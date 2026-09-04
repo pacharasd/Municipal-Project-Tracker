@@ -16,9 +16,10 @@
         tailwind.config = {
             darkMode: 'class',
             theme: {
-                extend: {
+               extend: {
                     fontFamily: {
-                        sans: ['Prompt', 'Sarabun', 'sans-serif'],
+                        sans: ['Sarabun', 'sans-serif'],
+                        heading: ['Prompt', 'sans-serif'],
                     },
                     colors: {
                         muni: {
@@ -45,7 +46,10 @@
 
     <style>
         body {
-            font-family: 'Prompt', 'Sarabun', sans-serif;
+            font-family: 'Sarabun', sans-serif;
+        }
+        h1, h2, h3, h4, h5, h6, .font-heading {
+            font-family: 'Prompt', sans-serif;
         }
         [x-cloak] { display: none !important; }
     </style>
@@ -64,19 +68,60 @@
                     <i data-lucide="landmark" class="w-6 h-6"></i>
                 </div>
                 <div>
-                    <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="text-base sm:text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                    <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="text-base sm:text-lg font-bold font-heading text-slate-900 tracking-tight flex items-center gap-2">
                         ระบบติดตามและบริหารโครงการเทศบาล
-                        <span class="hidden sm:inline-block text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">ปี 2568</span>
+                        <span class="hidden sm:inline-block text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 font-sans">ปี 2568</span>
                     </a>
-                    <p class="text-xs text-slate-500 hidden sm:block">Municipal Project Tracking & Budget Disbursement System</p>
+                    <p class="text-xs text-slate-500 hidden sm:block font-sans">Municipal Project Tracking & Budget Disbursement System</p>
                 </div>
             </div>
 
-            <!-- Right: Admin Profile & Logout -->
+            <!-- Right: Role Switcher, Current User & Logout -->
             <div class="flex items-center space-x-3 sm:space-x-4">
-                <div class="hidden sm:flex items-center gap-1.5 bg-purple-50 text-purple-700 px-3 py-1.5 rounded-xl border border-purple-200 text-xs font-bold">
-                    <i data-lucide="shield-check" class="w-4 h-4 text-purple-600"></i>
-                    <span>ผู้ดูแลระบบ (Admin)</span>
+                <?php
+                $userRole = $currentUser['role_name'] ?? 'officer';
+                $roleMeta = [
+                    'admin'           => ['label' => 'ผู้ดูแลระบบ (Admin)', 'bg' => 'bg-purple-50 text-purple-700 border-purple-200', 'icon' => 'shield-check'],
+                    'executive'       => ['label' => 'ผู้บริหาร (Executive)', 'bg' => 'bg-blue-50 text-blue-700 border-blue-200', 'icon' => 'briefcase'],
+                    'officer'         => ['label' => 'เจ้าหน้าที่ (Officer)', 'bg' => 'bg-emerald-50 text-emerald-700 border-emerald-200', 'icon' => 'clipboard-check'],
+                    'project_manager' => ['label' => 'ผู้ดูแลโครงการ (PM)', 'bg' => 'bg-amber-50 text-amber-700 border-amber-200', 'icon' => 'user-check'],
+                ];
+                $currentRoleInfo = $roleMeta[$userRole] ?? ['label' => $currentUser['role_label'] ?? 'ผู้ใช้งาน', 'bg' => 'bg-slate-50 text-slate-700 border-slate-200', 'icon' => 'user'];
+                $switchDemoUsers = \App\Core\Database::query("SELECT u.id, u.name, r.name as role_name, r.display_name as role_label FROM users u JOIN roles r ON u.role_id = r.id ORDER BY u.id ASC LIMIT 5");
+                ?>
+
+                <!-- Dynamic Role Badge & Quick Switcher Dropdown -->
+                <div class="relative" x-data="{ open: false }">
+                    <button type="button" @click="open = !open" class="hidden sm:flex items-center gap-1.5 <?= $currentRoleInfo['bg'] ?> px-3 py-1.5 rounded-xl border text-xs font-bold hover:shadow-sm transition cursor-pointer" title="คลิกเพื่อสลับบทบาททดสอบระบบ">
+                        <i data-lucide="<?= $currentRoleInfo['icon'] ?>" class="w-4 h-4"></i>
+                        <span><?= htmlspecialchars($currentRoleInfo['label']) ?></span>
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 opacity-60"></i>
+                    </button>
+
+                    <!-- Role Switcher Dropdown Menu -->
+                    <div x-show="open" @click.outside="open = false" x-cloak class="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-50 text-left">
+                        <div class="px-3 py-2 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider font-heading">
+                            สลับบทบาททดสอบระบบ (RBAC)
+                        </div>
+                        <div class="py-1 space-y-1">
+                            <?php foreach ($switchDemoUsers as $su): ?>
+                                <form action="<?= \App\Core\Router::url('/auth/switch') ?>" method="POST">
+                                    <input type="hidden" name="_token" value="<?= $csrfToken ?>">
+                                    <input type="hidden" name="user_id" value="<?= $su['id'] ?>">
+                                    <input type="hidden" name="redirect" value="<?= htmlspecialchars($_SERVER['REQUEST_URI'] ?? '') ?>">
+                                    <button type="submit" class="w-full text-left px-3 py-2 rounded-xl text-xs hover:bg-slate-50 flex items-center justify-between transition cursor-pointer <?= ($currentUser['id'] == $su['id']) ? 'bg-emerald-50 text-emerald-800 font-bold' : 'text-slate-700' ?>">
+                                        <div>
+                                            <div class="font-medium"><?= htmlspecialchars($su['name']) ?></div>
+                                            <div class="text-[10px] text-slate-400"><?= htmlspecialchars($su['role_label']) ?></div>
+                                        </div>
+                                        <?php if ($currentUser['id'] == $su['id']): ?>
+                                            <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>
+                                        <?php endif; ?>
+                                    </button>
+                                </form>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Current User Badge -->

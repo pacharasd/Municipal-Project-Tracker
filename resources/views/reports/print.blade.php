@@ -83,13 +83,6 @@
             </thead>
             <tbody>
                 <?php 
-                $statusLabels = [
-                    'not_started' => 'ยังไม่เริ่ม',
-                    'in_progress' => 'กำลังดำเนินการ',
-                    'completed'   => 'เสร็จสิ้น',
-                    'has_problem' => 'มีปัญหา',
-                    'cancelled'   => 'ยกเลิก',
-                ];
                 foreach ($projects as $idx => $p): 
                     $isMain = empty($p['parent_id']);
                     $rowBg = $isMain ? 'bg-slate-50/70 font-semibold' : '';
@@ -107,7 +100,7 @@
                         <td class="p-2 border border-slate-200 text-right font-mono"><?= number_format($p['budget'] - $p['disbursed_amount'], 2) ?></td>
                         <td class="p-2 border border-slate-200 text-center font-mono font-bold"><?= number_format($p['progress'], 1) ?>%</td>
                         <td class="p-2 border border-slate-200 text-center">
-                            <?= $statusLabels[$p['status']] ?? $p['status'] ?>
+                            <?= \App\Enums\ProjectStatus::labelFor($p['status']) ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>

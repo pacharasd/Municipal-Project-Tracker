@@ -59,18 +59,20 @@ class UserController
             exit;
         }
 
+        $roleId = !empty($_POST['role_id']) ? (int)$_POST['role_id'] : 3; // Default to Officer
+
         $hash = password_hash($password ?: 'password', PASSWORD_BCRYPT);
         $userId = Database::insert('users', [
             'name'          => $name,
             'email'         => $email,
             'password'      => $hash,
-            'role_id'       => 1, // Admin / Full rights
+            'role_id'       => $roleId,
             'department_id' => $departmentId,
             'position'      => $position,
             'phone'         => $phone,
         ]);
 
-        \App\Services\AuditLogService::log('CREATE_USER', 'User', $userId, null, ['name' => $name, 'email' => $email]);
+        \App\Services\AuditLogService::log('CREATE_USER', 'User', $userId, null, ['name' => $name, 'email' => $email, 'role_id' => $roleId]);
         Session::flash('success', "เพิ่มผู้ใช้งาน '{$name}' เรียบร้อยแล้ว (รหัสผ่านเริ่มต้น: {$password})");
         header('Location: ' . Router::url('/users'));
         exit;
@@ -121,13 +123,20 @@ class UserController
             'phone'         => $phone,
         ];
 
+        if (!empty($_POST['role_id'])) {
+            $updateData['role_id'] = (int)$_POST['role_id'];
+        }
+
         if (!empty($newPassword)) {
             $updateData['password'] = password_hash($newPassword, PASSWORD_BCRYPT);
         }
 
         Database::update('users', $updateData, "id = ?", [$userId]);
 
-        \App\Services\AuditLogService::log('UPDATE_USER', 'User', $userId, ['name' => $user['name'], 'email' => $user['email']], ['name' => $name, 'email' => $email]);
+        \App\Services\AuditLogService::log('UPDATE_USER', 'User', $userId, 
+            ['name' => $user['name'], 'email' => $user['email'], 'role_id' => $user['role_id']], 
+            ['name' => $name, 'email' => $email, 'role_id' => $updateData['role_id'] ?? $user['role_id']]
+        );
         Session::flash('success', "อัปเดตข้อมูลผู้ใช้ '{$name}' เรียบร้อยแล้ว");
         header('Location: ' . Router::url('/users'));
         exit;

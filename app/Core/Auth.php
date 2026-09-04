@@ -40,22 +40,37 @@ class Auth
 
     public static function isAdmin(): bool
     {
-        return true;
+        return self::role() === 'admin';
     }
 
     public static function isExecutive(): bool
     {
-        return true;
+        return in_array(self::role(), ['admin', 'executive']);
     }
 
     public static function isOfficer(): bool
     {
-        return true;
+        return in_array(self::role(), ['admin', 'officer']);
+    }
+
+    public static function isProjectManager(): bool
+    {
+        return in_array(self::role(), ['admin', 'project_manager']);
     }
 
     public static function canManageProjects(): bool
     {
-        return true;
+        return in_array(self::role(), ['admin', 'officer', 'project_manager']);
+    }
+
+    public static function canDisburse(): bool
+    {
+        return in_array(self::role(), ['admin', 'officer']);
+    }
+
+    public static function canManageUsers(): bool
+    {
+        return self::isAdmin();
     }
 
     public static function login(array $user): void
