@@ -50,22 +50,22 @@ class Auth
 
     public static function isOfficer(): bool
     {
-        return in_array(self::role(), ['admin', 'officer']);
+        return self::isAdmin();
     }
 
     public static function isProjectManager(): bool
     {
-        return in_array(self::role(), ['admin', 'project_manager']);
+        return self::isAdmin();
     }
 
     public static function canManageProjects(): bool
     {
-        return in_array(self::role(), ['admin', 'officer', 'project_manager']);
+        return self::isAdmin();
     }
 
     public static function canDisburse(): bool
     {
-        return in_array(self::role(), ['admin', 'officer']);
+        return self::isAdmin();
     }
 
     public static function canManageUsers(): bool
@@ -76,7 +76,7 @@ class Auth
     public static function login(array $user): void
     {
         Session::set('user_id', $user['id']);
-        Session::set('user_role', $user['role_name'] ?? 'officer');
+        Session::set('user_role', $user['role_name'] ?? 'admin');
         Session::set('user_name', $user['name']);
     }
 

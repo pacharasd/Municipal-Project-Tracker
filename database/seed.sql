@@ -8,9 +8,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- 1. Roles
 INSERT INTO `roles` (`id`, `name`, `display_name`, `description`) VALUES
 (1, 'admin', 'ผู้ดูแลระบบ (Administrator)', 'จัดการทุกระบบ ผู้ใช้ สิทธิ์ และดู Audit Log'),
-(2, 'executive', 'ผู้บริหาร (Executive)', 'ดู Dashboard, โครงการ, งบประมาณ และรายงานเชิงลึก'),
-(3, 'officer', 'เจ้าหน้าที่ (Officer)', 'สร้างและแก้ไขโครงการ, เพิ่มกิจกรรม, อัปเดตความคืบหน้า'),
-(4, 'project_manager', 'ผู้ดูแลโครงการ (Project Manager)', 'ดูแลโครงการที่ได้รับมอบหมาย, อัปเดตสถานะและกิจกรรม');
+(2, 'executive', 'ผู้บริหาร (Executive)', 'ดู Dashboard, โครงการ, งบประมาณ และรายงานเชิงลึก');
 
 -- 2. Departments
 INSERT INTO `departments` (`id`, `code`, `name`, `description`, `phone`) VALUES
@@ -39,9 +37,9 @@ INSERT INTO `fiscal_years` (`id`, `year`, `is_active`, `start_date`, `end_date`)
 INSERT INTO `users` (`id`, `name`, `email`, `password`, `role_id`, `department_id`, `position`, `phone`) VALUES
 (1, 'สมเกียรติ มั่นคง (แอดมิน)', 'admin@municipality.go.th', '$2y$10$wO32QoU1gqN3YjM2K915nOBcM0OqHlIgeIu29Q923I7G/dKqfK22G', 1, 4, 'ผู้อำนวยการศูนย์เทคโนโลยีและสารสนเทศ', '081-1111111'),
 (2, 'ดร.สมชาย ทรงคุณ (นายกเทศมนตรี)', 'executive@municipality.go.th', '$2y$10$wO32QoU1gqN3YjM2K915nOBcM0OqHlIgeIu29Q923I7G/dKqfK22G', 2, 4, 'นายกเทศมนตรี', '081-2222222'),
-(3, 'วรรณา จันทร์เพ็ญ (เจ้าหน้าที่กองสาธารณสุข)', 'officer.health@municipality.go.th', '$2y$10$wO32QoU1gqN3YjM2K915nOBcM0OqHlIgeIu29Q923I7G/dKqfK22G', 3, 2, 'นักวิชาการสาธารณสุขปฏิบัติการ', '081-3333333'),
-(4, 'วิชัย ก่อสร้างดี (เจ้าหน้าที่กองช่าง)', 'officer.eng@municipality.go.th', '$2y$10$wO32QoU1gqN3YjM2K915nOBcM0OqHlIgeIu29Q923I7G/dKqfK22G', 3, 1, 'วิศวกรโยธาชำนาญการ', '081-4444444'),
-(5, 'สุดา นำสุข (ผู้จัดการโครงการ)', 'pm.suda@municipality.go.th', '$2y$10$wO32QoU1gqN3YjM2K915nOBcM0OqHlIgeIu29Q923I7G/dKqfK22G', 4, 2, 'พยาบาลวิชาชีพชำนาญการ', '081-5555555');
+(3, 'วรรณา จันทร์เพ็ญ (เจ้าหน้าที่กองสาธารณสุข)', 'officer.health@municipality.go.th', '$2y$10$wO32QoU1gqN3YjM2K915nOBcM0OqHlIgeIu29Q923I7G/dKqfK22G', 1, 2, 'นักวิชาการสาธารณสุขปฏิบัติการ', '081-3333333'),
+(4, 'วิชัย ก่อสร้างดี (เจ้าหน้าที่กองช่าง)', 'officer.eng@municipality.go.th', '$2y$10$wO32QoU1gqN3YjM2K915nOBcM0OqHlIgeIu29Q923I7G/dKqfK22G', 1, 1, 'วิศวกรโยธาชำนาญการ', '081-4444444'),
+(5, 'สุดา นำสุข (ผู้จัดการโครงการ)', 'pm.suda@municipality.go.th', '$2y$10$wO32QoU1gqN3YjM2K915nOBcM0OqHlIgeIu29Q923I7G/dKqfK22G', 1, 2, 'พยาบาลวิชาชีพชำนาญการ', '081-5555555');
 
 -- 6. Main Projects (parent_id = NULL)
 INSERT INTO `projects` (`id`, `parent_id`, `project_code`, `name`, `description`, `fiscal_year_id`, `category_id`, `department_id`, `responsible_user_id`, `start_date`, `end_date`, `budget`, `disbursed_amount`, `status`, `progress`, `progress_mode`) VALUES

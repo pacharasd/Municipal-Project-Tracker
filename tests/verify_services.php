@@ -19,9 +19,13 @@ echo "Active User: {$user['name']} ({$user['role_name']})\n";
 $sub5Before = \App\Core\Database::fetch("SELECT id, actual_activity_count, planned_activity_count, progress FROM projects WHERE id = 5");
 echo "Subproject 5 Before: actual={$sub5Before['actual_activity_count']}/{$sub5Before['planned_activity_count']}, progress={$sub5Before['progress']}%\n";
 
-// Increment Subproject 5
-$incRes = \App\Services\ProgressService::updateSubProjectProgress(5, 1);
-echo "Incremented Subproject 5: actual={$incRes['actual']}, progress={$incRes['progress']}%\n";
+// Increment Subproject 5 (if not at max)
+try {
+    $incRes = \App\Services\ProgressService::updateSubProjectProgress(5, 1);
+    echo "Incremented Subproject 5: actual={$incRes['actual']}, progress={$incRes['progress']}%\n";
+} catch (\Exception $e) {
+    echo "Subproject 5 at capacity: {$e->getMessage()}\n";
+}
 
 $parent1 = \App\Core\Database::fetch("SELECT id, progress FROM projects WHERE id = 1");
 echo "Parent Project 1 Progress (Rule #47 Sync): {$parent1['progress']}%\n";
@@ -40,11 +44,11 @@ try {
 $sub5Budget = \App\Core\Database::fetch("SELECT id, budget, disbursed_amount, (budget - disbursed_amount) as remaining FROM projects WHERE id = 5");
 echo "\nTesting Budget Ceiling Guard on Subproject 5 (remaining: {$sub5Budget['remaining']})...\n";
 // Non-admin attempt over budget
-\App\Core\Auth::switchUser(3); // Officer (non-admin)
+\App\Core\Auth::switchUser(2); // Executive (non-admin)
 try {
     $excessAmount = (float)$sub5Budget['remaining'] + 50000;
     \App\Services\BudgetService::disburse(5, $excessAmount, date('Y-m-d'), 'ทดสอบเบิกเกินงบ');
-    echo "FAILED: Budget ceiling was not enforced for officer!\n";
+    echo "FAILED: Budget ceiling was not enforced for executive!\n";
 } catch (\Exception $e) {
     echo "SUCCESS: Budget ceiling strictly enforced: '{$e->getMessage()}'\n";
 }

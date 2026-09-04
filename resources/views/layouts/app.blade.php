@@ -79,12 +79,10 @@
             <!-- Right: Role Switcher, Current User & Logout -->
             <div class="flex items-center space-x-3 sm:space-x-4">
                 <?php
-                $userRole = $currentUser['role_name'] ?? 'officer';
+                $userRole = $currentUser['role_name'] ?? 'admin';
                 $roleMeta = [
-                    'admin'           => ['label' => 'ผู้ดูแลระบบ (Admin)', 'bg' => 'bg-purple-50 text-purple-700 border-purple-200', 'icon' => 'shield-check'],
-                    'executive'       => ['label' => 'ผู้บริหาร (Executive)', 'bg' => 'bg-blue-50 text-blue-700 border-blue-200', 'icon' => 'briefcase'],
-                    'officer'         => ['label' => 'เจ้าหน้าที่ (Officer)', 'bg' => 'bg-emerald-50 text-emerald-700 border-emerald-200', 'icon' => 'clipboard-check'],
-                    'project_manager' => ['label' => 'ผู้ดูแลโครงการ (PM)', 'bg' => 'bg-amber-50 text-amber-700 border-amber-200', 'icon' => 'user-check'],
+                    'admin'     => ['label' => 'ผู้ดูแลระบบ (Admin)', 'bg' => 'bg-purple-50 text-purple-700 border-purple-200', 'icon' => 'shield-check'],
+                    'executive' => ['label' => 'ผู้บริหาร (Executive)', 'bg' => 'bg-blue-50 text-blue-700 border-blue-200', 'icon' => 'briefcase'],
                 ];
                 $currentRoleInfo = $roleMeta[$userRole] ?? ['label' => $currentUser['role_label'] ?? 'ผู้ใช้งาน', 'bg' => 'bg-slate-50 text-slate-700 border-slate-200', 'icon' => 'user'];
                 $switchDemoUsers = \App\Core\Database::query("SELECT u.id, u.name, r.name as role_name, r.display_name as role_label FROM users u JOIN roles r ON u.role_id = r.id ORDER BY u.id ASC LIMIT 5");

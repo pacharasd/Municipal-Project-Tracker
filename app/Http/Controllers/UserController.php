@@ -59,7 +59,7 @@ class UserController
             exit;
         }
 
-        $roleId = !empty($_POST['role_id']) ? (int)$_POST['role_id'] : 3; // Default to Officer
+        $roleId = !empty($_POST['role_id']) ? (int)$_POST['role_id'] : 1; // Default to Admin
 
         $hash = password_hash($password ?: 'password', PASSWORD_BCRYPT);
         $userId = Database::insert('users', [
