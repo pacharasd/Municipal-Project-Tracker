@@ -273,8 +273,6 @@ ob_start();
                     <tr class="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                         <th class="py-3.5 px-4">รหัส / โครงการย่อย</th>
                         <th class="py-3.5 px-4">โครงการหลักที่สังกัด</th>
-                        <th class="py-3.5 px-4">สำนัก / กอง</th>
-                        <th class="py-3.5 px-4">ผู้รับผิดชอบ</th>
                         <th class="py-3.5 px-4 text-right">งบประมาณ</th>
                         <th class="py-3.5 px-4 text-right">เบิกจ่ายแล้ว</th>
                         <th class="py-3.5 px-4 text-center">กิจกรรม</th>
@@ -286,7 +284,7 @@ ob_start();
                 <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
                     <?php if (empty($subProjects)): ?>
                         <tr>
-                            <td colspan="10" class="py-8 text-center text-slate-400">
+                            <td colspan="8" class="py-8 text-center text-slate-400">
                                 <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
                                 ยังไม่มีโครงการย่อยในระบบ
                             </td>
@@ -294,7 +292,7 @@ ob_start();
                     <?php else: ?>
                         <?php foreach ($subProjects as $sp): ?>
                             <?php
-                            $spSearchText = htmlspecialchars(mb_strtolower($sp['project_code'] . ' ' . $sp['name'] . ' ' . ($sp['department_name'] ?? '') . ' ' . ($sp['responsible_name'] ?? '')));
+                            $spSearchText = htmlspecialchars(mb_strtolower($sp['project_code'] . ' ' . $sp['name'] . ' ' . ($sp['parent_code'] ?? '') . ' ' . ($sp['parent_name'] ?? '')));
                             $statusClass = match($sp['status']) {
                                 'completed'   => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                                 'in_progress' => 'bg-blue-50 text-blue-700 border-blue-200',
@@ -328,26 +326,9 @@ ob_start();
 
                                 <!-- Parent Project -->
                                 <td class="py-3 px-4">
-                                    <div class="text-[11px] text-slate-500 font-medium line-clamp-1 max-w-[200px]" title="<?= htmlspecialchars($sp['parent_name']) ?>">
+                                    <div class="text-[11px] text-slate-500 font-medium line-clamp-1 max-w-[220px]" title="<?= htmlspecialchars($sp['parent_name']) ?>">
                                         <span class="font-mono text-slate-400"><?= htmlspecialchars($sp['parent_code']) ?></span><br>
                                         <?= htmlspecialchars($sp['parent_name']) ?>
-                                    </div>
-                                </td>
-
-                                <!-- Department -->
-                                <td class="py-3 px-4 whitespace-nowrap">
-                                    <span class="px-2.5 py-1 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-100">
-                                        <?= htmlspecialchars($sp['department_name'] ?? 'ไม่ระบุ') ?>
-                                    </span>
-                                </td>
-
-                                <!-- Responsible Person -->
-                                <td class="py-3 px-4 whitespace-nowrap">
-                                    <div class="flex items-center gap-1.5">
-                                        <div class="w-6 h-6 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-[10px] font-bold">
-                                            <i data-lucide="user" class="w-3.5 h-3.5"></i>
-                                        </div>
-                                        <span class="text-xs text-slate-700"><?= htmlspecialchars($sp['responsible_name'] ?? 'ไม่ระบุ') ?></span>
                                     </div>
                                 </td>
 
