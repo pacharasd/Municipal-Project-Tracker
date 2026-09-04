@@ -185,22 +185,6 @@
                     <span>ประวัติการทำงาน (Audit Log)</span>
                 </a>
             </div>
-
-            <!-- Sidebar Footer -->
-            <div class="p-4 border-t border-slate-200 bg-slate-50/50">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center">
-                        <i data-lucide="database" class="w-4 h-4"></i>
-                    </div>
-                    <div class="text-xs">
-                        <div class="font-semibold text-slate-800">MySQL XAMPP</div>
-                        <div class="text-[10px] text-emerald-600 flex items-center gap-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-                            municipal_project_tracker
-                        </div>
-                    </div>
-                </div>
-            </div>
         </aside>
 
         <!-- Backdrop for mobile sidebar -->
