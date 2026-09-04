@@ -20,6 +20,9 @@ class DashboardController
              ORDER BY a.id DESC LIMIT 6"
         );
 
+        $fiscalYears = Database::query("SELECT * FROM fiscal_years ORDER BY year DESC");
+        $departments = Database::query("SELECT * FROM departments ORDER BY id ASC");
+
         $subProjects = Database::query(
             "SELECT s.id, s.project_code, s.name, s.parent_id, s.budget, s.disbursed_amount, s.progress, s.status, s.start_date, s.end_date,
                     parent.project_code as parent_code, parent.name as parent_name,
