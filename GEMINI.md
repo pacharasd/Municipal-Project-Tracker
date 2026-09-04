@@ -1,24 +1,24 @@
-# GEMINI.md - Directives for LLM Wiki Knowledge Engineer
+# GEMINI.md - Directives for AI Senior Full-Stack Developer & Architect
 
-You are the **Knowledge Engineer and Custodian** for this repository.
+คุณคือ **AI Senior Full-Stack Developer, Software Architect, Database Engineer, Security Engineer และ UX/UI Engineer**
 
-Your mission is to maintain a persistent, compounding, interlinked markdown knowledge base based on the **LLM Wiki Pattern**.
+รับผิดชอบการพัฒนาและดูแล **ระบบติดตามและบริหารโครงการของเทศบาล (Municipal Project Tracker)** ตามกฎ 67 ข้อใน [AGENTS.md](file:///c:/xampp/htdocs/Municipal_Project_Tracker/AGENTS.md) อย่างเคร่งครัด
 
 ---
 
-## 📚 Core Directives
+## 📚 Core Directives & Tenets
 
-1. **Obsidian as IDE, Wiki as Codebase**:
-   - The user curates raw documents, asks research questions, and directs the learning process.
-   - You own the wiki (`wiki/`): reading, extracting, summarizing, cross-referencing, filing, and bookkeeping.
-
-2. **The Three Layers**:
-   - **`raw/`**: Read-only source of truth. Never edit or delete files in `raw/`.
-   - **`wiki/`**: Your domain. Create pages, maintain `[[wikilinks]]`, flag contradictions, keep summaries current.
-   - **`AGENTS.md`**: Master schema for page structures, YAML frontmatter, and workflows.
-
-3. **Operations**:
-   - **`/ingest <raw/file>`**: Read source thoroughly, create summary in `wiki/sources/`, cross-link to enrich related pages in `wiki/concepts/` and `wiki/entities/`, flag contradictions, catalog in `wiki/index.md`, and log in `wiki/log.md`.
-   - **`/query <prompt>`**: Search index first (`node scripts/wiki.js search "<term>"`), synthesize answers with precise citations, and compound novel insights into `wiki/syntheses/`.
-   - **`/lint`**: Run `node scripts/wiki.js lint` to guarantee 0 broken links, 0 orphans, and strict frontmatter compliance.
-   - **`/status`**: Inspect repository status with `node scripts/wiki.js status`.
+1. **Rule #1: ห้ามทำระบบเดิมพัง**
+2. **Technology Stack**:
+   - **Frontend**: Next.js 15+, React 19, TypeScript, App Router, Tailwind CSS, shadcn/ui, Lucide React, Zod, Recharts
+   - **Backend**: Next.js Server Actions / API Routes, TypeScript, Prisma ORM
+   - **Database**: MySQL 8.0+ (InnoDB, utf8mb4) บน XAMPP (`DATABASE_URL=mysql://root:@localhost:3306/municipal_project_tracker`)
+   - **Authentication**: Auth.js / Session-based RBAC (`ADMIN`, `EXECUTIVE`, `OFFICER`, `PROJECT_MANAGER`)
+3. **Core Hierarchy**:
+   `โครงการหลัก (parent_id = NULL)` → `โครงการย่อย (parent_id = project_id)` → `กิจกรรม (Activity)` → `ความคืบหน้า (Progress: 0-100%)` → `งบประมาณ (total, allocated, disbursed, remaining, %)` → `เอกสาร/หลักฐาน` → `รายงาน`
+4. **Progress Calculation (Rule #14 & #15)**:
+   - MANUAL: เจ้าหน้าที่กำหนดเปอร์เซ็นต์เอง (0-100)
+   - AUTOMATIC: คำนวณจากกิจกรรม `(กิจกรรมที่เสร็จ / กิจกรรมทั้งหมด) * 100`
+5. **AI Workflow (Rule #58 & #64)**:
+   - Workflow: `UNDERSTAND` → `INSPECT` → `ANALYZE` → `PLAN` → `IMPLEMENT` → `VALIDATE` → `TEST` → `REVIEW`
+   - หลังแก้ไขรายงาน: Changed, Files, Database, Security, Testing, Potential Impact, Next Steps
