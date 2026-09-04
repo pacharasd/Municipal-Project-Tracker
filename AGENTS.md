@@ -2,45 +2,105 @@
 
 # ระบบติดตามและบริหารโครงการเทศบาล
 
-คุณคือ AI Senior Full-Stack Developer, Software Architect, Database Engineer, Security Engineer และ UX/UI Engineer
+คุณคือ Senior Full-Stack Developer, System Architect, Database Engineer และ UX/UI Designer ที่มีประสบการณ์พัฒนาระบบสารสนเทศสำหรับหน่วยงานราชการและเทศบาล
 
-หน้าที่ของคุณคือพัฒนาและดูแลระบบติดตามและบริหารโครงการของเทศบาล โดยต้องให้ความสำคัญกับ
+จงออกแบบและพัฒนาเว็บไซต์ **ระบบติดตามและบริหารโครงการของเทศบาล** สำหรับใช้ติดตามโครงการหลัก โครงการย่อย กิจกรรม งบประมาณ การเบิกจ่าย ผู้รับผิดชอบ สถานะ และเปอร์เซ็นต์ความสำเร็จของแต่ละโครงการ
 
-1. ความถูกต้องของข้อมูล
-2. ความสัมพันธ์ของข้อมูล
-3. ความปลอดภัย
-4. Maintainability
-5. Scalability
-6. Performance
-7. UX/UI
-8. ความสามารถในการตรวจสอบย้อนหลัง
-9. การไม่ทำลายระบบเดิม
-10. การเขียน Code ที่เป็นระบบ
+ระบบต้องออกแบบให้สามารถนำไปพัฒนาต่อและใช้งานจริงได้ โดยเน้นความเป็นระบบ ความถูกต้องของข้อมูล ความปลอดภัย และ UX/UI ที่ใช้งานง่ายสำหรับเจ้าหน้าที่เทศบาล
 
 ---
 
-# 1. PROJECT OBJECTIVE
+# 1. TECHNOLOGY STACK
 
-ระบบนี้เป็นระบบสำหรับติดตามและบริหารโครงการของเทศบาล
+## Backend และ Framework
 
-โครงสร้างหลักของระบบคือ
+* Laravel 11+
+* PHP 8.2+
+* Laravel Blade
+* Laravel Livewire สำหรับหน้าที่ต้องการโต้ตอบแบบ Dynamic
+* Laravel Eloquent ORM
+* Laravel Form Request สำหรับ Validation
+* Laravel Policies และ Gates สำหรับ Authorization
+* Laravel Notifications
+* Laravel Queues สำหรับงานเบื้องหลัง
+* Laravel Scheduler สำหรับงานแจ้งเตือนและตรวจสอบกำหนดการ
+
+## Frontend
+
+* Blade Templates
+* Livewire
+* Tailwind CSS
+* Alpine.js
+* Laravel Vite
+* Lucide Icons หรือไอคอนที่เหมาะสม
+* Chart.js หรือ ApexCharts สำหรับ Dashboard Charts
+* Laravel Excel สำหรับ Export Excel
+* Dompdf หรือ Snappy สำหรับ Export PDF
+
+## Database
+
+* MySQL 8.0+
+* InnoDB Storage Engine
+* utf8mb4 Character Set
+* Laravel Migrations
+* Laravel Seeders
+* Laravel Factories
+
+## Authentication
+
+* Laravel Breeze หรือ Laravel Fortify
+* Session-based Authentication
+* Role-Based Access Control (RBAC)
+* Laravel Policies
+* Laravel Gates
+* แนะนำให้ใช้ Spatie Laravel Permission สำหรับจัดการ Role และ Permission
+
+## Infrastructure
+
+* XAMPP
+* Apache
+* MySQL
+* PHP
+* phpMyAdmin
+* Composer
+* Node.js และ NPM
+* Git
+* GitHub
+
+## Development
+
+* Laravel Pint
+* PHPStan หรือ Larastan
+* PHPUnit หรือ Pest
+* Laravel Debugbar เฉพาะ Environment สำหรับพัฒนา
+* ESLint และ Prettier หากมี JavaScript เพิ่มเติม
+
+---
+
+# 2. แนวคิดโครงสร้างระบบ
+
+ระบบต้องรองรับโครงสร้างแบบ Hierarchical Project
 
 ```text
 โครงการหลัก
-    ↓
-โครงการย่อย
-    ↓
-กิจกรรม
-    ↓
-ความคืบหน้า
-    ↓
-งบประมาณ
-    ↓
-การเบิกจ่าย
-    ↓
-หลักฐาน / เอกสาร
-    ↓
-รายงาน
+│
+├── โครงการย่อยที่ 1
+│   ├── กิจกรรม
+│   ├── งบประมาณ
+│   ├── การเบิกจ่าย
+│   └── ความคืบหน้า
+│
+├── โครงการย่อยที่ 2
+│   ├── กิจกรรม
+│   ├── งบประมาณ
+│   ├── การเบิกจ่าย
+│   └── ความคืบหน้า
+│
+└── โครงการย่อยที่ 3
+    ├── กิจกรรม
+    ├── งบประมาณ
+    ├── การเบิกจ่าย
+    └── ความคืบหน้า
 ```
 
 ตัวอย่าง
@@ -48,334 +108,514 @@
 ```text
 โครงการเพื่อสุขภาพ
 
-├── โครงการส่งเสริมสุขภาพผู้สูงอายุ
-├── โครงการออกกำลังกายเพื่อสุขภาพ
-└── โครงการส่งเสริมสุขภาพประชาชน
+1. โครงการส่งเสริมสุขภาพผู้สูงอายุ
+2. โครงการออกกำลังกายเพื่อสุขภาพ
+3. โครงการส่งเสริมสุขภาพประชาชน
 ```
 
-แต่ละโครงการต้องสามารถติดตาม
+ต้องสามารถสร้างโครงการหลักได้หลายโครงการ และแต่ละโครงการหลักสามารถมีโครงการย่อยได้ไม่จำกัดจำนวน
 
-* ผู้รับผิดชอบ
+---
+
+# 3. ข้อมูลโครงการหลัก
+
+สร้างระบบจัดการโครงการหลักแบบ CRUD ด้วย Laravel
+
+ข้อมูลประกอบด้วย
+
+* รหัสโครงการ
+* ชื่อโครงการ
+* ปีงบประมาณ
+* ประเภท/หมวดหมู่โครงการ
+* หน่วยงาน
+* ผู้รับผิดชอบหลัก
+* คำอธิบาย
+* งบประมาณรวม
+* จำนวนโครงการย่อย
+* สถานะ
+* เปอร์เซ็นต์ความสำเร็จ
+* วันที่เริ่มต้น
+* วันที่สิ้นสุด
+* วันที่สร้าง
+* วันที่แก้ไข
+
+การสร้าง แก้ไข และลบข้อมูลต้องผ่าน Controller, Form Request, Service และ Policy ตามความเหมาะสม
+
+---
+
+# 4. ข้อมูลโครงการย่อย
+
+แต่ละโครงการหลักสามารถมีโครงการย่อยได้
+
+ข้อมูลโครงการย่อยประกอบด้วย
+
+* รหัสโครงการย่อย
+* ชื่อโครงการ
+* ผู้รับผิดชอบโครงการ
+* หน่วยงาน/กอง/สำนัก
 * ประเภทกิจกรรม
 * วัตถุประสงค์
 * กลุ่มเป้าหมาย
+* จำนวนกลุ่มเป้าหมาย
 * พื้นที่ดำเนินการ
-* วิธีดำเนินการ
-* ระยะเวลา
-* วันที่ดำเนินการเสร็จสิ้น
+* วิธีการดำเนินการ
+* วันที่เริ่มโครงการ
+* วันที่สิ้นสุดโครงการ
+* วันที่ทำกิจกรรมเสร็จสิ้น
 * งบประมาณ
-* ยอดเบิกจ่าย
-* จำนวนกิจกรรม
+* ยอดการเบิกจ่าย
+* จำนวนครั้งที่วางแผน
+* จำนวนครั้งที่ดำเนินการจริง
 * สถานะ
 * เปอร์เซ็นต์ความสำเร็จ
-* เอกสาร
+* หมายเหตุ
+* เอกสารแนบ
+* รูปภาพกิจกรรม
+
+ข้อมูลต้องเชื่อมโยงกับโครงการหลักด้วย Eloquent Relationship และ Foreign Key
+
+---
+
+# 5. ระบบสถานะ
+
+กำหนดสถานะโครงการเป็น
+
+1. ยังไม่เริ่มดำเนินการ
+2. กำลังดำเนินการ
+3. เสร็จสิ้น
+4. มีปัญหา
+5. ยกเลิก
+
+ควรกำหนดสถานะด้วย PHP Enum หรือ Constants กลาง เพื่อป้องกันการใช้ String กระจัดกระจายทั่วระบบ
+
+ใช้ Badge สีที่แตกต่างกันเพื่อให้เจ้าหน้าที่สามารถดูสถานะได้อย่างรวดเร็ว
+
+ตัวอย่าง
+
+```text
+กำลังดำเนินการ → Badge + Progress Bar
+เสร็จสิ้น → Badge + 100%
+มีปัญหา → Badge + แสดงข้อความปัญหา
+```
+
+---
+
+# 6. ระบบเปอร์เซ็นต์ความสำเร็จ
+
+ทุกโครงการย่อยต้องมีเปอร์เซ็นต์ความสำเร็จ
+
+ตัวอย่าง
+
+| โครงการ                         | สถานะ          | ความสำเร็จ |
+| ------------------------------- | -------------- | ---------: |
+| โครงการส่งเสริมสุขภาพผู้สูงอายุ | เสร็จสิ้น      |       100% |
+| โครงการออกกำลังกายเพื่อสุขภาพ   | กำลังดำเนินการ |        65% |
+| โครงการส่งเสริมสุขภาพประชาชน    | มีปัญหา        |        40% |
+
+แสดงเป็น Progress Bar
+
+```text
+0% ───────────── 100%
+```
+
+ต้องสามารถกำหนดเปอร์เซ็นต์ได้จากระบบ
+
+และควรมีระบบคำนวณอัตโนมัติจากกิจกรรมด้วย
+
+ตัวอย่าง
+
+```text
+มีทั้งหมด 10 กิจกรรม
+ดำเนินการเสร็จแล้ว 6 กิจกรรม
+
+ความสำเร็จ = 60%
+```
+
+ต้องเปิดให้ผู้ดูแลสามารถ Override เปอร์เซ็นต์ได้ หากการประเมินของโครงการไม่ได้ขึ้นอยู่กับจำนวนกิจกรรมเพียงอย่างเดียว
+
+ระบบต้องตรวจสอบว่าเปอร์เซ็นต์อยู่ระหว่าง 0 ถึง 100 และต้อง Validate ทั้ง Frontend และ Backend
+
+---
+
+# 7. ระบบกิจกรรม
+
+แต่ละโครงการย่อยสามารถมีหลายกิจกรรม
+
+ข้อมูลกิจกรรม
+
+* ชื่อกิจกรรม
+* รายละเอียด
+* วันที่จัดกิจกรรม
+* สถานที่
+* ผู้รับผิดชอบ
+* จำนวนผู้เข้าร่วม
+* งบประมาณกิจกรรม
+* สถานะ
+* เปอร์เซ็นต์ความสำเร็จ
 * รูปภาพ
-* ปัญหา/อุปสรรค
+* เอกสารหลักฐาน
+* หมายเหตุ
+
+สถานะกิจกรรม
+
+* ยังไม่ดำเนินการ
+* กำลังดำเนินการ
+* เสร็จสิ้น
+* มีปัญหา
+* ยกเลิก
+
+กิจกรรมต้องเชื่อมโยงกับโครงการย่อยด้วย Foreign Key และ Eloquent Relationship
 
 ---
 
-# 2. TECHNOLOGY STACK
+# 8. ระบบงบประมาณ
 
-## Frontend
+แต่ละโครงการต้องสามารถบันทึก
 
-* Next.js 15+
-* React
-* TypeScript
-* App Router
-* Tailwind CSS
-* shadcn/ui
-* Lucide React
-* React Hook Form
-* Zod
-* Recharts
+* งบประมาณที่ได้รับ
+* งบประมาณที่จัดสรร
+* ยอดเบิกจ่าย
+* ยอดคงเหลือ
+* เปอร์เซ็นต์การเบิกจ่าย
 
-## Backend
+สูตร
 
-* Next.js Server Actions
-* Next.js API Routes
-* TypeScript
-* Prisma ORM
+```text
+ยอดคงเหลือ =
+งบประมาณที่ได้รับ - ยอดเบิกจ่าย
+```
 
-## Database
+```text
+เปอร์เซ็นต์การเบิกจ่าย =
+ยอดเบิกจ่าย / งบประมาณที่ได้รับ × 100
+```
 
-* MySQL 8.0+
-* Prisma ORM
-* InnoDB Storage Engine
-* utf8mb4 Character Set
+ห้ามให้ยอดเบิกจ่ายมากกว่างบประมาณโดยไม่มีสิทธิ์ Override จาก Administrator
 
-## Authentication
+ข้อมูลทางการเงินต้องใช้ Decimal และไม่ควรใช้ Floating Point ในการคำนวณ
 
-* Auth.js
-* Session-based Authentication
-* Role-Based Access Control (RBAC)
+แนะนำให้ใช้ชนิดข้อมูล
 
-## Infrastructure
-
-* Docker
-* Docker Compose
-* Nginx
-
-## Development
-
-* ESLint
-* Prettier
-* Git
-* GitHub
+```text
+DECIMAL(15,2)
+```
 
 ---
 
-# 3. GENERAL DEVELOPMENT RULES
+# 9. Dashboard
 
-ก่อนแก้ไขหรือสร้างระบบใด ๆ ต้อง
+สร้าง Dashboard สำหรับผู้บริหารและเจ้าหน้าที่ด้วย Laravel Blade และ Livewire
 
-1. ตรวจสอบโครงสร้างโปรเจกต์ก่อน
-2. ตรวจสอบไฟล์ที่เกี่ยวข้อง
-3. ตรวจสอบ Database Schema
-4. ตรวจสอบ API / Server Actions
-5. ตรวจสอบ Components ที่เกี่ยวข้อง
-6. ตรวจสอบ Business Logic
-7. ตรวจสอบผลกระทบต่อระบบอื่น
-8. จึงเริ่มแก้ไข
+แสดงข้อมูลแบบ Card
 
-ห้ามแก้ Code แบบสุ่ม
+* โครงการทั้งหมด
+* โครงการที่กำลังดำเนินการ
+* โครงการที่เสร็จสิ้น
+* โครงการที่มีปัญหา
+* โครงการที่ยังไม่เริ่ม
+* งบประมาณทั้งหมด
+* งบประมาณที่เบิกจ่าย
+* งบประมาณคงเหลือ
+* เปอร์เซ็นต์ความสำเร็จเฉลี่ย
 
-ห้ามสร้างระบบซ้ำกับระบบที่มีอยู่แล้ว
-
-หากมี Function หรือ Component ที่สามารถนำกลับมาใช้ได้ ให้ Reuse
+ข้อมูลทั้งหมดต้องมาจาก MySQL ผ่าน Eloquent Query หรือ Query Builder ห้าม Hardcode ตัวเลขใน View
 
 ---
 
-# 4. CRITICAL RULE — DO NOT BREAK EXISTING SYSTEM
+# 10. Dashboard Charts
 
-ห้ามทำให้ระบบเดิมเสียหาย
+สร้างกราฟด้วย Chart.js หรือ ApexCharts
 
-ก่อนแก้ไขระบบใด ๆ ต้องตรวจสอบว่า Code นั้นถูกใช้งานอยู่ที่ใดบ้าง
+กราฟที่ต้องมี
+
+### 1. จำนวนโครงการตามสถานะ
+
+* ยังไม่เริ่ม
+* กำลังดำเนินการ
+* เสร็จสิ้น
+* มีปัญหา
+* ยกเลิก
+
+### 2. งบประมาณ
+
+แสดง
+
+```text
+งบประมาณทั้งหมด
+เทียบกับ
+ยอดเบิกจ่าย
+```
+
+### 3. ความสำเร็จของโครงการ
+
+แสดง Top / Bottom Projects
+
+เช่น
+
+```text
+โครงการ A 100%
+โครงการ B 85%
+โครงการ C 60%
+โครงการ D 35%
+```
+
+### 4. โครงการตามประเภท
+
+เช่น
+
+* สาธารณสุข
+* สิ่งแวดล้อม
+* การศึกษา
+* สังคม
+* โครงสร้างพื้นฐาน
+* วัฒนธรรม
+* อื่น ๆ
+
+ข้อมูลกราฟควรโหลดผ่าน Controller หรือ Livewire Component และส่งข้อมูลที่ผ่านการ Query จาก Database แล้วไปยัง JavaScript
+
+---
+
+# 11. หน้า Project Detail
+
+เมื่อคลิกโครงการหลัก ให้แสดงรายละเอียด
 
 ตัวอย่าง
 
-ถ้าจะแก้
-
 ```text
-ProjectStatus
+โครงการเพื่อสุขภาพ
+
+ผู้รับผิดชอบ
+กองสาธารณสุข
+
+งบประมาณ
+1,000,000 บาท
+
+เบิกจ่าย
+650,000 บาท
+
+ความสำเร็จ
+65%
 ```
 
-ต้องตรวจสอบ
+## โครงการย่อย
 
-* Project List
-* Project Detail
-* Dashboard
-* Report
-* API
-* Database
-* Notification
-* Filter
-* Search
+```text
+1. โครงการส่งเสริมสุขภาพผู้สูงอายุ
+   สถานะ: เสร็จสิ้น
+   ความสำเร็จ: 100%
 
-ก่อน
+2. โครงการออกกำลังกายเพื่อสุขภาพ
+   สถานะ: กำลังดำเนินการ
+   ความสำเร็จ: 65%
 
-ห้ามแก้เฉพาะหน้าเดียวโดยไม่ตรวจสอบระบบที่เกี่ยวข้อง
+3. โครงการส่งเสริมสุขภาพประชาชน
+   สถานะ: มีปัญหา
+   ความสำเร็จ: 40%
+```
+
+เมื่อคลิกโครงการย่อยให้แสดงรายละเอียดทั้งหมด รวมถึงกิจกรรม งบประมาณ การเบิกจ่าย เอกสาร รูปภาพ Timeline และ Audit Log ตามสิทธิ์ของผู้ใช้งาน
 
 ---
 
-# 5. CHANGE IMPACT ANALYSIS
+# 12. ระบบค้นหาและ Filter
 
-ก่อนแก้ไข Code ที่สำคัญ ให้ทำ Impact Analysis
+ต้องสามารถค้นหาโครงการได้
+
+* ค้นหาชื่อโครงการ
+* รหัสโครงการ
+* ปีงบประมาณ
+* หน่วยงาน
+* ผู้รับผิดชอบ
+* ประเภทโครงการ
+* สถานะ
+* ช่วงวันที่
+* ช่วงเปอร์เซ็นต์ความสำเร็จ
+
+สามารถ Filter และ Sort ได้
+
+ต้องใช้ Server-side Pagination และ Query จาก Database ไม่ควรโหลดข้อมูลทั้งหมดมา Filter บน Browser
+
+---
+
+# 13. ระบบรายงาน
+
+สร้างหน้า Reports ด้วย Laravel
+
+สามารถสร้างรายงาน
+
+* รายงานโครงการทั้งหมด
+* รายงานโครงการตามสถานะ
+* รายงานโครงการที่มีปัญหา
+* รายงานโครงการที่เสร็จสิ้น
+* รายงานงบประมาณ
+* รายงานการเบิกจ่าย
+* รายงานความสำเร็จ
+* รายงานตามหน่วยงาน
+* รายงานตามปีงบประมาณ
+
+รองรับ Export
+
+* Excel ด้วย Laravel Excel
+* CSV ด้วย Laravel Response หรือ Laravel Excel
+* PDF ด้วย Dompdf หรือ Snappy
+
+ข้อมูลใน Report ต้องตรงกับ Dashboard และ Database
+
+---
+
+# 14. ระบบแจ้งเตือน
+
+ระบบต้องตรวจสอบโครงการที่
+
+* ใกล้ถึงกำหนด
+* เลยกำหนด
+* ไม่มีการอัปเดตนาน
+* มีปัญหา
+* งบประมาณใกล้หมด
+
+แสดง Notification บน Dashboard
 
 ตัวอย่าง
 
-ถ้าแก้ไข Project Schema ต้องตรวจสอบ
-
 ```text
-Database
-    ↓
-Prisma
-    ↓
-API
-    ↓
-Server Actions
-    ↓
-Form
-    ↓
-Table
-    ↓
-Dashboard
-    ↓
-Report
-    ↓
-Export
-    ↓
-Notification
+⚠️ มี 3 โครงการใกล้ครบกำหนด
+
+🔴 มี 2 โครงการเกินกำหนด
+
+⚠️ มี 1 โครงการใช้งบประมาณเกิน 80%
 ```
 
-หากมีผลกระทบ ต้องแก้ให้ครบทุกจุด
+ใช้ Laravel Notifications และ Laravel Scheduler สำหรับตรวจสอบและสร้างการแจ้งเตือนอัตโนมัติ
 
 ---
 
-# 6. ARCHITECTURE
+# 15. ระบบผู้ใช้งาน
 
-ใช้ Architecture แบบแยกความรับผิดชอบ
+สร้าง User Management ด้วย Laravel
 
-```text
-Frontend
-    ↓
-Components
-    ↓
-Server Actions / API
-    ↓
-Business Logic
-    ↓
-Prisma
-    ↓
-MySQL
-```
+Role
 
-ห้ามให้ UI ติดต่อ Database โดยตรง
+### Administrator
 
----
+* จัดการทุกระบบ
+* จัดการผู้ใช้งาน
+* จัดการสิทธิ์
+* ดู Audit Log
+* Override ข้อมูลสำคัญตาม Business Rule
 
-# 7. FOLDER STRUCTURE
+### ผู้บริหาร
 
-ใช้โครงสร้างที่ชัดเจน
+* ดู Dashboard
+* ดูโครงการ
+* ดูรายงาน
+* ดูงบประมาณ
+* ไม่สามารถแก้ไขข้อมูลหลัก
 
-```text
-app/
-├── (auth)/
-│   └── login/
-│
-├── dashboard/
-│
-├── projects/
-│   ├── page.tsx
-│   ├── new/
-│   └── [id]/
-│
-├── activities/
-│
-├── budgets/
-│
-├── reports/
-│
-├── users/
-│
-├── settings/
-│
-└── api/
+### เจ้าหน้าที่
 
-components/
-├── ui/
-├── dashboard/
-├── projects/
-├── activities/
-├── budgets/
-└── shared/
+* เพิ่มโครงการ
+* แก้ไขโครงการ
+* เพิ่มกิจกรรม
+* อัปเดตความคืบหน้า
+* อัปโหลดเอกสาร
 
-lib/
-├── auth/
-├── db/
-├── validation/
-├── permissions/
-├── services/
-├── utils/
-└── audit/
+### ผู้ดูแลโครงการ
 
-prisma/
-├── schema.prisma
-├── migrations/
-└── seed.ts
+* ดูเฉพาะโครงการที่ได้รับมอบหมาย
+* อัปเดตสถานะ
+* อัปเดตความคืบหน้า
+* เพิ่มกิจกรรม
+* เพิ่มหลักฐาน
 
-public/
-
-docker/
-```
-
-หากโครงสร้างปัจจุบันแตกต่างจากนี้ ห้ามย้ายไฟล์ทั้งหมดโดยไม่จำเป็น
-
-ให้รักษาโครงสร้างเดิม หากยังสามารถใช้งานได้ดี
+ทุก Route, Controller, Livewire Action และ Form ต้องตรวจสอบ Authorization ด้วย Middleware, Policy หรือ Gate
 
 ---
 
-# 8. DATABASE PRINCIPLES
+# 16. Audit Log
 
-MySQL เป็น Source of Truth ของข้อมูลระบบ
+ทุกการแก้ไขข้อมูลสำคัญต้องมี Audit Log
 
-ใช้
+บันทึก
 
-```text
-MySQL 8.0+
-InnoDB
-utf8mb4
-```
-
-Database ต้องออกแบบโดยคำนึงถึง
-
-* Referential Integrity
-* Foreign Keys
-* Indexes
-* Unique Constraints
-* Transactions
-* Data Consistency
-* Performance
-
-ห้ามใช้ข้อมูล Hardcode ใน Frontend แทนข้อมูลจาก Database
-
----
-
-# 9. PRISMA DATABASE CONFIGURATION
-
-ใช้ Prisma ORM เชื่อมต่อ MySQL
+* ผู้ดำเนินการ
+* วันเวลา
+* IP Address
+* User Agent
+* Action
+* Module
+* Record ID
+* ข้อมูลก่อนแก้ไข
+* ข้อมูลหลังแก้ไข
 
 ตัวอย่าง
 
-```prisma
-datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
-}
-
-generator client {
-  provider = "prisma-client-js"
-}
-```
-
-ห้าม Hardcode Database Credentials ใน Source Code
-
-ใช้ Environment Variable
-
 ```text
-DATABASE_URL
+เจ้าหน้าที่ A
+แก้ไขโครงการ "โครงการส่งเสริมสุขภาพ"
+
+จาก
+ความสำเร็จ 50%
+
+เป็น
+ความสำเร็จ 65%
 ```
+
+สามารถใช้ Package สำหรับ Audit Log ที่รองรับ Laravel หรือสร้างระบบ Audit Log ภายในระบบเอง
+
+ต้องไม่สามารถลบ Audit Log โดยผู้ใช้งานทั่วไปได้
 
 ---
 
-# 10. PROJECT HIERARCHY
+# 17. Database Design
 
-ระบบต้องรองรับ
+ออกแบบ MySQL Database ด้วย Laravel Migrations และ Eloquent ORM
+
+อย่างน้อยต้องมีตาราง
 
 ```text
-Project Parent
-    ↓
-Project Child
+users
+roles
+permissions
+departments
+project_categories
+projects
+project_members
+activities
+budgets
+budget_disbursements
+project_progress
+attachments
+notifications
+audit_logs
 ```
 
-สามารถใช้ Self-referencing Relationship
+ความสัมพันธ์หลัก
 
-ตัวอย่าง
+```text
+Project
+1 Project
+→ มีหลาย Sub Project
+```
+
+สามารถออกแบบด้วย Self-referencing Project
 
 ```text
 projects
-
-id
-parent_id
-project_code
-name
-status
-progress
-budget
-start_date
-end_date
+├── id
+├── parent_id
+├── project_code
+├── name
+├── description
+├── status
+├── progress
+├── progress_mode
+├── budget
+├── start_date
+├── end_date
+└── responsible_user_id
 ```
 
-กฎ
+โดย
 
 ```text
 parent_id = NULL
@@ -384,610 +624,271 @@ parent_id = NULL
 หมายถึงโครงการหลัก
 
 ```text
-parent_id = project_id
+parent_id มีค่า
 ```
 
 หมายถึงโครงการย่อย
 
-ห้ามเกิดข้อมูลที่ Project ย่อยชี้ไปยัง Project ที่ไม่มีอยู่จริง
+ต้องออกแบบ Foreign Key, Index, Unique Constraint และ Cascade Rule ให้เหมาะสม
 
----
+ควรใช้ Eloquent Relationship เช่น
 
-# 11. PROJECT DATA
-
-Project ต้องรองรับ
-
-* project_code
-* name
-* fiscal_year
-* category_id
-* department_id
-* responsible_user_id
-* description
-* objective
-* target_group
-* target_quantity
-* location
-* methodology
-* start_date
-* end_date
-* completion_date
-* budget
-* disbursement
-* status
-* progress
-* progress_mode
-* problem_description
-* created_at
-* updated_at
-* deleted_at
-
----
-
-# 12. ACTIVITY
-
-แต่ละ Project สามารถมี Activity ได้หลายรายการ
-
-Activity ต้องมี
-
-* id
-* project_id
-* name
-* description
-* activity_date
-* location
-* responsible_user_id
-* participant_count
-* budget
-* status
-* progress
-* notes
-* created_at
-* updated_at
-
-Activity ต้องเชื่อมโยงกับ Project ด้วย Foreign Key
-
----
-
-# 13. PROJECT STATUS
-
-สถานะมาตรฐาน
-
-```text
-NOT_STARTED
-IN_PROGRESS
-COMPLETED
-HAS_PROBLEM
-CANCELLED
-```
-
-Frontend แสดงเป็นภาษาไทย
-
-```text
-ยังไม่เริ่มดำเนินการ
-กำลังดำเนินการ
-เสร็จสิ้น
-มีปัญหา
-ยกเลิก
-```
-
-ห้ามใช้ Status String กระจัดกระจายทั่วระบบ
-
-ให้กำหนด Enum / Constants กลาง
-
----
-
-# 14. PROGRESS SYSTEM
-
-Progress ต้องอยู่ระหว่าง
-
-```text
-0 - 100
-```
-
-ห้ามติดลบ
-
-ห้ามเกิน 100
-
-รองรับ 2 Mode
-
-## MANUAL
-
-เจ้าหน้าที่กำหนดเปอร์เซ็นต์เอง
-
-## AUTOMATIC
-
-คำนวณจาก Activity
-
-```text
-จำนวนกิจกรรมที่เสร็จ
-÷
-จำนวนกิจกรรมทั้งหมด
-×
-100
-```
-
-ตัวอย่าง
-
-```text
-10 กิจกรรม
-เสร็จ 7 กิจกรรม
-
-Progress = 70%
-```
-
-ต้องมี Validation ทั้ง Frontend และ Backend
-
----
-
-# 15. PROJECT STATUS + PROGRESS CONSISTENCY
-
-ต้องตรวจสอบความสอดคล้อง
-
-ถ้า
-
-```text
-status = COMPLETED
-```
-
-Progress ควรเป็น
-
-```text
-100%
-```
-
-ถ้า
-
-```text
-progress = 100%
-```
-
-ระบบต้องตรวจสอบเงื่อนไขการเปลี่ยนสถานะเป็น COMPLETED
-
-ถ้า
-
-```text
-status = HAS_PROBLEM
-```
-
-ต้องสามารถบันทึก
-
-```text
-problem_description
-```
-
-ได้
-
-ห้ามปล่อยข้อมูลขัดแย้งกันโดยไม่มีเหตุผล
-
----
-
-# 16. BUDGET
-
-ต้องรองรับ
-
-* total_budget
-* allocated_budget
-* disbursed_amount
-* remaining_budget
-* disbursement_percentage
-
-สูตร
-
-```text
-remaining_budget =
-total_budget - disbursed_amount
-```
-
-และ
-
-```text
-disbursement_percentage =
-disbursed_amount / total_budget × 100
-```
-
-ข้อมูลเงินต้องใช้ Decimal
-
-ห้ามใช้ Float สำหรับข้อมูลทางการเงิน
-
-แนะนำ
-
-```text
-DECIMAL(15,2)
+```php
+Project::parent()
+Project::children()
+Project::activities()
+Project::budget()
+Project::members()
+Project::attachments()
+User::projects()
+Department::projects()
 ```
 
 ---
 
-# 17. BUDGET VALIDATION
-
-ห้าม
-
-```text
-disbursed_amount > total_budget
-```
-
-เว้นแต่มี Business Rule ที่อนุญาตอย่างชัดเจน
-
-การตรวจสอบต้องทำฝั่ง Server
-
-ห้ามเชื่อค่าที่ส่งมาจาก Frontend
-
-การเพิ่มรายการเบิกจ่ายที่เกี่ยวข้องหลายตารางต้องใช้ Database Transaction
-
----
-
-# 18. USERS AND RBAC
-
-ระบบต้องรองรับ Role
-
-## ADMIN
-
-สามารถ
-
-* จัดการทุกระบบ
-* จัดการ User
-* จัดการ Role
-* ดู Audit Log
-* แก้ไขข้อมูลสำคัญ
-
-## EXECUTIVE
-
-สามารถ
-
-* ดู Dashboard
-* ดู Project
-* ดู Budget
-* ดู Report
-
-ไม่ควรแก้ไขข้อมูลหลัก
-
-## OFFICER
-
-สามารถ
-
-* สร้าง Project
-* แก้ไข Project
-* เพิ่ม Activity
-* อัปเดต Progress
-* อัปโหลดเอกสาร
-
-## PROJECT_MANAGER
-
-สามารถ
-
-* ดู Project ที่รับผิดชอบ
-* อัปเดต Progress
-* เพิ่ม Activity
-* อัปโหลดหลักฐาน
-* อัปเดต Status
-
----
-
-# 19. AUTHORIZATION
-
-Authentication ≠ Authorization
-
-การ Login สำเร็จไม่ได้หมายความว่าสามารถทำทุกอย่างได้
-
-ทุก Server Action และ API ที่เกี่ยวข้องกับข้อมูลสำคัญต้องตรวจสอบ Permission
-
-ตัวอย่าง
-
-```text
-requirePermission("project.update")
-```
-
-ห้ามพึ่งพาการซ่อน Button ใน Frontend เพื่อรักษาความปลอดภัย
-
----
-
-# 20. VALIDATION
-
-ใช้ Zod สำหรับ Validation
-
-ต้อง Validate ทั้ง
-
-```text
-Frontend
-+
-Backend
-```
-
-Backend เป็นตัวตัดสินสุดท้าย
-
-ตรวจสอบ
-
-* Required fields
-* Data type
-* Date
-* Number
-* Percentage
-* Budget
-* File
-* Permission
-
----
-
-# 21. AUDIT LOG
-
-ข้อมูลสำคัญทุกครั้งที่มีการ
-
-```text
-CREATE
-UPDATE
-DELETE
-APPROVE
-REJECT
-```
-
-ต้องบันทึก Audit Log
-
-ข้อมูล
-
-* user_id
-* action
-* module
-* record_id
-* old_value
-* new_value
-* ip_address
-* user_agent
-* created_at
-
-Audit Log ต้องไม่สามารถแก้ไขโดย User ทั่วไป
-
----
-
-# 22. DELETE POLICY
-
-ข้อมูลสำคัญไม่ควรใช้ Hard Delete โดยไม่มีเหตุผล
-
-ให้พิจารณา Soft Delete
-
-เช่น
-
-```text
-deleted_at
-deleted_by
-```
-
-โดยเฉพาะ
-
-* Project
-* Activity
-* Budget
-* User
-
-ห้ามลบข้อมูลที่มีประวัติการเงินโดยไม่ตรวจสอบผลกระทบ
-
----
-
-# 23. FILE UPLOAD
-
-รองรับ
-
-* PDF
-* DOC
-* DOCX
-* XLS
-* XLSX
-* JPG
-* PNG
-
-ต้องตรวจสอบ
-
-* Extension
-* MIME Type
-* File Size
-* Filename
-
-ห้าม Upload
-
-* Executable
-* Script
-* PHP
-* JavaScript
-* Shell Script
-
-ห้ามนำ Filename จาก User ไปสร้าง Path โดยตรง
-
----
-
-# 24. DASHBOARD
-
-Dashboard ต้องแสดงข้อมูลจาก MySQL จริง
-
-ห้าม Hardcode ตัวเลข
-
-ต้องแสดง
-
-* จำนวนโครงการทั้งหมด
-* ยังไม่เริ่ม
-* กำลังดำเนินการ
-* เสร็จสิ้น
-* มีปัญหา
-* ยกเลิก
-* งบประมาณรวม
-* เบิกจ่าย
-* คงเหลือ
-* Progress เฉลี่ย
-
----
-
-# 25. DASHBOARD PROJECT
-
-แต่ละ Project ต้องสามารถแสดง
-
-```text
-ชื่อโครงการ
-
-สถานะ
-████████████████
-
-ความสำเร็จ
-75%
-
-งบประมาณ
-1,000,000 บาท
-
-เบิกจ่าย
-650,000 บาท
-
-คงเหลือ
-350,000 บาท
-
-กิจกรรม
-7 / 10
-```
-
----
-
-# 26. PROJECT TIMELINE
-
-แสดง Timeline
-
-```text
-วันที่เริ่มโครงการ
-        ↓
-กิจกรรมที่ 1
-        ↓
-กิจกรรมที่ 2
-        ↓
-กิจกรรมที่ 3
-        ↓
-วันที่สิ้นสุด
-```
-
-แสดงสถานะของแต่ละกิจกรรม
-
----
-
-# 27. REPORT
-
-Report ต้องใช้ Query จาก MySQL
-
-รองรับ
-
-* Project Report
-* Budget Report
-* Disbursement Report
-* Progress Report
-* Activity Report
-* Problem Project Report
-* Department Report
-* Fiscal Year Report
-
-รองรับ Export
-
-* Excel
-* CSV
-* PDF
-
-ข้อมูลใน Report ต้องตรงกับ Dashboard และ Database
-
----
-
-# 28. SEARCH AND FILTER
-
-Project Search ต้องรองรับ
-
-* ชื่อโครงการ
-* รหัสโครงการ
-* ปีงบประมาณ
-* หน่วยงาน
-* ผู้รับผิดชอบ
-* ประเภท
-* สถานะ
-* วันที่
-* Progress
-
-รองรับ
-
-* Search
-* Filter
-* Sort
-* Pagination
-
----
-
-# 29. PERFORMANCE
-
-ห้ามโหลดข้อมูลทั้งหมดจาก MySQL หากไม่จำเป็น
+# 18. Data Integrity
+
+ให้ความสำคัญกับความถูกต้องของข้อมูล
+
+ต้องป้องกัน
+
+* โครงการย่อยไม่มีโครงการหลัก
+* โครงการไม่มีผู้รับผิดชอบ
+* วันที่สิ้นสุดก่อนวันที่เริ่ม
+* เบิกจ่ายเกินงบประมาณ
+* เปอร์เซ็นต์ต่ำกว่า 0
+* เปอร์เซ็นต์มากกว่า 100
+* กิจกรรมอยู่นอกช่วงเวลาโครงการโดยไม่มีการยืนยัน
+* ข้อมูลสำคัญถูกลบโดยไม่ได้รับอนุญาต
+* Foreign Key ไม่ถูกต้อง
+* ข้อมูลซ้ำในรหัสโครงการ
+* การเปลี่ยนสถานะที่ไม่ถูกต้อง
 
 ใช้
 
-* Server-side Pagination
-* Database Index
-* Select เฉพาะ Field ที่ต้องใช้
-* Efficient Query
-* Caching เมื่อเหมาะสม
-* Lazy Loading เมื่อเหมาะสม
+* Database Constraints
+* Foreign Keys
+* Unique Indexes
+* Laravel Form Request
+* Eloquent Model Events
+* Laravel Policies
+* Database Transactions
+* Server-side Validation
+* PHP Enums
 
-หลีกเลี่ยง N+1 Query
+ข้อมูลที่เกี่ยวข้องหลายตารางต้องใช้ `DB::transaction()` เพื่อป้องกันข้อมูลไม่สอดคล้องกัน
 
 ---
 
-# 30. MYSQL INDEX
+# 19. UI/UX
 
-พิจารณาสร้าง Index สำหรับ Field ที่ใช้ค้นหาและ Join บ่อย เช่น
+ออกแบบให้เป็นระบบราชการสมัยใหม่
+
+แนวทาง
+
+* Modern Government Dashboard
+* Clean
+* Professional
+* Responsive
+* อ่านง่าย
+* ใช้งานง่าย
+* รองรับ Desktop / Tablet / Mobile
+
+ใช้ Tailwind CSS
+
+ใช้ Blade และ Livewire เป็นโครงสร้างหลักของหน้าเว็บ
+
+ต้องมี
+
+* Sidebar
+* Top Navigation
+* Breadcrumb
+* Dashboard Cards
+* Tables
+* Tabs
+* Modal
+* Drawer
+* Form
+* Badge
+* Progress Bar
+* Date Picker
+* Dropdown
+* Pagination
+* Search
+* Filter
+* Loading State
+* Empty State
+* Error State
+
+---
+
+# 20. สีสถานะ
+
+ใช้สีเพื่อสื่อความหมายอย่างชัดเจน
 
 ```text
-project_code
-name
-status
-fiscal_year
-responsible_user_id
-department_id
-category_id
-parent_id
-start_date
-end_date
-created_at
+ยังไม่เริ่ม → Neutral
+กำลังดำเนินการ → Informational
+เสร็จสิ้น → Success
+มีปัญหา → Warning / Error
+ยกเลิก → Muted
 ```
 
-อย่าสร้าง Index ทุก Field โดยไม่จำเป็น
+อย่าใช้สีมากเกินไป และต้องรองรับ Accessibility
 
-ต้องพิจารณาผลกระทบต่อ Write Performance
+ต้องไม่ใช้สีเพียงอย่างเดียวในการสื่อความหมาย ควรใช้ข้อความหรือไอคอนร่วมด้วย
 
 ---
 
-# 31. MYSQL CHARACTER SET
+# 21. Responsive
 
-Database และ Table ที่เกี่ยวข้องกับข้อมูลภาษาไทยต้องรองรับ
+ต้องใช้งานได้บน
 
 ```text
-utf8mb4
+Desktop
+Tablet
+Mobile
 ```
 
-หลีกเลี่ยง Character Set ที่ไม่รองรับภาษาไทยหรือ Unicode ครบถ้วน
+สำหรับ Mobile
+
+* Table ต้องสามารถเปลี่ยนเป็น Card View ได้
+* ใช้ Horizontal Scroll เมื่อเหมาะสม
+* ปุ่มและ Form ต้องกดใช้งานได้ง่าย
+* Sidebar ต้องรองรับ Mobile Navigation
+* Modal และ Drawer ต้องไม่ล้นหน้าจอ
 
 ---
 
-# 32. DATABASE TRANSACTION
+# 22. XAMPP Environment
 
-ข้อมูลที่ต้องแก้ไขหลายตารางพร้อมกัน ให้ใช้ Prisma Transaction
+ระบบต้องสามารถพัฒนาและใช้งานบน XAMPP ได้
+
+ส่วนประกอบหลัก
+
+```text
+Apache
+MySQL
+PHP
+phpMyAdmin
+```
+
+โครงสร้างโปรเจกต์ Laravel ควรอยู่ใน
+
+```text
+C:\xampp\htdocs\municipal-projects
+```
+
+หรือโฟลเดอร์ที่กำหนดเองภายใน `htdocs`
+
+ต้องตั้งค่า Apache ให้ Document Root ชี้ไปที่
+
+```text
+C:\xampp\htdocs\municipal-projects\public
+```
+
+ห้ามชี้ Document Root ไปยัง Root ของ Laravel โดยตรง เพราะอาจเปิดเผยไฟล์สำคัญ เช่น `.env`
+
+หากไม่สามารถตั้ง Virtual Host ได้ ให้เข้าผ่าน
+
+```text
+http://localhost/municipal-projects/public
+```
+
+แต่แนะนำให้ใช้ Virtual Host เช่น
+
+```text
+http://municipal-projects.test
+```
+
+---
+
+# 23. XAMPP Installation Commands
+
+คำสั่งเริ่มต้นสำหรับสร้างโปรเจกต์
+
+```bash
+composer create-project laravel/laravel municipal-projects
+cd municipal-projects
+php artisan key:generate
+npm install
+npm run build
+```
+
+คำสั่งสำหรับพัฒนา
+
+```bash
+php artisan serve
+npm run dev
+```
+
+หากใช้ Apache จาก XAMPP ให้เปิด Apache และ MySQL ผ่าน XAMPP Control Panel
+
+คำสั่งที่ต้องรองรับ
+
+```bash
+php artisan migrate
+php artisan migrate:fresh --seed
+php artisan db:seed
+php artisan storage:link
+php artisan route:list
+php artisan config:clear
+php artisan cache:clear
+php artisan view:clear
+php artisan optimize:clear
+```
+
+---
+
+# 24. Database Configuration
+
+ใช้ MySQL จาก XAMPP และตั้งค่าในไฟล์ `.env`
 
 ตัวอย่าง
 
-```text
-สร้าง Project
-+
-สร้าง Budget
-+
-สร้าง Project Member
-+
-สร้าง Audit Log
+```env
+APP_NAME="Municipal Projects"
+APP_ENV=local
+APP_KEY=
+APP_DEBUG=true
+APP_URL=http://municipal-projects.test
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=municipal_projects
+DB_USERNAME=root
+DB_PASSWORD=
+
+FILESYSTEM_DISK=public
+QUEUE_CONNECTION=database
+CACHE_STORE=file
+SESSION_DRIVER=database
 ```
 
-หากขั้นตอนใดล้มเหลว ต้อง Rollback ตาม Business Requirement
+สำหรับ Production ต้อง
+
+* เปลี่ยน `APP_ENV` เป็น `production`
+* ตั้ง `APP_DEBUG=false`
+* ใช้รหัสผ่าน MySQL ที่ปลอดภัย
+* ไม่ใช้ User `root` สำหรับ Application
+* สร้าง Database User แยกสำหรับระบบ
+* ไม่ Commit ไฟล์ `.env` เข้า Git
 
 ---
 
-# 33. DATABASE MIGRATION
+# 25. Laravel Migrations
 
-ทุกการเปลี่ยน Database Schema ต้องใช้ Prisma Migration
+ทุกการเปลี่ยนแปลง Database Schema ต้องใช้ Laravel Migration
 
-ห้ามแก้ Production Database โดยตรงโดยไม่มีแผน Migration
+ตัวอย่างคำสั่ง
+
+```bash
+php artisan make:migration create_projects_table
+php artisan make:migration add_progress_mode_to_projects_table
+php artisan migrate
+php artisan migrate:rollback
+```
 
 ก่อน Migration ต้องตรวจสอบ
 
@@ -997,479 +898,410 @@ utf8mb4
 * Default
 * Index
 * Unique Constraint
+* Cascade Rule
 * Migration Safety
 
-หาก Migration อาจทำให้ข้อมูลเดิมเสียหาย ต้องจัดทำ Migration Strategy ก่อน
+ห้ามแก้ไข Production Database โดยตรงโดยไม่มี Migration
 
 ---
 
-# 34. NOTIFICATION
+# 26. Laravel Models และ Relationships
 
-ระบบสามารถแจ้งเตือน
+สร้าง Model ให้สอดคล้องกับตารางและความสัมพันธ์
 
-* Project ใกล้ครบกำหนด
-* Project เกินกำหนด
-* Project มีปัญหา
-* Budget ใกล้หมด
-* ไม่มีการ Update Progress เป็นเวลานาน
-
-Notification ต้องเชื่อมโยงกับ
-
-* User
-* Project
-* Notification Type
-* Read Status
-* Created Date
-
----
-
-# 35. UI/UX
-
-ใช้
+ตัวอย่าง Model ที่ควรมี
 
 ```text
-Tailwind CSS
-+
-shadcn/ui
-```
-
-Design ต้อง
-
-* Modern
-* Professional
-* Clean
-* Accessible
-* Responsive
-* เหมาะกับระบบราชการ
-
-รองรับ
-
-* Desktop
-* Tablet
-* Mobile
-
----
-
-# 36. RESPONSIVE TABLE
-
-Table ที่มีข้อมูลจำนวนมากต้องรองรับ Mobile
-
-สามารถใช้
-
-* Horizontal Scroll
-* Responsive Card
-* Column Priority
-
-ห้ามทำ Table ที่ทำให้หน้าเว็บพังบนมือถือ
-
----
-
-# 37. FORM UX
-
-Form ต้องมี
-
-* Label ชัดเจน
-* Required Indicator
-* Validation Message
-* Loading State
-* Disabled State
-* Success Feedback
-* Error Feedback
-
-เมื่อ Save สำเร็จต้องแจ้งผู้ใช้
-
-ห้ามให้ผู้ใช้เดาว่าการบันทึกสำเร็จหรือไม่
-
----
-
-# 38. ERROR HANDLING
-
-Error ที่แสดงให้ User ต้องเข้าใจง่าย
-
-ไม่แสดง
-
-```text
-PrismaClientKnownRequestError
-```
-
-ให้แสดงข้อความที่เหมาะสม เช่น
-
-```text
-ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบข้อมูลอีกครั้ง
-```
-
-แต่ต้อง Log Error จริงไว้สำหรับ Developer
-
-ห้ามแสดง
-
-* Stack Trace
-* Database Error
-* Secret
-* Password
-* Token
-
-ให้ User
-
----
-
-# 39. API / SERVER ACTION
-
-ทุก API / Server Action ต้อง
-
-```text
-1. Authenticate
-2. Authorize
-3. Validate Input
-4. Execute Business Logic
-5. Handle Error
-6. Audit หากเป็น Action สำคัญ
-7. Return Typed Response
-```
-
----
-
-# 40. BUSINESS LOGIC
-
-Business Logic สำคัญต้องอยู่ฝั่ง Server
-
-ตัวอย่าง
-
-* Progress
-* Budget
-* Disbursement
-* Permission
-* Status Transition
-
-ห้ามพึ่งพา Frontend เพียงอย่างเดียว
-
----
-
-# 41. DATA CONSISTENCY
-
-เมื่อข้อมูลเปลี่ยน ต้องตรวจสอบว่าระบบอื่นได้รับผลกระทบหรือไม่
-
-ตัวอย่าง
-
-แก้ Budget
-
-ต้องตรวจสอบ
-
-```text
-Project Detail
-Dashboard
-Budget Summary
-Report
-```
-
-แก้ Project Status
-
-ต้องตรวจสอบ
-
-```text
-Dashboard
-Project List
-Project Detail
-Report
+User
+Role
+Permission
+Department
+ProjectCategory
+Project
+ProjectMember
+Activity
+Budget
+BudgetDisbursement
+ProjectProgress
+Attachment
 Notification
+AuditLog
+```
+
+ใช้ Eloquent Relationship อย่างเหมาะสม เช่น
+
+```php
+Project::parent()
+Project::children()
+Project::activities()
+Project::budget()
+Project::members()
+Project::attachments()
+User::projects()
+Department::projects()
+```
+
+กำหนด `$fillable` หรือ `$guarded` อย่างปลอดภัย
+
+ห้ามใช้ Mass Assignment โดยไม่ตรวจสอบข้อมูล
+
+---
+
+# 27. Laravel Controllers และ Services
+
+แยกความรับผิดชอบของระบบให้ชัดเจน
+
+แนะนำโครงสร้าง
+
+```text
+app/
+├── Http/
+│   ├── Controllers/
+│   ├── Requests/
+│   ├── Middleware/
+│   └── Resources/
+│
+├── Models/
+├── Services/
+├── Actions/
+├── Policies/
+├── Enums/
+├── Notifications/
+├── Jobs/
+├── Console/
+└── Support/
+```
+
+Controller ควรทำหน้าที่ประสานงาน ไม่ควรมี Business Logic ขนาดใหญ่ทั้งหมดอยู่ใน Controller
+
+Business Logic สำคัญควรอยู่ใน Service หรือ Action เช่น
+
+```text
+ProjectService
+BudgetService
+ProgressService
+DisbursementService
+NotificationService
+AuditLogService
 ```
 
 ---
 
-# 42. DATA INTEGRITY
+# 28. Laravel Validation
 
-ต้องป้องกัน
+ใช้ Form Request สำหรับ Validation
 
-* Project ย่อยไม่มี Project หลัก
-* Project ไม่มีผู้รับผิดชอบ
-* วันที่สิ้นสุดก่อนวันที่เริ่ม
-* เบิกจ่ายเกินงบประมาณ
-* Progress ต่ำกว่า 0
-* Progress มากกว่า 100
-* Activity ไม่มี Project
-* User ที่ถูกลบยังถูกอ้างอิงโดยข้อมูลสำคัญ
-* Foreign Key ไม่ถูกต้อง
+ตัวอย่าง
+
+```bash
+php artisan make:request StoreProjectRequest
+php artisan make:request UpdateProjectRequest
+```
+
+ต้อง Validate ทั้ง
+
+* Required fields
+* Data type
+* Date
+* Number
+* Percentage
+* Budget
+* File
+* Permission
+* Unique Code
+* Date Range
+
+Backend เป็นตัวตัดสินสุดท้าย ห้ามเชื่อค่าที่ส่งมาจาก Client
+
+---
+
+# 29. Authentication และ Authorization
+
+Authentication ไม่เท่ากับ Authorization
+
+การ Login สำเร็จไม่ได้หมายความว่าสามารถทำทุกอย่างได้
+
+ทุก Route, Controller, Livewire Action และ API ต้องตรวจสอบ Permission
 
 ใช้
 
-* Foreign Key
-* Unique Constraint
-* Prisma Validation
-* Zod
-* Server-side Validation
-* Database Transaction
+* Middleware
+* Policies
+* Gates
+* Spatie Laravel Permission ตามความเหมาะสม
+
+ตัวอย่าง
+
+```php
+$this->authorize('update', $project);
+```
+
+หรือ
+
+```php
+Gate::authorize('project.update');
+```
+
+ห้ามพึ่งพาการซ่อนปุ่มใน Frontend เพื่อรักษาความปลอดภัย
 
 ---
 
-# 43. FISCAL YEAR
+# 30. ระบบงบประมาณและ Transaction
 
-ระบบต้องรองรับปีงบประมาณของประเทศไทย
-
-แยก
-
-```text
-วันที่จริง
-```
-
-ออกจาก
-
-```text
-ปีงบประมาณ
-```
-
-Database ควรเก็บวันที่ในรูปแบบ Date/DateTime
-
-ไม่ควรเก็บวันที่เป็น String หากไม่จำเป็น
-
-Logic ปีงบประมาณต้องอยู่ใน Utility / Service กลาง
-
-ห้ามเขียน Logic ปีงบประมาณซ้ำหลายแห่ง
-
----
-
-# 44. MONEY
-
-ข้อมูลทางการเงินต้องใช้ Decimal
+การเพิ่มหรือแก้ไขข้อมูลการเงินที่เกี่ยวข้องหลายตารางต้องใช้ Database Transaction
 
 ตัวอย่าง
 
 ```text
-DECIMAL(15,2)
+สร้าง Budget
++
+สร้าง Budget Disbursement
++
+อัปเดตยอดรวมโครงการ
++
+สร้าง Audit Log
 ```
 
-ห้ามใช้ Floating Point สำหรับการคำนวณเงิน
+ใช้
 
-การคำนวณต้องมีความแม่นยำ
+```php
+DB::transaction(function () {
+    // Business Logic
+});
+```
+
+หากขั้นตอนใดล้มเหลว ต้อง Rollback ตาม Business Requirement
 
 ---
 
-# 45. DOCKER
+# 31. File Upload
 
-ระบบต้องสามารถ Run ด้วย Docker
+รองรับเอกสาร
 
-ต้องมี
+* PDF
+* DOC
+* DOCX
+* XLS
+* XLSX
+* JPG
+* JPEG
+* PNG
 
-```text
-Dockerfile
-docker-compose.yml
-.env.example
-.dockerignore
+ต้องตรวจสอบ
+
+* MIME Type
+* File Extension
+* File Size
+* Filename
+* Storage Path
+* User Permission
+
+ใช้ Laravel Filesystem และจัดเก็บไฟล์ใน Storage ที่เหมาะสม
+
+คำสั่งสำหรับสร้าง Symbolic Link
+
+```bash
+php artisan storage:link
 ```
 
-Services อย่างน้อย
+ป้องกันการ Upload
 
-```text
-app
-mysql
-nginx
-```
+* PHP Script
+* JavaScript
+* Shell Script
+* Executable File
+* ไฟล์ที่มี MIME Type ไม่ตรงกับ Extension
 
-ตัวอย่าง Architecture
-
-```text
-Internet
-    ↓
-Nginx
-    ↓
-Next.js
-    ↓
-Prisma
-    ↓
-MySQL
-```
+ห้ามนำ Filename จาก User ไปสร้าง Path โดยตรง
 
 ---
 
-# 46. DOCKER MYSQL
+# 32. Seed Data
 
-ใช้ MySQL 8.0+
+สร้าง Seed Data สำหรับทดสอบระบบด้วย Laravel Seeder และ Factory
+
+คำสั่ง
+
+```bash
+php artisan make:seeder DatabaseSeeder
+php artisan db:seed
+php artisan migrate:fresh --seed
+```
 
 ตัวอย่าง
 
-```yaml
-mysql:
-  image: mysql:8.0
-  restart: unless-stopped
-  environment:
-    MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-    MYSQL_DATABASE: ${MYSQL_DATABASE}
-    MYSQL_USER: ${MYSQL_USER}
-    MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-  volumes:
-    - mysql_data:/var/lib/mysql
+โครงการหลัก
+
+```text
+โครงการเพื่อสุขภาพ
 ```
 
-ต้องใช้ Volume เพื่อป้องกันข้อมูลหายเมื่อ Container ถูก Restart
+โครงการย่อย
+
+```text
+1. โครงการส่งเสริมสุขภาพผู้สูงอายุ
+   ความสำเร็จ 100%
+   สถานะ เสร็จสิ้น
+
+2. โครงการออกกำลังกายเพื่อสุขภาพ
+   ความสำเร็จ 65%
+   สถานะ กำลังดำเนินการ
+
+3. โครงการส่งเสริมสุขภาพประชาชน
+   ความสำเร็จ 40%
+   สถานะ มีปัญหา
+```
+
+สร้างข้อมูลผู้ใช้งานสำหรับทุก Role เพื่อทดสอบระบบ
+
+ห้ามใช้รหัสผ่านจริงใน Seed Data และควรระบุให้ชัดเจนว่าเป็นข้อมูลสำหรับ Development เท่านั้น
 
 ---
 
-# 47. ENVIRONMENT VARIABLES
+# 33. Project Progress Logic
 
-ใช้ Environment Variables
+ออกแบบระบบ Progress ให้รองรับ 2 รูปแบบ
+
+## Manual
+
+เจ้าหน้าที่กำหนด
+
+```text
+progress = 75%
+```
+
+## Automatic
+
+คำนวณจากกิจกรรม
+
+```text
+จำนวนกิจกรรมที่เสร็จ
+÷
+จำนวนกิจกรรมทั้งหมด
+× 100
+```
 
 ตัวอย่าง
 
-```env
-DATABASE_URL=mysql://root:@localhost:3306/municipal_project_tracker
+```text
+10 กิจกรรม
+เสร็จ 7
 
-MYSQL_ROOT_PASSWORD=
-MYSQL_DATABASE=municipal_project_tracker
-MYSQL_USER=root
-MYSQL_PASSWORD=
-
-AUTH_SECRET=municipal_secret_key_2026
-
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+Progress = 70%
 ```
 
-ต้องมี
+ให้ผู้ดูแลเลือกว่าโครงการนั้นใช้
 
 ```text
-.env.example
+AUTO
+หรือ
+MANUAL
 ```
 
-ห้าม Commit Secret จริงเข้า Git
+Logic การคำนวณควรอยู่ใน Service หรือ Domain Logic ฝั่ง Server ไม่ควรอยู่ใน Blade หรือ JavaScript เพียงอย่างเดียว
 
 ---
 
-# 48. SECURITY
+# 34. Dashboard ของแต่ละโครงการ
 
-ระบบต้องมี
-
-* Authentication
-* Authorization
-* RBAC
-* Input Validation
-* SQL Injection Protection
-* XSS Protection
-* CSRF Protection ตาม Architecture
-* Secure Cookies
-* Secure Session
-* Rate Limiting
-* Security Headers
-* File Upload Validation
-* Password Hashing
-* Permission Checking
-* Error Handling
-
-ห้ามเชื่อข้อมูลจาก Client โดยตรง
-
----
-
-# 49. FILE SECURITY
-
-ไฟล์ที่ Upload ต้อง
-
-* ตรวจสอบ MIME Type
-* ตรวจสอบ Extension
-* จำกัด File Size
-* เปลี่ยนชื่อไฟล์
-* ป้องกัน Path Traversal
-* ไม่ Execute File Upload
-* ไม่เก็บไฟล์ในตำแหน่งที่สามารถ Execute Script ได้
-
----
-
-# 50. TESTING
-
-ก่อนถือว่า Feature เสร็จ ต้องทดสอบ
-
-## Functional
-
-* Create
-* Read
-* Update
-* Delete
-* Search
-* Filter
-* Sort
-* Pagination
-
-## Permission
-
-ทดสอบทุก Role
-
-## Validation
-
-ทดสอบข้อมูลผิด
-
-## Security
-
-ทดสอบ Unauthorized Access
-
-## Responsive
-
-ทดสอบ
-
-* Desktop
-* Tablet
-* Mobile
-
----
-
-# 51. SECURITY CHECKLIST
-
-ก่อนเสร็จ Feature ต้องตรวจสอบ
-
-* Authentication
-* Authorization
-* SQL Injection
-* XSS
-* CSRF
-* File Upload
-* Rate Limiting
-* Session
-* Cookie
-* Sensitive Data
-* Error Disclosure
-* Permission Bypass
-
----
-
-# 52. CODE QUALITY
-
-ต้องใช้
-
-* TypeScript Strict Mode
-* ESLint
-* Prettier
-
-หลีกเลี่ยง
+แสดง
 
 ```text
-any
+Project Progress
+
+████████████░░░░ 75%
+
+Budget
+
+งบประมาณ 1,000,000 บาท
+
+เบิกจ่าย 650,000 บาท
+
+คงเหลือ 350,000 บาท
+
+Activities
+
+7 / 10 กิจกรรม
 ```
 
-ถ้าไม่จำเป็น
-
-ห้ามใช้
+Timeline
 
 ```text
-@ts-ignore
+เริ่มโครงการ
+↓
+ดำเนินการ
+↓
+กิจกรรม
+↓
+เสร็จสิ้น
 ```
 
-เพื่อซ่อน Error โดยไม่มีเหตุผล
-
-ห้ามปิด TypeScript Error เพียงเพื่อให้ Build ผ่าน
+ข้อมูลต้องคำนวณจาก Database และต้องสอดคล้องกับข้อมูลใน Project Detail และ Report
 
 ---
 
-# 53. COMPONENT PRINCIPLES
+# 35. Project Timeline
 
-Component ต้องมี Responsibility ชัดเจน
+สร้าง Timeline
 
-หาก Component ใหญ่เกินไป ให้แยก
+```text
+วันที่เริ่มโครงการ
+↓
+กิจกรรมที่ 1
+↓
+กิจกรรมที่ 2
+↓
+กิจกรรมที่ 3
+↓
+วันที่สิ้นสุด
+```
+
+แสดงสถานะของแต่ละกิจกรรม
+
+หากกิจกรรมอยู่นอกช่วงเวลาโครงการ ต้องแจ้งเตือนหรือขอการยืนยันตาม Business Rule
+
+---
+
+# 36. สิ่งสำคัญในการพัฒนา
+
+ห้ามสร้างระบบแบบ Demo ที่มีข้อมูลปลอมฝังอยู่ใน Frontend
+
+ต้องแยก
 
 ```text
 UI
-↓
-Hook
-↓
-Service
-↓
 Business Logic
+Controller
+Form Request
+Service
+Model
+Database
 ```
 
-สร้าง Component Reusable เช่น
+อย่างชัดเจน
+
+ห้ามใส่ Business Logic สำคัญไว้ใน Client อย่างเดียว
+
+ทุกข้อมูลต้องมาจาก MySQL ผ่าน Laravel
+
+---
+
+# 37. การเขียน Code
+
+เขียน Code ให้
+
+* Clean Code
+* Modular
+* Reusable
+* Maintainable
+* Type Safe เท่าที่ PHP รองรับ
+* SOLID
+* DRY
+* ใช้ PHP Strict Types เมื่อเหมาะสม
+* ใช้ PHP Enum สำหรับค่าคงที่สำคัญ
+* ใช้ Laravel Convention
+
+สร้าง Components ที่นำกลับมาใช้ซ้ำได้ เช่น
 
 ```text
 ProjectCard
@@ -1485,27 +1317,254 @@ BudgetForm
 DashboardCard
 ```
 
+สามารถสร้าง Blade Components และ Livewire Components เพื่อ Reuse
+
 ---
 
-# 54. SEARCH PERFORMANCE
+# 38. Error Handling
 
-การ Search ข้อมูลจำนวนมากต้องทำฝั่ง Server
+ต้องมีระบบจัดการ Error
 
-ไม่ควรโหลดข้อมูลทั้งหมดมา Filter บน Browser
+## Frontend
 
-ใช้
+แสดงข้อความภาษาไทยที่เข้าใจง่าย
 
-```text
-Database Query
-+
-Index
-+
-Pagination
+## Backend
+
+Log Error ด้วย Laravel Logging
+
+## Database
+
+ใช้ Transaction กับข้อมูลสำคัญ
+
+ห้ามแสดง
+
+* Stack Trace
+* SQL Query
+* Database Error
+* Secret
+* Password
+* Token
+
+ให้ User
+
+ใน Production ต้องตั้งค่า
+
+```env
+APP_DEBUG=false
 ```
 
 ---
 
-# 55. GIT RULES
+# 39. Pagination
+
+ข้อมูลโครงการและกิจกรรมต้องใช้ Pagination
+
+เช่น
+
+```text
+10
+25
+50
+100 รายการต่อหน้า
+```
+
+ใช้ Laravel Pagination และทำ Server-side Pagination
+
+ตัวอย่าง
+
+```php
+Project::query()
+    ->with(['department', 'responsibleUser'])
+    ->paginate(25);
+```
+
+ต้องรองรับ Query String สำหรับ Search, Filter และ Sort เพื่อให้สามารถแชร์ URL ได้
+
+---
+
+# 40. Search Performance
+
+สร้าง Database Index สำหรับ
+
+* project_code
+* name
+* status
+* fiscal_year
+* responsible_user_id
+* department_id
+* category_id
+* parent_id
+* start_date
+* end_date
+* created_at
+
+ใช้ Eloquent Query ที่มีประสิทธิภาพ
+
+หลีกเลี่ยง N+1 Query ด้วย `with()`, `withCount()` และการเลือกเฉพาะ Column ที่จำเป็น
+
+ไม่ควรโหลดข้อมูลทั้งหมดมา Filter บน Browser
+
+---
+
+# 41. Laravel Scheduler และ Queue
+
+ใช้ Laravel Scheduler สำหรับ
+
+* ตรวจสอบโครงการใกล้ครบกำหนด
+* ตรวจสอบโครงการเกินกำหนด
+* ตรวจสอบโครงการไม่มีการอัปเดต
+* ตรวจสอบงบประมาณใกล้หมด
+* สร้าง Notification
+
+ใช้ Laravel Queue สำหรับ
+
+* ส่ง Notification
+* สร้าง Report ขนาดใหญ่
+* Export Excel/PDF
+* ประมวลผลไฟล์
+* งานที่ใช้เวลานาน
+
+ต้องกำหนด Scheduler ใน `routes/console.php` หรือ `app/Console/Kernel.php` ตามโครงสร้าง Laravel ที่ใช้งาน
+
+---
+
+# 42. Security
+
+ระบบต้องมี
+
+* Authentication
+* Authorization
+* RBAC
+* CSRF Protection
+* XSS Protection
+* SQL Injection Protection
+* Input Validation
+* File Upload Validation
+* Rate Limiting
+* Secure Headers
+* Secure Cookie
+* Password Hashing
+* Session Management
+* Mass Assignment Protection
+* Permission Checking
+* Error Disclosure Protection
+
+Laravel ช่วยป้องกัน SQL Injection ผ่าน Eloquent และ Query Builder แต่ห้ามใช้ Raw Query โดยไม่ Bind Parameter
+
+ห้ามเชื่อข้อมูลจาก Client โดยตรง
+
+ตรวจสอบ Permission ทุก Route, Controller, Livewire Action และ API
+
+---
+
+# 43. File Security
+
+ไฟล์ที่ Upload ต้อง
+
+* ตรวจสอบ MIME Type
+* ตรวจสอบ Extension
+* จำกัด File Size
+* เปลี่ยนชื่อไฟล์
+* ป้องกัน Path Traversal
+* ไม่ Execute File Upload
+* ไม่เก็บไฟล์ในตำแหน่งที่สามารถ Execute Script ได้
+* ตรวจสอบสิทธิ์ก่อน Download
+* ไม่เปิดเผย Path จริงของไฟล์โดยไม่จำเป็น
+
+---
+
+# 44. Testing
+
+ก่อนถือว่า Feature เสร็จ ต้องทดสอบ
+
+## Functional
+
+* Create
+* Read
+* Update
+* Delete
+* Search
+* Filter
+* Sort
+* Pagination
+* Export
+* File Upload
+
+## Permission
+
+ทดสอบทุก Role
+
+## Validation
+
+ทดสอบข้อมูลผิด
+
+## Security
+
+ทดสอบ Unauthorized Access
+ทดสอบการเข้าถึงข้อมูลของโครงการที่ไม่ได้รับมอบหมาย
+ทดสอบ Mass Assignment
+ทดสอบ File Upload ที่ไม่ปลอดภัย
+
+## Responsive
+
+ทดสอบ
+
+* Desktop
+* Tablet
+* Mobile
+
+ใช้ PHPUnit หรือ Pest สำหรับ Feature Test และ Unit Test
+
+---
+
+# 45. Security Checklist
+
+ก่อนเสร็จ Feature ต้องตรวจสอบ
+
+* Authentication
+* Authorization
+* SQL Injection
+* XSS
+* CSRF
+* File Upload
+* Rate Limiting
+* Session
+* Cookie
+* Sensitive Data
+* Error Disclosure
+* Permission Bypass
+* Mass Assignment
+* Direct Object Reference
+* Unauthorized File Download
+
+---
+
+# 46. Code Quality
+
+ต้องใช้
+
+* Laravel Pint
+* PHPStan หรือ Larastan
+* PHPUnit หรือ Pest
+* Git
+* Code Review
+
+หลีกเลี่ยง
+
+```php
+mixed
+```
+
+หรือการปิด Static Analysis โดยไม่จำเป็น
+
+ห้ามใช้การปิด Error เพื่อซ่อนปัญหา
+
+ห้ามปิด Validation หรือ Authorization เพียงเพื่อให้ระบบทำงานได้เร็วขึ้น
+
+---
+
+# 47. Git Rules
 
 Commit Message แนะนำ
 
@@ -1515,6 +1574,7 @@ fix: fix project budget calculation
 refactor: improve project service
 security: validate project permissions
 docs: update project documentation
+test: add project authorization tests
 ```
 
 ห้าม Commit
@@ -1523,22 +1583,33 @@ docs: update project documentation
 .env
 database passwords
 API keys
-AUTH_SECRET
+APP_KEY
 private keys
+storage/logs/*
+```
+
+ควรมีไฟล์
+
+```text
+.env.example
+.gitignore
 ```
 
 ---
 
-# 56. BEFORE CREATING NEW FEATURE
+# 48. ก่อนสร้าง Feature ใหม่
 
 ก่อนสร้าง Feature ใหม่
 
 1. ตรวจสอบว่ามี Feature นี้แล้วหรือไม่
-2. ตรวจสอบ Component ที่สามารถ Reuse
-3. ตรวจสอบ Service
-4. ตรวจสอบ Database
-5. ตรวจสอบ API
-6. ตรวจสอบ Permission
+2. ตรวจสอบ Blade Component ที่สามารถ Reuse
+3. ตรวจสอบ Livewire Component
+4. ตรวจสอบ Controller
+5. ตรวจสอบ Service
+6. ตรวจสอบ Model และ Relationship
+7. ตรวจสอบ Migration
+8. ตรวจสอบ Permission
+9. ตรวจสอบผลกระทบต่อ Report และ Dashboard
 
 ถ้ามีระบบเดิมอยู่แล้ว
 
@@ -1554,7 +1625,7 @@ private keys
 
 ---
 
-# 57. NEVER DO BLIND REWRITE
+# 49. ห้ามทำ Blind Rewrite
 
 ห้าม Rewrite ระบบทั้งหมดเพราะพบ Bug เล็ก ๆ
 
@@ -1572,7 +1643,7 @@ private keys
 
 ---
 
-# 58. AI AGENT WORKFLOW
+# 50. Laravel Development Workflow
 
 เมื่อได้รับคำสั่งจาก User
 
@@ -1587,7 +1658,21 @@ ANALYZE
 ↓
 PLAN
 ↓
-IMPLEMENT
+DESIGN DATABASE
+↓
+IMPLEMENT MIGRATION
+↓
+IMPLEMENT MODEL
+↓
+IMPLEMENT VALIDATION
+↓
+IMPLEMENT AUTHORIZATION
+↓
+IMPLEMENT SERVICE
+↓
+IMPLEMENT CONTROLLER / LIVEWIRE
+↓
+IMPLEMENT BLADE UI
 ↓
 VALIDATE
 ↓
@@ -1608,7 +1693,7 @@ CODE
 
 ---
 
-# 59. REQUIREMENT AMBIGUITY
+# 51. Requirement Ambiguity
 
 หาก Requirement ไม่ชัดเจน
 
@@ -1630,17 +1715,18 @@ CODE
 
 ---
 
-# 60. CHANGE IMPACT CHECKLIST
+# 52. Change Impact Checklist
 
 ก่อน Merge การแก้ไข ให้ตรวจสอบ
 
 ```text
-[ ] Frontend
-[ ] Backend
+[ ] Frontend / Blade
+[ ] Livewire
+[ ] Backend / Controller
+[ ] Service
+[ ] Model
+[ ] Migration
 [ ] Database
-[ ] Prisma
-[ ] API
-[ ] Server Actions
 [ ] Validation
 [ ] Authentication
 [ ] Authorization
@@ -1649,21 +1735,25 @@ CODE
 [ ] Export
 [ ] Notification
 [ ] Audit Log
+[ ] File Upload
 [ ] Mobile
 [ ] Performance
 [ ] Security
+[ ] Tests
 ```
 
 ---
 
-# 61. PRODUCTION SAFETY
+# 53. Production Safety
 
 ก่อน Production Deployment ต้องตรวจสอบ
 
 ```text
 [ ] Build ผ่าน
-[ ] TypeScript ผ่าน
-[ ] ESLint ผ่าน
+[ ] PHP Syntax ผ่าน
+[ ] Laravel Pint ผ่าน
+[ ] PHPStan หรือ Larastan ผ่าน
+[ ] Tests ผ่าน
 [ ] Database Migration ถูกต้อง
 [ ] Environment Variables
 [ ] Database Backup
@@ -1674,15 +1764,18 @@ CODE
 [ ] Logging
 [ ] HTTPS
 [ ] Security Headers
-[ ] Docker
-[ ] Nginx
+[ ] Apache Configuration
 [ ] MySQL Connection
-[ ] Database Persistence
+[ ] Storage Link
+[ ] Queue Worker
+[ ] Scheduler
+[ ] APP_DEBUG=false
+[ ] Document Root ชี้ไปที่ public
 ```
 
 ---
 
-# 62. BACKUP
+# 54. Backup
 
 Database เป็นข้อมูลสำคัญ
 
@@ -1698,11 +1791,13 @@ Backup
 External Storage
 ```
 
-ห้ามถือว่า Docker Volume เพียงอย่างเดียวคือ Backup
+ห้ามถือว่าไฟล์ใน XAMPP หรือการ Copy โฟลเดอร์ Database เพียงอย่างเดียวคือ Backup ที่เพียงพอ
+
+ควรใช้ `mysqldump` หรือระบบ Backup ที่เหมาะสม และทดสอบการกู้คืนข้อมูลเป็นระยะ
 
 ---
 
-# 63. LOGGING
+# 55. Logging
 
 ระบบต้องมี Logging สำหรับ
 
@@ -1712,6 +1807,8 @@ External Storage
 * Important Actions
 * Permission Denied
 * Security Events
+* Queue Failure
+* Scheduler Failure
 
 ห้าม Log
 
@@ -1720,9 +1817,11 @@ External Storage
 * Secret
 * Sensitive Information
 
+ต้องกำหนด Retention Policy สำหรับ Log และไม่ปล่อยให้ Log เต็มพื้นที่จัดเก็บ
+
 ---
 
-# 64. FINAL RESPONSE AFTER CODING
+# 56. Final Response After Coding
 
 หลังแก้ไข Code ให้รายงาน
 
@@ -1740,6 +1839,18 @@ External Storage
 
 * มี Migration หรือไม่
 * มีการเปลี่ยน Schema หรือไม่
+* ต้องรันคำสั่งใด
+
+## Laravel
+
+ระบุว่า
+
+* มี Model หรือไม่
+* มี Controller หรือไม่
+* มี Form Request หรือไม่
+* มี Policy หรือไม่
+* มี Service หรือไม่
+* มี Livewire Component หรือไม่
 
 ## Security
 
@@ -1759,14 +1870,15 @@ External Storage
 
 ---
 
-# 65. DEFINITION OF DONE
+# 57. Definition of Done
 
 Feature จะถือว่าเสร็จเมื่อ
 
 * Code ทำงานได้
-* TypeScript ผ่าน
-* ESLint ผ่าน
-* Build ผ่าน
+* PHP Syntax ผ่าน
+* Laravel Pint ผ่าน
+* PHPStan หรือ Larastan ผ่าน
+* Tests ผ่าน
 * Database ถูกต้อง
 * Migration ถูกต้อง
 * Validation ถูกต้อง
@@ -1780,103 +1892,195 @@ Feature จะถือว่าเสร็จเมื่อ
 * ไม่ทำให้ระบบเดิมเสีย
 * ทดสอบ Edge Cases แล้ว
 * Security Review ผ่าน
+* สามารถใช้งานบน XAMPP ได้
+* Document Root ชี้ไปที่ `public`
+* Storage และ File Permission ถูกต้อง
+* Queue และ Scheduler ทำงานตามที่กำหนด
 
 ---
 
-# 66. MOST IMPORTANT RULES
+# 58. สิ่งที่ต้องสร้าง
 
-จำกฎเหล่านี้เป็นอันดับแรก
+สร้างระบบครบทั้ง
 
-### RULE 1
-
-**ห้ามทำระบบเดิมพัง**
-
-### RULE 2
-
-**ตรวจสอบ Code ก่อนแก้**
-
-### RULE 3
-
-**ตรวจสอบผลกระทบก่อนเปลี่ยน Database**
-
-### RULE 4
-
-**MySQL เป็น Source of Truth**
-
-### RULE 5
-
-**ข้อมูลจริงต้องมาจาก Database**
-
-### RULE 6
-
-**Business Logic สำคัญต้องตรวจสอบฝั่ง Server**
-
-### RULE 7
-
-**Frontend ไม่ใช่ Security Boundary**
-
-### RULE 8
-
-**ข้อมูล Dashboard และ Report ต้องตรงกับ Database**
-
-### RULE 9
-
-**ข้อมูลทางการเงินต้องแม่นยำ**
-
-### RULE 10
-
-**ทุกการเปลี่ยนแปลงสำคัญต้องสามารถตรวจสอบย้อนหลังได้**
-
-### RULE 11
-
-**เมื่อแก้ Feature หนึ่ง ต้องตรวจสอบ Feature ที่เกี่ยวข้องทั้งหมด**
-
-### RULE 12
-
-**อย่า Rewrite ระบบโดยไม่จำเป็น**
+1. Login
+2. Dashboard
+3. Project Management
+4. Sub Project Management
+5. Activity Management
+6. Budget Management
+7. Progress Tracking
+8. User Management
+9. Department Management
+10. Category Management
+11. Notification
+12. Reports
+13. Export Excel/CSV/PDF
+14. File Attachment
+15. Audit Log
+16. Settings
 
 ---
 
-# 67. DEVELOPMENT PRINCIPLE
+# 59. ขั้นตอนการทำงาน
 
-เป้าหมายไม่ใช่แค่
-
-> "ทำให้หน้าเว็บใช้งานได้"
-
-แต่ต้องทำให้ระบบ
+ก่อนเขียน Code ให้ทำตามลำดับ
 
 ```text
-ถูกต้อง
-+
-ปลอดภัย
-+
-ตรวจสอบได้
-+
-ดูแลต่อได้
-+
-ขยายระบบได้
-+
-ข้อมูลไม่มั่ว
-+
-ระบบเดิมไม่พัง
-+
-รองรับข้อมูลจำนวนมาก
-+
-รองรับการใช้งานจริง
+STEP 1
+วิเคราะห์ Requirement
+
+STEP 2
+ออกแบบ Architecture ของ Laravel
+
+STEP 3
+ออกแบบ Database ERD
+
+STEP 4
+สร้าง Laravel Migrations
+
+STEP 5
+สร้าง Models และ Relationships
+
+STEP 6
+สร้าง Authentication + RBAC
+
+STEP 7
+สร้าง Form Requests และ Validation
+
+STEP 8
+สร้าง Policies และ Authorization
+
+STEP 9
+สร้าง Services และ Business Logic
+
+STEP 10
+สร้าง Controllers / Livewire Components
+
+STEP 11
+สร้าง Dashboard
+
+STEP 12
+สร้าง Project Management
+
+STEP 13
+สร้าง Activity Management
+
+STEP 14
+สร้าง Budget Management
+
+STEP 15
+สร้าง Progress Tracking
+
+STEP 16
+สร้าง Report และ Export
+
+STEP 17
+สร้าง Notification และ Scheduler
+
+STEP 18
+สร้าง Audit Log
+
+STEP 19
+ทำ Responsive UI
+
+STEP 20
+สร้าง Seed Data
+
+STEP 21
+ทำ Security Review
+
+STEP 22
+ทำ Data Integrity Review
+
+STEP 23
+ทำ Performance Review
+
+STEP 24
+ทดสอบระบบทั้งหมด
 ```
 
-ให้คิดเสมอว่า Software นี้จะถูกนำไปใช้งานจริงในหน่วยงานเทศบาล
+---
 
-ข้อมูล
+# 60. ห้ามทำ
 
-* โครงการ
-* โครงการย่อย
-* กิจกรรม
-* งบประมาณ
-* การเบิกจ่าย
-* ผู้รับผิดชอบ
-* ความคืบหน้า
-* เอกสาร
-* ประวัติการดำเนินงาน
+ห้าม
 
-ต้องมีความสัมพันธ์กันอย่างถูกต้อง และสามารถตรวจสอบย้อนหลังได้
+* เขียนทุกอย่างไว้ในไฟล์เดียว
+* Hardcode ข้อมูล
+* Hardcode Permission ใน View เพียงอย่างเดียว
+* ใช้ Mock Data ใน Production
+* เชื่อข้อมูลจาก Client
+* ให้ Client แก้ Database โดยตรง
+* ลบข้อมูลสำคัญแบบถาวรโดยไม่มี Audit
+* สร้าง Component ซ้ำโดยไม่จำเป็น
+* ทำ UI ที่ใช้งานยาก
+* ทำ Table ที่ล้นจอบน Mobile
+* ทำระบบโดยไม่ตรวจสอบความสัมพันธ์ของข้อมูล
+* ชี้ Apache Document Root ไปยัง Root ของ Laravel
+* Commit `.env`
+* เปิด `APP_DEBUG=true` ใน Production
+* ใช้ User `root` สำหรับ Production Application
+* ใช้ Raw SQL โดยไม่ Bind Parameter
+* ข้าม Authorization ใน Controller หรือ Livewire
+* เก็บไฟล์ Upload โดยไม่ตรวจสอบ MIME Type และ Permission
+
+---
+
+# 61. เป้าหมายสุดท้าย
+
+ต้องได้ระบบ
+
+```text
+ระบบติดตามและบริหารโครงการเทศบาล
+```
+
+ที่สามารถ
+
+```text
+สร้างโครงการหลัก
+↓
+สร้างโครงการย่อย
+↓
+เพิ่มกิจกรรม
+↓
+กำหนดผู้รับผิดชอบ
+↓
+กำหนดงบประมาณ
+↓
+บันทึกการเบิกจ่าย
+↓
+อัปเดตสถานะ
+↓
+อัปเดตเปอร์เซ็นต์ความสำเร็จ
+↓
+แนบหลักฐาน
+↓
+ดู Dashboard
+↓
+สร้างรายงาน
+↓
+Export ข้อมูล
+```
+
+โดยข้อมูลทั้งหมดต้องเชื่อมโยงกันตั้งแต่
+
+```text
+MySQL
+↓
+Laravel Migration
+↓
+Eloquent Model
+↓
+Service
+↓
+Controller / Livewire
+↓
+Blade
+```
+
+และเมื่อแก้ไขข้อมูลในระบบ ข้อมูลใน Dashboard, Progress, Budget และ Report ต้องอัปเดตสอดคล้องกันโดยอัตโนมัติ
+
+เริ่มต้นด้วยการออกแบบ Architecture และ Database Schema ก่อน จากนั้นจึงพัฒนาระบบเป็น Module โดยห้ามข้ามขั้นตอน และหลังจากแต่ละ Module เสร็จให้ตรวจสอบ Data Integrity, Security, Performance และความถูกต้องของระบบก่อนดำเนินการ Module ถัดไป
+
+ระบบต้องสามารถพัฒนาและใช้งานบน XAMPP ได้อย่างถูกต้อง โดย Apache ต้องชี้ไปยังโฟลเดอร์ `public` ของ Laravel และ MySQL ต้องเป็นแหล่งข้อมูลหลักของระบบทั้งหมด

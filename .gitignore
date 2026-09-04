@@ -3,15 +3,24 @@
 Thumbs.db
 desktop.ini
 
+# Environment
+.env
+
 # Temporary files
 *.tmp
 *.bak
 *~
 
-# Node.js
+# Node.js & Vendor
 node_modules/
 npm-debug.log*
+vendor/
+
+# Storage
+storage/logs/*
+!storage/logs/.gitkeep
 
 # Obsidian internal workspaces (keep app.json & graph.json, ignore session cache)
 .obsidian/workspace*
 .obsidian/cache/
+
