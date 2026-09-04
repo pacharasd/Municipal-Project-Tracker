@@ -159,19 +159,19 @@ ob_start();
         </div>
     </div>
 
-    <!-- Department Progress & Top/Bottom Projects -->
+    <!-- Main Projects Progress & Top/Bottom Projects -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Department Performance (2 cols) -->
+        <!-- Main Project Performance (2 cols) -->
         <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
-                    <i data-lucide="building-2" class="w-5 h-5 text-blue-600"></i>
-                    ผลงานและความก้าวหน้ารายสำนัก / กอง
+                    <i data-lucide="folder-kanban" class="w-5 h-5 text-blue-600"></i>
+                    ผลงานและความก้าวหน้ารายโครงการหลัก
                 </h2>
-                <span class="text-xs text-slate-400">เรียงตามสำนัก/กอง</span>
+                <span class="text-xs text-slate-400">เรียงตามโครงการหลัก</span>
             </div>
             <div class="h-72 relative">
-                <canvas id="deptChart"></canvas>
+                <canvas id="mainProjectChart"></canvas>
             </div>
         </div>
 
@@ -277,19 +277,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 3. Department Performance Horizontal Bar
-    const deptLabels = <?= json_encode(array_column($stats['department_data'], 'name'), JSON_UNESCAPED_UNICODE) ?>;
-    const deptProgress = <?= json_encode(array_map(fn($d) => round((float)($d['avg_progress'] ?? 0), 1), $stats['department_data'])) ?>;
+    // 3. Main Projects Performance Horizontal Bar
+    const mainProjects = <?= json_encode($stats['main_projects_data'] ?? [], JSON_UNESCAPED_UNICODE) ?>;
+    const mainProjLabels = mainProjects.map(p => p.name);
+    const mainProjProgress = mainProjects.map(p => Math.round((parseFloat(p.progress) || 0) * 10) / 10);
+    const mainProjColors = mainProjProgress.map(p => {
+        if (p >= 100) return '#10b981';
+        if (p >= 50) return '#0ea5e9';
+        if (p > 0) return '#f59e0b';
+        return '#94a3b8';
+    });
 
-    const deptCtx = document.getElementById('deptChart').getContext('2d');
-    new Chart(deptCtx, {
+    const mainProjectCtx = document.getElementById('mainProjectChart').getContext('2d');
+    new Chart(mainProjectCtx, {
         type: 'bar',
         data: {
-            labels: deptLabels,
+            labels: mainProjLabels,
             datasets: [{
-                label: 'ความก้าวหน้าเฉลี่ย (%)',
-                data: deptProgress,
-                backgroundColor: '#0ea5e9',
+                label: 'ความก้าวหน้า (%)',
+                data: mainProjProgress,
+                backgroundColor: mainProjColors,
                 borderRadius: 6,
             }]
         },
@@ -298,13 +305,51 @@ document.addEventListener('DOMContentLoaded', () => {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false }
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: function(context) {
+                            const item = mainProjects[context[0].dataIndex];
+                            return item ? `[${item.project_code}] ${item.name}` : context[0].label;
+                        },
+                        label: function(context) {
+                            return `ความก้าวหน้า: ${context.raw}%`;
+                        },
+                        afterLabel: function(context) {
+                            const item = mainProjects[context.dataIndex];
+                            if (!item) return '';
+                            const budget = Number(item.budget || 0).toLocaleString('th-TH');
+                            const disbursed = Number(item.disbursed_amount || 0).toLocaleString('th-TH');
+                            const subCount = item.sub_project_count || 0;
+                            return [
+                                `หน่วยงาน: ${item.department_name || '-'}`,
+                                `งบประมาณ: ${budget} บาท (เบิกจ่าย: ${disbursed} บาท)`,
+                                `โครงการย่อย: ${subCount} โครงการ`
+                            ];
+                        }
+                    }
+                }
             },
             scales: {
                 x: {
                     min: 0,
                     max: 100,
                     ticks: { callback: (val) => val + '%' }
+                },
+                y: {
+                    ticks: {
+                        callback: function(value) {
+                            const label = this.getLabelForValue(value);
+                            if (typeof label === 'string' && label.length > 32) {
+                                return label.substring(0, 30) + '...';
+                            }
+                            return label;
+                        },
+                        font: {
+                            family: "'Prompt', sans-serif",
+                            size: 12
+                        }
+                    }
                 }
             }
         }

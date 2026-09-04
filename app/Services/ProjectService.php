@@ -232,23 +232,37 @@ class ProjectService
             "SELECT name, progress, status, budget FROM projects WHERE parent_id IS NOT NULL ORDER BY progress ASC LIMIT 4"
         );
 
+        // 5. Main Projects Progress Data for Dashboard Chart
+        $mainProjectsData = Database::query(
+            "SELECT p.id, p.project_code, p.name, p.progress, p.budget, p.disbursed_amount, p.status,
+                    d.name as department_name,
+                    COUNT(s.id) as sub_project_count
+             FROM projects p
+             LEFT JOIN departments d ON p.department_id = d.id
+             LEFT JOIN projects s ON s.parent_id = p.id
+             WHERE p.parent_id IS NULL
+             GROUP BY p.id, p.project_code, p.name, p.progress, p.budget, p.disbursed_amount, p.status, d.name
+             ORDER BY p.id ASC"
+        );
+
         return [
-            'main_total'        => $mainTotal,
-            'sub_total'         => $subTotal,
-            'not_started'       => $notStarted,
-            'in_progress'       => $inProgress,
-            'completed'         => $completed,
-            'has_problem'       => $hasProblem,
-            'cancelled'         => $cancelled,
-            'total_budget'      => $totalBudget,
-            'total_disbursed'   => $totalDisbursed,
-            'total_remaining'   => $totalRemaining,
-            'disbursement_pct'  => $disbursementPct,
-            'avg_progress'      => round($avgProgress, 2),
-            'department_data'   => $deptData,
-            'category_data'     => $catData,
-            'top_projects'      => $topProjects,
-            'bottom_projects'   => $bottomProjects,
+            'main_total'         => $mainTotal,
+            'sub_total'          => $subTotal,
+            'not_started'        => $notStarted,
+            'in_progress'        => $inProgress,
+            'completed'          => $completed,
+            'has_problem'        => $hasProblem,
+            'cancelled'          => $cancelled,
+            'total_budget'       => $totalBudget,
+            'total_disbursed'    => $totalDisbursed,
+            'total_remaining'    => $totalRemaining,
+            'disbursement_pct'   => $disbursementPct,
+            'avg_progress'       => round($avgProgress, 2),
+            'department_data'    => $deptData,
+            'main_projects_data' => $mainProjectsData,
+            'category_data'      => $catData,
+            'top_projects'       => $topProjects,
+            'bottom_projects'    => $bottomProjects,
         ];
     }
 }
