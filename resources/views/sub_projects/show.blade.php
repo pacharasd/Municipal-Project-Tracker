@@ -531,8 +531,8 @@ $title = htmlspecialchars($project['name']);
                             <p class="text-xs text-rose-700">โครงการจะถูกจัดเข้าสู่บัญชีเฝ้าระวัง (Watchlist) ทันที</p>
                         </div>
                     </div>
-                    <button type="button" @click="problemModal = false" class="text-slate-400 hover:text-slate-600">
-                        <i data-lucide="x" class="w-5 h-5"></i>
+                    <button type="button" @click.stop="problemModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 hover:bg-rose-100 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
+                        <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
                     </button>
                 </div>
 
@@ -569,8 +569,8 @@ $title = htmlspecialchars($project['name']);
                             <p class="text-xs text-emerald-700">ปลดโครงการออกจากสถานะ "มีปัญหา"</p>
                         </div>
                     </div>
-                    <button type="button" @click="resolveModal = false" class="text-slate-400 hover:text-slate-600">
-                        <i data-lucide="x" class="w-5 h-5"></i>
+                    <button type="button" @click.stop="resolveModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 hover:bg-emerald-100 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
+                        <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
                     </button>
                 </div>
 
@@ -599,8 +599,8 @@ $title = htmlspecialchars($project['name']);
             <div class="bg-white w-full max-w-xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
                 <div class="p-6 border-b border-slate-100 flex items-center justify-between">
                     <h3 class="text-base font-bold text-slate-900">เพิ่มกิจกรรมใหม่</h3>
-                    <button type="button" @click="activityModal = false" class="text-slate-400 hover:text-slate-600">
-                        <i data-lucide="x" class="w-5 h-5"></i>
+                    <button type="button" @click.stop="activityModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
+                        <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
                     </button>
                 </div>
 
@@ -658,8 +658,8 @@ $title = htmlspecialchars($project['name']);
                         <h3 class="text-base font-bold text-slate-900">บันทึกการเบิกจ่ายงบประมาณ</h3>
                         <p class="text-xs text-slate-500 mt-0.5">คงเหลือเบิกจ่ายได้: <?= number_format($project['budget'] - $project['disbursed_amount'], 2) ?> บาท</p>
                     </div>
-                    <button type="button" @click="disburseModal = false" class="text-slate-400 hover:text-slate-600">
-                        <i data-lucide="x" class="w-5 h-5"></i>
+                    <button type="button" @click.stop="disburseModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
+                        <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
                     </button>
                 </div>
 
@@ -709,8 +709,8 @@ $title = htmlspecialchars($project['name']);
             <div class="bg-white w-full max-w-sm rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
                 <div class="p-5 border-b border-slate-100 flex items-center justify-between">
                     <h3 class="text-sm font-bold text-slate-900">กำหนดเปอร์เซ็นต์ความคืบหน้าเอง</h3>
-                    <button type="button" @click="manualModal = false" class="text-slate-400 hover:text-slate-600">
-                        <i data-lucide="x" class="w-4 h-4"></i>
+                    <button type="button" @click.stop="manualModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
+                        <i data-lucide="x" class="w-4 h-4 pointer-events-none"></i>
                     </button>
                 </div>
                 <form action="<?= \App\Core\Router::url("/sub-projects/{$project['id']}/manual-progress") ?>" method="POST" class="p-5 space-y-4">
@@ -750,8 +750,8 @@ $title = htmlspecialchars($project['name']);
                             <p class="text-xs text-slate-500">แอดมินและผู้ดูแลโครงการปรับสถานะและเปอร์เซ็นต์ได้โดยตรง</p>
                         </div>
                     </div>
-                    <button type="button" @click="statusModal = false" class="text-slate-400 hover:text-slate-600">
-                        <i data-lucide="x" class="w-5 h-5"></i>
+                    <button type="button" @click.stop="statusModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
+                        <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
                     </button>
                 </div>
 
@@ -886,8 +886,8 @@ $title = htmlspecialchars($project['name']);
                         <p class="text-xs text-slate-400">รหัส: <?= htmlspecialchars($project['project_code']) ?></p>
                     </div>
                 </div>
-                <button type="button" @click="editSubModal = false" class="text-slate-400 hover:text-slate-600">
-                    <i data-lucide="x" class="w-5 h-5"></i>
+                <button type="button" @click.stop="editSubModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
+                    <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
                 </button>
             </div>
 
@@ -1019,8 +1019,8 @@ $title = htmlspecialchars($project['name']);
                         <p class="text-xs text-slate-400">อัปเดตรายละเอียด งบประมาณ และความคืบหน้ากิจกรรม</p>
                     </div>
                 </div>
-                <button type="button" @click="editActModal = false" class="text-slate-400 hover:text-slate-600">
-                    <i data-lucide="x" class="w-5 h-5"></i>
+                <button type="button" @click.stop="editActModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
+                    <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
                 </button>
             </div>
 
@@ -1127,8 +1127,8 @@ $title = htmlspecialchars($project['name']);
                         <p class="text-xs text-slate-400">อัปโหลดหลักฐานเชิงประจักษ์ประกอบโครงการ</p>
                     </div>
                 </div>
-                <button type="button" @click="uploadModal = false" class="text-slate-400 hover:text-slate-600">
-                    <i data-lucide="x" class="w-5 h-5"></i>
+                <button type="button" @click.stop="uploadModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
+                    <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
                 </button>
             </div>
 

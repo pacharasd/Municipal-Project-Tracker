@@ -167,8 +167,8 @@ $title = 'ประวัติการใช้งานและการต�
                         <p class="text-xs text-slate-500 dark:text-slate-400" x-text="`${selectedLog?.module} > ${selectedLog?.action} โดย ${selectedLog?.user_name || 'System'}`"></p>
                     </div>
                 </div>
-                <button @click="selectedLog = null" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-                    <i data-lucide="x" class="w-5 h-5"></i>
+                <button type="button" @click.stop="selectedLog = null" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
+                    <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
                 </button>
             </div>
 

@@ -166,8 +166,8 @@ $title = htmlspecialchars($project['name']);
                         <h3 class="text-lg font-bold text-slate-900">เพิ่มโครงการย่อย</h3>
                         <p class="text-xs text-slate-500 mt-0.5">ภายใต้: <?= htmlspecialchars($project['name']) ?></p>
                     </div>
-                    <button type="button" @click="createSubModal = false" class="text-slate-400 hover:text-slate-600">
-                        <i data-lucide="x" class="w-5 h-5"></i>
+                    <button type="button" @click.stop="createSubModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
+                        <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
                     </button>
                 </div>
 

@@ -182,8 +182,8 @@ $currentUserId = Auth::id();
                         <p class="text-xs text-slate-400">สร้างบัญชีผู้ใช้งานสำหรับเจ้าหน้าที่เทศบาล</p>
                     </div>
                 </div>
-                <button type="button" @click="createModal = false" class="text-slate-400 hover:text-slate-600">
-                    <i data-lucide="x" class="w-5 h-5"></i>
+                <button type="button" @click.stop="createModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
+                    <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
                 </button>
             </div>
 
@@ -287,8 +287,8 @@ $currentUserId = Auth::id();
                         <p class="text-xs text-slate-400">อัปเดตรายละเอียดและสิทธิ์ของผู้ใช้</p>
                     </div>
                 </div>
-                <button type="button" @click="editModal = false" class="text-slate-400 hover:text-slate-600">
-                    <i data-lucide="x" class="w-5 h-5"></i>
+                <button type="button" @click.stop="editModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
+                    <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
                 </button>
             </div>
 

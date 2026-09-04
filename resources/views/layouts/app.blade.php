@@ -237,33 +237,41 @@
 
     <!-- Initialize Lucide Icons -->
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-        });
-        document.addEventListener('alpine:initialized', () => {
-            lucide.createIcons();
-        });
-        window.addEventListener('load', () => {
-            lucide.createIcons();
-        });
-
-        // Automatically create icons when Alpine teleports modals into <body>
-        let lucideDebounce = null;
-        const observer = new MutationObserver((mutations) => {
-            let hasNewNodes = false;
-            for (const m of mutations) {
-                if (m.addedNodes.length > 0) {
-                    hasNewNodes = true;
-                    break;
+        function safeCreateIcons() {
+            if (window.lucide && typeof lucide.createIcons === 'function') {
+                const unhandled = document.querySelectorAll('i[data-lucide]');
+                if (unhandled.length > 0) {
+                    lucide.createIcons();
                 }
             }
-            if (hasNewNodes) {
-                clearTimeout(lucideDebounce);
-                lucideDebounce = setTimeout(() => {
-                    if (window.lucide && typeof lucide.createIcons === 'function') {
-                        lucide.createIcons();
+        }
+
+        document.addEventListener('DOMContentLoaded', safeCreateIcons);
+        document.addEventListener('alpine:initialized', safeCreateIcons);
+        window.addEventListener('load', safeCreateIcons);
+
+        // Only observe when actual <i> tags with data-lucide are added (e.g. dynamic modals), avoiding infinite loops on <svg>
+        let lucideDebounce = null;
+        const observer = new MutationObserver((mutations) => {
+            let hasNewIcons = false;
+            for (const m of mutations) {
+                for (const node of m.addedNodes) {
+                    if (node.nodeType === 1) {
+                        if (node.tagName === 'I' && node.hasAttribute('data-lucide')) {
+                            hasNewIcons = true;
+                            break;
+                        }
+                        if (node.querySelector && node.querySelector('i[data-lucide]')) {
+                            hasNewIcons = true;
+                            break;
+                        }
                     }
-                }, 10);
+                }
+                if (hasNewIcons) break;
+            }
+            if (hasNewIcons) {
+                clearTimeout(lucideDebounce);
+                lucideDebounce = setTimeout(safeCreateIcons, 30);
             }
         });
         observer.observe(document.body, { childList: true, subtree: true });
