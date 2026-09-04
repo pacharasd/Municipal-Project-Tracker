@@ -172,7 +172,7 @@ $title = htmlspecialchars($project['name']);
                     <div class="mt-2 flex items-baseline gap-3">
                         <span class="text-3xl sm:text-4xl font-extrabold text-slate-900"><?= number_format($project['progress'], 1) ?>%</span>
                         <span class="text-sm font-semibold text-slate-500">ความสำเร็จโครงการ</span>
-                        <?php if ($project['planned_activity_count'] > 1): ?>
+                        <?php if ($project['planned_activity_count'] >= 1): ?>
                             <span class="text-xs px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 font-mono font-medium">
                                 กิจกรรม: <?= $project['actual_activity_count'] ?> / <?= $project['planned_activity_count'] ?> ครั้ง
                             </span>
@@ -181,7 +181,7 @@ $title = htmlspecialchars($project['name']);
                     <div class="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-2">
                         <span>สถานะปัจจุบัน: <b class="text-slate-800"><?= $stLabel ?></b></span>
                         <span>•</span>
-                        <span>โหมด: <span class="font-medium text-indigo-700"><?= $project['progress_mode'] === 'manual' ? 'ปรับตามสถานะ / ผู้ดูแลกำหนดเอง' : 'คำนวณอัตโนมัติจากกิจกรรม' ?></span></span>
+                        <span>โหมด: <span class="font-medium text-indigo-700">สัมพันธ์ตามสถานะและความคืบหน้าโครงการ</span></span>
                     </div>
                 </div>
 
@@ -190,10 +190,10 @@ $title = htmlspecialchars($project['name']);
                     <?php if (\App\Core\Auth::canManageProjects()): ?>
                         <button type="button" @click="statusModal = true"
                                 class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-600/20 transition-all">
-                            <i data-lucide="sliders" class="w-4 h-4"></i> ปรับสถานะ & ความคืบหน้า
+                             <i data-lucide="sliders" class="w-4 h-4"></i> ปรับสถานะ & ความคืบหน้า
                         </button>
 
-                        <?php if ($project['planned_activity_count'] > 1): ?>
+                        <?php if ($project['planned_activity_count'] >= 1): ?>
                             <form action="<?= \App\Core\Router::url("/sub-projects/{$project['id']}/increment") ?>" method="POST" class="inline">
                                 <input type="hidden" name="_csrf_token" value="<?= $csrfToken ?>">
                                 <button type="submit" 

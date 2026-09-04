@@ -35,38 +35,43 @@ class ProgressService
             }
             $actual = $newActual;
 
-            // เมื่อกด +1 กิจกรรม ให้คำนวณเปอร์เซ็นต์ความสำเร็จตามกิจกรรมทันที และเปลี่ยนโหมดเป็น auto
-            $progress = $planned > 0 ? round(($actual / $planned) * 100, 2) : 0.0;
-            $mode = 'auto';
+            // สำคัญ: กด +1 กิจกรรม แล้วเปอร์เซ็นต์ความสำเร็จโครงการไม่ขึ้นตามจำนวนครั้งที่กด
+            // ให้เปอร์เซ็นต์ไปสัมพันธ์กับสถานะและความคืบหน้าโครงการแทน
+            // เพราะบางโครงการมีกิจกรรม 1 ครั้ง หากคิดตามสัดส่วนจะข้ามไปสำเร็จ 100% ทันทีโดยไม่มีสถานะกำลังดำเนินการ
+            $status = $oldStatus;
+            if ($status === 'not_started' || $oldProgress == 0.0) {
+                // เมื่อเริ่มบันทึกกิจกรรม สถานะจะเข้าสู่ "กำลังดำเนินการ" ทันที
+                $status = 'in_progress';
+                // ปรับความคืบหน้าให้อยู่ในสถานะกำลังดำเนินการ (เช่น 50% หรือค่าที่ผู้ใช้กำหนด แต่ไม่กระโดดไป 100% สำเร็จ)
+                $progress = ($oldProgress > 0) ? $oldProgress : ($planned > 1 ? min(90.0, round(($actual / $planned) * 100, 2)) : 50.0);
+            } else {
+                // หากกำลังดำเนินการอยู่แล้ว ให้คงเปอร์เซ็นต์ความคืบหน้าที่ผู้ดูแลกำหนดไว้
+                $progress = $oldProgress;
+            }
+            $mode = 'manual';
         } elseif ($manualProgress !== null) {
             if ($manualProgress < 0 || $manualProgress > 100) {
                 throw new Exception("เปอร์เซ็นต์ความคืบหน้าต้องอยู่ระหว่าง 0 ถึง 100%");
             }
             $progress = round($manualProgress, 2);
             $mode = 'manual';
-            // ซิงค์จำนวนกิจกรรมตามเปอร์เซ็นต์ที่กำหนด
-            if ($planned > 0) {
-                $actual = (int)round(($progress / 100.0) * $planned);
+
+            // ปรับสถานะให้สัมพันธ์กับเปอร์เซ็นต์ความคืบหน้า
+            if ($progress >= 100.0) {
+                $status = ($oldStatus === 'cancelled') ? $oldStatus : 'completed';
+            } elseif ($progress > 0.0) {
+                $status = ($oldStatus === 'has_problem' || $oldStatus === 'cancelled') ? $oldStatus : 'in_progress';
+            } else {
+                $status = ($oldStatus === 'has_problem' || $oldStatus === 'cancelled') ? $oldStatus : 'not_started';
             }
-        } elseif ($mode === 'auto') {
-            // Rule #6 & #46: ความสำเร็จ = กิจกรรมที่ทำแล้ว ÷ ทั้งหมด × 100
-            $progress = $planned > 0 ? round(($actual / $planned) * 100, 2) : 0.0;
         } else {
             $progress = $oldProgress;
+            $status = $oldStatus;
+            $mode = $project['progress_mode'] ?? 'manual';
         }
 
-        // กำหนดสถานะให้สัมพันธ์กับเปอร์เซ็นต์และความคืบหน้า
-        $status = $project['status'];
-        if ($progress >= 100.0) {
-            $status = ($status === 'cancelled') ? $status : 'completed';
-            $completionDate = date('Y-m-d');
-        } elseif ($progress > 0) {
-            $status = ($status === 'has_problem' || $status === 'cancelled') ? $status : 'in_progress';
-            $completionDate = null;
-        } else {
-            $status = ($status === 'has_problem' || $status === 'cancelled') ? $status : 'not_started';
-            $completionDate = null;
-        }
+        // กำหนดวันที่เสร็จสิ้นเมื่อสถานะเป็นเสร็จสิ้นสมบูรณ์เท่านั้น
+        $completionDate = ($status === 'completed') ? date('Y-m-d') : null;
 
         Database::update('projects', [
             'actual_activity_count' => $actual,
@@ -116,20 +121,29 @@ class ProgressService
         $planned = (int)($project['planned_activity_count'] ?? 1);
         $actual = (int)($project['actual_activity_count'] ?? 0);
 
-        // คำนวณความสัมพันธ์ระหว่างเปอร์เซ็นต์และสถานะ
+        // ให้เปอร์เซ็นต์สัมพันธ์กับสถานะและความคืบหน้าโครงการ
         if ($newProgress !== null) {
             if ($newProgress < 0 || $newProgress > 100) {
                 throw new Exception("เปอร์เซ็นต์ความคืบหน้าต้องอยู่ระหว่าง 0 ถึง 100%");
             }
             $progress = round($newProgress, 2);
+
+            // เมื่อกำหนดเปอร์เซ็นต์ ให้ปรับสถานะให้สอดคล้องกัน
+            if ($progress >= 100.0 && $newStatus !== 'cancelled' && $newStatus !== 'has_problem') {
+                $newStatus = 'completed';
+            } elseif ($progress == 0.0 && $newStatus !== 'cancelled' && $newStatus !== 'has_problem') {
+                $newStatus = 'not_started';
+            } elseif ($progress > 0.0 && $progress < 100.0 && $newStatus !== 'cancelled' && $newStatus !== 'has_problem') {
+                $newStatus = 'in_progress';
+            }
         } else {
-            // Adaptive progress linked directly to project status
+            // เมื่อเลือกสถานะ ให้กำหนดเปอร์เซ็นต์ที่สัมพันธ์กัน
             if ($newStatus === 'completed') {
                 $progress = 100.0;
             } elseif ($newStatus === 'not_started') {
                 $progress = 0.0;
             } elseif ($newStatus === 'in_progress') {
-                $progress = $oldProgress > 0 ? $oldProgress : ($planned > 1 ? round((1 / $planned) * 100, 2) : 50.0);
+                $progress = ($oldProgress > 0 && $oldProgress < 100.0) ? $oldProgress : 50.0;
             } else {
                 $progress = $oldProgress;
             }
