@@ -1,0 +1,17 @@
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.bak
+*~
+
+# Node.js
+node_modules/
+npm-debug.log*
+
+# Obsidian internal workspaces (keep app.json & graph.json, ignore session cache)
+.obsidian/workspace*
+.obsidian/cache/

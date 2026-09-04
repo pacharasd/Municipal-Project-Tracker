@@ -1,0 +1,21 @@
+{
+  "name": "llm-wiki-knowledge-base",
+  "version": "1.0.0",
+  "description": "A persistent, compounding personal knowledge base maintained by LLMs (Obsidian as IDE, Wiki as Codebase)",
+  "private": true,
+  "scripts": {
+    "search": "node scripts/wiki.js search",
+    "lint": "node scripts/wiki.js lint",
+    "status": "node scripts/wiki.js status",
+    "log": "node scripts/wiki.js log"
+  },
+  "keywords": [
+    "llm-wiki",
+    "knowledge-base",
+    "obsidian",
+    "pkm",
+    "second-brain"
+  ],
+  "author": "LLM Wiki Knowledge Engineer",
+  "license": "MIT"
+}
