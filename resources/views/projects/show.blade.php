@@ -43,6 +43,18 @@ $title = htmlspecialchars($project['name']);
             <?= nl2br(htmlspecialchars($project['description'] ?? 'ไม่มีคำอธิบายเพิ่มเติม')) ?>
         </p>
 
+        <?php if (!empty($project['objective'])): ?>
+            <div class="mt-3 p-3.5 rounded-xl bg-indigo-50/60 border border-indigo-100/80 text-slate-800 max-w-4xl">
+                <div class="text-xs font-bold text-indigo-900 flex items-center gap-1.5 mb-1">
+                    <i data-lucide="target" class="w-4 h-4 text-indigo-600"></i>
+                    วัตถุประสงค์โครงการ
+                </div>
+                <div class="text-sm text-slate-700 leading-relaxed">
+                    <?= nl2br(htmlspecialchars($project['objective'])) ?>
+                </div>
+            </div>
+        <?php endif; ?>
+
         <!-- KPI Grid -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-100">
             <div>

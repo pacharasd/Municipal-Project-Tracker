@@ -291,6 +291,49 @@ $title = htmlspecialchars($project['name']);
                 <?php endif; ?>
             </div>
         </div>
+
+        <!-- วัตถุประสงค์ & รายละเอียดโครงการ -->
+        <div class="mt-6 pt-6 border-t border-slate-100 space-y-3">
+            <div class="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100/80">
+                <div class="text-xs font-bold text-indigo-900 flex items-center gap-2 mb-1.5">
+                    <span class="p-1 bg-indigo-100 text-indigo-700 rounded-lg">
+                        <i data-lucide="target" class="w-4 h-4"></i>
+                    </span>
+                    <span>วัตถุประสงค์โครงการ</span>
+                </div>
+                <div class="text-sm leading-relaxed text-slate-700">
+                    <?= !empty($project['objective']) ? nl2br(htmlspecialchars($project['objective'])) : '<span class="text-slate-400 italic">ไม่ได้ระบุวัตถุประสงค์โครงการ</span>' ?>
+                </div>
+            </div>
+
+            <?php if (!empty($project['description'])): ?>
+                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                    <div class="text-xs font-bold text-slate-700 flex items-center gap-2 mb-1.5">
+                        <span class="p-1 bg-slate-200 text-slate-700 rounded-lg">
+                            <i data-lucide="file-text" class="w-4 h-4"></i>
+                        </span>
+                        <span>รายละเอียด / คำอธิบายโครงการ</span>
+                    </div>
+                    <div class="text-sm leading-relaxed text-slate-600">
+                        <?= nl2br(htmlspecialchars($project['description'])) ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <?php if (!empty($project['methodology'])): ?>
+                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                    <div class="text-xs font-bold text-slate-700 flex items-center gap-2 mb-1.5">
+                        <span class="p-1 bg-slate-200 text-slate-700 rounded-lg">
+                            <i data-lucide="list-checks" class="w-4 h-4"></i>
+                        </span>
+                        <span>วิธีการดำเนินการ</span>
+                    </div>
+                    <div class="text-sm leading-relaxed text-slate-600">
+                        <?= nl2br(htmlspecialchars($project['methodology'])) ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+        </div>
     </div>
 
     <!-- Activities & Budget Two Columns -->
