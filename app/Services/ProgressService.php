@@ -34,50 +34,51 @@ class ProgressService
                 throw new Exception("จำนวนกิจกรรมต้องไม่ติดลบ");
             }
             $actual = $newActual;
-        }
 
-        if ($mode === 'auto') {
+            // เมื่อกด +1 กิจกรรม ให้คำนวณเปอร์เซ็นต์ความสำเร็จตามกิจกรรมทันที และเปลี่ยนโหมดเป็น auto
+            $progress = $planned > 0 ? round(($actual / $planned) * 100, 2) : 0.0;
+            $mode = 'auto';
+        } elseif ($manualProgress !== null) {
+            if ($manualProgress < 0 || $manualProgress > 100) {
+                throw new Exception("เปอร์เซ็นต์ความคืบหน้าต้องอยู่ระหว่าง 0 ถึง 100%");
+            }
+            $progress = round($manualProgress, 2);
+            $mode = 'manual';
+            // ซิงค์จำนวนกิจกรรมตามเปอร์เซ็นต์ที่กำหนด
+            if ($planned > 0) {
+                $actual = (int)round(($progress / 100.0) * $planned);
+            }
+        } elseif ($mode === 'auto') {
             // Rule #6 & #46: ความสำเร็จ = กิจกรรมที่ทำแล้ว ÷ ทั้งหมด × 100
             $progress = $planned > 0 ? round(($actual / $planned) * 100, 2) : 0.0;
         } else {
-            // Manual Mode: 0 - 100%
-            if ($manualProgress !== null) {
-                if ($manualProgress < 0 || $manualProgress > 100) {
-                    throw new Exception("เปอร์เซ็นต์ความคืบหน้าต้องอยู่ระหว่าง 0 ถึง 100%");
-                }
-                $progress = round($manualProgress, 2);
-            } else {
-                $progress = $oldProgress;
-            }
+            $progress = $oldProgress;
         }
 
-        // Determine Status based on Progress & Existing condition
+        // กำหนดสถานะให้สัมพันธ์กับเปอร์เซ็นต์และความคืบหน้า
         $status = $project['status'];
         if ($progress >= 100.0) {
-            $status = 'completed';
+            $status = ($status === 'cancelled') ? $status : 'completed';
             $completionDate = date('Y-m-d');
         } elseif ($progress > 0) {
-            if ($status !== 'has_problem') {
-                $status = 'in_progress';
-            }
+            $status = ($status === 'has_problem' || $status === 'cancelled') ? $status : 'in_progress';
             $completionDate = null;
         } else {
-            if ($status !== 'has_problem') {
-                $status = 'not_started';
-            }
+            $status = ($status === 'has_problem' || $status === 'cancelled') ? $status : 'not_started';
             $completionDate = null;
         }
 
         Database::update('projects', [
             'actual_activity_count' => $actual,
             'progress'              => $progress,
+            'progress_mode'         => $mode,
             'status'                => $status,
             'completion_date'       => $completionDate,
         ], "id = ?", [$subProjectId]);
 
         // Sync parent project average progress
         if (!empty($project['parent_id'])) {
-            self::syncParentProjectProgress($project['parent_id']);
+            self::syncParentProjectProgress((int)$project['parent_id']);
         }
 
         AuditLogService::log('UPDATE_PROGRESS', 'Project', $subProjectId, 
@@ -115,7 +116,7 @@ class ProgressService
         $planned = (int)($project['planned_activity_count'] ?? 1);
         $actual = (int)($project['actual_activity_count'] ?? 0);
 
-        // Determine progress based on explicit input or adaptive status defaults
+        // คำนวณความสัมพันธ์ระหว่างเปอร์เซ็นต์และสถานะ
         if ($newProgress !== null) {
             if ($newProgress < 0 || $newProgress > 100) {
                 throw new Exception("เปอร์เซ็นต์ความคืบหน้าต้องอยู่ระหว่าง 0 ถึง 100%");
@@ -128,17 +129,30 @@ class ProgressService
             } elseif ($newStatus === 'not_started') {
                 $progress = 0.0;
             } elseif ($newStatus === 'in_progress') {
-                $progress = $oldProgress > 0 ? $oldProgress : 50.0;
+                $progress = $oldProgress > 0 ? $oldProgress : ($planned > 1 ? round((1 / $planned) * 100, 2) : 50.0);
             } else {
                 $progress = $oldProgress;
             }
         }
 
-        // Auto-adjust status if progress is 100% and not cancelled or flagged as problem
+        // ปรับสถานะให้สอดคล้องกับเปอร์เซ็นต์อัตโนมัติ
         if ($progress >= 100.0 && $newStatus !== 'cancelled' && $newStatus !== 'has_problem') {
             $newStatus = 'completed';
+            $actual = $planned;
         } elseif ($progress == 0.0 && $newStatus !== 'cancelled' && $newStatus !== 'has_problem') {
             $newStatus = 'not_started';
+            $actual = 0;
+        } elseif ($progress > 0 && $progress < 100.0 && $newStatus !== 'cancelled' && $newStatus !== 'has_problem') {
+            $newStatus = 'in_progress';
+            if ($planned > 0) {
+                $actual = (int)round(($progress / 100.0) * $planned);
+            }
+        }
+
+        if ($newStatus === 'completed') {
+            $actual = $planned;
+        } elseif ($newStatus === 'not_started') {
+            $actual = 0;
         }
 
         $completionDate = ($newStatus === 'completed') ? date('Y-m-d') : null;
@@ -151,13 +165,6 @@ class ProgressService
         } elseif ($newStatus === 'completed' || $newStatus === 'in_progress') {
             // If problem is resolved or completed, clear problem flag
             $problemDescription = null;
-        }
-
-        // Sync actual count with completion if needed
-        if ($newStatus === 'completed') {
-            $actual = $planned;
-        } elseif ($newStatus === 'not_started') {
-            $actual = 0;
         }
 
         Database::update('projects', [
@@ -232,5 +239,46 @@ class ProgressService
             'progress' => $avgProgress,
             'status'   => $parentStatus,
         ], "id = ?", [$parentId]);
+    }
+
+    /**
+     * ซิงค์ความก้าวหน้าและสถานะจากกิจกรรมในตาราง activities
+     */
+    public static function syncFromActivities(int $subProjectId): void
+    {
+        $project = Database::fetch("SELECT * FROM projects WHERE id = ?", [$subProjectId]);
+        if (!$project) return;
+
+        $totalActivities = (int)Database::fetchColumn("SELECT COUNT(*) FROM activities WHERE project_id = ?", [$subProjectId]);
+        if ($totalActivities === 0) return;
+
+        $completedActivities = (int)Database::fetchColumn("SELECT COUNT(*) FROM activities WHERE project_id = ? AND status = 'completed'", [$subProjectId]);
+
+        $planned = max((int)$project['planned_activity_count'], $totalActivities);
+        $actual = $completedActivities;
+        $progress = $planned > 0 ? round(($actual / $planned) * 100, 2) : 0.0;
+
+        $status = $project['status'];
+        if ($status !== 'has_problem' && $status !== 'cancelled') {
+            if ($progress >= 100.0) {
+                $status = 'completed';
+            } elseif ($progress > 0.0) {
+                $status = 'in_progress';
+            } else {
+                $status = 'not_started';
+            }
+        }
+
+        Database::update('projects', [
+            'planned_activity_count' => $planned,
+            'actual_activity_count'  => $actual,
+            'progress'               => $progress,
+            'status'                 => $status,
+            'completion_date'        => ($status === 'completed') ? date('Y-m-d') : null,
+        ], "id = ?", [$subProjectId]);
+
+        if (!empty($project['parent_id'])) {
+            self::syncParentProjectProgress((int)$project['parent_id']);
+        }
     }
 }

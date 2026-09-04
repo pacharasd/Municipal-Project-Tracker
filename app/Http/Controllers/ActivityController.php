@@ -8,6 +8,7 @@ use App\Core\Session;
 use App\Core\Router;
 use App\Core\Validator;
 use App\Services\AuditLogService;
+use App\Services\ProgressService;
 use Exception;
 
 class ActivityController
@@ -56,6 +57,7 @@ class ActivityController
             ]);
 
             AuditLogService::log('CREATE_ACTIVITY', 'Activity', $actId, null, ['name' => $_POST['name'], 'project_id' => $projectId]);
+            ProgressService::syncFromActivities($projectId);
             Session::flash('success', "เพิ่มกิจกรรม '{$_POST['name']}' เรียบร้อยแล้ว");
         } catch (Exception $e) {
             Session::flash('error', 'เกิดข้อผิดพลาด: ' . $e->getMessage());
@@ -84,6 +86,7 @@ class ActivityController
         ], "id = ?", [$actId]);
 
         AuditLogService::log('UPDATE_ACTIVITY_STATUS', 'Activity', $actId, ['status' => $act['status']], ['status' => $newStatus]);
+        ProgressService::syncFromActivities((int)$act['project_id']);
         Session::flash('success', "อัปเดตสถานะกิจกรรมเป็น {$newStatus} เรียบร้อยแล้ว");
         header('Location: ' . Router::url("/sub-projects/{$act['project_id']}"));
         exit;
@@ -133,6 +136,7 @@ class ActivityController
         ], "id = ?", [$actId]);
 
         AuditLogService::log('UPDATE_ACTIVITY', 'Activity', $actId, ['name' => $act['name']], ['name' => $_POST['name']]);
+        ProgressService::syncFromActivities((int)$act['project_id']);
         Session::flash('success', "แก้ไขกิจกรรม '{$_POST['name']}' เรียบร้อยแล้ว");
         header('Location: ' . Router::url("/sub-projects/{$act['project_id']}"));
         exit;
@@ -159,6 +163,7 @@ class ActivityController
 
         Database::execute("DELETE FROM activities WHERE id = ?", [$actId]);
         AuditLogService::log('DELETE_ACTIVITY', 'Activity', $actId, ['name' => $name, 'project_id' => $projectId]);
+        ProgressService::syncFromActivities($projectId);
 
         Session::flash('success', "ลบกิจกรรม '{$name}' เรียบร้อยแล้ว");
         header('Location: ' . Router::url("/sub-projects/{$projectId}"));
