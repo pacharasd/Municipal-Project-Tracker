@@ -316,6 +316,7 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
     <template x-teleport="body">
     <div x-show="disburseModalOpen" 
          x-cloak 
+         @click.self="disburseModalOpen = false"
          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
@@ -324,8 +325,7 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0">
         
-        <div @click.away="disburseModalOpen = false" 
-             class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5">
             
             <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
                 <div class="flex items-center gap-3">
@@ -354,9 +354,11 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
                     <select name="project_id" x-model="selectedSubProject" required
                             class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white">
                         <option value="">-- กรุณาเลือกโครงการย่อย --</option>
-                        <template x-for="p in subProjects" :key="p.id">
-                            <option :value="p.id" x-text="`${p.project_code} - ${p.name} (คงเหลือ ฿${Number(p.remaining).toLocaleString('th-TH', {minimumFractionDigits: 2})})`"></option>
-                        </template>
+                        <?php foreach ($subProjects as $p): ?>
+                            <option value="<?= $p['id'] ?>">
+                                <?= htmlspecialchars($p['project_code'] . ' - ' . $p['name'] . ' (คงเหลือ ฿' . number_format($p['remaining'], 2) . ')') ?>
+                            </option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
 

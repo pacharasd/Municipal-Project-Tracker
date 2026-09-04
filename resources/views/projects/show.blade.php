@@ -159,8 +159,8 @@ $title = htmlspecialchars($project['name']);
 
     <!-- Modal: Create Sub-project -->
     <template x-teleport="body">
-        <div x-show="createSubModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div @click.away="createSubModal = false" class="bg-white w-full max-w-3xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
+        <div x-show="createSubModal" x-cloak @click.self="createSubModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <div class="bg-white w-full max-w-3xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
                 <div class="p-6 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
                     <div>
                         <h3 class="text-lg font-bold text-slate-900">เพิ่มโครงการย่อย</h3>

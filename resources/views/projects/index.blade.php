@@ -188,8 +188,8 @@ $title = "จัดการโครงการหลักและโคร�
 
     <!-- Modal: Create Main Project -->
     <template x-teleport="body">
-        <div x-show="createModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div @click.away="createModal = false" class="bg-white w-full max-w-2xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+        <div x-show="createModal" x-cloak @click.self="createModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <div class="bg-white w-full max-w-2xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
                 <div class="p-6 border-b border-slate-100 flex items-center justify-between">
                     <div>
                         <h3 class="text-lg font-bold text-slate-900">สร้างโครงการหลักใหม่</h3>

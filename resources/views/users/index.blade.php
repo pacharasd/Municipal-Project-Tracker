@@ -12,7 +12,7 @@ $currentUserId = Auth::id();
     searchQuery: '', 
     createModal: false,
     editModal: false,
-    editUser: { id: '', name: '', email: '', position: '', department_id: '', phone: '' },
+    editUser: { id: '', name: '', email: '', position: '', department_id: '', phone: '', role_id: '' },
     openEdit(u) {
         this.editUser = Object.assign({}, u);
         this.editModal = true;
@@ -87,6 +87,7 @@ $currentUserId = Auth::id();
                                 'position'      => $u['position'] ?? '',
                                 'department_id' => $u['department_id'] ?? '',
                                 'phone'         => $u['phone'] ?? '',
+                                'role_id'       => $u['role_id'] ?? 3,
                             ]), ENT_QUOTES, 'UTF-8');
                         ?>
                             <tr class="hover:bg-slate-50/75 dark:hover:bg-slate-800/40 transition-colors"
@@ -169,9 +170,8 @@ $currentUserId = Auth::id();
 
     <!-- Create User Modal -->
     <template x-teleport="body">
-    <div x-show="createModal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-lg w-full overflow-hidden"
-             @click.away="createModal = false">
+    <div x-show="createModal" style="display: none;" @click.self="createModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-lg w-full overflow-hidden">
             <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <div class="p-2 rounded-xl bg-purple-100 dark:bg-purple-950/50 text-purple-600">
@@ -275,9 +275,8 @@ $currentUserId = Auth::id();
 
     <!-- Edit User Modal -->
     <template x-teleport="body">
-    <div x-show="editModal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-lg w-full overflow-hidden"
-             @click.away="editModal = false">
+    <div x-show="editModal" style="display: none;" @click.self="editModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-lg w-full overflow-hidden">
             <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <div class="p-2 rounded-xl bg-blue-100 dark:bg-blue-950/50 text-blue-600">

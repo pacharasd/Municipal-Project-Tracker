@@ -519,8 +519,8 @@ $title = htmlspecialchars($project['name']);
 
     <!-- Modal: Report Problem -->
     <template x-teleport="body">
-        <div x-show="problemModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div @click.away="problemModal = false" class="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+        <div x-show="problemModal" x-cloak @click.self="problemModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
                 <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-rose-50/50">
                     <div class="flex items-center gap-3">
                         <div class="p-2 rounded-xl bg-rose-100 text-rose-700">
@@ -557,8 +557,8 @@ $title = htmlspecialchars($project['name']);
 
     <!-- Modal: Resolve Problem -->
     <template x-teleport="body">
-        <div x-show="resolveModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div @click.away="resolveModal = false" class="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+        <div x-show="resolveModal" x-cloak @click.self="resolveModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
                 <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-emerald-50/50">
                     <div class="flex items-center gap-3">
                         <div class="p-2 rounded-xl bg-emerald-100 text-emerald-700">
@@ -595,8 +595,8 @@ $title = htmlspecialchars($project['name']);
 
     <!-- Modal: Add Activity -->
     <template x-teleport="body">
-        <div x-show="activityModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div @click.away="activityModal = false" class="bg-white w-full max-w-xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+        <div x-show="activityModal" x-cloak @click.self="activityModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <div class="bg-white w-full max-w-xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
                 <div class="p-6 border-b border-slate-100 flex items-center justify-between">
                     <h3 class="text-base font-bold text-slate-900">เพิ่มกิจกรรมใหม่</h3>
                     <button type="button" @click="activityModal = false" class="text-slate-400 hover:text-slate-600">
@@ -651,8 +651,8 @@ $title = htmlspecialchars($project['name']);
 
     <!-- Modal: Disburse Budget -->
     <template x-teleport="body">
-        <div x-show="disburseModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div @click.away="disburseModal = false" class="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+        <div x-show="disburseModal" x-cloak @click.self="disburseModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
                 <div class="p-6 border-b border-slate-100 flex items-center justify-between">
                     <div>
                         <h3 class="text-base font-bold text-slate-900">บันทึกการเบิกจ่ายงบประมาณ</h3>
@@ -705,8 +705,8 @@ $title = htmlspecialchars($project['name']);
 
     <!-- Modal: Manual Progress Override -->
     <template x-teleport="body">
-        <div x-show="manualModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div @click.away="manualModal = false" class="bg-white w-full max-w-sm rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+        <div x-show="manualModal" x-cloak @click.self="manualModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <div class="bg-white w-full max-w-sm rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
                 <div class="p-5 border-b border-slate-100 flex items-center justify-between">
                     <h3 class="text-sm font-bold text-slate-900">กำหนดเปอร์เซ็นต์ความคืบหน้าเอง</h3>
                     <button type="button" @click="manualModal = false" class="text-slate-400 hover:text-slate-600">
@@ -730,7 +730,7 @@ $title = htmlspecialchars($project['name']);
 
     <!-- Modal: Update Status and Progress Directly -->
     <template x-teleport="body">
-        <div x-show="statusModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+        <div x-show="statusModal" x-cloak @click.self="statusModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"
@@ -738,7 +738,7 @@ $title = htmlspecialchars($project['name']);
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0">
             
-            <div @click.away="statusModal = false" class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden space-y-5 p-6">
+            <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden space-y-5 p-6">
                 
                 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                     <div class="flex items-center gap-3">
@@ -756,7 +756,7 @@ $title = htmlspecialchars($project['name']);
                 </div>
 
                 <form action="<?= \App\Core\Router::url("/sub-projects/{$project['id']}/status") ?>" method="POST" class="space-y-4">
-                    <input type="hidden" name="_csrf_token" value="<?= $csrfToken ?>">
+                    <input type="hidden" name="_token" value="<?= $csrfToken ?>">
 
                     <!-- 1. Status Selection -->
                     <div>
@@ -874,9 +874,8 @@ $title = htmlspecialchars($project['name']);
 
     <!-- Modal: Edit Sub-Project -->
     <template x-teleport="body">
-    <div x-show="editSubModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-2xl w-full overflow-hidden max-h-[90vh] flex flex-col"
-             @click.away="editSubModal = false">
+    <div x-show="editSubModal" x-cloak style="display: none;" @click.self="editSubModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-2xl w-full overflow-hidden max-h-[90vh] flex flex-col">
             <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <div class="p-2 rounded-xl bg-blue-100 dark:bg-blue-950/50 text-blue-600">
@@ -1008,9 +1007,8 @@ $title = htmlspecialchars($project['name']);
 
     <!-- Modal: Edit Activity -->
     <template x-teleport="body">
-    <div x-show="editActModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-lg w-full overflow-hidden"
-             @click.away="editActModal = false">
+    <div x-show="editActModal" x-cloak style="display: none;" @click.self="editActModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-lg w-full overflow-hidden">
             <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <div class="p-2 rounded-xl bg-blue-100 dark:bg-blue-950/50 text-blue-600">
@@ -1026,7 +1024,7 @@ $title = htmlspecialchars($project['name']);
                 </button>
             </div>
 
-            <form :action="'<?= \App\Core\Router::url('/activities/') ?>' + selectedAct.id + '/update'" method="POST" class="p-6 space-y-4">
+            <form :action="'<?= \App\Core\Router::url('/activities') ?>/' + (selectedAct.id || '') + '/update'" method="POST" class="p-6 space-y-4">
                 <input type="hidden" name="_token" value="<?= $csrfToken ?>">
 
                 <div>
@@ -1117,9 +1115,8 @@ $title = htmlspecialchars($project['name']);
 
     <!-- Modal: Upload Attachment or Photo -->
     <template x-teleport="body">
-    <div x-show="uploadModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-md w-full overflow-hidden"
-             @click.away="uploadModal = false">
+    <div x-show="uploadModal" x-cloak style="display: none;" @click.self="uploadModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-md w-full overflow-hidden">
             <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <div class="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600">
