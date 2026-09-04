@@ -210,6 +210,214 @@ ob_start();
             </div>
         </div>
     </div>
+
+    <!-- All Sub-Projects Table (ตารางโครงการย่อยทั้งหมดด้านล่างสุด) -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden" 
+         x-data="{ 
+             search: '', 
+             statusFilter: 'all' 
+         }">
+        <!-- Table Header -->
+        <div class="p-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-2">
+                    <div class="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+                        <i data-lucide="layers" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-base font-bold text-slate-900">ตารางโครงการย่อยทั้งหมด</h2>
+                            <span class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800">
+                                <?= count($subProjects) ?> โครงการ
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-0.5">ติดตามความก้าวหน้า งบประมาณ การเบิกจ่าย และสถานะการดำเนินงานรายโครงการย่อยทั้งหมด</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls: Search & Filter -->
+            <div class="flex flex-wrap items-center gap-2.5">
+                <!-- Search Input -->
+                <div class="relative">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                    <input type="text" 
+                           x-model="search" 
+                           placeholder="ค้นหารหัส หรือชื่อโครงการ..." 
+                           class="text-xs pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition w-48 sm:w-60">
+                </div>
+
+                <!-- Status Filter -->
+                <select x-model="statusFilter" 
+                        class="text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition text-slate-700">
+                    <option value="all">ทุกสถานะ</option>
+                    <option value="in_progress">กำลังดำเนินการ</option>
+                    <option value="completed">เสร็จสิ้น</option>
+                    <option value="has_problem">มีปัญหา</option>
+                    <option value="not_started">ยังไม่เริ่ม</option>
+                </select>
+
+                <!-- Link to Main Projects -->
+                <a href="<?= \App\Core\Router::url('/projects') ?>" 
+                   class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition border border-emerald-200">
+                    <span>ดูแบบผังโครงการหลัก</span>
+                    <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Table View -->
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                        <th class="py-3.5 px-4">รหัส / โครงการย่อย</th>
+                        <th class="py-3.5 px-4">โครงการหลักที่สังกัด</th>
+                        <th class="py-3.5 px-4">สำนัก / กอง</th>
+                        <th class="py-3.5 px-4">ผู้รับผิดชอบ</th>
+                        <th class="py-3.5 px-4 text-right">งบประมาณ</th>
+                        <th class="py-3.5 px-4 text-right">เบิกจ่ายแล้ว</th>
+                        <th class="py-3.5 px-4 text-center">กิจกรรม</th>
+                        <th class="py-3.5 px-4 text-center w-36">ความก้าวหน้า</th>
+                        <th class="py-3.5 px-4 text-center">สถานะ</th>
+                        <th class="py-3.5 px-4 text-center">จัดการ</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
+                    <?php if (empty($subProjects)): ?>
+                        <tr>
+                            <td colspan="10" class="py-8 text-center text-slate-400">
+                                <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+                                ยังไม่มีโครงการย่อยในระบบ
+                            </td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($subProjects as $sp): ?>
+                            <?php
+                            $spSearchText = htmlspecialchars(mb_strtolower($sp['project_code'] . ' ' . $sp['name'] . ' ' . ($sp['department_name'] ?? '') . ' ' . ($sp['responsible_name'] ?? '')));
+                            $statusClass = match($sp['status']) {
+                                'completed'   => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                                'in_progress' => 'bg-blue-50 text-blue-700 border-blue-200',
+                                'has_problem' => 'bg-rose-50 text-rose-700 border-rose-200 animate-pulse',
+                                default       => 'bg-slate-100 text-slate-600 border-slate-200'
+                            };
+                            $statusLabel = match($sp['status']) {
+                                'completed'   => 'เสร็จสิ้น',
+                                'in_progress' => 'กำลังดำเนินการ',
+                                'has_problem' => 'มีปัญหา',
+                                default       => 'ยังไม่เริ่ม'
+                            };
+                            $progressColor = match(true) {
+                                (float)$sp['progress'] >= 100 => 'bg-emerald-500',
+                                (float)$sp['progress'] >= 50  => 'bg-sky-500',
+                                (float)$sp['progress'] > 0   => 'bg-amber-500',
+                                default                       => 'bg-slate-300'
+                            };
+                            $disbursedPct = (float)$sp['budget'] > 0 ? round(((float)$sp['disbursed_amount'] / (float)$sp['budget']) * 100, 1) : 0;
+                            ?>
+                            <tr class="hover:bg-slate-50/80 transition-colors"
+                                x-show="(!search || '<?= $spSearchText ?>'.includes(search.toLowerCase())) && (statusFilter === 'all' || statusFilter === '<?= $sp['status'] ?>')">
+                                <!-- Code & Name -->
+                                <td class="py-3 px-4">
+                                    <div class="font-mono text-[11px] font-bold text-slate-500"><?= htmlspecialchars($sp['project_code']) ?></div>
+                                    <a href="<?= \App\Core\Router::url("/sub-projects/{$sp['id']}") ?>" 
+                                       class="font-semibold text-slate-900 hover:text-emerald-600 transition line-clamp-1 mt-0.5">
+                                        <?= htmlspecialchars($sp['name']) ?>
+                                    </a>
+                                </td>
+
+                                <!-- Parent Project -->
+                                <td class="py-3 px-4">
+                                    <div class="text-[11px] text-slate-500 font-medium line-clamp-1 max-w-[200px]" title="<?= htmlspecialchars($sp['parent_name']) ?>">
+                                        <span class="font-mono text-slate-400"><?= htmlspecialchars($sp['parent_code']) ?></span><br>
+                                        <?= htmlspecialchars($sp['parent_name']) ?>
+                                    </div>
+                                </td>
+
+                                <!-- Department -->
+                                <td class="py-3 px-4 whitespace-nowrap">
+                                    <span class="px-2.5 py-1 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                                        <?= htmlspecialchars($sp['department_name'] ?? 'ไม่ระบุ') ?>
+                                    </span>
+                                </td>
+
+                                <!-- Responsible Person -->
+                                <td class="py-3 px-4 whitespace-nowrap">
+                                    <div class="flex items-center gap-1.5">
+                                        <div class="w-6 h-6 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-[10px] font-bold">
+                                            <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                                        </div>
+                                        <span class="text-xs text-slate-700"><?= htmlspecialchars($sp['responsible_name'] ?? 'ไม่ระบุ') ?></span>
+                                    </div>
+                                </td>
+
+                                <!-- Budget -->
+                                <td class="py-3 px-4 text-right whitespace-nowrap">
+                                    <div class="font-bold text-slate-900"><?= number_format($sp['budget'], 2) ?></div>
+                                    <div class="text-[10px] text-slate-400">บาท</div>
+                                </td>
+
+                                <!-- Disbursed -->
+                                <td class="py-3 px-4 text-right whitespace-nowrap">
+                                    <div class="font-semibold text-emerald-600"><?= number_format($sp['disbursed_amount'], 2) ?></div>
+                                    <div class="text-[10px] text-slate-400"><?= $disbursedPct ?>%</div>
+                                </td>
+
+                                <!-- Activities -->
+                                <td class="py-3 px-4 text-center whitespace-nowrap">
+                                    <span class="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-semibold text-[11px]">
+                                        <?= $sp['completed_activity_count'] ?> / <?= $sp['activity_count'] ?>
+                                    </span>
+                                </td>
+
+                                <!-- Progress -->
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center justify-between text-xs mb-1 font-bold">
+                                        <span class="text-slate-600"><?= number_format($sp['progress'], 1) ?>%</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                        <div class="<?= $progressColor ?> h-1.5 rounded-full" style="width: <?= min(100, $sp['progress']) ?>%"></div>
+                                    </div>
+                                </td>
+
+                                <!-- Status -->
+                                <td class="py-3 px-4 text-center whitespace-nowrap">
+                                    <span class="px-2.5 py-1 text-[10px] font-semibold rounded-full border <?= $statusClass ?>">
+                                        <?= $statusLabel ?>
+                                    </span>
+                                </td>
+
+                                <!-- Action -->
+                                <td class="py-3 px-4 text-center whitespace-nowrap">
+                                    <a href="<?= \App\Core\Router::url("/sub-projects/{$sp['id']}") ?>" 
+                                       class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 transition text-xs font-semibold"
+                                       title="ดูรายละเอียดโครงการย่อย">
+                                        <span>ดูข้อมูล</span>
+                                        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Table Footer Summary -->
+        <div class="p-4 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+            <div>
+                แสดงทั้งหมด <span class="font-bold text-slate-700"><?= count($subProjects) ?></span> รายการโครงการย่อย
+            </div>
+            <div class="flex items-center gap-6">
+                <div>
+                    งบประมาณรวม: <span class="font-bold text-slate-900"><?= number_format(array_sum(array_column($subProjects, 'budget')), 2) ?></span> บาท
+                </div>
+                <div>
+                    เบิกจ่ายแล้วรวม: <span class="font-bold text-emerald-600"><?= number_format(array_sum(array_column($subProjects, 'disbursed_amount')), 2) ?></span> บาท
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Chart.js Scripts Initialization -->
