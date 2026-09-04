@@ -35,19 +35,11 @@ class ProgressService
             }
             $actual = $newActual;
 
-            // สำคัญ: กด +1 กิจกรรม แล้วเปอร์เซ็นต์ความสำเร็จโครงการไม่ขึ้นตามจำนวนครั้งที่กด
-            // ให้เปอร์เซ็นต์ไปสัมพันธ์กับสถานะและความคืบหน้าโครงการแทน
-            // เพราะบางโครงการมีกิจกรรม 1 ครั้ง หากคิดตามสัดส่วนจะข้ามไปสำเร็จ 100% ทันทีโดยไม่มีสถานะกำลังดำเนินการ
-            $status = $oldStatus;
-            if ($status === 'not_started' || $oldProgress == 0.0) {
-                // เมื่อเริ่มบันทึกกิจกรรม สถานะจะเข้าสู่ "กำลังดำเนินการ" ทันที
-                $status = 'in_progress';
-                // ปรับความคืบหน้าให้อยู่ในสถานะกำลังดำเนินการ (เช่น 50% หรือค่าที่ผู้ใช้กำหนด แต่ไม่กระโดดไป 100% สำเร็จ)
-                $progress = ($oldProgress > 0) ? $oldProgress : ($planned > 1 ? min(90.0, round(($actual / $planned) * 100, 2)) : 50.0);
-            } else {
-                // หากกำลังดำเนินการอยู่แล้ว ให้คงเปอร์เซ็นต์ความคืบหน้าที่ผู้ดูแลกำหนดไว้
-                $progress = $oldProgress;
-            }
+            // สำคัญมาก: กด +1 กิจกรรม จะเพิ่มเฉพาะจำนวนครั้งกิจกรรมจริงเท่านั้น
+            // เปอร์เซ็นต์ความสำเร็จโครงการจะไม่ขึ้นตามการกด +1 (คงค่าเดิมไว้เสมอ ไม่เพิ่มขึ้น)
+            // ให้เปอร์เซ็นต์ขึ้นตอนเปลี่ยนสถานะและความคืบหน้าโครงการอย่างเดียว
+            $progress = $oldProgress;
+            $status = ($oldStatus === 'not_started') ? 'in_progress' : $oldStatus;
             $mode = 'manual';
         } elseif ($manualProgress !== null) {
             if ($manualProgress < 0 || $manualProgress > 100) {
@@ -152,21 +144,10 @@ class ProgressService
         // ปรับสถานะให้สอดคล้องกับเปอร์เซ็นต์อัตโนมัติ
         if ($progress >= 100.0 && $newStatus !== 'cancelled' && $newStatus !== 'has_problem') {
             $newStatus = 'completed';
-            $actual = $planned;
         } elseif ($progress == 0.0 && $newStatus !== 'cancelled' && $newStatus !== 'has_problem') {
             $newStatus = 'not_started';
-            $actual = 0;
         } elseif ($progress > 0 && $progress < 100.0 && $newStatus !== 'cancelled' && $newStatus !== 'has_problem') {
             $newStatus = 'in_progress';
-            if ($planned > 0) {
-                $actual = (int)round(($progress / 100.0) * $planned);
-            }
-        }
-
-        if ($newStatus === 'completed') {
-            $actual = $planned;
-        } elseif ($newStatus === 'not_started') {
-            $actual = 0;
         }
 
         $completionDate = ($newStatus === 'completed') ? date('Y-m-d') : null;
@@ -270,6 +251,14 @@ class ProgressService
 
         $planned = max((int)$project['planned_activity_count'], $totalActivities);
         $actual = $completedActivities;
+        if (($project['progress_mode'] ?? 'manual') === 'manual') {
+            Database::update('projects', [
+                'planned_activity_count' => $planned,
+                'actual_activity_count'  => $actual,
+            ], "id = ?", [$subProjectId]);
+            return;
+        }
+
         $progress = $planned > 0 ? round(($actual / $planned) * 100, 2) : 0.0;
 
         $status = $project['status'];
