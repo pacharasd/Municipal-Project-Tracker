@@ -7,6 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title><?= htmlspecialchars($title ?? 'ระบบติดตามและบริหารโครงการเทศบาล') ?> - เทศบาลตำบล/เมือง</title>
+    <link rel="icon" type="image/webp" href="<?= \App\Core\Router::url('/images/mobile-logo.webp') ?>">
     
     <!-- Theme Detection & Anti-Flicker Script (Standard 3-State Tailwind Pattern: Light / Dark / System) -->
     <script>
@@ -258,9 +259,15 @@
                 <button type="button" @click="sidebarOpen = !sidebarOpen" class="lg:hidden p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition shrink-0" aria-label="เปิดเมนู">
                     <i data-lucide="menu" class="w-5 h-5 sm:w-6 sm:h-6"></i>
                 </button>
-                <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-bold shadow-neon-green shrink-0">
-                    <i data-lucide="activity" class="w-4 h-4 sm:w-6 sm:h-6"></i>
-                </div>
+                <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="shrink-0 flex items-center group" title="ระบบติดตามและบริหารโครงการเทศบาล">
+                    <img src="<?= \App\Core\Router::url('/images/mobile-logo.webp') ?>" 
+                         alt="โลโก้เทศบาล" 
+                         class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl object-contain shrink-0 shadow-sm border border-slate-200/80 dark:border-white/10 bg-white dark:bg-white/5 p-0.5 group-hover:scale-105 transition-transform"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div style="display:none;" class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 items-center justify-center text-slate-950 font-bold shadow-neon-green shrink-0">
+                        <i data-lucide="activity" class="w-4 h-4 sm:w-6 sm:h-6"></i>
+                    </div>
+                </a>
                 <div class="min-w-0">
                     <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="font-bold font-heading text-slate-900 dark:text-white tracking-tight flex items-center gap-1 sm:gap-2">
                         <span class="hidden md:inline text-base sm:text-lg whitespace-nowrap">ระบบติดตามและบริหารโครงการเทศบาล</span>
