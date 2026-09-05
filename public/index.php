@@ -35,8 +35,12 @@ spl_autoload_register(function ($class) {
     }
 });
 
-// Load .env variables if present
+// Load .env variables if present (check root directory and public directory)
 $envFile = dirname(__DIR__) . '/.env';
+if (!file_exists($envFile) && file_exists(__DIR__ . '/.env')) {
+    $envFile = __DIR__ . '/.env';
+}
+
 if (file_exists($envFile)) {
     $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
@@ -47,9 +51,15 @@ if (file_exists($envFile)) {
         if (strpos($line, '=') !== false) {
             [$name, $value] = explode('=', $line, 2);
             $name = trim($name);
-            $value = trim($value, " \t\n\r\0\x0B\"'");
+            $value = trim($value);
+            // Strip matching surrounding quotes if present
+            if ((str_starts_with($value, '"') && str_ends_with($value, '"')) ||
+                (str_starts_with($value, "'") && str_ends_with($value, "'"))) {
+                $value = substr($value, 1, -1);
+            }
             putenv("{$name}={$value}");
             $_ENV[$name] = $value;
+            $_SERVER[$name] = $value;
         }
     }
 }

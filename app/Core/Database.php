@@ -13,11 +13,11 @@ class Database
     public static function connect(): PDO
     {
         if (self::$instance === null) {
-            $host = getenv('DB_HOST') ?: '127.0.0.1';
-            $port = getenv('DB_PORT') ?: '3306';
-            $db   = getenv('DB_DATABASE') ?: 'behn_project_tracker';
-            $user = getenv('DB_USERNAME') ?: 'root';
-            $pass = getenv('DB_PASSWORD') !== false ? getenv('DB_PASSWORD') : '';
+            $host = $_ENV['DB_HOST'] ?? $_SERVER['DB_HOST'] ?? (getenv('DB_HOST') ?: '127.0.0.1');
+            $port = $_ENV['DB_PORT'] ?? $_SERVER['DB_PORT'] ?? (getenv('DB_PORT') ?: '3306');
+            $db   = $_ENV['DB_DATABASE'] ?? $_SERVER['DB_DATABASE'] ?? (getenv('DB_DATABASE') ?: 'project_tracker');
+            $user = $_ENV['DB_USERNAME'] ?? $_SERVER['DB_USERNAME'] ?? (getenv('DB_USERNAME') ?: 'project_tracker');
+            $pass = $_ENV['DB_PASSWORD'] ?? $_SERVER['DB_PASSWORD'] ?? (getenv('DB_PASSWORD') !== false ? getenv('DB_PASSWORD') : '');
 
             $dsn = "mysql:host={$host};port={$port};dbname={$db};charset=utf8mb4";
             $options = [
@@ -30,6 +30,18 @@ class Database
             try {
                 self::$instance = new PDO($dsn, $user, $pass, $options);
             } catch (PDOException $e) {
+                // If 127.0.0.1 failed, try localhost socket (or vice-versa) for Linux Plesk/MariaDB compatibility
+                $altHost = ($host === '127.0.0.1') ? 'localhost' : (($host === 'localhost') ? '127.0.0.1' : null);
+                if ($altHost !== null) {
+                    try {
+                        $altDsn = "mysql:host={$altHost};port={$port};dbname={$db};charset=utf8mb4";
+                        self::$instance = new PDO($altDsn, $user, $pass, $options);
+                        return self::$instance;
+                    } catch (PDOException $altEx) {
+                        // Keep initial exception for reporting
+                    }
+                }
+
                 error_log("Database connection failed: " . $e->getMessage());
                 self::renderConnectionError($e, $host, $port, $db, $user);
                 exit;
