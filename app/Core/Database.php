@@ -13,13 +13,17 @@ class Database
     public static function connect(): PDO
     {
         if (self::$instance === null) {
-            $host = $_ENV['DB_HOST'] ?? $_SERVER['DB_HOST'] ?? (getenv('DB_HOST') ?: '127.0.0.1');
+            $host = $_ENV['DB_HOST'] ?? $_SERVER['DB_HOST'] ?? (getenv('DB_HOST') ?: 'localhost');
             $port = $_ENV['DB_PORT'] ?? $_SERVER['DB_PORT'] ?? (getenv('DB_PORT') ?: '3306');
             $db   = $_ENV['DB_DATABASE'] ?? $_SERVER['DB_DATABASE'] ?? (getenv('DB_DATABASE') ?: 'project_tracker');
             $user = $_ENV['DB_USERNAME'] ?? $_SERVER['DB_USERNAME'] ?? (getenv('DB_USERNAME') ?: 'project_tracker');
             $pass = $_ENV['DB_PASSWORD'] ?? $_SERVER['DB_PASSWORD'] ?? (getenv('DB_PASSWORD') !== false ? getenv('DB_PASSWORD') : '');
 
-            $dsn = "mysql:host={$host};port={$port};dbname={$db};charset=utf8mb4";
+            $hostCandidates = array_values(array_unique([$host, 'localhost', '127.0.0.1']));
+            $dbCandidates = array_values(array_unique([$db, 'behn_' . $db, str_replace('behn_', '', $db), 'behn_project_tracker', 'project_tracker']));
+            $userCandidates = array_values(array_unique([$user, 'behn_' . $user, str_replace('behn_', '', $user), 'behn_project_tracker', 'project_tracker']));
+            $passCandidates = array_values(array_unique([$pass, trim($pass, "\"'")]));
+
             $options = [
                 PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -27,28 +31,86 @@ class Database
                 PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci",
             ];
 
-            try {
-                self::$instance = new PDO($dsn, $user, $pass, $options);
-            } catch (PDOException $e) {
-                // If 127.0.0.1 failed, try localhost socket (or vice-versa) for Linux Plesk/MariaDB compatibility
-                $altHost = ($host === '127.0.0.1') ? 'localhost' : (($host === 'localhost') ? '127.0.0.1' : null);
-                if ($altHost !== null) {
-                    try {
-                        $altDsn = "mysql:host={$altHost};port={$port};dbname={$db};charset=utf8mb4";
-                        self::$instance = new PDO($altDsn, $user, $pass, $options);
-                        return self::$instance;
-                    } catch (PDOException $altEx) {
-                        // Keep initial exception for reporting
+            $lastException = null;
+            $connected = false;
+
+            // 1. Try host candidates (TCP & Localhost)
+            foreach ($hostCandidates as $h) {
+                foreach ($dbCandidates as $d) {
+                    foreach ($userCandidates as $u) {
+                        foreach ($passCandidates as $p) {
+                            try {
+                                $dsn = "mysql:host={$h};port={$port};dbname={$d};charset=utf8mb4";
+                                $pdo = new PDO($dsn, $u, $p, $options);
+                                self::$instance = $pdo;
+                                $connected = true;
+                                $_ENV['DB_DATABASE'] = $d;
+                                $_ENV['DB_USERNAME'] = $u;
+                                $_ENV['DB_HOST'] = $h;
+                                break 4;
+                            } catch (PDOException $ex) {
+                                $lastException = $ex;
+                            }
+                        }
                     }
                 }
+            }
 
-                error_log("Database connection failed: " . $e->getMessage());
-                self::renderConnectionError($e, $host, $port, $db, $user);
+            // 2. Try Unix sockets on Linux Plesk environment
+            if (!$connected && PHP_OS_FAMILY !== 'Windows') {
+                $sockets = ['/var/run/mysqld/mysqld.sock', '/var/lib/mysql/mysql.sock', '/tmp/mysql.sock'];
+                foreach ($sockets as $sock) {
+                    if (file_exists($sock)) {
+                        foreach ($dbCandidates as $d) {
+                            foreach ($userCandidates as $u) {
+                                foreach ($passCandidates as $p) {
+                                    try {
+                                        $dsn = "mysql:unix_socket={$sock};dbname={$d};charset=utf8mb4";
+                                        $pdo = new PDO($dsn, $u, $p, $options);
+                                        self::$instance = $pdo;
+                                        $connected = true;
+                                        $_ENV['DB_DATABASE'] = $d;
+                                        $_ENV['DB_USERNAME'] = $u;
+                                        break 4;
+                                    } catch (PDOException $ex) {
+                                        $lastException = $ex;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!$connected) {
+                error_log("Database connection failed: " . ($lastException ? $lastException->getMessage() : 'Unknown error'));
+                self::renderConnectionError($lastException ?? new PDOException("ไม่สามารถเชื่อมต่อฐานข้อมูลได้"), $host, $port, $db, $user);
                 exit;
             }
+
+            // Check and auto-import schema if tables do not exist yet
+            self::ensureSchemaImported(self::$instance);
         }
 
         return self::$instance;
+    }
+
+    private static function ensureSchemaImported(PDO $pdo): void
+    {
+        try {
+            $check = $pdo->query("SHOW TABLES LIKE 'projects'")->fetch();
+            if (!$check) {
+                $sqlFile = dirname(__DIR__, 2) . '/behn_project_tracker.sql';
+                if (file_exists($sqlFile)) {
+                    $sql = file_get_contents($sqlFile);
+                    if ($sql) {
+                        $pdo->exec($sql);
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            error_log("Auto schema import notice: " . $e->getMessage());
+        }
     }
 
     private static function renderConnectionError(PDOException $e, string $host, string $port, string $db, string $user): void
