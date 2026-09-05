@@ -38,13 +38,23 @@ class DashboardController
              ORDER BY s.id ASC"
         );
 
+        $latestProjects = Database::query(
+            "SELECT s.id, s.project_code, s.name, s.budget, s.progress, s.status, s.updated_at, s.created_at,
+                    d.name as department_name
+             FROM projects s
+             LEFT JOIN departments d ON s.department_id = d.id
+             WHERE s.parent_id IS NOT NULL
+             ORDER BY s.id DESC LIMIT 5"
+        );
+
         View::render('dashboard.index', [
-            'stats'        => $stats,
-            'watchlist'    => $watchlist,
-            'recentAudit'  => $recentAudit,
-            'fiscalYears'  => $fiscalYears,
-            'departments'  => $departments,
-            'subProjects'  => $subProjects,
+            'stats'          => $stats,
+            'watchlist'      => $watchlist,
+            'recentAudit'    => $recentAudit,
+            'fiscalYears'    => $fiscalYears,
+            'departments'    => $departments,
+            'subProjects'    => $subProjects,
+            'latestProjects' => $latestProjects,
         ]);
     }
 

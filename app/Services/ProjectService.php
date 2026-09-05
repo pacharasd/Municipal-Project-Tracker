@@ -210,10 +210,14 @@ class ProjectService
 
         // 2. Department Chart Data
         $deptData = Database::query(
-            "SELECT d.name, COUNT(p.id) as project_count, SUM(p.budget) as total_budget, AVG(p.progress) as avg_progress 
+            "SELECT d.name, 
+                    COUNT(s.id) as project_count, 
+                    COALESCE(SUM(s.budget), 0) as total_budget, 
+                    COALESCE(SUM(s.disbursed_amount), 0) as total_disbursed, 
+                    COALESCE(AVG(s.progress), 0) as avg_progress 
              FROM departments d 
-             LEFT JOIN projects p ON d.id = p.department_id AND p.parent_id IS NULL
-             GROUP BY d.id, d.name ORDER BY d.id ASC"
+             LEFT JOIN projects s ON d.id = s.department_id AND s.parent_id IS NOT NULL
+             GROUP BY d.id, d.name ORDER BY project_count DESC, d.id ASC"
         );
 
         // 3. Category Distribution

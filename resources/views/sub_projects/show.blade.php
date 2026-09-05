@@ -43,8 +43,8 @@ $title = htmlspecialchars($project['name']);
     }
 }">
     <!-- Breadcrumb & Back Navigation -->
-    <div class="flex items-center justify-between">
-        <a href="<?= \App\Core\Router::url("/projects/{$project['parent_id']}") ?>" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <a href="<?= \App\Core\Router::url("/projects/{$project['parent_id']}") ?>" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
             <i data-lucide="arrow-left" class="w-4 h-4"></i> ย้อนกลับไป: <?= htmlspecialchars($project['parent_name'] ?? 'โครงการหลัก') ?>
         </a>
         <div class="flex flex-wrap items-center gap-2">
@@ -110,7 +110,7 @@ $title = htmlspecialchars($project['name']);
     <?php endif; ?>
 
     <!-- Sub-project Title & Main Card -->
-    <div class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
+    <div class="bg-white dark:bg-[#181a20] p-4 sm:p-8 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex flex-wrap items-center gap-2">
                 <span class="px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-slate-100 text-slate-800 border border-slate-200"><?= htmlspecialchars($project['project_code']) ?></span>
@@ -163,25 +163,25 @@ $title = htmlspecialchars($project['name']);
         </div>
 
         <!-- Progress & Status Management Widget -->
-        <div class="mt-6 p-6 rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50/30 border border-slate-200 shadow-sm">
+        <div class="mt-6 p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50/30 dark:from-white/[0.02] dark:to-indigo-950/20 border border-slate-200 dark:border-white/[0.08] shadow-sm">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <div class="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
-                        <i data-lucide="gauge" class="w-4 h-4"></i> ความคืบหน้าของโครงการ
+                    <div class="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400 flex items-center gap-1.5">
+                        <i data-lucide="trending-up" class="w-4 h-4"></i> ความคืบหน้าของโครงการ
                     </div>
                     <div class="mt-2 flex items-baseline gap-3">
-                        <span class="text-3xl sm:text-4xl font-extrabold text-slate-900"><?= number_format($project['progress'], 1) ?>%</span>
-                        <span class="text-sm font-semibold text-slate-500">ความสำเร็จโครงการ</span>
+                        <span class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white"><?= number_format($project['progress'], 1) ?>%</span>
+                        <span class="text-sm font-semibold text-slate-500 dark:text-slate-400">ความสำเร็จโครงการ</span>
                         <?php if ($project['planned_activity_count'] >= 1): ?>
-                            <span class="text-xs px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 font-mono font-medium">
+                            <span class="text-xs px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 font-mono font-medium">
                                 กิจกรรม: <?= $project['actual_activity_count'] ?> / <?= $project['planned_activity_count'] ?> ครั้ง
                             </span>
                         <?php endif; ?>
                     </div>
-                    <div class="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-2">
-                        <span>สถานะปัจจุบัน: <b class="text-slate-800"><?= $stLabel ?></b></span>
+                    <div class="text-xs text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap items-center gap-2">
+                        <span>สถานะปัจจุบัน: <b class="text-slate-800 dark:text-slate-200"><?= $stLabel ?></b></span>
                         <span>•</span>
-                        <span>โหมด: <span class="font-medium text-indigo-700">สัมพันธ์ตามสถานะและความคืบหน้าโครงการ</span></span>
+                        <span>โหมด: <span class="font-medium text-indigo-700 dark:text-indigo-400">สัมพันธ์ตามสถานะและความคืบหน้าโครงการ</span></span>
                     </div>
                 </div>
 
@@ -209,7 +209,7 @@ $title = htmlspecialchars($project['name']);
             </div>
 
             <!-- Big Progress Bar -->
-            <div class="w-full bg-slate-200/80 rounded-full h-3.5 mt-4 overflow-hidden shadow-inner">
+            <div class="w-full bg-slate-200/80 dark:bg-white/[0.08] rounded-full h-3.5 mt-4 overflow-hidden shadow-inner">
                 <div class="h-3.5 rounded-full transition-all duration-500 flex items-center justify-end pr-2 text-[10px] font-bold text-white <?= $project['status'] === 'has_problem' ? 'bg-rose-500' : ($project['status'] === 'completed' ? 'bg-emerald-500' : 'bg-gradient-to-r from-indigo-500 to-teal-500') ?>" style="width: <?= min(100, (float)$project['progress']) ?>%">
                     <?= $project['progress'] > 10 ? number_format($project['progress'], 0) . '%' : '' ?>
                 </div>
@@ -217,8 +217,8 @@ $title = htmlspecialchars($project['name']);
 
             <!-- Quick One-Click Progress & Status Presets -->
             <?php if (\App\Core\Auth::canManageProjects()): ?>
-                <div class="mt-4 pt-3 border-t border-slate-200/60 flex flex-wrap items-center justify-between gap-2 text-xs">
-                    <span class="text-slate-500 flex items-center gap-1 font-medium">
+                <div class="mt-4 pt-3 border-t border-slate-200/60 dark:border-white/[0.06] flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <span class="text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium">
                         <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i> ปรับด่วน:
                     </span>
                     <div class="flex flex-wrap items-center gap-1.5">
@@ -294,41 +294,41 @@ $title = htmlspecialchars($project['name']);
 
         <!-- วัตถุประสงค์ & รายละเอียดโครงการ -->
         <div class="mt-6 pt-6 border-t border-slate-100 space-y-3">
-            <div class="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100/80">
-                <div class="text-xs font-bold text-indigo-900 flex items-center gap-2 mb-1.5">
-                    <span class="p-1 bg-indigo-100 text-indigo-700 rounded-lg">
+            <div class="p-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/25 border border-indigo-100 dark:border-indigo-800/30">
+                <div class="text-xs font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-2 mb-1.5">
+                    <span class="p-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg">
                         <i data-lucide="target" class="w-4 h-4"></i>
                     </span>
                     <span>วัตถุประสงค์โครงการ</span>
                 </div>
-                <div class="text-sm leading-relaxed text-slate-700">
-                    <?= !empty($project['objective']) ? nl2br(htmlspecialchars($project['objective'])) : '<span class="text-slate-400 italic">ไม่ได้ระบุวัตถุประสงค์โครงการ</span>' ?>
+                <div class="text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+                    <?= !empty($project['objective']) ? nl2br(htmlspecialchars($project['objective'])) : '<span class="text-slate-400 dark:text-slate-500 italic">ไม่ได้ระบุวัตถุประสงค์โครงการ</span>' ?>
                 </div>
             </div>
 
             <?php if (!empty($project['description'])): ?>
-                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                    <div class="text-xs font-bold text-slate-700 flex items-center gap-2 mb-1.5">
-                        <span class="p-1 bg-slate-200 text-slate-700 rounded-lg">
+                <div class="p-4 rounded-2xl bg-slate-50/80 dark:bg-[#12141a] border border-slate-200 dark:border-white/[0.08]">
+                    <div class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2 mb-1.5">
+                        <span class="p-1 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-lg border border-blue-100 dark:border-blue-900/40">
                             <i data-lucide="file-text" class="w-4 h-4"></i>
                         </span>
                         <span>รายละเอียด / คำอธิบายโครงการ</span>
                     </div>
-                    <div class="text-sm leading-relaxed text-slate-600">
+                    <div class="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
                         <?= nl2br(htmlspecialchars($project['description'])) ?>
                     </div>
                 </div>
             <?php endif; ?>
 
             <?php if (!empty($project['methodology'])): ?>
-                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                    <div class="text-xs font-bold text-slate-700 flex items-center gap-2 mb-1.5">
-                        <span class="p-1 bg-slate-200 text-slate-700 rounded-lg">
+                <div class="p-4 rounded-2xl bg-slate-50/80 dark:bg-[#12141a] border border-slate-200 dark:border-white/[0.08]">
+                    <div class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2 mb-1.5">
+                        <span class="p-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-lg border border-emerald-100 dark:border-emerald-900/40">
                             <i data-lucide="list-checks" class="w-4 h-4"></i>
                         </span>
                         <span>วิธีการดำเนินการ</span>
                     </div>
-                    <div class="text-sm leading-relaxed text-slate-600">
+                    <div class="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
                         <?= nl2br(htmlspecialchars($project['methodology'])) ?>
                     </div>
                 </div>
@@ -339,7 +339,7 @@ $title = htmlspecialchars($project['name']);
     <!-- Activities & Budget Two Columns -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Activities Column -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div class="bg-white dark:bg-[#181a20] p-4 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm space-y-4">
             <div class="flex items-center justify-between">
                 <div>
                     <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
@@ -361,18 +361,18 @@ $title = htmlspecialchars($project['name']);
             <?php else: ?>
                 <div class="space-y-3">
                     <?php foreach ($project['activities'] as $act): ?>
-                        <div class="p-4 rounded-xl border border-slate-200 hover:border-blue-300 transition-all bg-white flex items-start justify-between gap-3">
+                        <div class="p-4 rounded-xl border border-slate-200 dark:border-white/[0.08] hover:border-blue-300 dark:hover:border-blue-500/40 transition-all bg-white dark:bg-[#12141a] flex items-start justify-between gap-3">
                             <div class="flex-1">
                                 <div class="flex items-center gap-2">
-                                    <h4 class="text-sm font-bold text-slate-900"><?= htmlspecialchars($act['name']) ?></h4>
+                                    <h4 class="text-sm font-bold text-slate-900 dark:text-white"><?= htmlspecialchars($act['name']) ?></h4>
                                     <?php if ($act['status'] === 'completed'): ?>
-                                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">เสร็จแล้ว</span>
+                                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">เสร็จแล้ว</span>
                                     <?php elseif ($act['status'] === 'in_progress'): ?>
-                                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-50 text-blue-700 border border-blue-200">ดำเนินการอยู่</span>
+                                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40">ดำเนินการอยู่</span>
                                     <?php elseif ($act['status'] === 'has_problem'): ?>
-                                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-50 text-rose-700 border border-rose-200">มีปัญหา</span>
+                                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40">มีปัญหา</span>
                                     <?php else: ?>
-                                        <span class="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-slate-100 text-slate-600">ยังไม่เริ่ม</span>
+                                        <span class="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10">ยังไม่เริ่ม</span>
                                     <?php endif; ?>
                                 </div>
                                 <p class="text-xs text-slate-500 mt-1"><?= htmlspecialchars($act['description'] ?: 'ไม่มีรายละเอียด') ?></p>
@@ -426,8 +426,8 @@ $title = htmlspecialchars($project['name']);
             <?php endif; ?>
         </div>
 
-        <!-- Budget & Disbursement Column -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <!-- Budget Column -->
+        <div class="bg-white dark:bg-[#181a20] p-4 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm space-y-4">
             <div class="flex items-center justify-between">
                 <div>
                     <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
@@ -446,13 +446,13 @@ $title = htmlspecialchars($project['name']);
             <?php 
             $pctDisb = $project['budget'] > 0 ? round(($project['disbursed_amount'] / $project['budget']) * 100, 1) : 0;
             ?>
-            <div class="p-4 rounded-xl bg-purple-50/50 border border-purple-100">
-                <div class="flex items-center justify-between text-xs font-semibold text-purple-900 mb-1.5">
-                    <span>เบิกจ่ายไปแล้ว <?= $pctDisb ?>%</span>
-                    <span>คงเหลือ <?= number_format($project['budget'] - $project['disbursed_amount'], 2) ?> บาท</span>
+            <div class="p-4 rounded-xl bg-purple-50/60 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-800/30">
+                <div class="flex items-center justify-between text-xs font-semibold text-purple-900 dark:text-purple-300 mb-1.5">
+                    <span>เบิกจ่ายไปแล้ว <strong class="font-bold text-purple-700 dark:text-purple-200"><?= $pctDisb ?>%</strong></span>
+                    <span>คงเหลือ <strong class="font-bold text-slate-800 dark:text-slate-200"><?= number_format($project['budget'] - $project['disbursed_amount'], 2) ?></strong> บาท</span>
                 </div>
-                <div class="w-full bg-purple-100 rounded-full h-2 overflow-hidden">
-                    <div class="bg-purple-600 h-2 rounded-full transition-all" style="width: <?= min(100, $pctDisb) ?>%"></div>
+                <div class="w-full bg-purple-100 dark:bg-white/[0.08] rounded-full h-2 overflow-hidden">
+                    <div class="bg-purple-600 dark:bg-purple-500 h-2 rounded-full transition-all" style="width: <?= min(100, $pctDisb) ?>%"></div>
                 </div>
             </div>
 
@@ -464,7 +464,7 @@ $title = htmlspecialchars($project['name']);
             <?php else: ?>
                 <div class="space-y-2">
                     <?php foreach ($project['disbursements'] as $disb): ?>
-                        <div class="p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 flex items-center justify-between gap-3 text-xs">
+                        <div class="p-3.5 rounded-xl border border-slate-100 dark:border-white/[0.06] bg-slate-50/80 dark:bg-white/[0.03] flex items-center justify-between gap-3 text-xs">
                             <div>
                                 <div class="font-semibold text-slate-900"><?= htmlspecialchars($disb['description']) ?></div>
                                 <div class="text-slate-400 text-[11px] mt-0.5">
@@ -497,7 +497,7 @@ $title = htmlspecialchars($project['name']);
     </div>
 
     <!-- Attachments & Media Gallery Section -->
-    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+    <div class="bg-white dark:bg-[#181a20] p-4 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm space-y-4">
         <div class="flex items-center justify-between">
             <div>
                 <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
@@ -514,7 +514,7 @@ $title = htmlspecialchars($project['name']);
         </div>
 
         <?php if (empty($project['attachments'])): ?>
-            <div class="p-8 text-center bg-slate-50/70 rounded-xl border border-dashed border-slate-300">
+            <div class="p-8 text-center bg-slate-50/70 dark:bg-white/[0.02] rounded-xl border border-dashed border-slate-300 dark:border-white/[0.1]">
                 <i data-lucide="image" class="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-50"></i>
                 <p class="text-xs text-slate-500 font-medium">ยังไม่มีรูปภาพหรือเอกสารแนบในโครงการนี้</p>
                 <?php if (\App\Core\Auth::canManageProjects()): ?>

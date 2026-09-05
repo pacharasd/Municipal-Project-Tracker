@@ -20,6 +20,10 @@ vendor/
 storage/logs/*
 !storage/logs/.gitkeep
 
+# Temporary & debug artifacts
+scratch/
+dashboard_rendered.html
+
 # Obsidian internal workspaces (keep app.json & graph.json, ignore session cache)
 .obsidian/workspace*
 .obsidian/cache/
