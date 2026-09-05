@@ -15,6 +15,7 @@ desktop.ini
 node_modules/
 npm-debug.log*
 vendor/
+package.json
 
 # Storage
 storage/logs/*
@@ -28,16 +29,16 @@ dashboard_rendered.html
 .obsidian/
 wiki/
 raw/
-scripts/*wiki*
+
+# Development & Testing tools
+scripts/
+tests/
+database/
 
 # AI Assistant local metadata
 .agents/
 
-# Old duplicate SQL dumps (keep behn_project_tracker.sql & database/schema.sql)
+# Duplicate assets & dumps
 municipal_project_tracker.sql
-database/municipal_project_tracker_real.sql
-
-# Root asset duplicated in public/
 /mobile-logo.webp
-
-
+public/mobile-logo.webp
