@@ -15,7 +15,7 @@ class Database
         if (self::$instance === null) {
             $host = getenv('DB_HOST') ?: '127.0.0.1';
             $port = getenv('DB_PORT') ?: '3306';
-            $db   = getenv('DB_DATABASE') ?: 'municipal_project_tracker';
+            $db   = getenv('DB_DATABASE') ?: 'behn_project_tracker';
             $user = getenv('DB_USERNAME') ?: 'root';
             $pass = getenv('DB_PASSWORD') !== false ? getenv('DB_PASSWORD') : '';
 
