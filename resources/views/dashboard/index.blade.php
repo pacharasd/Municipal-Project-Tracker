@@ -834,18 +834,36 @@ function initDashboardCharts(isThemeChange = false) {
         const activeDepts = deptData.filter(d => parseInt(d.project_count || 0) > 0);
         const isMobile = window.innerWidth < 640;
         
-        // Format labels for mobile screen cleanly without ugly steep tilts
-        const labels = activeDepts.map(d => {
-            if (isMobile) {
-                if (d.name === 'กองสาธารณสุขและสิ่งแวดล้อม') return ['กองสาธารณสุข', '& สิ่งแวดล้อม'];
-                if (d.name === 'สำนักปลัดเทศบาล') return ['สำนักปลัดฯ'];
-                if (d.name.length > 10) {
-                    const mid = Math.ceil(d.name.length / 2);
-                    return [d.name.slice(0, mid), d.name.slice(mid)];
-                }
+        // ฟังก์ชันตัดแบ่งคำภาษาไทยอย่างเป็นระเบียบ ไม่ให้ตัวหนังสือเอียงหรือซ้อนทับกัน
+        const formatThaiDeptLabel = (name) => {
+            if (!name) return '';
+            if (name === 'กองสาธารณสุขและสิ่งแวดล้อม') {
+                return ['กองสาธารณสุข', 'และสิ่งแวดล้อม'];
             }
-            return d.name;
-        });
+            if (name === 'สำนักปลัดเทศบาล') {
+                return ['สำนักปลัด', 'เทศบาล'];
+            }
+            if (name === 'สำนักการศึกษา') {
+                return ['สำนัก', 'การศึกษา'];
+            }
+            if (name === 'กองสวัสดิการสังคม') {
+                return ['กองสวัสดิการ', 'สังคม'];
+            }
+            if (name === 'กองยุทธศาสตร์และงบประมาณ') {
+                return ['กองยุทธศาสตร์', 'และงบประมาณ'];
+            }
+            if (name.includes('และ')) {
+                const parts = name.split('และ');
+                return [parts[0], 'และ' + parts.slice(1).join('และ')];
+            }
+            if (name.length > 12) {
+                const mid = Math.ceil(name.length / 2);
+                return [name.slice(0, mid), name.slice(mid)];
+            }
+            return name;
+        };
+
+        const labels = activeDepts.map(d => formatThaiDeptLabel(d.name));
         const counts = activeDepts.map(d => parseInt(d.project_count) || 0);
 
         // สร้าง Gradient สีน้ำเงินแนวตั้งแบบพรีเมียม
@@ -868,13 +886,21 @@ function initDashboardCharts(isThemeChange = false) {
                     hoverBackgroundColor: barHoverGrad,
                     borderRadius: { topLeft: 8, topRight: 8, bottomLeft: 2, bottomRight: 2 },
                     borderSkipped: false,
-                    barPercentage: isMobile ? 0.65 : 0.5,
-                    categoryPercentage: isMobile ? 0.85 : 0.75
+                    barPercentage: isMobile ? 0.6 : 0.48,
+                    categoryPercentage: isMobile ? 0.85 : 0.72
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        top: 10,
+                        bottom: 4,
+                        left: 4,
+                        right: 4
+                    }
+                },
                 animation: isThemeChange ? false : {
                     duration: 800,
                     easing: 'easeOutQuart'
@@ -905,7 +931,7 @@ function initDashboardCharts(isThemeChange = false) {
                         ticks: {
                             stepSize: 5,
                             color: tickColor,
-                            font: { family: "'Prompt', sans-serif", size: isMobile ? 10 : 11 }
+                            font: { family: "'Prompt', 'Sarabun', sans-serif", size: isMobile ? 10 : 11 }
                         },
                         grid: { 
                             color: gridColor,
@@ -915,9 +941,16 @@ function initDashboardCharts(isThemeChange = false) {
                     x: {
                         ticks: {
                             color: labelColor,
-                            maxRotation: isMobile ? 0 : 45,
+                            maxRotation: 0,
                             minRotation: 0,
-                            font: { family: "'Prompt', sans-serif", size: isMobile ? 9.5 : 11 }
+                            autoSkip: false,
+                            font: { 
+                                family: "'Prompt', 'Sarabun', sans-serif", 
+                                size: isMobile ? 9.5 : 11.5,
+                                weight: '500',
+                                lineHeight: 1.3
+                            },
+                            padding: 8
                         },
                         grid: { display: false }
                     }
