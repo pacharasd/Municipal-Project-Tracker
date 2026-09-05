@@ -24,7 +24,20 @@ storage/logs/*
 scratch/
 dashboard_rendered.html
 
-# Obsidian internal workspaces (keep app.json & graph.json, ignore session cache)
-.obsidian/workspace*
-.obsidian/cache/
+# Obsidian & Wiki
+.obsidian/
+wiki/
+raw/
+scripts/*wiki*
+
+# AI Assistant local metadata
+.agents/
+
+# Old duplicate SQL dumps (keep behn_project_tracker.sql & database/schema.sql)
+municipal_project_tracker.sql
+database/municipal_project_tracker_real.sql
+
+# Root asset duplicated in public/
+/mobile-logo.webp
+
 
