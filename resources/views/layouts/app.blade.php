@@ -246,7 +246,22 @@
         }
     </style>
 </head>
-<body class="h-full antialiased text-slate-800 dark:text-slate-100 bg-[#f8fafc] dark:bg-[#0f1014] flex flex-col transition-colors duration-150 w-full max-w-full overflow-x-hidden" x-data="{ sidebarOpen: false }">
+<body class="h-full antialiased text-slate-800 dark:text-slate-100 bg-[#f8fafc] dark:bg-[#0f1014] flex flex-col transition-colors duration-150 w-full max-w-full overflow-x-hidden" 
+      x-data="{ 
+          sidebarOpen: false, 
+          desktopSidebarOpen: (localStorage.getItem('mpt_desktop_sidebar') !== 'false'),
+          toggleSidebar() {
+              if (window.innerWidth >= 1024) {
+                  this.desktopSidebarOpen = !this.desktopSidebarOpen;
+                  try {
+                      localStorage.setItem('mpt_desktop_sidebar', this.desktopSidebarOpen ? 'true' : 'false');
+                  } catch (e) {}
+              } else {
+                  this.sidebarOpen = !this.sidebarOpen;
+              }
+              setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 320);
+          }
+      }">
 
     <!-- SPA Top Progress Bar (Neon Green Glow) -->
     <div id="spa-progress" class="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 via-teal-300 to-green-500 shadow-[0_0_12px_#10b981] z-[9999] transition-all duration-200 pointer-events-none opacity-0" style="width: 0%;"></div>
@@ -256,7 +271,11 @@
         <div class="px-2.5 sm:px-6 lg:px-8 flex items-center justify-between h-14 sm:h-16 w-full max-w-full">
             <!-- Left Logo & Title -->
             <div class="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1 sm:flex-initial">
-                <button type="button" @click="sidebarOpen = !sidebarOpen" class="lg:hidden p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition shrink-0" aria-label="เปิดเมนู">
+                <button type="button" 
+                        @click="toggleSidebar()" 
+                        class="p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition shrink-0 cursor-pointer flex items-center justify-center" 
+                        :title="(window.innerWidth >= 1024 && !desktopSidebarOpen) ? 'แสดงแถบเมนู' : 'เปิด/ปิดแถบเมนู'"
+                        aria-label="เปิด/ปิดแถบเมนู">
                     <i data-lucide="menu" class="w-5 h-5 sm:w-6 sm:h-6"></i>
                 </button>
                 <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="shrink-0 flex items-center group" title="ระบบติดตามและบริหารโครงการเทศบาล">
@@ -489,94 +508,102 @@
     <!-- Main Container Layout -->
     <div class="flex-1 flex overflow-hidden w-full max-w-full min-w-0">
         <!-- Sidebar Navigation -->
-        <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-[#0b0c0f] border-r border-slate-200 dark:border-white/[0.08] pt-16 lg:pt-0 transform lg:translate-x-0 lg:static transition-all duration-200 ease-in-out flex flex-col justify-between shadow-lg dark:shadow-2xl lg:shadow-none">
-            <div id="sidebar-nav-items" class="p-4 space-y-2 overflow-y-auto">
-                <div class="px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 font-heading">
-                    MENU
+        <aside :class="{
+                   'translate-x-0': sidebarOpen,
+                   '-translate-x-full': !sidebarOpen,
+                   'lg:w-64 lg:opacity-100': desktopSidebarOpen,
+                   'lg:w-0 lg:border-r-0 lg:opacity-0 lg:pointer-events-none': !desktopSidebarOpen
+               }" 
+               class="fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-[#0b0c0f] border-r border-slate-200 dark:border-white/[0.08] pt-16 lg:pt-0 transform lg:translate-x-0 lg:static transition-all duration-300 ease-in-out flex flex-col justify-between shadow-lg dark:shadow-2xl lg:shadow-none overflow-hidden shrink-0">
+            <div class="w-64 h-full flex flex-col justify-between overflow-hidden">
+                <div id="sidebar-nav-items" class="p-4 space-y-2 overflow-y-auto flex-1">
+                    <div class="px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 font-heading">
+                        MENU
+                    </div>
+                    
+                    <!-- แดชบอร์ดภาพรวม -->
+                    <?php $isDashboard = str_contains($_SERVER['REQUEST_URI'], '/dashboard'); ?>
+                    <a href="<?= \App\Core\Router::url('/dashboard') ?>" 
+                       class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isDashboard ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="layout-dashboard" class="w-5 h-5 <?= $isDashboard ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
+                            <span>แดชบอร์ดภาพรวม</span>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-4 h-4 <?= $isDashboard ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
+                    </a>
+
+                    <!-- โครงการหลัก & ย่อย -->
+                    <?php $isProjects = (str_contains($_SERVER['REQUEST_URI'], '/projects') || str_contains($_SERVER['REQUEST_URI'], '/sub-projects')); ?>
+                    <a href="<?= \App\Core\Router::url('/projects') ?>" 
+                       class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isProjects ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="folder-kanban" class="w-5 h-5 <?= $isProjects ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
+                            <span>โครงการหลัก & ย่อย</span>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-4 h-4 <?= $isProjects ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
+                    </a>
+
+                    <!-- งบประมาณ & เบิกจ่าย -->
+                    <?php $isBudgets = str_contains($_SERVER['REQUEST_URI'], '/budgets'); ?>
+                    <a href="<?= \App\Core\Router::url('/budgets') ?>" 
+                       class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isBudgets ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="wallet" class="w-5 h-5 <?= $isBudgets ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
+                            <span>งบประมาณ & เบิกจ่าย</span>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-4 h-4 <?= $isBudgets ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
+                    </a>
+
+                    <!-- รายงาน & ส่งออกข้อมูล -->
+                    <?php $isReports = str_contains($_SERVER['REQUEST_URI'], '/reports'); ?>
+                    <a href="<?= \App\Core\Router::url('/reports') ?>" 
+                       class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isReports ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="file-spreadsheet" class="w-5 h-5 <?= $isReports ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
+                            <span>รายงาน & ส่งออกข้อมูล</span>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-4 h-4 <?= $isReports ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
+                    </a>
+
+                    <div class="pt-4 px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 font-heading">
+                        ADMINISTRATION
+                    </div>
+
+                    <!-- ผู้ใช้งาน & สิทธิ์ -->
+                    <?php $isUsers = str_contains($_SERVER['REQUEST_URI'], '/users'); ?>
+                    <a href="<?= \App\Core\Router::url('/users') ?>" 
+                       class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isUsers ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="users" class="w-5 h-5 <?= $isUsers ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
+                            <span>ผู้ใช้งาน & บทบาท</span>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-4 h-4 <?= $isUsers ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
+                    </a>
+
+                    <!-- Audit Log -->
+                    <?php $isAudit = str_contains($_SERVER['REQUEST_URI'], '/audit-logs'); ?>
+                    <a href="<?= \App\Core\Router::url('/audit-logs') ?>" 
+                       class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isAudit ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="history" class="w-5 h-5 <?= $isAudit ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
+                            <span>ประวัติการทำงาน</span>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-4 h-4 <?= $isAudit ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
+                    </a>
                 </div>
-                
-                <!-- แดชบอร์ดภาพรวม -->
-                <?php $isDashboard = str_contains($_SERVER['REQUEST_URI'], '/dashboard'); ?>
-                <a href="<?= \App\Core\Router::url('/dashboard') ?>" 
-                   class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isDashboard ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
-                    <div class="flex items-center gap-3">
-                        <i data-lucide="layout-dashboard" class="w-5 h-5 <?= $isDashboard ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
-                        <span>แดชบอร์ดภาพรวม</span>
-                    </div>
-                    <i data-lucide="chevron-right" class="w-4 h-4 <?= $isDashboard ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
-                </a>
 
-                <!-- โครงการหลัก & ย่อย -->
-                <?php $isProjects = (str_contains($_SERVER['REQUEST_URI'], '/projects') || str_contains($_SERVER['REQUEST_URI'], '/sub-projects')); ?>
-                <a href="<?= \App\Core\Router::url('/projects') ?>" 
-                   class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isProjects ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
-                    <div class="flex items-center gap-3">
-                        <i data-lucide="folder-kanban" class="w-5 h-5 <?= $isProjects ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
-                        <span>โครงการหลัก & ย่อย</span>
+                <!-- Bottom Icons -->
+                <div class="p-4 border-t border-slate-200 dark:border-white/[0.08] flex items-center justify-between text-slate-500 dark:text-slate-400 shrink-0">
+                    <div class="flex items-center gap-2">
+                        <button type="button" @click="toggleSidebar()" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#181a20] border border-slate-200 dark:border-white/[0.08] flex items-center justify-center hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer" title="ซ่อน/ย่อแถบเมนู">
+                            <i data-lucide="panel-left-close" class="w-4 h-4"></i>
+                        </button>
+                        <button type="button" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#181a20] border border-slate-200 dark:border-white/[0.08] flex items-center justify-center hover:text-emerald-600 dark:hover:text-emerald-400 transition" title="ช่วยเหลือ">
+                            <i data-lucide="help-circle" class="w-4 h-4"></i>
+                        </button>
                     </div>
-                    <i data-lucide="chevron-right" class="w-4 h-4 <?= $isProjects ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
-                </a>
-
-                <!-- งบประมาณ & เบิกจ่าย -->
-                <?php $isBudgets = str_contains($_SERVER['REQUEST_URI'], '/budgets'); ?>
-                <a href="<?= \App\Core\Router::url('/budgets') ?>" 
-                   class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isBudgets ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
-                    <div class="flex items-center gap-3">
-                        <i data-lucide="wallet" class="w-5 h-5 <?= $isBudgets ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
-                        <span>งบประมาณ & เบิกจ่าย</span>
-                    </div>
-                    <i data-lucide="chevron-right" class="w-4 h-4 <?= $isBudgets ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
-                </a>
-
-                <!-- รายงาน & ส่งออกข้อมูล -->
-                <?php $isReports = str_contains($_SERVER['REQUEST_URI'], '/reports'); ?>
-                <a href="<?= \App\Core\Router::url('/reports') ?>" 
-                   class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isReports ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
-                    <div class="flex items-center gap-3">
-                        <i data-lucide="file-spreadsheet" class="w-5 h-5 <?= $isReports ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
-                        <span>รายงาน & ส่งออกข้อมูล</span>
-                    </div>
-                    <i data-lucide="chevron-right" class="w-4 h-4 <?= $isReports ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
-                </a>
-
-                <div class="pt-4 px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 font-heading">
-                    ADMINISTRATION
+                    <span class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400/80 font-mono">MPT V2.0</span>
                 </div>
-
-                <!-- ผู้ใช้งาน & สิทธิ์ -->
-                <?php $isUsers = str_contains($_SERVER['REQUEST_URI'], '/users'); ?>
-                <a href="<?= \App\Core\Router::url('/users') ?>" 
-                   class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isUsers ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
-                    <div class="flex items-center gap-3">
-                        <i data-lucide="users" class="w-5 h-5 <?= $isUsers ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
-                        <span>ผู้ใช้งาน & บทบาท</span>
-                    </div>
-                    <i data-lucide="chevron-right" class="w-4 h-4 <?= $isUsers ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
-                </a>
-
-                <!-- Audit Log -->
-                <?php $isAudit = str_contains($_SERVER['REQUEST_URI'], '/audit-logs'); ?>
-                <a href="<?= \App\Core\Router::url('/audit-logs') ?>" 
-                   class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isAudit ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
-                    <div class="flex items-center gap-3">
-                        <i data-lucide="history" class="w-5 h-5 <?= $isAudit ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
-                        <span>ประวัติการทำงาน</span>
-                    </div>
-                    <i data-lucide="chevron-right" class="w-4 h-4 <?= $isAudit ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
-                </a>
-            </div>
-
-            <!-- Bottom Icons -->
-            <div class="p-4 border-t border-slate-200 dark:border-white/[0.08] flex items-center justify-between text-slate-500 dark:text-slate-400">
-                <div class="flex items-center gap-2">
-                    <button type="button" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#181a20] border border-slate-200 dark:border-white/[0.08] flex items-center justify-center hover:text-emerald-600 dark:hover:text-emerald-400 transition" title="ตั้งค่าระบบ">
-                        <i data-lucide="settings" class="w-4 h-4"></i>
-                    </button>
-                    <button type="button" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#181a20] border border-slate-200 dark:border-white/[0.08] flex items-center justify-center hover:text-emerald-600 dark:hover:text-emerald-400 transition" title="ช่วยเหลือ">
-                        <i data-lucide="help-circle" class="w-4 h-4"></i>
-                    </button>
-                </div>
-                <span class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400/80 font-mono">MPT V2.0</span>
             </div>
         </aside>
 
