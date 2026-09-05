@@ -415,8 +415,8 @@
 
                 <!-- Current User Avatar -->
                 <div class="flex items-center gap-1.5 sm:gap-2 pl-1 sm:pl-2 border-l border-slate-200/80 dark:border-white/[0.08] shrink-0">
-                    <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 text-slate-950 flex items-center justify-center font-extrabold text-xs shadow-neon-green ring-1 sm:ring-2 ring-emerald-400/40 shrink-0">
-                        <?= mb_substr($currentUser['name'] ?? 'U', 0, 1) ?>
+                    <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 text-slate-950 flex items-center justify-center shadow-neon-green ring-1 sm:ring-2 ring-emerald-400/40 shrink-0">
+                        <i data-lucide="user" class="w-4 h-4 sm:w-4.5 sm:h-4.5 text-slate-950 stroke-[2.2]"></i>
                     </div>
                     <div class="hidden lg:block text-left">
                         <div class="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[130px]"><?= htmlspecialchars($currentUser['name'] ?? 'ผู้ใช้งาน') ?></div>
