@@ -328,7 +328,8 @@ $presetIcons = [
             <table class="w-full text-left text-xs">
                 <thead class="bg-slate-50/80 dark:bg-white/[0.02] border-b border-slate-100 dark:border-white/[0.06] text-slate-500 dark:text-slate-400 uppercase font-heading text-[10px] tracking-wider">
                     <tr>
-                        <th class="py-3.5 px-4 font-bold"># / ประเภทโครงการ</th>
+                        <th class="py-3.5 px-4 font-bold text-center w-12">#</th>
+                        <th class="py-3.5 px-4 font-bold">ประเภทโครงการ</th>
                         <th class="py-3.5 px-3 font-bold text-center">โครงการหลัก</th>
                         <th class="py-3.5 px-3 font-bold text-center">โครงการย่อย</th>
                         <th class="py-3.5 px-3 font-bold text-right">งบประมาณรวม</th>
@@ -352,21 +353,17 @@ $presetIcons = [
                         ?>
                         <tr class="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition"
                             x-show="!searchQuery || '<?= addslashes(mb_strtolower($cat['name'], 'UTF-8')) ?>'.includes(searchQuery.toLowerCase())">
+                            <td class="py-4 px-4 text-center text-slate-400 font-mono font-medium">
+                                <?= $idx++ ?>
+                            </td>
                             <td class="py-4 px-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border <?= $theme['bg'] ?>">
-                                        <i data-lucide="<?= htmlspecialchars($catIcon) ?>" class="w-4 h-4"></i>
-                                    </div>
-                                    <div>
-                                        <a href="<?= Router::url('/projects?category_id=' . $cat['id']) ?>" 
-                                           class="font-bold text-slate-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                                            <?= htmlspecialchars($cat['name']) ?>
-                                        </a>
-                                        <p class="text-[11px] text-slate-400 line-clamp-1 max-w-xs">
-                                            <?= htmlspecialchars($cat['description'] ?: 'ไม่มีรายละเอียด') ?>
-                                        </p>
-                                    </div>
-                                </div>
+                                <a href="<?= Router::url('/projects?category_id=' . $cat['id']) ?>" 
+                                   class="font-bold text-sm text-slate-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors block">
+                                    <?= htmlspecialchars($cat['name']) ?>
+                                </a>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 max-w-sm mt-0.5">
+                                    <?= htmlspecialchars($cat['description'] ?: 'ไม่มีรายละเอียดคำอธิบายเพิ่มเติม') ?>
+                                </p>
                             </td>
                             <td class="py-4 px-3 text-center">
                                 <span class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/[0.05] font-bold text-slate-800 dark:text-white font-mono">
