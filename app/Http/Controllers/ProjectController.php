@@ -19,6 +19,7 @@ class ProjectController
         $filters = [
             'fiscal_year_id' => $_GET['fiscal_year_id'] ?? '',
             'department_id'  => $_GET['department_id'] ?? '',
+            'category_id'    => $_GET['category_id'] ?? '',
             'status'         => $_GET['status'] ?? '',
             'search'         => trim($_GET['search'] ?? ''),
         ];

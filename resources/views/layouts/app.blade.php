@@ -858,6 +858,17 @@
                         <i data-lucide="chevron-right" class="w-4 h-4 <?= $isUsers ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
                     </a>
 
+                    <!-- ประเภทโครงการ -->
+                    <?php $isCategories = str_contains($_SERVER['REQUEST_URI'], '/categories'); ?>
+                    <a href="<?= \App\Core\Router::url('/categories') ?>" 
+                       class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isCategories ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="tags" class="w-5 h-5 <?= $isCategories ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
+                            <span>ประเภทโครงการ</span>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-4 h-4 <?= $isCategories ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
+                    </a>
+
                     <!-- Audit Log -->
                     <?php $isAudit = str_contains($_SERVER['REQUEST_URI'], '/audit-logs'); ?>
                     <a href="<?= \App\Core\Router::url('/audit-logs') ?>" 

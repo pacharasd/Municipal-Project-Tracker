@@ -10,7 +10,7 @@ use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\UserController;
-
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\AttachmentController;
 
 // Root redirect
@@ -79,3 +79,10 @@ Router::get('/users', [UserController::class, 'index']);
 Router::post('/users', [UserController::class, 'store']);
 Router::post('/users/{id}/update', [UserController::class, 'update']);
 Router::post('/users/{id}/delete', [UserController::class, 'delete']);
+
+// Project Categories Management Routes (Master Data)
+Router::get('/categories', [CategoryController::class, 'index']);
+Router::post('/categories', [CategoryController::class, 'store']);
+Router::post('/categories/{id}/update', [CategoryController::class, 'update']);
+Router::post('/categories/{id}/delete', [CategoryController::class, 'delete']);
+

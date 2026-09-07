@@ -55,6 +55,10 @@ class ProjectService
             $sql .= " AND p.department_id = ?";
             $params[] = $filters['department_id'];
         }
+        if (!empty($filters['category_id'])) {
+            $sql .= " AND p.category_id = ?";
+            $params[] = $filters['category_id'];
+        }
         if (!empty($filters['status'])) {
             $sql .= " AND p.status = ?";
             $params[] = $filters['status'];

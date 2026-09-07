@@ -177,6 +177,31 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
         </div>
     </form>
 
+    <?php if (!empty($filters['category_id'])): ?>
+        <?php 
+        $activeCategory = null;
+        foreach ($categories as $cat) {
+            if ((string)$cat['id'] === (string)$filters['category_id']) {
+                $activeCategory = $cat;
+                break;
+            }
+        }
+        ?>
+        <?php if ($activeCategory): ?>
+            <div class="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 flex items-center justify-between text-xs text-emerald-800 dark:text-emerald-300 shadow-xs">
+                <div class="flex items-center gap-2.5">
+                    <span class="p-1.5 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                        <i data-lucide="tags" class="w-4 h-4"></i>
+                    </span>
+                    <span>กำลังแสดงเฉพาะโครงการในหมวดหมู่: <strong class="font-bold text-emerald-900 dark:text-emerald-200"><?= htmlspecialchars($activeCategory['name']) ?></strong></span>
+                </div>
+                <a href="<?= \App\Core\Router::url('/projects') ?>" class="px-3 py-1.5 rounded-xl bg-white dark:bg-white/10 hover:bg-emerald-100 dark:hover:bg-white/20 text-emerald-700 dark:text-emerald-200 font-bold flex items-center gap-1.5 border border-emerald-300/60 dark:border-white/10 transition text-[11px] shadow-xs cursor-pointer">
+                    <i data-lucide="x" class="w-3.5 h-3.5"></i> ล้างการกรองหมวดหมู่
+                </a>
+            </div>
+        <?php endif; ?>
+    <?php endif; ?>
+
     <!-- Toolbar: Per Page Selector, Total Counts & Status Filter Pills -->
     <div id="projects-toolbar" class="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white dark:bg-[#181a20] p-3.5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm text-xs text-slate-600 dark:text-slate-400">
         <!-- Left: Per Page Selector & Summary Counts -->
