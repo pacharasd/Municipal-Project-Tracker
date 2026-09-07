@@ -40,7 +40,10 @@ class Auth
 
     public static function isAdmin(): bool
     {
-        return self::role() === 'admin';
+        $user = self::user();
+        if (!$user) return false;
+        $role = strtolower($user['role_name'] ?? '');
+        return in_array($role, ['admin', 'administrator']) || ((int)($user['role_id'] ?? 0) === 1);
     }
 
     public static function isExecutive(): bool

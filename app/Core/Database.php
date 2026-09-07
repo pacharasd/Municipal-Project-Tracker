@@ -138,6 +138,51 @@ class Database
                         WHERE p.responsible_person IS NULL OR p.responsible_person = ''
                     ");
                 }
+
+                // Ensure category_id column exists in projects
+                $catColCheck = $pdo->query("SHOW COLUMNS FROM `projects` LIKE 'category_id'")->fetch();
+                if (!$catColCheck) {
+                    $pdo->exec("ALTER TABLE `projects` ADD COLUMN `category_id` BIGINT UNSIGNED NULL AFTER `department_id`");
+                }
+            }
+
+            // Ensure project_categories table exists with proper schema
+            $pdo->exec("
+                CREATE TABLE IF NOT EXISTS `project_categories` (
+                    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                    `name` VARCHAR(100) NOT NULL UNIQUE,
+                    `description` TEXT NULL,
+                    `icon` VARCHAR(50) DEFAULT 'folder',
+                    `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+                    `updated_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    PRIMARY KEY (`id`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ");
+
+            // If project_categories is empty, seed standard 5 municipal categories and link
+            $catCount = (int) $pdo->query("SELECT COUNT(*) FROM `project_categories`")->fetchColumn();
+            if ($catCount === 0) {
+                $pdo->exec("
+                    INSERT INTO `project_categories` (`id`, `name`, `description`, `icon`, `created_at`, `updated_at`) VALUES
+                    (1, 'โครงสร้างพื้นฐาน', 'งานคมนาคม ไฟฟ้า ประปา ระบายน้ำ และผังเมือง', 'folder', NOW(), NOW()),
+                    (2, 'สาธารณสุขและคุณภาพชีวิต', 'การดูแลสุขภาพ สุขาภิบาล และการดูแลผู้สูงอายุ', 'folder', NOW(), NOW()),
+                    (3, 'การศึกษาและวัฒนธรรม', 'การส่งเสริมการเรียนรู้ ทักษะอาชีพ และศิลปวัฒนธรรม', 'folder', NOW(), NOW()),
+                    (4, 'สิ่งแวดล้อมและทรัพยากร', 'การจัดการขยะ น้ำเสีย พื้นที่สีเขียว และพลังงานทดแทน', 'folder', NOW(), NOW()),
+                    (5, 'สังคมและเศรษฐกิจชุมชน', 'การสงเคราะห์ผู้ด้อยโอกาส วิสาหกิจชุมชน และท่องเที่ยว', 'folder', NOW(), NOW())
+                    ON DUPLICATE KEY UPDATE `name` = VALUES(`name`);
+                ");
+
+                // Auto-categorize existing main projects
+                $pdo->exec("
+                    UPDATE `projects` SET `category_id` = CASE 
+                        WHEN `name` LIKE '%ถนน%' OR `name` LIKE '%สะพาน%' OR `name` LIKE '%ระบายน้ำ%' OR `name` LIKE '%ไฟ%' OR `name` LIKE '%ช่าง%' OR `name` LIKE '%ทาง%' THEN 1
+                        WHEN `name` LIKE '%สุขภาพ%' OR `name` LIKE '%สาธารณสุข%' OR `name` LIKE '%โรค%' OR `name` LIKE '%ผู้สูงอายุ%' OR `name` LIKE '%ยา%' THEN 2
+                        WHEN `name` LIKE '%ศึกษา%' OR `name` LIKE '%โรงเรียน%' OR `name` LIKE '%เรียน%' OR `name` LIKE '%วัฒนธรรม%' OR `name` LIKE '%เยาวชน%' THEN 3
+                        WHEN `name` LIKE '%ขยะ%' OR `name` LIKE '%สิ่งแวดล้อม%' OR `name` LIKE '%น้ำเสีย%' OR `name` LIKE '%พลังงาน%' OR `name` LIKE '%สวน%' THEN 4
+                        ELSE 5
+                    END
+                    WHERE `category_id` IS NULL AND `parent_id` IS NULL;
+                ");
             }
         } catch (Exception $e) {
             error_log("Auto schema migration notice: " . $e->getMessage());
@@ -352,6 +397,12 @@ DB_PASSWORD=รหัสผ่านที่ตั้งไว้</code></pre>
         $sql = "UPDATE `{$table}` SET {$fields} WHERE {$where}";
         $params = array_merge(array_values($data), $whereParams);
         return self::execute($sql, $params);
+    }
+
+    public static function delete(string $table, string $where, array $whereParams = []): int
+    {
+        $sql = "DELETE FROM `{$table}` WHERE {$where}";
+        return self::execute($sql, $whereParams);
     }
 
     public static function transaction(callable $callback): mixed

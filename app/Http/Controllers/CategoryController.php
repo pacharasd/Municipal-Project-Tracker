@@ -82,153 +82,186 @@ class CategoryController
 
     public function store(): void
     {
-        if (!Auth::isAdmin()) {
-            Session::flash('error', 'เฉพาะผู้ดูแลระบบ (Administrator) เท่านั้นที่มีสิทธิ์เพิ่มประเภทโครงการ');
+        try {
+            if (!Auth::isAdmin()) {
+                Session::flash('error', 'เฉพาะผู้ดูแลระบบ (Administrator) เท่านั้นที่มีสิทธิ์เพิ่มประเภทโครงการ');
+                header('Location: ' . Router::url('/categories'));
+                exit;
+            }
+
+            $name = trim($_POST['name'] ?? '');
+            $description = trim($_POST['description'] ?? '');
+
+            if (empty($name)) {
+                Session::flash('error', 'กรุณาระบุชื่อประเภทโครงการ');
+                header('Location: ' . Router::url('/categories'));
+                exit;
+            }
+
+            if (mb_strlen($name) < 2 || mb_strlen($name) > 100) {
+                Session::flash('error', 'ชื่อประเภทโครงการต้องมีความยาวระหว่าง 2 ถึง 100 ตัวอักษร');
+                header('Location: ' . Router::url('/categories'));
+                exit;
+            }
+
+            // Check duplicate name
+            $exists = Database::fetchColumn("SELECT COUNT(*) FROM project_categories WHERE name = ?", [$name]);
+            if ($exists > 0) {
+                Session::flash('error', "ชื่อประเภทโครงการ '{$name}' มีอยู่ในระบบแล้ว กรุณาใช้ชื่ออื่น");
+                header('Location: ' . Router::url('/categories'));
+                exit;
+            }
+
+            $now = date('Y-m-d H:i:s');
+            $categoryId = Database::insert('project_categories', [
+                'name'        => $name,
+                'description' => $description ?: null,
+                'icon'        => 'folder',
+                'created_at'  => $now,
+                'updated_at'  => $now,
+            ]);
+
+            try {
+                AuditLogService::log(
+                    'CREATE',
+                    'ProjectCategory',
+                    $categoryId,
+                    null,
+                    ['name' => $name, 'description' => $description]
+                );
+            } catch (Exception $e) {
+                error_log("Audit log notice: " . $e->getMessage());
+            }
+
+            Session::flash('success', "เพิ่มประเภทโครงการ '{$name}' เรียบร้อยแล้ว");
+            header('Location: ' . Router::url('/categories'));
+            exit;
+        } catch (Exception $e) {
+            error_log("Category store error: " . $e->getMessage());
+            Session::flash('error', "ไม่สามารถบันทึกประเภทโครงการได้: " . $e->getMessage());
             header('Location: ' . Router::url('/categories'));
             exit;
         }
-
-        $name = trim($_POST['name'] ?? '');
-        $description = trim($_POST['description'] ?? '');
-
-        if (empty($name)) {
-            Session::flash('error', 'กรุณาระบุชื่อประเภทโครงการ');
-            header('Location: ' . Router::url('/categories'));
-            exit;
-        }
-
-        if (mb_strlen($name) < 2 || mb_strlen($name) > 100) {
-            Session::flash('error', 'ชื่อประเภทโครงการต้องมีความยาวระหว่าง 2 ถึง 100 ตัวอักษร');
-            header('Location: ' . Router::url('/categories'));
-            exit;
-        }
-
-        // Check duplicate name
-        $exists = Database::fetchColumn("SELECT COUNT(*) FROM project_categories WHERE name = ?", [$name]);
-        if ($exists > 0) {
-            Session::flash('error', "ชื่อประเภทโครงการ '{$name}' มีอยู่ในระบบแล้ว กรุณาใช้ชื่ออื่น");
-            header('Location: ' . Router::url('/categories'));
-            exit;
-        }
-
-        $now = date('Y-m-d H:i:s');
-        $categoryId = Database::insert('project_categories', [
-            'name'        => $name,
-            'description' => $description ?: null,
-            'icon'        => 'folder',
-            'created_at'  => $now,
-            'updated_at'  => $now,
-        ]);
-
-        AuditLogService::log(
-            'CREATE',
-            'ProjectCategory',
-            $categoryId,
-            null,
-            ['name' => $name, 'description' => $description]
-        );
-
-        Session::flash('success', "เพิ่มประเภทโครงการ '{$name}' เรียบร้อยแล้ว");
-        header('Location: ' . Router::url('/categories'));
-        exit;
     }
 
     public function update(string $id): void
     {
-        if (!Auth::isAdmin()) {
-            Session::flash('error', 'เฉพาะผู้ดูแลระบบ (Administrator) เท่านั้นที่มีสิทธิ์แก้ไขประเภทโครงการ');
+        try {
+            if (!Auth::isAdmin()) {
+                Session::flash('error', 'เฉพาะผู้ดูแลระบบ (Administrator) เท่านั้นที่มีสิทธิ์แก้ไขประเภทโครงการ');
+                header('Location: ' . Router::url('/categories'));
+                exit;
+            }
+
+            $categoryId = (int)$id;
+            $category = Database::fetch("SELECT * FROM project_categories WHERE id = ?", [$categoryId]);
+            if (!$category) {
+                Session::flash('error', 'ไม่พบประเภทโครงการที่ต้องการแก้ไข');
+                header('Location: ' . Router::url('/categories'));
+                exit;
+            }
+
+            $name = trim($_POST['name'] ?? '');
+            $description = trim($_POST['description'] ?? '');
+
+            if (empty($name)) {
+                Session::flash('error', 'กรุณาระบุชื่อประเภทโครงการ');
+                header('Location: ' . Router::url('/categories'));
+                exit;
+            }
+
+            if (mb_strlen($name) < 2 || mb_strlen($name) > 100) {
+                Session::flash('error', 'ชื่อประเภทโครงการต้องมีความยาวระหว่าง 2 ถึง 100 ตัวอักษร');
+                header('Location: ' . Router::url('/categories'));
+                exit;
+            }
+
+            // Check duplicate name excluding self
+            $exists = Database::fetchColumn("SELECT COUNT(*) FROM project_categories WHERE name = ? AND id != ?", [$name, $categoryId]);
+            if ($exists > 0) {
+                Session::flash('error', "ชื่อประเภทโครงการ '{$name}' ซ้ำกับประเภทอื่นที่มีอยู่ในระบบแล้ว");
+                header('Location: ' . Router::url('/categories'));
+                exit;
+            }
+
+            $updateData = [
+                'name'        => $name,
+                'description' => $description ?: null,
+                'updated_at'  => date('Y-m-d H:i:s'),
+            ];
+
+            Database::update('project_categories', $updateData, "id = ?", [$categoryId]);
+
+            try {
+                AuditLogService::log(
+                    'UPDATE',
+                    'ProjectCategory',
+                    $categoryId,
+                    ['name' => $category['name'], 'description' => $category['description']],
+                    $updateData
+                );
+            } catch (Exception $e) {
+                error_log("Audit log notice: " . $e->getMessage());
+            }
+
+            Session::flash('success', "อัปเดตประเภทโครงการ '{$name}' เรียบร้อยแล้ว");
+            header('Location: ' . Router::url('/categories'));
+            exit;
+        } catch (Exception $e) {
+            error_log("Category update error: " . $e->getMessage());
+            Session::flash('error', "ไม่สามารถอัปเดตประเภทโครงการได้: " . $e->getMessage());
             header('Location: ' . Router::url('/categories'));
             exit;
         }
-
-        $categoryId = (int)$id;
-        $category = Database::fetch("SELECT * FROM project_categories WHERE id = ?", [$categoryId]);
-        if (!$category) {
-            Session::flash('error', 'ไม่พบประเภทโครงการที่ต้องการแก้ไข');
-            header('Location: ' . Router::url('/categories'));
-            exit;
-        }
-
-        $name = trim($_POST['name'] ?? '');
-        $description = trim($_POST['description'] ?? '');
-
-        if (empty($name)) {
-            Session::flash('error', 'กรุณาระบุชื่อประเภทโครงการ');
-            header('Location: ' . Router::url('/categories'));
-            exit;
-        }
-
-        if (mb_strlen($name) < 2 || mb_strlen($name) > 100) {
-            Session::flash('error', 'ชื่อประเภทโครงการต้องมีความยาวระหว่าง 2 ถึง 100 ตัวอักษร');
-            header('Location: ' . Router::url('/categories'));
-            exit;
-        }
-
-        // Check duplicate name excluding self
-        $exists = Database::fetchColumn("SELECT COUNT(*) FROM project_categories WHERE name = ? AND id != ?", [$name, $categoryId]);
-        if ($exists > 0) {
-            Session::flash('error', "ชื่อประเภทโครงการ '{$name}' ซ้ำกับประเภทอื่นที่มีอยู่ในระบบแล้ว");
-            header('Location: ' . Router::url('/categories'));
-            exit;
-        }
-
-        $updateData = [
-            'name'        => $name,
-            'description' => $description ?: null,
-            'updated_at'  => date('Y-m-d H:i:s'),
-        ];
-
-        Database::update('project_categories', $updateData, "id = ?", [$categoryId]);
-
-        AuditLogService::log(
-            'UPDATE',
-            'ProjectCategory',
-            $categoryId,
-            ['name' => $category['name'], 'description' => $category['description']],
-            $updateData
-        );
-
-        Session::flash('success', "อัปเดตประเภทโครงการ '{$name}' เรียบร้อยแล้ว");
-        header('Location: ' . Router::url('/categories'));
-        exit;
     }
 
     public function delete(string $id): void
     {
-        if (!Auth::isAdmin()) {
-            Session::flash('error', 'เฉพาะผู้ดูแลระบบ (Administrator) เท่านั้นที่มีสิทธิ์ลบประเภทโครงการ');
+        try {
+            if (!Auth::isAdmin()) {
+                Session::flash('error', 'เฉพาะผู้ดูแลระบบ (Administrator) เท่านั้นที่มีสิทธิ์ลบประเภทโครงการ');
+                header('Location: ' . Router::url('/categories'));
+                exit;
+            }
+
+            $categoryId = (int)$id;
+            $category = Database::fetch("SELECT * FROM project_categories WHERE id = ?", [$categoryId]);
+            if (!$category) {
+                Session::flash('error', 'ไม่พบประเภทโครงการที่ต้องการลบ');
+                header('Location: ' . Router::url('/categories'));
+                exit;
+            }
+
+            // Safety check: ensure no projects linked to this category
+            $linkedCount = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects WHERE category_id = ?", [$categoryId]);
+            if ($linkedCount > 0) {
+                Session::flash('error', "ไม่สามารถลบประเภทโครงการ '{$category['name']}' ได้ เนื่องจากมีโครงการหลักผูกอยู่ {$linkedCount} โครงการ กรุณาย้ายหรือเปลี่ยนประเภทโครงการเหล่านั้นก่อนลบ");
+                header('Location: ' . Router::url('/categories'));
+                exit;
+            }
+
+            Database::delete('project_categories', "id = ?", [$categoryId]);
+
+            try {
+                AuditLogService::log(
+                    'DELETE',
+                    'ProjectCategory',
+                    $categoryId,
+                    ['name' => $category['name']],
+                    null
+                );
+            } catch (Exception $e) {
+                error_log("Audit log notice: " . $e->getMessage());
+            }
+
+            Session::flash('success', "ลบประเภทโครงการ '{$category['name']}' เรียบร้อยแล้ว");
+            header('Location: ' . Router::url('/categories'));
+            exit;
+        } catch (Exception $e) {
+            error_log("Category delete error: " . $e->getMessage());
+            Session::flash('error', "ไม่สามารถลบประเภทโครงการได้: " . $e->getMessage());
             header('Location: ' . Router::url('/categories'));
             exit;
         }
-
-        $categoryId = (int)$id;
-        $category = Database::fetch("SELECT * FROM project_categories WHERE id = ?", [$categoryId]);
-        if (!$category) {
-            Session::flash('error', 'ไม่พบประเภทโครงการที่ต้องการลบ');
-            header('Location: ' . Router::url('/categories'));
-            exit;
-        }
-
-        // Safety check: ensure no projects linked to this category
-        $linkedCount = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects WHERE category_id = ?", [$categoryId]);
-        if ($linkedCount > 0) {
-            Session::flash('error', "ไม่สามารถลบประเภทโครงการ '{$category['name']}' ได้ เนื่องจากมีโครงการหลักผูกอยู่ {$linkedCount} โครงการ กรุณาย้ายหรือเปลี่ยนประเภทโครงการเหล่านั้นก่อนลบ");
-            header('Location: ' . Router::url('/categories'));
-            exit;
-        }
-
-        Database::delete('project_categories', "id = ?", [$categoryId]);
-
-        AuditLogService::log(
-            'DELETE',
-            'ProjectCategory',
-            $categoryId,
-            ['name' => $category['name'], 'icon' => $category['icon']],
-            null
-        );
-
-        Session::flash('success', "ลบประเภทโครงการ '{$category['name']}' เรียบร้อยแล้ว");
-        header('Location: ' . Router::url('/categories'));
-        exit;
     }
 }
