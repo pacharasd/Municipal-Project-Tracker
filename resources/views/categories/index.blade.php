@@ -287,13 +287,14 @@ $presetIcons = [
                     </div>
 
                     <!-- Progress Average Status -->
-                    <div class="mt-4 pt-3 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between">
-                        <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">ความคืบหน้าเฉลี่ย</span>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-mono font-bold <?= $tier['textClass'] ?>"><?= number_format($avgProg, 1) ?>%</span>
-                            <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold border whitespace-nowrap <?= $tier['badgeClass'] ?>">
-                                <?= $tier['label'] ?>
-                            </span>
+                    <div class="mt-4 pt-3 border-t border-slate-100 dark:border-white/[0.06]">
+                        <div class="flex items-center justify-between text-xs mb-1.5">
+                            <span class="text-slate-500 dark:text-slate-400 font-medium">ความคืบหน้าเฉลี่ย</span>
+                            <span class="font-mono font-bold <?= $tier['textClass'] ?>"><?= number_format($avgProg, 1) ?>%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-white/[0.06] h-2 rounded-full overflow-hidden p-0.5">
+                            <div class="bg-gradient-to-r <?= $tier['gradient'] ?> h-full rounded-full transition-all duration-500" 
+                                 style="width: <?= $avgProg > 0 ? min(100, max(5, $avgProg)) : 0 ?>%"></div>
                         </div>
                     </div>
                 </div>
@@ -334,7 +335,7 @@ $presetIcons = [
                         <th class="py-3.5 px-3 font-bold text-center">โครงการย่อย</th>
                         <th class="py-3.5 px-3 font-bold text-right">งบประมาณรวม</th>
                         <th class="py-3.5 px-3 font-bold text-right">ยอดเบิกจ่าย</th>
-                        <th class="py-3.5 px-4 font-bold text-center">ความคืบหน้าเฉลี่ย</th>
+                        <th class="py-3.5 px-4 font-bold text-left min-w-[170px]">ความคืบหน้าเฉลี่ย</th>
                         <th class="py-3.5 px-4 font-bold text-center">จัดการ</th>
                     </tr>
                 </thead>
@@ -382,12 +383,13 @@ $presetIcons = [
                                 <div class="font-mono font-semibold text-slate-900 dark:text-white"><?= number_format($dTotal) ?> ฿</div>
                                 <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold"><?= number_format($disbPct, 1) ?>%</div>
                             </td>
-                            <td class="py-4 px-4 text-center">
-                                <div class="inline-flex items-center gap-2">
-                                    <span class="font-mono font-bold text-xs <?= $tier['textClass'] ?>"><?= number_format($avgProg, 1) ?>%</span>
-                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold border <?= $tier['badgeClass'] ?>">
-                                        <?= $tier['label'] ?>
-                                    </span>
+                            <td class="py-4 px-4 min-w-[170px]">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="font-mono font-bold text-xs w-11 text-right shrink-0 <?= $tier['textClass'] ?>"><?= number_format($avgProg, 1) ?>%</span>
+                                    <div class="flex-1 bg-slate-100 dark:bg-white/[0.08] h-2.5 rounded-full overflow-hidden p-0.5 border border-slate-200/50 dark:border-white/5" title="ความคืบหน้าเฉลี่ย <?= number_format($avgProg, 1) ?>%">
+                                        <div class="bg-gradient-to-r <?= $tier['gradient'] ?> h-full rounded-full transition-all duration-500 shadow-sm" 
+                                             style="width: <?= $avgProg > 0 ? min(100, max(6, $avgProg)) : 0 ?>%"></div>
+                                    </div>
                                 </div>
                             </td>
                             <td class="py-4 px-4 text-center whitespace-nowrap">
