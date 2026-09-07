@@ -123,7 +123,7 @@ class ProjectController
         }
 
         try {
-            $projectId = Database::insert('projects', [
+            $insertData = [
                 'parent_id'           => null,
                 'project_code'        => $code,
                 'name'                => trim($_POST['name']),
@@ -132,7 +132,6 @@ class ProjectController
                 'category_id'         => (int)$_POST['category_id'],
                 'department_id'       => $deptId,
                 'responsible_user_id' => $responsibleUserId,
-                'responsible_person'  => $responsiblePerson ?: null,
                 'start_date'          => $_POST['start_date'],
                 'end_date'            => $_POST['end_date'],
                 'budget'              => (float)$_POST['budget'],
@@ -140,7 +139,11 @@ class ProjectController
                 'status'              => 'not_started',
                 'progress'            => 0.00,
                 'progress_mode'       => 'auto',
-            ]);
+            ];
+            if (ProjectService::hasResponsiblePersonColumn()) {
+                $insertData['responsible_person'] = $responsiblePerson ?: null;
+            }
+            $projectId = Database::insert('projects', $insertData);
 
             // Create initial budget record
             Database::insert('budgets', [
@@ -197,7 +200,7 @@ class ProjectController
             'end_date'            => $_POST['end_date'],
             'notes'               => trim($_POST['notes'] ?? ''),
         ];
-        if (isset($_POST['responsible_person'])) {
+        if (isset($_POST['responsible_person']) && ProjectService::hasResponsiblePersonColumn()) {
             $updateData['responsible_person'] = trim($_POST['responsible_person']);
         }
 

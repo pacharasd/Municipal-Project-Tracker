@@ -125,9 +125,22 @@ class Database
                         $pdo->exec($sql);
                     }
                 }
+            } else {
+                // Auto-migrate newly added columns seamlessly
+                $colCheck = $pdo->query("SHOW COLUMNS FROM `projects` LIKE 'responsible_person'")->fetch();
+                if (!$colCheck) {
+                    $pdo->exec("ALTER TABLE `projects` ADD COLUMN `responsible_person` VARCHAR(255) NULL AFTER `responsible_user_id`");
+                    $pdo->exec("
+                        UPDATE `projects` p
+                        LEFT JOIN `users` u ON p.responsible_user_id = u.id
+                        LEFT JOIN `departments` d ON p.department_id = d.id
+                        SET p.responsible_person = COALESCE(u.name, d.name)
+                        WHERE p.responsible_person IS NULL OR p.responsible_person = ''
+                    ");
+                }
             }
         } catch (Exception $e) {
-            error_log("Auto schema import notice: " . $e->getMessage());
+            error_log("Auto schema migration notice: " . $e->getMessage());
         }
     }
 
