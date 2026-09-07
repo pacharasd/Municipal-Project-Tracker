@@ -74,58 +74,150 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
     </div>
 
     <!-- Filters Section -->
-    <form action="<?= \App\Core\Router::url('/projects') ?>" method="GET" @submit.prevent="currentPage = 1; scrollToTop(); syncUrl()" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+    <form action="<?= \App\Core\Router::url('/projects') ?>" method="GET" @submit.prevent="currentPage = 1; scrollToTop(); syncUrl()" class="bg-white dark:bg-[#181a20] p-4 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         <!-- Search Keyword -->
         <div class="lg:col-span-2 relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                 <i data-lucide="search" class="w-4 h-4"></i>
             </div>
-            <input type="text" name="search" x-model="search" @input="currentPage = 1; syncUrl()" value="<?= htmlspecialchars($filters['search']) ?>" placeholder="ค้นหาชื่อ รหัสโครงการ หรือโครงการย่อย..." class="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+            <input type="text" name="search" x-model="search" @input="currentPage = 1; syncUrl()" value="<?= htmlspecialchars($filters['search']) ?>" placeholder="ค้นหาชื่อ รหัสโครงการ หรือโครงการย่อย..." class="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
         </div>
 
-        <!-- Fiscal Year Filter -->
-        <div>
-            <select name="fiscal_year_id" x-model="fiscalYearFilter" @change="currentPage = 1; syncUrl()" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                <option value="">-- ทุกปีงบประมาณ --</option>
-                <?php foreach ($fiscalYears as $fy): ?>
-                    <option value="<?= $fy['id'] ?>" <?= $filters['fiscal_year_id'] == $fy['id'] ? 'selected' : '' ?>>ปี <?= $fy['year'] ?></option>
-                <?php endforeach; ?>
-            </select>
+        <!-- Fiscal Year Filter (Custom Dropdown) -->
+        <div class="relative" x-data="{ openFy: false }" @click.outside="openFy = false">
+            <input type="hidden" name="fiscal_year_id" :value="fiscalYearFilter">
+            <button type="button" 
+                    @click="openFy = !openFy" 
+                    class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer transition-all">
+                <span x-text="currentFiscalYearLabel" class="truncate font-medium"></span>
+                <svg class="w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0" :class="{ 'rotate-180': openFy }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div x-show="openFy" 
+                 x-transition:enter="transition ease-out duration-100"
+                 x-transition:enter-start="transform opacity-0 scale-95"
+                 x-transition:enter-end="transform opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-75"
+                 x-transition:leave-start="transform opacity-100 scale-100"
+                 x-transition:leave-end="transform opacity-0 scale-95"
+                 class="absolute z-40 mt-1.5 w-full bg-white dark:bg-[#1f222e] rounded-xl shadow-xl border border-slate-200 dark:border-white/10 py-1 max-h-56 overflow-y-auto" 
+                 style="display: none;">
+                <div @click="fiscalYearFilter = ''; currentPage = 1; syncUrl(); openFy = false" 
+                     class="px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 cursor-pointer flex items-center justify-between"
+                     :class="{ 'bg-emerald-50/70 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-semibold': !fiscalYearFilter }">
+                    <span>-- ทุกปีงบประมาณ --</span>
+                    <svg x-show="!fiscalYearFilter" class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <template x-for="fy in fiscalYearOptions" :key="fy.id">
+                    <div @click="fiscalYearFilter = fy.id; currentPage = 1; syncUrl(); openFy = false" 
+                         class="px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 cursor-pointer flex items-center justify-between transition-colors"
+                         :class="{ 'bg-emerald-50/70 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-semibold': String(fiscalYearFilter) === String(fy.id) }">
+                        <span x-text="'ปี ' + fy.year + (fy.is_active ? ' (ปัจจุบัน)' : '')"></span>
+                        <svg x-show="String(fiscalYearFilter) === String(fy.id)" class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                </template>
+            </div>
         </div>
 
-        <!-- Department Filter -->
-        <div>
-            <select name="department_id" x-model="departmentFilter" @change="currentPage = 1; syncUrl()" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                <option value="">-- ทุกสำนัก/กอง --</option>
-                <?php foreach ($departments as $dept): ?>
-                    <option value="<?= $dept['id'] ?>" <?= $filters['department_id'] == $dept['id'] ? 'selected' : '' ?>><?= htmlspecialchars($dept['name']) ?></option>
-                <?php endforeach; ?>
-            </select>
+        <!-- Department Filter (Custom Dropdown) -->
+        <div class="relative" x-data="{ openDept: false }" @click.outside="openDept = false">
+            <input type="hidden" name="department_id" :value="departmentFilter">
+            <button type="button" 
+                    @click="openDept = !openDept" 
+                    class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer transition-all">
+                <span x-text="currentDepartmentLabel" class="truncate font-medium"></span>
+                <svg class="w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0" :class="{ 'rotate-180': openDept }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div x-show="openDept" 
+                 x-transition:enter="transition ease-out duration-100"
+                 x-transition:enter-start="transform opacity-0 scale-95"
+                 x-transition:enter-end="transform opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-75"
+                 x-transition:leave-start="transform opacity-100 scale-100"
+                 x-transition:leave-end="transform opacity-0 scale-95"
+                 class="absolute z-40 mt-1.5 w-full bg-white dark:bg-[#1f222e] rounded-xl shadow-xl border border-slate-200 dark:border-white/10 py-1 max-h-56 overflow-y-auto" 
+                 style="display: none;">
+                <div @click="departmentFilter = ''; currentPage = 1; syncUrl(); openDept = false" 
+                     class="px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 cursor-pointer flex items-center justify-between"
+                     :class="{ 'bg-emerald-50/70 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-semibold': !departmentFilter }">
+                    <span>-- ทุกสำนัก/กอง --</span>
+                    <svg x-show="!departmentFilter" class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <template x-for="dept in departmentOptions" :key="dept.id">
+                    <div @click="departmentFilter = dept.id; currentPage = 1; syncUrl(); openDept = false" 
+                         class="px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 cursor-pointer flex items-center justify-between transition-colors"
+                         :class="{ 'bg-emerald-50/70 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-semibold': String(departmentFilter) === String(dept.id) }">
+                        <span x-text="dept.name"></span>
+                        <svg x-show="String(departmentFilter) === String(dept.id)" class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                </template>
+            </div>
         </div>
 
         <!-- Submit & Clear Buttons -->
         <div class="flex items-center gap-2">
-            <button type="submit" class="w-full py-2 px-4 text-sm font-medium text-white bg-slate-800 rounded-xl hover:bg-slate-900 transition-colors cursor-pointer">
+            <button type="submit" class="w-full py-2 px-4 text-sm font-medium text-white bg-slate-800 dark:bg-slate-700 rounded-xl hover:bg-slate-900 dark:hover:bg-slate-600 transition-colors cursor-pointer">
                 ค้นหา
             </button>
-            <button type="button" @click="resetFilters()" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer transition-colors" title="ล้างตัวกรอง">
+            <button type="button" @click="resetFilters()" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl cursor-pointer transition-colors" title="ล้างตัวกรอง">
                 <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
             </button>
         </div>
     </form>
 
     <!-- Toolbar: Per Page Selector, Total Counts & Status Filter Pills -->
-    <div id="projects-toolbar" class="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm text-xs text-slate-600">
+    <div id="projects-toolbar" class="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white dark:bg-[#181a20] p-3.5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm text-xs text-slate-600 dark:text-slate-400">
         <!-- Left: Per Page Selector & Summary Counts -->
         <div class="flex flex-wrap items-center gap-3">
             <div class="flex items-center gap-1.5">
-                <span class="font-medium text-slate-500">แสดง:</span>
-                <select x-model="perPage" @change="setPerPage($event.target.value)" class="px-2.5 py-1 text-xs rounded-xl border border-slate-300 bg-white font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">
-                    <option value="5">5 โครงการ / หน้า</option>
-                    <option value="10">10 โครงการ / หน้า</option>
-                    <option value="20">20 โครงการ / หน้า</option>
-                    <option value="all">แสดงทั้งหมด</option>
-                </select>
+                <span class="font-medium text-slate-500 dark:text-slate-400">แสดง:</span>
+                <div class="relative" x-data="{ openPerPage: false }" @click.outside="openPerPage = false">
+                    <button type="button" 
+                            @click="openPerPage = !openPerPage" 
+                            class="px-2.5 py-1 text-xs rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer shadow-xs">
+                        <span x-text="perPage === 'all' ? 'แสดงทั้งหมด' : perPage + ' โครงการ / หน้า'"></span>
+                        <svg class="w-3 h-3 text-slate-400 transition-transform duration-200" :class="{ 'rotate-180': openPerPage }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div x-show="openPerPage" 
+                         x-transition:enter="transition ease-out duration-100"
+                         x-transition:enter-start="transform opacity-0 scale-95"
+                         x-transition:enter-end="transform opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-75"
+                         x-transition:leave-start="transform opacity-100 scale-100"
+                         x-transition:leave-end="transform opacity-0 scale-95"
+                         class="absolute left-0 z-40 mt-1 w-36 bg-white dark:bg-[#1f222e] rounded-xl shadow-xl border border-slate-200 dark:border-white/10 py-1 overflow-hidden" 
+                         style="display: none;">
+                        <div @click="setPerPage(5); openPerPage = false" class="px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 cursor-pointer flex items-center justify-between" :class="{ 'font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50/60 dark:bg-emerald-500/10': perPage == 5 }">
+                            <span>5 โครงการ / หน้า</span>
+                            <svg x-show="perPage == 5" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <div @click="setPerPage(10); openPerPage = false" class="px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 cursor-pointer flex items-center justify-between" :class="{ 'font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50/60 dark:bg-emerald-500/10': perPage == 10 }">
+                            <span>10 โครงการ / หน้า</span>
+                            <svg x-show="perPage == 10" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <div @click="setPerPage(20); openPerPage = false" class="px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 cursor-pointer flex items-center justify-between" :class="{ 'font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50/60 dark:bg-emerald-500/10': perPage == 20 }">
+                            <span>20 โครงการ / หน้า</span>
+                            <svg x-show="perPage == 20" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <div @click="setPerPage('all'); openPerPage = false" class="px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 cursor-pointer flex items-center justify-between" :class="{ 'font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50/60 dark:bg-emerald-500/10': perPage === 'all' }">
+                            <span>แสดงทั้งหมด</span>
+                            <svg x-show="perPage === 'all'" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="hidden sm:block text-slate-300">|</div>
@@ -213,13 +305,14 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                         </div>
 
                         <!-- Progress indicator -->
+                        <?php $pTier = \App\Services\ProgressService::getProgressTier((float)$p['progress'], $p['status'] ?? null); ?>
                         <div class="w-36">
                             <div class="flex items-center justify-between text-xs mb-1">
                                 <span class="text-slate-500 dark:text-slate-400">ความก้าวหน้า</span>
-                                <span class="font-bold text-emerald-600 dark:text-emerald-400"><?= number_format($p['progress'], 1) ?>%</span>
+                                <span class="font-bold <?= $pTier['textClass'] ?>"><?= number_format($p['progress'], 1) ?>%</span>
                             </div>
-                            <div class="w-full bg-slate-100 dark:bg-white/[0.08] rounded-full h-2 overflow-hidden">
-                                <div class="bg-gradient-to-r from-emerald-500 to-teal-500 h-2 rounded-full" style="width: <?= min(100, $p['progress']) ?>%"></div>
+                            <div class="w-full bg-slate-100 dark:bg-white/[0.08] rounded-full h-2 overflow-hidden p-0.5">
+                                <div class="bg-gradient-to-r <?= $pTier['gradient'] ?> h-1.5 rounded-full transition-all duration-500" style="width: <?= min(100, (float)$p['progress']) ?>%"></div>
                             </div>
                         </div>
 
@@ -259,7 +352,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                                                 'completed' => 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/40',
                                                 'in_progress' => 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/40',
                                                 'has_problem' => 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/40 animate-pulse',
-                                                default => 'bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700/60'
+                                                default => 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/40'
                                             };
                                             $statusLabel = match($sub['status']) {
                                                 'completed' => 'เสร็จสิ้น',
@@ -277,14 +370,15 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                                         </h3>
                                     </div>
                                     
+                                    <?php $subTier = \App\Services\ProgressService::getProgressTier((float)$sub['progress'], $sub['status'] ?? null); ?>
                                     <div class="mt-3.5">
                                         <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                                             <span>กิจกรรม: <b class="text-slate-700 dark:text-slate-200"><?= $sub['actual_activity_count'] ?></b> / <?= $sub['planned_activity_count'] ?> ครั้ง</span>
-                                            <span class="font-bold text-emerald-600 dark:text-emerald-400"><?= number_format($sub['progress'], 1) ?>%</span>
+                                            <span class="font-bold <?= $subTier['textClass'] ?>"><?= number_format($sub['progress'], 1) ?>%</span>
                                         </div>
 
                                         <div class="w-full bg-slate-100 dark:bg-white/[0.08] rounded-full h-1.5 mt-1.5 overflow-hidden">
-                                            <div class="h-1.5 rounded-full <?= $sub['status'] == 'has_problem' ? 'bg-rose-500' : 'bg-emerald-500' ?>" style="width: <?= min(100, $sub['progress']) ?>%"></div>
+                                            <div class="h-1.5 rounded-full bg-gradient-to-r <?= $subTier['gradient'] ?> transition-all duration-500" style="width: <?= min(100, (float)$sub['progress']) ?>%"></div>
                                         </div>
 
                                         <div class="mt-3 pt-2.5 pb-0.5 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
@@ -392,81 +486,369 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
     <!-- Modal: Create Main Project -->
     <template x-teleport="body">
         <div x-show="createModal" x-cloak @click.self="createModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div class="bg-white w-full max-w-2xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-                <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+            <div class="bg-white dark:bg-[#181a20] w-full max-w-2xl rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 relative">
+                <div class="p-6 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
                     <div>
-                        <h3 class="text-lg font-bold text-slate-900">สร้างโครงการหลักใหม่</h3>
-                        <p class="text-xs text-slate-500 mt-0.5">เพิ่มโครงการหลักประจำปีงบประมาณตามแผนพัฒนาเทศบาล</p>
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">สร้างโครงการหลักใหม่</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">เพิ่มโครงการหลักประจำปีงบประมาณตามแผนพัฒนาเทศบาล</p>
                     </div>
-                    <button type="button" @click.stop="createModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
+                    <button type="button" @click.stop="createModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
                         <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
                     </button>
                 </div>
 
-                <form action="<?= \App\Core\Router::url('/projects') ?>" method="POST" class="p-6 space-y-4">
+                <form action="<?= \App\Core\Router::url('/projects') ?>" method="POST" 
+                      @submit="
+                        const cat = $el.querySelector('input[name=category_id]')?.value;
+                        const dept = $el.querySelector('input[name=department_id]')?.value;
+                        const start = $el.querySelector('input[name=start_date]')?.value;
+                        const end = $el.querySelector('input[name=end_date]')?.value;
+                        if (!cat) {
+                            alert('กรุณาเลือกประเภทโครงการ');
+                            $event.preventDefault();
+                            return false;
+                        }
+                        if (!dept) {
+                            alert('กรุณาเลือกหน่วยงาน / สำนัก / กอง');
+                            $event.preventDefault();
+                            return false;
+                        }
+                        if (!start) {
+                            alert('กรุณาเลือกวันที่เริ่มต้นโครงการ');
+                            $event.preventDefault();
+                            return false;
+                        }
+                        if (!end) {
+                            alert('กรุณาเลือกวันที่สิ้นสุดโครงการ');
+                            $event.preventDefault();
+                            return false;
+                        }
+                        if (start > end) {
+                            alert('วันที่สิ้นสุดโครงการต้องไม่น้อยกว่าวันที่เริ่มต้น');
+                            $event.preventDefault();
+                            return false;
+                        }
+                      "
+                      class="p-6 space-y-4">
                     <input type="hidden" name="_token" value="<?= $csrfToken ?>">
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">รหัสโครงการ <span class="text-rose-500">*</span></label>
-                            <input type="text" name="project_code" required placeholder="เช่น PRJ-2568-004" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">รหัสโครงการ <span class="text-rose-500">*</span></label>
+                            <input type="text" name="project_code" required placeholder="เช่น PRJ-<?= date('Y') + 543 ?>-001" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">ปีงบประมาณ <span class="text-rose-500">*</span></label>
-                            <select name="fiscal_year_id" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                                <?php foreach ($fiscalYears as $fy): ?>
-                                    <option value="<?= $fy['id'] ?>" <?= $fy['is_active'] ? 'selected' : '' ?>>ปี <?= $fy['year'] ?></option>
-                                <?php endforeach; ?>
-                            </select>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ปีงบประมาณ <span class="text-rose-500">*</span></label>
+                            <?php 
+                                $defaultFyId = '';
+                                $defaultFyName = '-- เลือกปีงบประมาณ --';
+                                foreach ($fiscalYears as $fy) {
+                                    if (!empty($fy['is_active'])) {
+                                        $defaultFyId = $fy['id'];
+                                        $defaultFyName = 'ปี ' . $fy['year'];
+                                        break;
+                                    }
+                                }
+                                if (empty($defaultFyId) && !empty($fiscalYears)) {
+                                    $defaultFyId = $fiscalYears[0]['id'];
+                                    $defaultFyName = 'ปี ' . $fiscalYears[0]['year'];
+                                }
+                            ?>
+                            <div class="relative" x-data="{
+                                open: false,
+                                val: '<?= $defaultFyId ?>',
+                                label: '<?= htmlspecialchars($defaultFyName) ?>',
+                                select(id, name) {
+                                    this.val = id;
+                                    this.label = name;
+                                    this.open = false;
+                                }
+                            }" @click.outside="open = false">
+                                <input type="hidden" name="fiscal_year_id" :value="val">
+                                <button type="button" 
+                                        @click="open = !open" 
+                                        class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white flex items-center justify-between focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-colors cursor-pointer">
+                                    <span x-text="label" class="truncate font-medium"></span>
+                                    <svg class="w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                                <div x-show="open" 
+                                     x-transition:enter="transition ease-out duration-100"
+                                     x-transition:enter-start="transform opacity-0 scale-95"
+                                     x-transition:enter-end="transform opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-75"
+                                     x-transition:leave-start="transform opacity-100 scale-100"
+                                     x-transition:leave-end="transform opacity-0 scale-95"
+                                     class="absolute z-50 mt-1.5 w-full bg-white dark:bg-[#1f222e] rounded-xl shadow-xl border border-slate-200 dark:border-white/10 py-1 max-h-56 overflow-y-auto" 
+                                     style="display: none;">
+                                    <?php foreach ($fiscalYears as $fy): ?>
+                                        <div @click="select('<?= $fy['id'] ?>', 'ปี <?= $fy['year'] ?>')" 
+                                             class="px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer flex items-center justify-between transition-colors"
+                                             :class="{ 'bg-emerald-50/70 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-semibold': val == '<?= $fy['id'] ?>' }">
+                                            <span>ปี <?= $fy['year'] ?> <?= !empty($fy['is_active']) ? '<span class="text-xs text-emerald-600 dark:text-emerald-400 font-normal ml-1">(ปัจจุบัน)</span>' : '' ?></span>
+                                            <svg x-show="val == '<?= $fy['id'] ?>'" class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">ชื่อโครงการหลัก <span class="text-rose-500">*</span></label>
-                        <input type="text" name="name" required placeholder="ระบุชื่อโครงการหลัก..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ชื่อโครงการหลัก <span class="text-rose-500">*</span></label>
+                        <input type="text" name="name" required placeholder="ระบุชื่อโครงการหลัก..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">คำอธิบายและวัตถุประสงค์</label>
-                        <textarea name="description" rows="2" placeholder="รายละเอียดของโครงการ..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">คำอธิบายและวัตถุประสงค์</label>
+                        <textarea name="description" rows="2" placeholder="รายละเอียดของโครงการ..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"></textarea>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">หมวดหมู่โครงการ <span class="text-rose-500">*</span></label>
-                            <select name="category_id" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                                <?php foreach ($categories as $cat): ?>
-                                    <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['name']) ?></option>
-                                <?php endforeach; ?>
-                            </select>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ประเภทโครงการ <span class="text-rose-500">*</span></label>
+                            <div class="relative" x-data="{
+                                open: false,
+                                val: '',
+                                label: '-- เลือกประเภทโครงการ --',
+                                select(id, name) {
+                                    this.val = id;
+                                    this.label = name;
+                                    this.open = false;
+                                }
+                            }" @click.outside="open = false">
+                                <input type="hidden" name="category_id" :value="val">
+                                <button type="button" 
+                                        @click="open = !open" 
+                                        class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white flex items-center justify-between focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-colors cursor-pointer">
+                                    <span x-text="label" :class="{ 'text-slate-400 dark:text-slate-500 font-normal': !val, 'text-slate-900 dark:text-white font-medium': val }" class="truncate"></span>
+                                    <svg class="w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                                <div x-show="open" 
+                                     x-transition:enter="transition ease-out duration-100"
+                                     x-transition:enter-start="transform opacity-0 scale-95"
+                                     x-transition:enter-end="transform opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-75"
+                                     x-transition:leave-start="transform opacity-100 scale-100"
+                                     x-transition:leave-end="transform opacity-0 scale-95"
+                                     class="absolute z-50 mt-1.5 w-full bg-white dark:bg-[#1f222e] rounded-xl shadow-xl border border-slate-200 dark:border-white/10 py-1 max-h-56 overflow-y-auto" 
+                                     style="display: none;">
+                                    <?php foreach ($categories as $cat): ?>
+                                        <div @click="select('<?= $cat['id'] ?>', '<?= htmlspecialchars(addslashes($cat['name'])) ?>')" 
+                                             class="px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer flex items-center justify-between transition-colors"
+                                             :class="{ 'bg-emerald-50/70 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-semibold': val == '<?= $cat['id'] ?>' }">
+                                            <span><?= htmlspecialchars($cat['name']) ?></span>
+                                            <svg x-show="val == '<?= $cat['id'] ?>'" class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">หน่วยงาน / สำนัก / กอง <span class="text-rose-500">*</span></label>
-                            <select name="department_id" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                                <?php foreach ($departments as $dept): ?>
-                                    <option value="<?= $dept['id'] ?>"><?= htmlspecialchars($dept['name']) ?></option>
-                                <?php endforeach; ?>
-                            </select>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">หน่วยงาน / สำนัก / กอง <span class="text-rose-500">*</span></label>
+                            <div class="relative" x-data="{
+                                open: false,
+                                val: '',
+                                label: '-- เลือกหน่วยงาน / สำนัก / กอง --',
+                                select(id, name) {
+                                    this.val = id;
+                                    this.label = name;
+                                    this.open = false;
+                                }
+                            }" @click.outside="open = false">
+                                <input type="hidden" name="department_id" :value="val">
+                                <button type="button" 
+                                        @click="open = !open" 
+                                        class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white flex items-center justify-between focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-colors cursor-pointer">
+                                    <span x-text="label" :class="{ 'text-slate-400 dark:text-slate-500 font-normal': !val, 'text-slate-900 dark:text-white font-medium': val }" class="truncate"></span>
+                                    <svg class="w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                                <div x-show="open" 
+                                     x-transition:enter="transition ease-out duration-100"
+                                     x-transition:enter-start="transform opacity-0 scale-95"
+                                     x-transition:enter-end="transform opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-75"
+                                     x-transition:leave-start="transform opacity-100 scale-100"
+                                     x-transition:leave-end="transform opacity-0 scale-95"
+                                     class="absolute z-50 mt-1.5 w-full bg-white dark:bg-[#1f222e] rounded-xl shadow-xl border border-slate-200 dark:border-white/10 py-1 max-h-56 overflow-y-auto" 
+                                     style="display: none;">
+                                    <?php foreach ($departments as $dept): ?>
+                                        <div @click="select('<?= $dept['id'] ?>', '<?= htmlspecialchars(addslashes($dept['name'])) ?>')" 
+                                             class="px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer flex items-center justify-between transition-colors"
+                                             :class="{ 'bg-emerald-50/70 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-semibold': val == '<?= $dept['id'] ?>' }">
+                                            <span><?= htmlspecialchars($dept['name']) ?></span>
+                                            <svg x-show="val == '<?= $dept['id'] ?>'" class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">งบประมาณรวม (บาท) <span class="text-rose-500">*</span></label>
-                            <input type="number" step="0.01" min="0" name="budget" required placeholder="0.00" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">งบประมาณรวม (บาท) <span class="text-rose-500">*</span></label>
+                            <input type="number" step="0.01" min="0" name="budget" required placeholder="0.00" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">วันที่เริ่มต้น <span class="text-rose-500">*</span></label>
-                            <input type="date" name="start_date" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">วันที่เริ่มต้น <span class="text-rose-500">*</span></label>
+                            <div class="relative" x-data="thaiDatePicker({ name: 'start_date', value: '', align: 'left', placeholder: 'วว/ดด/ปปปป' })" @click.outside="open = false">
+                                <input type="hidden" :name="name" :value="value">
+                                <button type="button" 
+                                        @click="toggle()" 
+                                        class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white flex items-center justify-between focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-colors cursor-pointer">
+                                    <span x-text="displayLabel" 
+                                          :class="{ 'text-slate-400 dark:text-slate-500 font-normal': !value, 'font-medium text-slate-900 dark:text-white': value }"
+                                          class="truncate">วว/ดด/ปปปป</span>
+                                    <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                </button>
+                                <div x-show="open" 
+                                     x-transition:enter="transition ease-out duration-100"
+                                     x-transition:enter-start="transform opacity-0 scale-95"
+                                     x-transition:enter-end="transform opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-75"
+                                     x-transition:leave-start="transform opacity-100 scale-100"
+                                     x-transition:leave-end="transform opacity-0 scale-95"
+                                     class="absolute bottom-full mb-2 left-0 z-50 w-72 bg-white dark:bg-[#1f222e] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-3.5"
+                                     style="display: none;">
+                                    <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 dark:border-white/10">
+                                        <div class="flex items-center gap-1">
+                                            <button type="button" @click="viewYear--" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีก่อนหน้า">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
+                                            </button>
+                                            <button type="button" @click="prevMonth()" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนก่อนหน้า">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                                            </button>
+                                        </div>
+                                        <div class="text-xs font-bold text-slate-800 dark:text-white" x-text="monthLabel"></div>
+                                        <div class="flex items-center gap-1">
+                                            <button type="button" @click="nextMonth()" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนถัดไป">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                            </button>
+                                            <button type="button" @click="viewYear++" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีถัดไป">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-7 gap-1 mb-1 text-center">
+                                        <template x-for="day in shortDays">
+                                            <div class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 py-1" x-text="day"></div>
+                                        </template>
+                                    </div>
+                                    <div class="grid grid-cols-7 gap-1 text-center">
+                                        <template x-for="item in days">
+                                            <div>
+                                                <button type="button" 
+                                                        x-show="item.isCurrent"
+                                                        @click="selectDate(item)"
+                                                        class="w-8 h-8 mx-auto text-xs flex items-center justify-center rounded-xl transition-all cursor-pointer"
+                                                        :class="{
+                                                            'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-600/30': value === item.date,
+                                                            'border border-emerald-500 text-emerald-600 dark:text-emerald-400 font-semibold hover:bg-emerald-50 dark:hover:bg-emerald-500/10': item.isToday && value !== item.date,
+                                                            'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10': value !== item.date && !item.isToday
+                                                        }"
+                                                        x-text="item.day">
+                                                </button>
+                                                <div x-show="!item.isCurrent" class="w-8 h-8 mx-auto text-xs flex items-center justify-center text-slate-300 dark:text-slate-600 pointer-events-none" x-text="item.day"></div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <div class="mt-3 pt-2 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs">
+                                        <button type="button" @click="clear()" class="text-slate-400 hover:text-rose-500 transition cursor-pointer font-medium">ล้างค่า</button>
+                                        <button type="button" @click="selectToday()" class="text-emerald-600 dark:text-emerald-400 hover:underline transition cursor-pointer font-semibold">วันนี้</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">วันที่สิ้นสุด <span class="text-rose-500">*</span></label>
-                            <input type="date" name="end_date" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">วันที่สิ้นสุด <span class="text-rose-500">*</span></label>
+                            <div class="relative" x-data="thaiDatePicker({ name: 'end_date', value: '', align: 'right', placeholder: 'วว/ดด/ปปปป' })" @click.outside="open = false">
+                                <input type="hidden" :name="name" :value="value">
+                                <button type="button" 
+                                        @click="toggle()" 
+                                        class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white flex items-center justify-between focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-colors cursor-pointer">
+                                    <span x-text="displayLabel" 
+                                          :class="{ 'text-slate-400 dark:text-slate-500 font-normal': !value, 'font-medium text-slate-900 dark:text-white': value }"
+                                          class="truncate">วว/ดด/ปปปป</span>
+                                    <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                </button>
+                                <div x-show="open" 
+                                     x-transition:enter="transition ease-out duration-100"
+                                     x-transition:enter-start="transform opacity-0 scale-95"
+                                     x-transition:enter-end="transform opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-75"
+                                     x-transition:leave-start="transform opacity-100 scale-100"
+                                     x-transition:leave-end="transform opacity-0 scale-95"
+                                     class="absolute bottom-full mb-2 right-0 z-50 w-72 bg-white dark:bg-[#1f222e] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-3.5"
+                                     style="display: none;">
+                                    <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 dark:border-white/10">
+                                        <div class="flex items-center gap-1">
+                                            <button type="button" @click="viewYear--" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีก่อนหน้า">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
+                                            </button>
+                                            <button type="button" @click="prevMonth()" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนก่อนหน้า">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                                            </button>
+                                        </div>
+                                        <div class="text-xs font-bold text-slate-800 dark:text-white" x-text="monthLabel"></div>
+                                        <div class="flex items-center gap-1">
+                                            <button type="button" @click="nextMonth()" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนถัดไป">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                            </button>
+                                            <button type="button" @click="viewYear++" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีถัดไป">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-7 gap-1 mb-1 text-center">
+                                        <template x-for="day in shortDays">
+                                            <div class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 py-1" x-text="day"></div>
+                                        </template>
+                                    </div>
+                                    <div class="grid grid-cols-7 gap-1 text-center">
+                                        <template x-for="item in days">
+                                            <div>
+                                                <button type="button" 
+                                                        x-show="item.isCurrent"
+                                                        @click="selectDate(item)"
+                                                        class="w-8 h-8 mx-auto text-xs flex items-center justify-center rounded-xl transition-all cursor-pointer"
+                                                        :class="{
+                                                            'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-600/30': value === item.date,
+                                                            'border border-emerald-500 text-emerald-600 dark:text-emerald-400 font-semibold hover:bg-emerald-50 dark:hover:bg-emerald-500/10': item.isToday && value !== item.date,
+                                                            'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10': value !== item.date && !item.isToday
+                                                        }"
+                                                        x-text="item.day">
+                                                </button>
+                                                <div x-show="!item.isCurrent" class="w-8 h-8 mx-auto text-xs flex items-center justify-center text-slate-300 dark:text-slate-600 pointer-events-none" x-text="item.day"></div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <div class="mt-3 pt-2 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs">
+                                        <button type="button" @click="clear()" class="text-slate-400 hover:text-rose-500 transition cursor-pointer font-medium">ล้างค่า</button>
+                                        <button type="button" @click="selectToday()" class="text-emerald-600 dark:text-emerald-400 hover:underline transition cursor-pointer font-semibold">วันนี้</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-                        <button type="button" @click="createModal = false" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
+                    <div class="pt-4 border-t border-slate-100 dark:border-white/10 flex items-center justify-end gap-3">
+                        <button type="button" @click="createModal = false" class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-colors cursor-pointer">
                             ยกเลิก
                         </button>
                         <button type="submit" class="px-5 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-sm shadow-emerald-600/30 cursor-pointer">
@@ -490,6 +872,20 @@ function mainProjectsPage() {
         statusFilter: 'all',
         currentPage: 1,
         perPage: 5,
+        fiscalYearOptions: <?= json_encode($fiscalYears, JSON_UNESCAPED_UNICODE) ?>,
+        departmentOptions: <?= json_encode($departments, JSON_UNESCAPED_UNICODE) ?>,
+
+        get currentFiscalYearLabel() {
+            if (!this.fiscalYearFilter) return '-- ทุกปีงบประมาณ --';
+            const found = this.fiscalYearOptions.find(f => String(f.id) === String(this.fiscalYearFilter));
+            return found ? 'ปี ' + found.year : '-- ทุกปีงบประมาณ --';
+        },
+
+        get currentDepartmentLabel() {
+            if (!this.departmentFilter) return '-- ทุกสำนัก/กอง --';
+            const found = this.departmentOptions.find(d => String(d.id) === String(this.departmentFilter));
+            return found ? found.name : '-- ทุกสำนัก/กอง --';
+        },
 
         init() {
             const params = new URLSearchParams(window.location.search);

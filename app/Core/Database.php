@@ -13,6 +13,24 @@ class Database
     public static function connect(): PDO
     {
         if (self::$instance === null) {
+            // Auto-load .env if not loaded yet
+            if (empty($_ENV['DB_DATABASE'])) {
+                $envFile = dirname(__DIR__, 2) . '/.env';
+                if (file_exists($envFile)) {
+                    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                    foreach ($lines as $line) {
+                        if (str_starts_with(trim($line), '#')) continue;
+                        if (str_contains($line, '=')) {
+                            [$k, $v] = explode('=', $line, 2);
+                            $k = trim($k);
+                            $v = trim(trim($v), '"\'');
+                            $_ENV[$k] = $v;
+                            putenv("{$k}={$v}");
+                        }
+                    }
+                }
+            }
+
             $host = $_ENV['DB_HOST'] ?? $_SERVER['DB_HOST'] ?? (getenv('DB_HOST') ?: 'localhost');
             $port = $_ENV['DB_PORT'] ?? $_SERVER['DB_PORT'] ?? (getenv('DB_PORT') ?: '3306');
             $db   = $_ENV['DB_DATABASE'] ?? $_SERVER['DB_DATABASE'] ?? (getenv('DB_DATABASE') ?: 'project_tracker');

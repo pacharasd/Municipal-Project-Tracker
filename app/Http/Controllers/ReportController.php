@@ -35,14 +35,22 @@ class ReportController
             $params[] = $departmentId;
         }
         if (!empty($status)) {
+            $mappedStatus = match($status) {
+                'ยังไม่เริ่มดำเนินการ', 'ยังไม่เริ่ม', 'not_started' => 'not_started',
+                'กำลังดำเนินการ', 'in_progress' => 'in_progress',
+                'เสร็จสิ้น', 'completed' => 'completed',
+                'มีปัญหา', 'has_problem' => 'has_problem',
+                'ยกเลิก', 'cancelled' => 'cancelled',
+                default => $status
+            };
             $sql .= " AND p.status = ?";
-            $params[] = $status;
+            $params[] = $mappedStatus;
         }
 
         $sql .= " ORDER BY p.parent_id IS NULL DESC, p.id DESC";
 
         $projects = Database::query($sql, $params);
-        $fiscalYears = Database::query("SELECT * FROM fiscal_years ORDER BY year DESC");
+        $fiscalYears = \App\Services\FiscalYearService::getAll();
         $departments = Database::query("SELECT * FROM departments ORDER BY id ASC");
 
         View::render('reports.index', [
@@ -85,8 +93,16 @@ class ReportController
             $params[] = $departmentId;
         }
         if (!empty($status)) {
+            $mappedStatus = match($status) {
+                'ยังไม่เริ่มดำเนินการ', 'ยังไม่เริ่ม', 'not_started' => 'not_started',
+                'กำลังดำเนินการ', 'in_progress' => 'in_progress',
+                'เสร็จสิ้น', 'completed' => 'completed',
+                'มีปัญหา', 'has_problem' => 'has_problem',
+                'ยกเลิก', 'cancelled' => 'cancelled',
+                default => $status
+            };
             $sql .= " AND p.status = ?";
-            $params[] = $status;
+            $params[] = $mappedStatus;
         }
 
         $sql .= " ORDER BY p.parent_id IS NULL DESC, p.id DESC";
@@ -170,8 +186,16 @@ class ReportController
             $params[] = $departmentId;
         }
         if (!empty($status)) {
+            $mappedStatus = match($status) {
+                'ยังไม่เริ่มดำเนินการ', 'ยังไม่เริ่ม', 'not_started' => 'not_started',
+                'กำลังดำเนินการ', 'in_progress' => 'in_progress',
+                'เสร็จสิ้น', 'completed' => 'completed',
+                'มีปัญหา', 'has_problem' => 'has_problem',
+                'ยกเลิก', 'cancelled' => 'cancelled',
+                default => $status
+            };
             $sql .= " AND p.status = ?";
-            $params[] = $status;
+            $params[] = $mappedStatus;
         }
 
         $sql .= " ORDER BY p.parent_id IS NULL DESC, p.id DESC";

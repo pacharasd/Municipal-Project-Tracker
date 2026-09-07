@@ -249,8 +249,9 @@ $currentUserId = Auth::id();
                         </label>
                         <select name="role_id" required
                                 class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-purple-500 focus:outline-none dark:text-white font-semibold">
+                            <option value="" disabled selected hidden>-- เลือกบทบาท / สิทธิ์ --</option>
                             <?php foreach ($roles as $r): ?>
-                                <option value="<?= $r['id'] ?>" <?= ($r['id'] == 1) ? 'selected' : '' ?>><?= htmlspecialchars($r['display_name']) ?></option>
+                                <option value="<?= $r['id'] ?>"><?= htmlspecialchars($r['display_name']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>

@@ -530,9 +530,7 @@ $tierNotStartedPct = round(($tierNotStarted / $subCount) * 100, 1);
                             <?php
                             $isProblem = ($w['status'] === 'has_problem');
                             $wProg = (float)($w['progress'] ?? 0);
-                            $wProgGrad = $isProblem 
-                                ? 'from-rose-500 to-red-500' 
-                                : ($wProg >= 75 ? 'from-emerald-400 to-green-500' : 'from-amber-400 to-yellow-500');
+                            $wTier = \App\Services\ProgressService::getProgressTier($wProg, $w['status'] ?? null);
                             $statusBadge = $isProblem 
                                 ? ['label' => 'ล่าช้า', 'class' => 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60']
                                 : ['label' => 'ใกล้ครบกำหนด', 'class' => 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60'];
@@ -552,9 +550,9 @@ $tierNotStartedPct = round(($tierNotStarted / $subCount) * 100, 1);
                                 </td>
                                 <td class="py-3.5 px-3">
                                     <div class="flex items-center gap-2.5">
-                                        <span class="font-mono font-bold w-8 text-right text-slate-900 dark:text-white"><?= (int)$wProg ?>%</span>
+                                        <span class="font-mono font-bold w-8 text-right <?= $wTier['textClass'] ?>"><?= (int)$wProg ?>%</span>
                                         <div class="flex-1 bg-slate-100 dark:bg-white/[0.06] h-2 rounded-full overflow-hidden p-0.5">
-                                            <div class="bg-gradient-to-r <?= $wProgGrad ?> h-1.5 rounded-full" style="width: <?= min(100, max(5, $wProg)) ?>%"></div>
+                                            <div class="bg-gradient-to-r <?= $wTier['gradient'] ?> h-1.5 rounded-full" style="width: <?= min(100, max(5, $wProg)) ?>%"></div>
                                         </div>
                                     </div>
                                 </td>
@@ -620,7 +618,7 @@ $tierNotStartedPct = round(($tierNotStarted / $subCount) * 100, 1);
                             <?php
                             $isComp = ($lp['status'] === 'completed');
                             $lpProg = (float)($lp['progress'] ?? 0);
-                            $lpProgGrad = $isComp ? 'from-emerald-400 to-green-500' : 'from-blue-400 to-indigo-500';
+                            $lpTier = \App\Services\ProgressService::getProgressTier($lpProg, $lp['status'] ?? null);
                             $lpStatusBadge = $isComp
                                 ? ['label' => 'เสร็จแล้ว', 'class' => 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60']
                                 : ['label' => 'กำลังดำเนินการ', 'class' => 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60'];
@@ -641,9 +639,9 @@ $tierNotStartedPct = round(($tierNotStarted / $subCount) * 100, 1);
                                 </td>
                                 <td class="py-3.5 px-3">
                                     <div class="flex items-center gap-2.5">
-                                        <span class="font-mono font-bold w-8 text-right text-slate-900 dark:text-white"><?= (int)$lpProg ?>%</span>
+                                        <span class="font-mono font-bold w-8 text-right <?= $lpTier['textClass'] ?>"><?= (int)$lpProg ?>%</span>
                                         <div class="flex-1 bg-slate-100 dark:bg-white/[0.06] h-2 rounded-full overflow-hidden p-0.5">
-                                            <div class="bg-gradient-to-r <?= $lpProgGrad ?> h-1.5 rounded-full" style="width: <?= min(100, max(5, $lpProg)) ?>%"></div>
+                                            <div class="bg-gradient-to-r <?= $lpTier['gradient'] ?> h-1.5 rounded-full" style="width: <?= min(100, max(5, $lpProg)) ?>%"></div>
                                         </div>
                                     </div>
                                 </td>

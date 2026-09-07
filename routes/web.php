@@ -42,6 +42,10 @@ Router::get('/sub-projects/{id}', [SubProjectController::class, 'show']);
 Router::post('/sub-projects/{id}/update', [SubProjectController::class, 'update']);
 Router::post('/sub-projects/{id}/delete', [SubProjectController::class, 'delete']);
 Router::post('/sub-projects/{id}/increment', [SubProjectController::class, 'incrementProgress']);
+Router::get('/sub-projects/{id}/increment', function(string $id) {
+    header('Location: ' . Router::url("/sub-projects/{$id}"));
+    exit;
+});
 Router::post('/sub-projects/{id}/status', [SubProjectController::class, 'updateStatusAndProgress']);
 Router::post('/sub-projects/{id}/manual-progress', [SubProjectController::class, 'updateManualProgress']);
 Router::post('/sub-projects/{id}/report-problem', [SubProjectController::class, 'reportProblem']);

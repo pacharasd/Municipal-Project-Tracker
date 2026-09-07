@@ -145,11 +145,11 @@ $avgProgress = count($projects) > 0 ? round(array_sum(array_column($projects, 'p
                 <select name="status" 
                         class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none dark:text-white">
                     <option value="">-- ทุกสถานะ --</option>
-                    <option value="ยังไม่เริ่มดำเนินการ" <?= $status === 'ยังไม่เริ่มดำเนินการ' ? 'selected' : '' ?>>ยังไม่เริ่มดำเนินการ</option>
-                    <option value="กำลังดำเนินการ" <?= $status === 'กำลังดำเนินการ' ? 'selected' : '' ?>>กำลังดำเนินการ</option>
-                    <option value="เสร็จสิ้น" <?= $status === 'เสร็จสิ้น' ? 'selected' : '' ?>>เสร็จสิ้น</option>
-                    <option value="มีปัญหา" <?= $status === 'มีปัญหา' ? 'selected' : '' ?>>มีปัญหา</option>
-                    <option value="ยกเลิก" <?= $status === 'ยกเลิก' ? 'selected' : '' ?>>ยกเลิก</option>
+                    <option value="not_started" <?= in_array($status, ['not_started', 'ยังไม่เริ่ม', 'ยังไม่เริ่มดำเนินการ']) ? 'selected' : '' ?>>ยังไม่เริ่ม</option>
+                    <option value="in_progress" <?= in_array($status, ['in_progress', 'กำลังดำเนินการ']) ? 'selected' : '' ?>>กำลังดำเนินการ</option>
+                    <option value="completed" <?= in_array($status, ['completed', 'เสร็จสิ้น']) ? 'selected' : '' ?>>เสร็จสิ้น</option>
+                    <option value="has_problem" <?= in_array($status, ['has_problem', 'มีปัญหา']) ? 'selected' : '' ?>>มีปัญหา</option>
+                    <option value="cancelled" <?= in_array($status, ['cancelled', 'ยกเลิก']) ? 'selected' : '' ?>>ยกเลิก</option>
                 </select>
             </div>
 
@@ -203,17 +203,17 @@ $avgProgress = count($projects) > 0 ? round(array_sum(array_column($projects, 'p
             <table class="w-full text-left border-collapse text-xs">
                 <thead>
                     <tr class="border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70 text-slate-600 dark:text-slate-400 font-semibold uppercase tracking-wider">
-                        <th class="py-3 px-3 w-10 text-center">#</th>
-                        <th class="py-3 px-3">รหัสโครงการ</th>
-                        <th class="py-3 px-3">ชื่อโครงการ / ระดับ</th>
-                        <th class="py-3 px-3">สำนัก / กอง</th>
-                        <th class="py-3 px-3 text-center">ปีงบ</th>
-                        <th class="py-3 px-3 text-right">งบประมาณ (บาท)</th>
-                        <th class="py-3 px-3 text-right">เบิกจ่าย (บาท)</th>
-                        <th class="py-3 px-3 text-right">คงเหลือ (บาท)</th>
-                        <th class="py-3 px-3 text-center w-28">ความคืบหน้า</th>
-                        <th class="py-3 px-3 text-center">สถานะ</th>
-                        <th class="py-3 px-3">ผู้รับผิดชอบ</th>
+                        <th class="py-3 px-3 w-10 text-center whitespace-nowrap">#</th>
+                        <th class="py-3 px-3 whitespace-nowrap">รหัสโครงการ</th>
+                        <th class="py-3 px-3 min-w-[220px]">ชื่อโครงการ / ระดับ</th>
+                        <th class="py-3 px-3 whitespace-nowrap">สำนัก / กอง</th>
+                        <th class="py-3 px-3 text-center whitespace-nowrap">ปีงบ</th>
+                        <th class="py-3 px-3 text-right whitespace-nowrap">งบประมาณ (บาท)</th>
+                        <th class="py-3 px-3 text-right whitespace-nowrap">เบิกจ่าย (บาท)</th>
+                        <th class="py-3 px-3 text-right whitespace-nowrap">คงเหลือ (บาท)</th>
+                        <th class="py-3 px-3 text-center w-28 whitespace-nowrap">ความคืบหน้า</th>
+                        <th class="py-3 px-3 text-center whitespace-nowrap">สถานะ</th>
+                        <th class="py-3 px-3 whitespace-nowrap">ผู้รับผิดชอบ</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -228,10 +228,11 @@ $avgProgress = count($projects) > 0 ? round(array_sum(array_column($projects, 'p
                             $isParent = empty($p['parent_id']);
                             $remaining = $p['budget'] - $p['disbursed_amount'];
                             $badgeClass = ProjectStatus::badgeClass($p['status']);
+                            $rTier = \App\Services\ProgressService::getProgressTier((float)$p['progress'], $p['status'] ?? null);
                         ?>
                             <tr class="hover:bg-slate-50/75 dark:hover:bg-slate-800/40 transition-colors <?= $isParent ? 'bg-slate-50/30 dark:bg-slate-800/20 font-medium' : '' ?>">
-                                <td class="py-3 px-3 text-center text-slate-400 font-mono"><?= $idx + 1 ?></td>
-                                <td class="py-3 px-3 font-mono font-semibold text-slate-700 dark:text-slate-300">
+                                <td class="py-3 px-3 text-center text-slate-400 font-mono whitespace-nowrap"><?= $idx + 1 ?></td>
+                                <td class="py-3 px-3 font-mono font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
                                     <?= htmlspecialchars($p['project_code']) ?>
                                 </td>
                                 <td class="py-3 px-3">
@@ -248,31 +249,32 @@ $avgProgress = count($projects) > 0 ? round(array_sum(array_column($projects, 'p
                                         </div>
                                     <?php endif; ?>
                                 </td>
-                                <td class="py-3 px-3 text-slate-600 dark:text-slate-300">
+                                <td class="py-3 px-3 text-slate-600 dark:text-slate-300 whitespace-nowrap">
                                     <?= htmlspecialchars($p['department_name'] ?? 'ไม่ระบุ') ?>
                                 </td>
-                                <td class="py-3 px-3 text-center text-slate-600 dark:text-slate-400">
+                                <td class="py-3 px-3 text-center text-slate-600 dark:text-slate-400 whitespace-nowrap">
                                     <?= htmlspecialchars($p['fiscal_year'] ?? '-') ?>
                                 </td>
-                                <td class="py-3 px-3 text-right font-mono font-semibold text-slate-900 dark:text-white">
+                                <td class="py-3 px-3 text-right font-mono font-semibold text-slate-900 dark:text-white whitespace-nowrap">
                                     <?= number_format($p['budget'], 2) ?>
                                 </td>
-                                <td class="py-3 px-3 text-right font-mono text-purple-600 dark:text-purple-400">
+                                <td class="py-3 px-3 text-right font-mono text-purple-600 dark:text-purple-400 whitespace-nowrap">
                                     <?= number_format($p['disbursed_amount'], 2) ?>
                                 </td>
-                                <td class="py-3 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400">
+                                <td class="py-3 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
                                     <?= number_format($remaining, 2) ?>
                                 </td>
-                                <td class="py-3 px-3 text-center">
-                                    <div class="flex items-center justify-center gap-1.5 font-semibold">
-                                        <span><?= $p['progress'] ?>%</span>
+                                <td class="py-3 px-3 text-center whitespace-nowrap">
+                                    <div class="flex items-center justify-center gap-1.5 font-semibold <?= $rTier['textClass'] ?>">
+                                        <span class="w-1.5 h-1.5 rounded-full <?= $rTier['bgDot'] ?>"></span>
+                                        <span><?= number_format((float)$p['progress'], 1) ?>%</span>
                                     </div>
-                                    <div class="w-20 mx-auto bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mt-1">
-                                        <div class="h-full rounded-full <?= $p['progress'] >= 100 ? 'bg-emerald-500' : 'bg-blue-600' ?>" style="width: <?= min(100, (float)$p['progress']) ?>%"></div>
+                                    <div class="w-20 mx-auto bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden mt-1 p-0.5">
+                                        <div class="h-full rounded-full bg-gradient-to-r <?= $rTier['gradient'] ?>" style="width: <?= min(100, (float)$p['progress']) ?>%"></div>
                                     </div>
                                 </td>
-                                <td class="py-3 px-3 text-center">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border <?= $badgeClass ?>">
+                                <td class="py-3 px-3 text-center whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold border whitespace-nowrap <?= $badgeClass ?>">
                                         <?= htmlspecialchars(ProjectStatus::labelFor($p['status'])) ?>
                                     </span>
                                 </td>

@@ -42,18 +42,26 @@ class ActivityController
         }
 
         try {
+            $targetParticipants = (int)($_POST['target_participant_count'] ?? $_POST['participant_count'] ?? 0);
+            $actualParticipants = (int)($_POST['actual_participant_count'] ?? 0);
+            if (!isset($_POST['actual_participant_count']) && isset($_POST['participant_count'])) {
+                $actualParticipants = (int)$_POST['participant_count'];
+            }
+
             $actId = Database::insert('activities', [
-                'project_id'          => $projectId,
-                'name'                => trim($_POST['name']),
-                'description'         => trim($_POST['description'] ?? ''),
-                'activity_date'       => $_POST['activity_date'],
-                'location'            => trim($_POST['location'] ?? ''),
-                'responsible_user_id' => !empty($_POST['responsible_user_id']) ? (int)$_POST['responsible_user_id'] : Auth::id(),
-                'participant_count'   => (int)($_POST['participant_count'] ?? 0),
-                'budget'              => (float)$_POST['budget'],
-                'status'              => $_POST['status'] ?? 'not_started',
-                'progress'            => ($_POST['status'] ?? '') === 'completed' ? 100.00 : 0.00,
-                'notes'               => trim($_POST['notes'] ?? ''),
+                'project_id'               => $projectId,
+                'name'                     => trim($_POST['name']),
+                'description'              => trim($_POST['description'] ?? ''),
+                'activity_date'            => $_POST['activity_date'],
+                'location'                 => trim($_POST['location'] ?? ''),
+                'responsible_user_id'      => !empty($_POST['responsible_user_id']) ? (int)$_POST['responsible_user_id'] : Auth::id(),
+                'target_participant_count' => $targetParticipants,
+                'actual_participant_count' => $actualParticipants,
+                'participant_count'        => $actualParticipants,
+                'budget'                   => (float)$_POST['budget'],
+                'status'                   => $_POST['status'] ?? 'not_started',
+                'progress'                 => ($_POST['status'] ?? '') === 'completed' ? 100.00 : 0.00,
+                'notes'                    => trim($_POST['notes'] ?? ''),
             ]);
 
             AuditLogService::log('CREATE_ACTIVITY', 'Activity', $actId, null, ['name' => $_POST['name'], 'project_id' => $projectId]);
@@ -123,16 +131,25 @@ class ActivityController
         $status = $_POST['status'] ?? $act['status'];
         $progress = isset($_POST['progress']) ? (float)$_POST['progress'] : ($status === 'completed' ? 100.00 : $act['progress']);
 
+        $targetParticipants = isset($_POST['target_participant_count']) 
+            ? (int)$_POST['target_participant_count'] 
+            : (int)($act['target_participant_count'] ?? 0);
+        $actualParticipants = isset($_POST['actual_participant_count']) 
+            ? (int)$_POST['actual_participant_count'] 
+            : (int)($_POST['participant_count'] ?? $act['actual_participant_count'] ?? $act['participant_count'] ?? 0);
+
         Database::update('activities', [
-            'name'                => trim($_POST['name']),
-            'description'         => trim($_POST['description'] ?? ''),
-            'activity_date'       => $_POST['activity_date'],
-            'location'            => trim($_POST['location'] ?? ''),
-            'participant_count'   => (int)($_POST['participant_count'] ?? 0),
-            'budget'              => (float)$_POST['budget'],
-            'status'              => $status,
-            'progress'            => $progress,
-            'notes'               => trim($_POST['notes'] ?? ''),
+            'name'                     => trim($_POST['name']),
+            'description'              => trim($_POST['description'] ?? ''),
+            'activity_date'            => $_POST['activity_date'],
+            'location'                 => trim($_POST['location'] ?? ''),
+            'target_participant_count' => $targetParticipants,
+            'actual_participant_count' => $actualParticipants,
+            'participant_count'        => $actualParticipants,
+            'budget'                   => (float)$_POST['budget'],
+            'status'                   => $status,
+            'progress'                 => $progress,
+            'notes'                    => trim($_POST['notes'] ?? ''),
         ], "id = ?", [$actId]);
 
         AuditLogService::log('UPDATE_ACTIVITY', 'Activity', $actId, ['name' => $act['name']], ['name' => $_POST['name']]);

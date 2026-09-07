@@ -69,13 +69,14 @@ $title = htmlspecialchars($project['name']);
                 <div class="text-xs text-slate-400 dark:text-slate-500">คงเหลือ</div>
                 <div class="text-lg sm:text-xl font-bold text-purple-600 dark:text-purple-400 mt-0.5"><?= number_format($project['budget'] - $project['disbursed_amount'], 2) ?> <span class="text-xs font-normal text-slate-500">บาท</span></div>
             </div>
+            <?php $pTier = \App\Services\ProgressService::getProgressTier((float)$project['progress'], $project['status'] ?? null); ?>
             <div>
                 <div class="text-xs text-slate-400 dark:text-slate-500 flex items-center justify-between">
                     <span>ความก้าวหน้าเฉลี่ย (Rule #47)</span>
-                    <span class="font-bold text-emerald-600 dark:text-emerald-400"><?= number_format($project['progress'], 1) ?>%</span>
+                    <span class="font-bold <?= $pTier['textClass'] ?>"><?= number_format($project['progress'], 1) ?>%</span>
                 </div>
-                <div class="w-full bg-slate-100 dark:bg-[#1f222e] rounded-full h-2 mt-2 overflow-hidden">
-                    <div class="bg-gradient-to-r from-emerald-500 to-teal-500 h-2 rounded-full" style="width: <?= min(100, $project['progress']) ?>%"></div>
+                <div class="w-full bg-slate-100 dark:bg-[#1f222e] rounded-full h-2 mt-2 overflow-hidden p-0.5">
+                    <div class="bg-gradient-to-r <?= $pTier['gradient'] ?> h-1.5 rounded-full transition-all duration-500" style="width: <?= min(100, (float)$project['progress']) ?>%"></div>
                 </div>
             </div>
         </div>
@@ -129,12 +130,13 @@ $title = htmlspecialchars($project['name']);
                                 <td class="py-3.5 px-4 text-slate-600 dark:text-slate-400 font-medium whitespace-nowrap text-center">
                                     <?= $sub['actual_activity_count'] ?> / <?= $sub['planned_activity_count'] ?> ครั้ง
                                 </td>
+                                <?php $subTier = \App\Services\ProgressService::getProgressTier((float)$sub['progress'], $sub['status'] ?? null); ?>
                                 <td class="py-3.5 px-4 w-44">
                                     <div class="flex items-center justify-between text-xs mb-1">
-                                        <span class="font-bold text-emerald-600 dark:text-emerald-400"><?= number_format($sub['progress'], 1) ?>%</span>
+                                        <span class="font-bold <?= $subTier['textClass'] ?>"><?= number_format($sub['progress'], 1) ?>%</span>
                                     </div>
                                     <div class="w-full bg-slate-100 dark:bg-[#1f222e] rounded-full h-1.5 overflow-hidden">
-                                        <div class="h-1.5 rounded-full <?= $sub['status'] == 'has_problem' ? 'bg-rose-500' : 'bg-emerald-500' ?>" style="width: <?= min(100, $sub['progress']) ?>%"></div>
+                                        <div class="h-1.5 rounded-full bg-gradient-to-r <?= $subTier['gradient'] ?> transition-all duration-500" style="width: <?= min(100, (float)$sub['progress']) ?>%"></div>
                                     </div>
                                 </td>
                                 <td class="py-3.5 px-4 text-center whitespace-nowrap">
@@ -143,7 +145,7 @@ $title = htmlspecialchars($project['name']);
                                         'completed' => 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-200/80 dark:border-emerald-500/30',
                                         'in_progress' => 'bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-200/80 dark:border-blue-500/30',
                                         'has_problem' => 'bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-200/80 dark:border-rose-500/30 animate-pulse',
-                                        default => 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10'
+                                        default => 'bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-200/80 dark:border-amber-500/30'
                                     };
                                     $sLabel = match($sub['status']) {
                                         'completed' => 'เสร็จสิ้น',
@@ -183,18 +185,39 @@ $title = htmlspecialchars($project['name']);
                     </button>
                 </div>
 
-                <form action="<?= \App\Core\Router::url('/sub-projects') ?>" method="POST" class="p-6 space-y-4 overflow-y-auto flex-1">
+                <form action="<?= \App\Core\Router::url('/sub-projects') ?>" method="POST" 
+                      @submit="
+                        const start = $el.querySelector('input[name=start_date]')?.value;
+                        const end = $el.querySelector('input[name=end_date]')?.value;
+                        if (!start) {
+                            alert('กรุณาเลือกวันที่เริ่มต้น');
+                            $event.preventDefault();
+                            return false;
+                        }
+                        if (!end) {
+                            alert('กรุณาเลือกวันที่สิ้นสุด');
+                            $event.preventDefault();
+                            return false;
+                        }
+                        if (start > end) {
+                            alert('วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่มต้น');
+                            $event.preventDefault();
+                            return false;
+                        }
+                      "
+                      class="p-6 space-y-4 overflow-y-auto flex-1">
                     <input type="hidden" name="_token" value="<?= $csrfToken ?>">
                     <input type="hidden" name="parent_id" value="<?= $project['id'] ?>">
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">รหัสโครงการย่อย <span class="text-rose-500">*</span></label>
-                            <input type="text" name="project_code" required placeholder="เช่น SUB-2568-001-04" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <input type="text" name="project_code" required placeholder="เช่น SUB-2568-001-04" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ผู้รับผิดชอบโครงการ</label>
-                            <select name="responsible_user_id" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <select name="responsible_user_id" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+                                <option value="" disabled selected hidden>-- เลือกผู้รับผิดชอบโครงการ --</option>
                                 <?php foreach ($users as $u): ?>
                                     <option value="<?= $u['id'] ?>"><?= htmlspecialchars($u['name']) ?> (<?= htmlspecialchars($u['position'] ?? '') ?>)</option>
                                 <?php endforeach; ?>
@@ -204,63 +227,199 @@ $title = htmlspecialchars($project['name']);
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ชื่อโครงการย่อย <span class="text-rose-500">*</span></label>
-                        <input type="text" name="name" required placeholder="ระบุชื่อโครงการย่อย..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <input type="text" name="name" required placeholder="ระบุชื่อโครงการย่อย..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ประเภทกิจกรรม</label>
-                            <input type="text" name="activity_type" placeholder="เช่น ตรวจสุขภาพ, งานก่อสร้าง, ฝึกอบรม" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <input type="text" name="activity_type" placeholder="เช่น ตรวจสุขภาพ, งานก่อสร้าง, ฝึกอบรม" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">พื้นที่ดำเนินการ</label>
-                            <input type="text" name="location" placeholder="เช่น ชุมชนวัดใหม่, สวนสาธารณะ" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <input type="text" name="location" placeholder="เช่น ชุมชนวัดใหม่, สวนสาธารณะ" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">กลุ่มเป้าหมาย</label>
-                            <input type="text" name="target_group" placeholder="เช่น ประชาชนทั่วไป, ผู้สูงอายุ" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <input type="text" name="target_group" placeholder="เช่น ประชาชนทั่วไป, ผู้สูงอายุ" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">จำนวนกลุ่มเป้าหมาย (คน)</label>
-                            <input type="number" min="0" name="target_quantity" placeholder="0" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <input type="number" min="0" name="target_quantity" placeholder="0" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                         </div>
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">วัตถุประสงค์</label>
-                        <textarea name="objective" rows="2" placeholder="วัตถุประสงค์ของโครงการ..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">งบประมาณ (บาท) <span class="text-rose-500">*</span></label>
-                            <input type="number" step="0.01" min="0" name="budget" required placeholder="0.00" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">จำนวนครั้งที่วางแผน <span class="text-rose-500">*</span></label>
-                            <input type="number" min="1" name="planned_activity_count" value="4" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                            <span class="text-[10px] text-slate-400">ใช้คำนวณ Progress ตาม Rule #46</span>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">โหมดการคำนวณความสำเร็จ</label>
-                            <select name="progress_mode" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                                <option value="auto">คำนวณอัตโนมัติ (AUTO)</option>
-                                <option value="manual">ระบุเอง (MANUAL)</option>
-                            </select>
-                        </div>
+                        <textarea name="objective" rows="2" placeholder="วัตถุประสงค์ของโครงการ..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"></textarea>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">วันที่เริ่มต้น <span class="text-rose-500">*</span></label>
-                            <input type="date" name="start_date" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <div class="relative" x-data="thaiDatePicker({ name: 'start_date', value: '', align: 'left', placeholder: 'วว/ดด/ปปปป' })" @click.outside="open = false">
+                                <input type="hidden" :name="name" :value="value">
+                                <button type="button" 
+                                        @click="toggle()" 
+                                        class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white flex items-center justify-between focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-colors cursor-pointer">
+                                    <span x-text="displayLabel" 
+                                          :class="{ 'text-slate-400 dark:text-slate-500 font-normal': !value, 'font-medium text-slate-900 dark:text-white': value }"
+                                          class="truncate">วว/ดด/ปปปป</span>
+                                    <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                </button>
+                                <div x-show="open" 
+                                     x-transition:enter="transition ease-out duration-100"
+                                     x-transition:enter-start="transform opacity-0 scale-95"
+                                     x-transition:enter-end="transform opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-75"
+                                     x-transition:leave-start="transform opacity-100 scale-100"
+                                     x-transition:leave-end="transform opacity-0 scale-95"
+                                     class="absolute bottom-full mb-2 left-0 z-50 w-72 bg-white dark:bg-[#1f222e] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-3.5"
+                                     style="display: none;">
+                                    <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 dark:border-white/10">
+                                        <div class="flex items-center gap-1">
+                                            <button type="button" @click="viewYear--" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีก่อนหน้า">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
+                                            </button>
+                                            <button type="button" @click="prevMonth()" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนก่อนหน้า">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                                            </button>
+                                        </div>
+                                        <div class="text-xs font-bold text-slate-800 dark:text-white" x-text="monthLabel"></div>
+                                        <div class="flex items-center gap-1">
+                                            <button type="button" @click="nextMonth()" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนถัดไป">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                            </button>
+                                            <button type="button" @click="viewYear++" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีถัดไป">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-7 gap-1 mb-1 text-center">
+                                        <template x-for="day in shortDays">
+                                            <div class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 py-1" x-text="day"></div>
+                                        </template>
+                                    </div>
+                                    <div class="grid grid-cols-7 gap-1 text-center">
+                                        <template x-for="item in days">
+                                            <div>
+                                                <button type="button" 
+                                                        x-show="item.isCurrent"
+                                                        @click="selectDate(item)"
+                                                        class="w-8 h-8 mx-auto text-xs flex items-center justify-center rounded-xl transition-all cursor-pointer"
+                                                        :class="{
+                                                            'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-600/30': value === item.date,
+                                                            'border border-emerald-500 text-emerald-600 dark:text-emerald-400 font-semibold hover:bg-emerald-50 dark:hover:bg-emerald-500/10': item.isToday && value !== item.date,
+                                                            'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10': value !== item.date && !item.isToday
+                                                        }"
+                                                        x-text="item.day">
+                                                </button>
+                                                <div x-show="!item.isCurrent" class="w-8 h-8 mx-auto text-xs flex items-center justify-center text-slate-300 dark:text-slate-600 pointer-events-none" x-text="item.day"></div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <div class="mt-3 pt-2 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs">
+                                        <button type="button" @click="clear()" class="text-slate-400 hover:text-rose-500 transition cursor-pointer font-medium">ล้างค่า</button>
+                                        <button type="button" @click="selectToday()" class="text-emerald-600 dark:text-emerald-400 hover:underline transition cursor-pointer font-semibold">วันนี้</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">วันที่สิ้นสุด <span class="text-rose-500">*</span></label>
-                            <input type="date" name="end_date" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <div class="relative" x-data="thaiDatePicker({ name: 'end_date', value: '', align: 'right', placeholder: 'วว/ดด/ปปปป' })" @click.outside="open = false">
+                                <input type="hidden" :name="name" :value="value">
+                                <button type="button" 
+                                        @click="toggle()" 
+                                        class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white flex items-center justify-between focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-colors cursor-pointer">
+                                    <span x-text="displayLabel" 
+                                          :class="{ 'text-slate-400 dark:text-slate-500 font-normal': !value, 'font-medium text-slate-900 dark:text-white': value }"
+                                          class="truncate">วว/ดด/ปปปป</span>
+                                    <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                </button>
+                                <div x-show="open" 
+                                     x-transition:enter="transition ease-out duration-100"
+                                     x-transition:enter-start="transform opacity-0 scale-95"
+                                     x-transition:enter-end="transform opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-75"
+                                     x-transition:leave-start="transform opacity-100 scale-100"
+                                     x-transition:leave-end="transform opacity-0 scale-95"
+                                     class="absolute bottom-full mb-2 right-0 z-50 w-72 bg-white dark:bg-[#1f222e] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-3.5"
+                                     style="display: none;">
+                                    <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 dark:border-white/10">
+                                        <div class="flex items-center gap-1">
+                                            <button type="button" @click="viewYear--" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีก่อนหน้า">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
+                                            </button>
+                                            <button type="button" @click="prevMonth()" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนก่อนหน้า">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                                            </button>
+                                        </div>
+                                        <div class="text-xs font-bold text-slate-800 dark:text-white" x-text="monthLabel"></div>
+                                        <div class="flex items-center gap-1">
+                                            <button type="button" @click="nextMonth()" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนถัดไป">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                            </button>
+                                            <button type="button" @click="viewYear++" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีถัดไป">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-7 gap-1 mb-1 text-center">
+                                        <template x-for="day in shortDays">
+                                            <div class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 py-1" x-text="day"></div>
+                                        </template>
+                                    </div>
+                                    <div class="grid grid-cols-7 gap-1 text-center">
+                                        <template x-for="item in days">
+                                            <div>
+                                                <button type="button" 
+                                                        x-show="item.isCurrent"
+                                                        @click="selectDate(item)"
+                                                        class="w-8 h-8 mx-auto text-xs flex items-center justify-center rounded-xl transition-all cursor-pointer"
+                                                        :class="{
+                                                            'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-600/30': value === item.date,
+                                                            'border border-emerald-500 text-emerald-600 dark:text-emerald-400 font-semibold hover:bg-emerald-50 dark:hover:bg-emerald-500/10': item.isToday && value !== item.date,
+                                                            'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10': value !== item.date && !item.isToday
+                                                        }"
+                                                        x-text="item.day">
+                                                </button>
+                                                <div x-show="!item.isCurrent" class="w-8 h-8 mx-auto text-xs flex items-center justify-center text-slate-300 dark:text-slate-600 pointer-events-none" x-text="item.day"></div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <div class="mt-3 pt-2 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs">
+                                        <button type="button" @click="clear()" class="text-slate-400 hover:text-rose-500 transition cursor-pointer font-medium">ล้างค่า</button>
+                                        <button type="button" @click="selectToday()" class="text-emerald-600 dark:text-emerald-400 hover:underline transition cursor-pointer font-semibold">วันนี้</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">งบประมาณ (บาท) <span class="text-rose-500">*</span></label>
+                            <input type="number" step="0.01" min="0" name="budget" required placeholder="0.00" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">จำนวนครั้งที่วางแผน <span class="text-rose-500">*</span></label>
+                            <input type="number" min="1" name="planned_activity_count" value="4" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+                            <span class="text-[10px] text-slate-400">ใช้คำนวณ Progress ตาม Rule #46</span>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">โหมดการคำนวณความสำเร็จ</label>
+                            <select name="progress_mode" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+                                <option value="auto">คำนวณอัตโนมัติ (AUTO)</option>
+                                <option value="manual">ระบุเอง (MANUAL)</option>
+                            </select>
                         </div>
                     </div>
 
@@ -298,37 +457,37 @@ $title = htmlspecialchars($project['name']);
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">รหัสโครงการ <span class="text-rose-500">*</span></label>
-                            <input type="text" name="project_code" value="<?= htmlspecialchars($project['project_code']) ?>" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <input type="text" name="project_code" value="<?= htmlspecialchars($project['project_code']) ?>" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ปีงบประมาณ <span class="text-rose-500">*</span></label>
-                            <input type="number" name="fiscal_year" value="<?= htmlspecialchars($project['fiscal_year']) ?>" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <input type="number" name="fiscal_year" value="<?= htmlspecialchars($project['fiscal_year']) ?>" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                         </div>
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ชื่อโครงการหลัก <span class="text-rose-500">*</span></label>
-                        <input type="text" name="name" value="<?= htmlspecialchars($project['name']) ?>" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <input type="text" name="name" value="<?= htmlspecialchars($project['name']) ?>" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">คำอธิบายโครงการ</label>
-                        <textarea name="description" rows="2" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"><?= htmlspecialchars($project['description'] ?? '') ?></textarea>
+                        <textarea name="description" rows="2" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"><?= htmlspecialchars($project['description'] ?? '') ?></textarea>
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">วัตถุประสงค์โครงการ</label>
-                        <textarea name="objective" rows="2" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"><?= htmlspecialchars($project['objective'] ?? '') ?></textarea>
+                        <textarea name="objective" rows="2" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"><?= htmlspecialchars($project['objective'] ?? '') ?></textarea>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">งบประมาณรวม (บาท) <span class="text-rose-500">*</span></label>
-                            <input type="number" step="0.01" min="0" name="budget" value="<?= htmlspecialchars($project['budget']) ?>" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <input type="number" step="0.01" min="0" name="budget" value="<?= htmlspecialchars($project['budget']) ?>" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">สถานะโครงการ</label>
-                            <select name="status" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <select name="status" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                                 <option value="not_started" <?= $project['status'] === 'not_started' ? 'selected' : '' ?>>ยังไม่เริ่ม</option>
                                 <option value="in_progress" <?= $project['status'] === 'in_progress' ? 'selected' : '' ?>>กำลังดำเนินการ</option>
                                 <option value="completed" <?= $project['status'] === 'completed' ? 'selected' : '' ?>>เสร็จสิ้น</option>

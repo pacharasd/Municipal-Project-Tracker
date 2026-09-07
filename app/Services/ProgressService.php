@@ -284,4 +284,99 @@ class ProgressService
             self::syncParentProjectProgress((int)$project['parent_id']);
         }
     }
+
+    /**
+     * คืนค่าเกณฑ์ชุดสี 5 ระดับของความก้าวหน้าโครงการ (Progress Tiers)
+     * ตามมาตรฐานการ์ดความก้าวหน้าโครงการ:
+     * Tier 1: > 75% -> Emerald (#10b981)
+     * Tier 2: 50% - 75% -> Blue (#3b82f6)
+     * Tier 3: 25% - 50% -> Amber (#f59e0b)
+     * Tier 4: < 25% (และ > 0%) -> Orange (#f97316)
+     * Tier 5: 0% หรือสถานะ has_problem -> Rose (#f43f5e)
+     */
+    public static function getProgressTier(float $progress, ?string $status = null): array
+    {
+        if ($status === 'has_problem') {
+            return [
+                'key'        => 'has_problem',
+                'label'      => 'มีปัญหา',
+                'colorHex'   => '#f43f5e',
+                'gradient'   => 'from-rose-500 to-red-500',
+                'bgSolid'    => 'bg-rose-500',
+                'textClass'  => 'text-rose-600 dark:text-rose-400',
+                'bgDot'      => 'bg-[#f43f5e]',
+                'shadow'     => 'shadow-rose-500/50',
+                'badgeClass' => 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60',
+            ];
+        }
+
+        if ($progress > 75.0) {
+            return [
+                'key'        => 'over_75',
+                'label'      => 'มากกว่า 75%',
+                'colorHex'   => '#10b981',
+                'gradient'   => 'from-emerald-400 to-teal-500',
+                'bgSolid'    => 'bg-emerald-500',
+                'textClass'  => 'text-emerald-600 dark:text-emerald-400',
+                'bgDot'      => 'bg-[#10b981]',
+                'shadow'     => 'shadow-emerald-500/50',
+                'badgeClass' => 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60',
+            ];
+        }
+
+        if ($progress >= 50.0) {
+            return [
+                'key'        => '50_to_75',
+                'label'      => '50% - 75%',
+                'colorHex'   => '#3b82f6',
+                'gradient'   => 'from-blue-400 to-indigo-500',
+                'bgSolid'    => 'bg-blue-500',
+                'textClass'  => 'text-blue-600 dark:text-blue-400',
+                'bgDot'      => 'bg-[#3b82f6]',
+                'shadow'     => 'shadow-blue-500/50',
+                'badgeClass' => 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60',
+            ];
+        }
+
+        if ($progress >= 25.0) {
+            return [
+                'key'        => '25_to_50',
+                'label'      => '25% - 50%',
+                'colorHex'   => '#f59e0b',
+                'gradient'   => 'from-amber-400 to-yellow-500',
+                'bgSolid'    => 'bg-amber-500',
+                'textClass'  => 'text-amber-600 dark:text-amber-400',
+                'bgDot'      => 'bg-[#f59e0b]',
+                'shadow'     => 'shadow-amber-500/50',
+                'badgeClass' => 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60',
+            ];
+        }
+
+        if ($progress > 0.0) {
+            return [
+                'key'        => 'under_25',
+                'label'      => 'น้อยกว่า 25%',
+                'colorHex'   => '#f97316',
+                'gradient'   => 'from-orange-400 to-amber-500',
+                'bgSolid'    => 'bg-orange-500',
+                'textClass'  => 'text-orange-600 dark:text-orange-400',
+                'bgDot'      => 'bg-[#f97316]',
+                'shadow'     => 'shadow-orange-500/50',
+                'badgeClass' => 'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-300 border border-orange-200 dark:border-orange-800/60',
+            ];
+        }
+
+        // ยังไม่เริ่ม (0%)
+        return [
+            'key'        => 'not_started',
+            'label'      => 'ยังไม่เริ่ม',
+            'colorHex'   => '#f43f5e',
+            'gradient'   => 'from-rose-500 to-red-500',
+            'bgSolid'    => 'bg-rose-500',
+            'textClass'  => 'text-rose-600 dark:text-rose-400',
+            'bgDot'      => 'bg-[#f43f5e]',
+            'shadow'     => 'shadow-rose-500/50',
+            'badgeClass' => 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60',
+        ];
+    }
 }

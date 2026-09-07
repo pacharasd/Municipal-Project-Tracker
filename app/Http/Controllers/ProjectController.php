@@ -24,7 +24,7 @@ class ProjectController
         ];
 
         $projects = ProjectService::getMainProjects($filters);
-        $fiscalYears = Database::query("SELECT * FROM fiscal_years ORDER BY year DESC");
+        $fiscalYears = \App\Services\FiscalYearService::getAll();
         $departments = Database::query("SELECT * FROM departments ORDER BY id ASC");
         $categories = Database::query("SELECT * FROM project_categories ORDER BY id ASC");
 

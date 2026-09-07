@@ -8,6 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title><?= htmlspecialchars($title ?? 'ระบบติดตามและบริหารโครงการเทศบาล') ?> - เทศบาลตำบล/เมือง</title>
     <link rel="icon" type="image/webp" href="<?= \App\Core\Router::url('/images/mobile-logo.webp') ?>">
+    <meta name="color-scheme" id="meta-color-scheme" content="light">
     
     <!-- Theme Detection & Anti-Flicker Script (Standard 3-State Tailwind Pattern: Light / Dark / System) -->
     <script>
@@ -15,14 +16,20 @@
             try {
                 const theme = localStorage.getItem('theme') || 'system';
                 const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-                if (theme === 'dark' || (theme === 'system' && prefersDark)) {
+                const isDark = (theme === 'dark' || (theme === 'system' && prefersDark));
+                if (isDark) {
                     document.documentElement.classList.add('dark');
+                    document.documentElement.style.colorScheme = 'dark';
                 } else {
                     document.documentElement.classList.remove('dark');
+                    document.documentElement.style.colorScheme = 'light';
                 }
+                const metaScheme = document.getElementById('meta-color-scheme');
+                if (metaScheme) metaScheme.content = isDark ? 'dark' : 'light';
             } catch (e) {
                 if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
                     document.documentElement.classList.add('dark');
+                    document.documentElement.style.colorScheme = 'dark';
                 }
             }
         })();
@@ -91,6 +98,175 @@
         }
     </script>
     
+    <!-- Global DOM-based Thai Datepicker Component (Available before Alpine initializes) -->
+    <script>
+        function thaiDatePicker(config = {}) {
+            const today = new Date();
+            let viewDate = today;
+            if (config.value) {
+                const parts = String(config.value).split('-');
+                if (parts.length === 3) {
+                    const parsed = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                    if (!isNaN(parsed.getTime())) viewDate = parsed;
+                }
+            }
+
+            return {
+                name: config.name || '',
+                value: config.value || '',
+                placeholder: config.placeholder || 'วว/ดด/ปปปป',
+                align: config.align || 'left',
+                open: false,
+                viewYear: viewDate.getFullYear(),
+                viewMonth: viewDate.getMonth(),
+
+                monthNames: [
+                    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน',
+                    'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม',
+                    'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+                ],
+                shortDays: ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'],
+
+                get displayValue() {
+                    return this.displayLabel;
+                },
+
+                get displayLabel() {
+                    if (!this.value) return this.placeholder;
+                    const parts = String(this.value).split('-');
+                    if (parts.length !== 3) return this.value;
+                    const y = parseInt(parts[0], 10);
+                    const m = parseInt(parts[1], 10);
+                    const d = parseInt(parts[2], 10);
+                    const thaiYear = y + 543;
+                    return `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${thaiYear}`;
+                },
+
+                get monthLabel() {
+                    return this.monthNames[this.viewMonth] + ' ' + (this.viewYear + 543);
+                },
+
+                get days() {
+                    return this.generateDays();
+                },
+
+                get calendarDays() {
+                    return this.generateDays();
+                },
+
+                generateDays() {
+                    const list = [];
+                    const firstDayIndex = new Date(this.viewYear, this.viewMonth, 1).getDay();
+                    const lastDate = new Date(this.viewYear, this.viewMonth + 1, 0).getDate();
+                    const prevLastDate = new Date(this.viewYear, this.viewMonth, 0).getDate();
+
+                    for (let i = firstDayIndex - 1; i >= 0; i--) {
+                        list.push({
+                            day: prevLastDate - i,
+                            isCurrent: false,
+                            isCurrentMonth: false,
+                            date: '',
+                            dateStr: '',
+                            isToday: false,
+                            isSelected: false
+                        });
+                    }
+
+                    const ty = today.getFullYear();
+                    const tm = String(today.getMonth() + 1).padStart(2, '0');
+                    const td = String(today.getDate()).padStart(2, '0');
+                    const todayStr = `${ty}-${tm}-${td}`;
+
+                    for (let i = 1; i <= lastDate; i++) {
+                        const mStr = String(this.viewMonth + 1).padStart(2, '0');
+                        const dStr = String(i).padStart(2, '0');
+                        const dateStr = `${this.viewYear}-${mStr}-${dStr}`;
+                        list.push({
+                            day: i,
+                            isCurrent: true,
+                            isCurrentMonth: true,
+                            date: dateStr,
+                            dateStr: dateStr,
+                            isToday: dateStr === todayStr,
+                            isSelected: this.value === dateStr
+                        });
+                    }
+
+                    const total = list.length <= 35 ? 35 : 42;
+                    const rem = total - list.length;
+                    for (let i = 1; i <= rem; i++) {
+                        list.push({
+                            day: i,
+                            isCurrent: false,
+                            isCurrentMonth: false,
+                            date: '',
+                            dateStr: '',
+                            isToday: false,
+                            isSelected: false
+                        });
+                    }
+                    return list;
+                },
+
+                toggle() {
+                    this.open = !this.open;
+                    if (this.open && this.value) {
+                        const parts = String(this.value).split('-');
+                        if (parts.length === 3) {
+                            this.viewYear = parseInt(parts[0], 10);
+                            this.viewMonth = parseInt(parts[1], 10) - 1;
+                        }
+                    }
+                },
+
+                prevMonth() {
+                    if (this.viewMonth === 0) {
+                        this.viewMonth = 11;
+                        this.viewYear--;
+                    } else {
+                        this.viewMonth--;
+                    }
+                },
+
+                nextMonth() {
+                    if (this.viewMonth === 11) {
+                        this.viewMonth = 0;
+                        this.viewYear++;
+                    } else {
+                        this.viewMonth++;
+                    }
+                },
+
+                selectDate(item) {
+                    if (!item.isCurrent || !item.date) return;
+                    this.value = item.date;
+                    this.open = false;
+                },
+
+                selectToday() {
+                    const ty = today.getFullYear();
+                    const tm = String(today.getMonth() + 1).padStart(2, '0');
+                    const td = String(today.getDate()).padStart(2, '0');
+                    this.value = `${ty}-${tm}-${td}`;
+                    this.viewYear = ty;
+                    this.viewMonth = today.getMonth();
+                    this.open = false;
+                },
+
+                clear() {
+                    this.value = '';
+                    this.open = false;
+                }
+            };
+        }
+        window.thaiDatePicker = thaiDatePicker;
+        document.addEventListener('alpine:init', function() {
+            if (window.Alpine && typeof Alpine.data === 'function') {
+                Alpine.data('thaiDatePicker', thaiDatePicker);
+            }
+        });
+    </script>
+
     <!-- Alpine.js & Lucide Icons -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -98,6 +274,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
+        :root {
+            color-scheme: light;
+        }
+        html.dark {
+            color-scheme: dark;
+        }
+
         /* Base / Light Mode Defaults */
         body {
             font-family: 'Sarabun', sans-serif;
@@ -110,9 +293,18 @@
         }
         [x-cloak] { display: none !important; }
 
-        /* Form focus transition only (prevent desync during theme switch) */
-        input:focus, select:focus, textarea:focus {
-            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        /* ========================================================= */
+        /* Zero-Flicker Focus State (Eliminate Native Black Outline) */
+        /* ========================================================= */
+        input, select, textarea, button {
+            outline: none !important;
+            -webkit-tap-highlight-color: transparent;
+        }
+        input:focus, select:focus, textarea:focus, button:focus,
+        input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible,
+        input:active, select:active, textarea:active, button:active {
+            outline: none !important;
+            outline-offset: 0 !important;
         }
 
         /* Light table rows hover */
@@ -120,15 +312,34 @@
             background-color: rgba(0, 0, 0, 0.02);
         }
 
-        /* Form Inputs & Selects (Light) */
-        input:not([type="checkbox"]):not([type="radio"]), select, textarea {
+        /* Form Inputs & Selects (Light) - Instant crisp border, smooth glow */
+        input:not([type="checkbox"]):not([type="radio"]):not(:focus):not(:focus-visible),
+        select:not(:focus):not(:focus-visible),
+        textarea:not(:focus):not(:focus-visible) {
             background-color: #ffffff;
             border: 1px solid #cbd5e1;
             color: #0f172a;
+            color-scheme: light;
+            outline: none !important;
+            transition: box-shadow 0.1s ease-out;
         }
-        input:focus, select:focus, textarea:focus {
-            border-color: #10b981;
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+        select option, select optgroup {
+            background-color: #ffffff;
+            color: #0f172a;
+            color-scheme: light;
+        }
+        input:not([type="checkbox"]):not([type="radio"]):focus,
+        input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+        select:focus, select:focus-visible,
+        textarea:focus, textarea:focus-visible,
+        button.cursor-pointer:focus, button.cursor-pointer:focus-visible,
+        .focus\:border-emerald-500:focus, .focus\:border-emerald-500:focus-visible,
+        [class*="focus:border-emerald-500"]:focus, [class*="focus:border-emerald-500"]:focus-visible {
+            border: 1px solid #10b981 !important;
+            border-color: #10b981 !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
+            outline: none !important;
+            outline-offset: 0 !important;
         }
 
         /* Light Scrollbar Styling */
@@ -194,7 +405,9 @@
         html.dark .bg-slate-200 {
             background-color: rgba(255, 255, 255, 0.08) !important;
         }
-        html.dark .border-slate-100, html.dark .border-slate-200, html.dark .border-slate-300 {
+        html.dark .border-slate-100:not(:focus):not(:focus-visible),
+        html.dark .border-slate-200:not(:focus):not(:focus-visible),
+        html.dark .border-slate-300:not(:focus):not(:focus-visible) {
             border-color: rgba(255, 255, 255, 0.08) !important;
         }
 
@@ -203,15 +416,35 @@
             background-color: rgba(255, 255, 255, 0.03) !important;
         }
 
-        /* Form Inputs & Selects Dark */
-        html.dark input:not([type="checkbox"]):not([type="radio"]), html.dark select, html.dark textarea {
+        /* Form Inputs & Selects Dark - Sleek resting border, Vibrant Emerald focus ring matching Light Mode */
+        html.dark input:not([type="checkbox"]):not([type="radio"]):not(:focus):not(:focus-visible),
+        html.dark select:not(:focus):not(:focus-visible),
+        html.dark textarea:not(:focus):not(:focus-visible) {
             background-color: #12141a !important;
             border: 1px solid rgba(255, 255, 255, 0.12) !important;
             color: #ffffff !important;
+            color-scheme: dark;
+            outline: none !important;
+            transition: box-shadow 0.1s ease-out;
         }
-        html.dark input:focus, html.dark select:focus, html.dark textarea:focus {
+        html.dark select option, html.dark select optgroup {
+            background-color: #181a20 !important;
+            color: #ffffff !important;
+            color-scheme: dark;
+        }
+        html.dark input:not([type="checkbox"]):not([type="radio"]):focus,
+        html.dark input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+        html.dark select:focus, html.dark select:focus-visible,
+        html.dark textarea:focus, html.dark textarea:focus-visible,
+        html.dark button.cursor-pointer:focus, html.dark button.cursor-pointer:focus-visible,
+        html.dark .focus\:border-emerald-500:focus, html.dark .focus\:border-emerald-500:focus-visible,
+        html.dark [class*="focus:border-emerald-500"]:focus, html.dark [class*="focus:border-emerald-500"]:focus-visible,
+        html.dark .dark\:border-white\/10:focus, html.dark .dark\:border-white\/10:focus-visible {
+            border: 1px solid #10b981 !important;
             border-color: #10b981 !important;
-            box-shadow: 0 0 10px rgba(16, 185, 129, 0.3) !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.35) !important;
+            outline: none !important;
+            outline-offset: 0 !important;
         }
 
         /* Dark Scrollbar Styling */
@@ -239,6 +472,7 @@
         #main-content {
             max-width: 100% !important;
             overflow-x: hidden !important;
+            contain: paint;
         }
         #main-content table,
         #main-content table * {
@@ -250,6 +484,7 @@
       x-data="{ 
           sidebarOpen: false, 
           desktopSidebarOpen: (localStorage.getItem('mpt_desktop_sidebar') !== 'false'),
+          resizeTimer: null,
           toggleSidebar() {
               if (window.innerWidth >= 1024) {
                   this.desktopSidebarOpen = !this.desktopSidebarOpen;
@@ -259,12 +494,31 @@
               } else {
                   this.sidebarOpen = !this.sidebarOpen;
               }
-              setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 320);
+              clearTimeout(this.resizeTimer);
+              this.resizeTimer = setTimeout(() => { 
+                  window.dispatchEvent(new Event('resize')); 
+              }, 220);
           }
       }">
 
+    <?php 
+        $flashSuccess = \App\Core\Session::flash('success');
+        $flashError = \App\Core\Session::flash('error');
+        $flashInfo = \App\Core\Session::flash('info');
+    ?>
+
     <!-- SPA Top Progress Bar (Neon Green Glow) -->
     <div id="spa-progress" class="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 via-teal-300 to-green-500 shadow-[0_0_12px_#10b981] z-[9999] transition-all duration-200 pointer-events-none opacity-0" style="width: 0%;"></div>
+
+    <!-- Floating Toast Notifications Container -->
+    <div id="toast-container" class="fixed top-4 right-4 sm:top-6 sm:right-6 z-[99999] pointer-events-none flex flex-col gap-2.5 max-w-sm w-full px-4 sm:px-0"></div>
+
+    <!-- Flash Message Carrier for SPA and initial page load -->
+    <div id="flash-message-carrier" 
+         style="display: none;" 
+         data-success="<?= htmlspecialchars($flashSuccess ?? '', ENT_QUOTES) ?>" 
+         data-error="<?= htmlspecialchars($flashError ?? '', ENT_QUOTES) ?>"
+         data-info="<?= htmlspecialchars($flashInfo ?? '', ENT_QUOTES) ?>"></div>
 
     <!-- Top Navigation Bar -->
     <header class="bg-white/95 dark:bg-[#101115]/95 border-b border-slate-200 dark:border-white/[0.08] sticky top-0 z-30 shadow-sm dark:shadow-md backdrop-blur-md transition-colors duration-150 w-full max-w-full">
@@ -413,7 +667,7 @@
                         </div>
                         <div class="py-1 space-y-1">
                             <?php foreach ($switchDemoUsers as $su): ?>
-                                <form action="<?= \App\Core\Router::url('/auth/switch') ?>" method="POST">
+                                <form action="<?= \App\Core\Router::url('/auth/switch') ?>" method="POST" data-no-spa>
                                     <input type="hidden" name="_token" value="<?= $csrfToken ?>">
                                     <input type="hidden" name="user_id" value="<?= $su['id'] ?>">
                                     <input type="hidden" name="redirect" value="<?= htmlspecialchars($_SERVER['REQUEST_URI'] ?? '') ?>">
@@ -511,10 +765,10 @@
         <aside :class="{
                    'translate-x-0': sidebarOpen,
                    '-translate-x-full': !sidebarOpen,
-                   'lg:w-64 lg:opacity-100': desktopSidebarOpen,
-                   'lg:w-0 lg:border-r-0 lg:opacity-0 lg:pointer-events-none': !desktopSidebarOpen
+                   'lg:ml-0': desktopSidebarOpen,
+                   'lg:-ml-64 lg:pointer-events-none': !desktopSidebarOpen
                }" 
-               class="fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-[#0b0c0f] border-r border-slate-200 dark:border-white/[0.08] pt-16 lg:pt-0 transform lg:translate-x-0 lg:static transition-all duration-300 ease-in-out flex flex-col justify-between shadow-lg dark:shadow-2xl lg:shadow-none overflow-hidden shrink-0">
+               class="fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-[#0b0c0f] border-r border-slate-200 dark:border-white/[0.08] pt-16 lg:pt-0 transform lg:translate-x-0 lg:static transition-[margin-left,transform] duration-200 ease-out flex flex-col justify-between shadow-lg dark:shadow-2xl lg:shadow-none overflow-hidden shrink-0 will-change-[margin-left,transform]">
             <div class="w-64 h-full flex flex-col justify-between overflow-hidden">
                 <div id="sidebar-nav-items" class="p-4 space-y-2 overflow-y-auto flex-1">
                     <div class="px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 font-heading">
@@ -659,8 +913,88 @@
         observer.observe(document.body, { childList: true, subtree: true });
     </script>
 
-    <!-- Seamless SPA Navigation Router (Persistent Sidebar & Header) -->
+    <!-- Seamless SPA Navigation & Mutation Engine (Persistent Sidebar, Header & Zero-Reload Forms) -->
     <script>
+        // Floating Toast Notification System
+        window.showToast = function(message, type = 'success', duration = 3500) {
+            if (!message) return;
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = 'pointer-events-auto flex items-start gap-3 p-4 rounded-2xl shadow-xl backdrop-blur-md border transition-all duration-300 transform translate-y-[-10px] opacity-0';
+            
+            let colorClasses = '';
+            let iconSvg = '';
+            let title = '';
+
+            if (type === 'success') {
+                colorClasses = 'bg-white/95 dark:bg-[#161a22]/95 border-emerald-500/30 dark:border-emerald-500/40 text-slate-800 dark:text-white shadow-emerald-500/10';
+                iconSvg = '<div class="w-7 h-7 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg></div>';
+                title = 'ดำเนินการสำเร็จ';
+            } else if (type === 'error') {
+                colorClasses = 'bg-white/95 dark:bg-[#161a22]/95 border-rose-500/30 dark:border-rose-500/40 text-slate-800 dark:text-white shadow-rose-500/10';
+                iconSvg = '<div class="w-7 h-7 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg></div>';
+                title = 'เกิดข้อผิดพลาด';
+            } else {
+                colorClasses = 'bg-white/95 dark:bg-[#161a22]/95 border-blue-500/30 dark:border-blue-500/40 text-slate-800 dark:text-white shadow-blue-500/10';
+                iconSvg = '<div class="w-7 h-7 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>';
+                title = 'แจ้งเตือนระบบ';
+            }
+
+            toast.className += ' ' + colorClasses;
+            toast.innerHTML = `
+                ${iconSvg}
+                <div class="flex-1 min-w-0 pr-2">
+                    <h4 class="text-xs font-bold font-heading mb-0.5">${title}</h4>
+                    <p class="text-xs text-slate-600 dark:text-slate-300 font-sans leading-relaxed break-words">${message}</p>
+                </div>
+                <button type="button" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg transition-colors cursor-pointer shrink-0" aria-label="ปิดการแจ้งเตือน">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            `;
+
+            const closeBtn = toast.querySelector('button');
+            const removeToast = () => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-[-10px]', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            };
+            if (closeBtn) closeBtn.addEventListener('click', removeToast);
+
+            container.appendChild(toast);
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-[-10px]', 'opacity-0');
+                toast.classList.add('translate-y-0', 'opacity-100');
+            });
+
+            setTimeout(removeToast, duration);
+        };
+
+        // Helper to check and display flash messages from carrier
+        function checkAndDisplayFlash(doc = document) {
+            const carrier = doc.getElementById('flash-message-carrier');
+            if (!carrier) return;
+            const success = carrier.getAttribute('data-success');
+            const error = carrier.getAttribute('data-error');
+            const info = carrier.getAttribute('data-info');
+            if (success) window.showToast(success, 'success');
+            if (error) window.showToast(error, 'error');
+            if (info) window.showToast(info, 'info');
+
+            // Clear carrier attributes so message isn't shown twice
+            carrier.removeAttribute('data-success');
+            carrier.removeAttribute('data-error');
+            carrier.removeAttribute('data-info');
+        }
+
+        // Initialize flash check on first page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => checkAndDisplayFlash());
+        } else {
+            checkAndDisplayFlash();
+        }
+
         window.AppSPA = {
             isNavigating: false,
             progressEl: null,
@@ -757,11 +1091,14 @@
                         }
                     }
 
-                    // 5. Replace Main Content & Scroll to Top
+                    // 5. Clean up any teleported modal overlays attached to body that might linger
+                    document.querySelectorAll('body > [x-teleport-target], body > [data-teleport-overlay]').forEach(el => el.remove());
+
+                    // 6. Replace Main Content & Scroll to Top
                     currentMain.innerHTML = newMain.innerHTML;
                     currentMain.scrollTop = 0;
 
-                    // 6. Re-evaluate <script> tags inside newMain
+                    // 7. Re-evaluate <script> tags inside newMain
                     const scripts = Array.from(currentMain.querySelectorAll('script'));
                     for (const oldScript of scripts) {
                         const newScript = document.createElement('script');
@@ -772,7 +1109,7 @@
                         oldScript.parentNode.replaceChild(newScript, oldScript);
                     }
 
-                    // 7. Re-initialize Alpine on currentMain
+                    // 8. Re-initialize Alpine on currentMain
                     if (window.Alpine && typeof Alpine.initTree === 'function') {
                         try {
                             Alpine.initTree(currentMain);
@@ -781,15 +1118,15 @@
                         }
                     }
 
-                    // 8. Re-render Lucide Icons
+                    // 9. Re-render Lucide Icons
                     safeCreateIcons();
 
-                    // 9. Re-initialize charts if on dashboard
+                    // 10. Re-initialize charts if on dashboard
                     if (typeof window.initDashboardCharts === 'function' && (document.getElementById('statusDonutChart') || document.getElementById('statusChart') || document.getElementById('budgetTrendChart'))) {
                         window.initDashboardCharts();
                     }
 
-                    // 10. Auto-close mobile sidebar if opened
+                    // 11. Auto-close mobile sidebar if opened
                     const bodyEl = document.querySelector('body');
                     if (bodyEl && window.Alpine) {
                         const alpineData = bodyEl._x_dataStack ? bodyEl._x_dataStack[0] : null;
@@ -798,10 +1135,189 @@
                         }
                     }
 
+                    // 12. Check and display any flash message from destination
+                    checkAndDisplayFlash(newDoc);
+
                 } catch (err) {
                     console.error('SPA navigation error, falling back:', err);
                     window.location.href = url;
                 } finally {
+                    this.isNavigating = false;
+                    this.finishProgress();
+                }
+            },
+
+            // Asynchronous form submit handler for zero-reload Add/Edit/Delete
+            async submitForm(form, submitter) {
+                if (this.isNavigating) return;
+
+                const method = (form.method || 'GET').toUpperCase();
+                if (method !== 'POST') return;
+
+                let actionUrl;
+                try {
+                    actionUrl = new URL(form.action || window.location.href, window.location.origin);
+                } catch (err) {
+                    form.submit();
+                    return;
+                }
+
+                if (actionUrl.origin !== window.location.origin) {
+                    form.submit();
+                    return;
+                }
+
+                const path = actionUrl.pathname.toLowerCase();
+                // Exclude file export / download / print / logout / auth switch
+                if (form.hasAttribute('data-no-spa') || path.includes('/export') || path.includes('/print') || path.includes('/logout') || path.includes('/auth/switch') || path.endsWith('.pdf') || path.endsWith('.xlsx') || path.endsWith('.csv')) {
+                    form.submit();
+                    return;
+                }
+
+                this.isNavigating = true;
+                this.startProgress();
+
+                // Disable submit button & visual feedback
+                const submitBtn = submitter || form.querySelector('button[type="submit"], input[type="submit"]');
+                const originalBtnText = submitBtn ? submitBtn.innerHTML : null;
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.style.opacity = '0.7';
+                }
+
+                // Smooth optimistic feedback for row deletion
+                let targetRowOrCard = null;
+                if (path.includes('/delete')) {
+                    targetRowOrCard = form.closest('tr, .p-4.rounded-xl, .activity-card');
+                    if (targetRowOrCard) {
+                        targetRowOrCard.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+                        targetRowOrCard.style.opacity = '0.35';
+                        targetRowOrCard.style.transform = 'scale(0.98)';
+                    }
+                }
+
+                try {
+                    const formData = new FormData(form);
+                    if (submitter && submitter.name) {
+                        formData.append(submitter.name, submitter.value);
+                    }
+
+                    const res = await fetch(actionUrl.href, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'text/html,application/xhtml+xml,application/xml'
+                        }
+                    });
+
+                    if (!res.ok) {
+                        console.warn('Form submit HTTP status ' + res.status);
+                        try {
+                            const errJson = await res.json();
+                            if (errJson && errJson.message) {
+                                window.showToast(errJson.message, 'error');
+                                return;
+                            }
+                        } catch (e) {}
+                        window.showToast('เกิดข้อผิดพลาดในการประมวลผลข้อมูล (รหัส ' + res.status + ')', 'error');
+                        return;
+                    }
+
+                    const targetUrl = res.url || window.location.href;
+                    const html = await res.text();
+                    const parser = new DOMParser();
+                    const newDoc = parser.parseFromString(html, 'text/html');
+
+                    const newMain = newDoc.querySelector('#main-content');
+                    if (!newMain) {
+                        try {
+                            const json = JSON.parse(html);
+                            if (json) {
+                                if (json.message) {
+                                    window.showToast(json.message, json.success === false ? 'error' : 'success');
+                                }
+                                this.navigate(window.location.href, false);
+                                return;
+                            }
+                        } catch (e) {}
+                        window.location.reload();
+                        return;
+                    }
+
+                    // 1. Update Title
+                    if (newDoc.title) {
+                        document.title = newDoc.title;
+                    }
+
+                    // 2. Update Sidebar Active Links & Counts
+                    const newSidebar = newDoc.querySelector('#sidebar-nav-items');
+                    const currentSidebar = document.querySelector('#sidebar-nav-items');
+                    if (newSidebar && currentSidebar) {
+                        currentSidebar.innerHTML = newSidebar.innerHTML;
+                    }
+
+                    // 3. Update Browser History if destination URL changed
+                    if (targetUrl !== window.location.href) {
+                        window.history.pushState({ spa: true, url: targetUrl }, '', targetUrl);
+                    }
+
+                    // 4. Teardown existing Alpine bindings in main
+                    const currentMain = document.querySelector('#main-content');
+                    if (window.Alpine && typeof Alpine.destroyTree === 'function') {
+                        try {
+                            Alpine.destroyTree(currentMain);
+                        } catch (e) {
+                            console.warn('Alpine destroyTree:', e);
+                        }
+                    }
+
+                    // 5. Clean up any teleported modal overlays attached to body
+                    document.querySelectorAll('body > [x-teleport-target], body > [data-teleport-overlay]').forEach(el => el.remove());
+
+                    // 6. Replace Main Content
+                    currentMain.innerHTML = newMain.innerHTML;
+
+                    // 7. Re-evaluate <script> tags inside newMain
+                    const scripts = Array.from(currentMain.querySelectorAll('script'));
+                    for (const oldScript of scripts) {
+                        const newScript = document.createElement('script');
+                        for (const attr of oldScript.attributes) {
+                            newScript.setAttribute(attr.name, attr.value);
+                        }
+                        newScript.text = oldScript.text;
+                        oldScript.parentNode.replaceChild(newScript, oldScript);
+                    }
+
+                    // 8. Re-initialize Alpine on currentMain
+                    if (window.Alpine && typeof Alpine.initTree === 'function') {
+                        try {
+                            Alpine.initTree(currentMain);
+                        } catch (e) {
+                            console.warn('Alpine initTree:', e);
+                        }
+                    }
+
+                    // 9. Re-render Lucide Icons
+                    safeCreateIcons();
+
+                    // 10. Re-initialize charts if on dashboard
+                    if (typeof window.initDashboardCharts === 'function' && (document.getElementById('statusDonutChart') || document.getElementById('statusChart') || document.getElementById('budgetTrendChart'))) {
+                        window.initDashboardCharts();
+                    }
+
+                    // 11. Extract and display Flash Message as Toast
+                    checkAndDisplayFlash(newDoc);
+
+                } catch (err) {
+                    console.error('SPA form submit error, falling back:', err);
+                    form.submit();
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = '1';
+                        if (originalBtnText) submitBtn.innerHTML = originalBtnText;
+                    }
                     this.isNavigating = false;
                     this.finishProgress();
                 }
@@ -841,10 +1357,12 @@
             window.AppSPA.navigate(url.href, true);
         });
 
-        // Intercept GET filter forms (e.g. reports, audit logs)
+        // Intercept both GET filter forms and POST mutation forms (Zero-Reload Add/Edit/Delete)
         document.addEventListener('submit', function(e) {
+            if (e.defaultPrevented) return; // Respect client-side validation / confirmation cancellations
+
             const form = e.target;
-            if (!form || (form.method && form.method.toUpperCase() !== 'GET')) return;
+            if (!form || !form.tagName || form.tagName.toLowerCase() !== 'form') return;
             if (form.target === '_blank' || form.hasAttribute('data-no-spa')) return;
 
             let actionUrl;
@@ -856,19 +1374,28 @@
             if (actionUrl.origin !== window.location.origin) return;
 
             const path = actionUrl.pathname.toLowerCase();
-            if (path.includes('/export') || path.includes('/print')) return;
-
-            e.preventDefault();
-            const formData = new FormData(form);
-            const searchParams = new URLSearchParams();
-            for (const [key, value] of formData.entries()) {
-                if (value !== '') {
-                    searchParams.append(key, value);
-                }
+            if (path.includes('/export') || path.includes('/print') || path.includes('/logout') || path.includes('/auth/switch') || path.endsWith('.pdf') || path.endsWith('.xlsx') || path.endsWith('.csv')) {
+                return; // Let normal browser download / export proceed
             }
-            const query = searchParams.toString();
-            const targetUrl = actionUrl.pathname + (query ? '?' + query : '');
-            window.AppSPA.navigate(targetUrl, true);
+
+            const method = (form.method || 'GET').toUpperCase();
+
+            if (method === 'GET') {
+                e.preventDefault();
+                const formData = new FormData(form);
+                const searchParams = new URLSearchParams();
+                for (const [key, value] of formData.entries()) {
+                    if (value !== '') {
+                        searchParams.append(key, value);
+                    }
+                }
+                const query = searchParams.toString();
+                const targetUrl = actionUrl.pathname + (query ? '?' + query : '');
+                window.AppSPA.navigate(targetUrl, true);
+            } else if (method === 'POST') {
+                e.preventDefault();
+                window.AppSPA.submitForm(form, e.submitter);
+            }
         });
 
         // Handle Browser History (Back / Forward)
@@ -917,9 +1444,14 @@
             applyThemeSynchronously(function() {
                 if (isDark) {
                     document.documentElement.classList.add('dark');
+                    document.documentElement.style.colorScheme = 'dark';
                 } else {
                     document.documentElement.classList.remove('dark');
+                    document.documentElement.style.colorScheme = 'light';
                 }
+
+                const metaScheme = document.getElementById('meta-color-scheme');
+                if (metaScheme) metaScheme.content = isDark ? 'dark' : 'light';
 
                 // Dispatch event synchronously for Alpine, Chart.js, and components
                 window.dispatchEvent(new CustomEvent('theme-changed', {

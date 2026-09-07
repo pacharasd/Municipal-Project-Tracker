@@ -117,16 +117,16 @@ class SubProjectController
     public function incrementProgress(string $id): void
     {
         $subId = (int)$id;
-        $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) || (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json'));
+        $wantsJson = isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json');
 
         try {
             $res = ProgressService::updateSubProjectProgress($subId, +1);
-            if ($isAjax) {
+            if ($wantsJson) {
                 View::json($res);
             }
-            Session::flash('success', "เพิ่มความคืบหน้าสำเร็จ: ดำเนินการแล้ว {$res['actual']}/{$res['planned']} ครั้ง ({$res['progress']}%)");
+            Session::flash('success', "เพิ่มความคืบหน้าสำเร็จ: ดำเนินการแล้ว {$res['actual']}/{$res['planned']} ครั้ง");
         } catch (Exception $e) {
-            if ($isAjax) {
+            if ($wantsJson) {
                 View::json(['success' => false, 'message' => $e->getMessage()], 422);
             }
             Session::flash('error', $e->getMessage());

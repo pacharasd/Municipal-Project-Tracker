@@ -99,7 +99,7 @@
                         <td class="p-2 border border-slate-200 text-right font-mono"><?= number_format($p['disbursed_amount'], 2) ?></td>
                         <td class="p-2 border border-slate-200 text-right font-mono"><?= number_format($p['budget'] - $p['disbursed_amount'], 2) ?></td>
                         <td class="p-2 border border-slate-200 text-center font-mono font-bold"><?= number_format($p['progress'], 1) ?>%</td>
-                        <td class="p-2 border border-slate-200 text-center">
+                        <td class="p-2 border border-slate-200 text-center whitespace-nowrap">
                             <?= \App\Enums\ProjectStatus::labelFor($p['status']) ?>
                         </td>
                     </tr>
