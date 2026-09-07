@@ -90,7 +90,6 @@ class CategoryController
 
         $name = trim($_POST['name'] ?? '');
         $description = trim($_POST['description'] ?? '');
-        $icon = trim($_POST['icon'] ?? 'folder');
 
         if (empty($name)) {
             Session::flash('error', 'กรุณาระบุชื่อประเภทโครงการ');
@@ -116,7 +115,7 @@ class CategoryController
         $categoryId = Database::insert('project_categories', [
             'name'        => $name,
             'description' => $description ?: null,
-            'icon'        => $icon ?: 'folder',
+            'icon'        => 'folder',
             'created_at'  => $now,
             'updated_at'  => $now,
         ]);
@@ -126,7 +125,7 @@ class CategoryController
             'ProjectCategory',
             $categoryId,
             null,
-            ['name' => $name, 'icon' => $icon, 'description' => $description]
+            ['name' => $name, 'description' => $description]
         );
 
         Session::flash('success', "เพิ่มประเภทโครงการ '{$name}' เรียบร้อยแล้ว");
@@ -152,7 +151,6 @@ class CategoryController
 
         $name = trim($_POST['name'] ?? '');
         $description = trim($_POST['description'] ?? '');
-        $icon = trim($_POST['icon'] ?? 'folder');
 
         if (empty($name)) {
             Session::flash('error', 'กรุณาระบุชื่อประเภทโครงการ');
@@ -177,7 +175,6 @@ class CategoryController
         $updateData = [
             'name'        => $name,
             'description' => $description ?: null,
-            'icon'        => $icon ?: 'folder',
             'updated_at'  => date('Y-m-d H:i:s'),
         ];
 
@@ -187,7 +184,7 @@ class CategoryController
             'UPDATE',
             'ProjectCategory',
             $categoryId,
-            ['name' => $category['name'], 'icon' => $category['icon'], 'description' => $category['description']],
+            ['name' => $category['name'], 'description' => $category['description']],
             $updateData
         );
 

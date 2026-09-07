@@ -6,36 +6,6 @@ use App\Core\Auth;
 use App\Services\ProgressService;
 
 $isAdmin = Auth::isAdmin();
-
-// Color themes mapping for icons
-$colorThemes = [
-    'truck'          => ['bg' => 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20', 'gradient' => 'from-blue-500 to-indigo-600'],
-    'heart-pulse'    => ['bg' => 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20', 'gradient' => 'from-rose-500 to-pink-600'],
-    'graduation-cap' => ['bg' => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20', 'gradient' => 'from-amber-500 to-orange-600'],
-    'leaf'           => ['bg' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20', 'gradient' => 'from-emerald-500 to-teal-600'],
-    'users'          => ['bg' => 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20', 'gradient' => 'from-violet-500 to-purple-600'],
-    'building-2'     => ['bg' => 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20', 'gradient' => 'from-cyan-500 to-blue-600'],
-    'shield'         => ['bg' => 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20', 'gradient' => 'from-red-500 to-rose-600'],
-    'landmark'       => ['bg' => 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20', 'gradient' => 'from-slate-600 to-slate-800'],
-];
-
-$defaultTheme = ['bg' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20', 'gradient' => 'from-emerald-500 to-teal-600'];
-
-// Preset icons for picker
-$presetIcons = [
-    ['icon' => 'truck', 'label' => 'โครงสร้าง/คมนาคม'],
-    ['icon' => 'heart-pulse', 'label' => 'สาธารณสุข/สุขภาพ'],
-    ['icon' => 'graduation-cap', 'label' => 'การศึกษา/วัฒนธรรม'],
-    ['icon' => 'leaf', 'label' => 'สิ่งแวดล้อม/เกษตร'],
-    ['icon' => 'users', 'label' => 'สังคม/ชุมชน'],
-    ['icon' => 'building-2', 'label' => 'ผังเมือง/อาคาร'],
-    ['icon' => 'shield', 'label' => 'ความปลอดภัย/ป้องกันภัย'],
-    ['icon' => 'wallet', 'label' => 'เศรษฐกิจ/การเงิน'],
-    ['icon' => 'activity', 'label' => 'กีฬา/นันทนาการ'],
-    ['icon' => 'landmark', 'label' => 'การปกครอง/นิติการ'],
-    ['icon' => 'lightbulb', 'label' => 'นวัตกรรม/พัฒนา'],
-    ['icon' => 'folder', 'label' => 'ทั่วไป/อื่นๆ'],
-];
 ?>
 
 <div class="space-y-6 max-w-7xl mx-auto pb-12"
@@ -45,16 +15,14 @@ $presetIcons = [
         deleteModal: false,
         activeTab: 'grid', // 'grid' | 'table'
         searchQuery: '',
-        editData: { id: '', name: '', description: '', icon: 'folder' },
+        editData: { id: '', name: '', description: '' },
         deleteData: { id: '', name: '', project_count: 0 },
-        createIcon: 'folder',
 
         openEdit(cat) {
             this.editData = {
                 id: cat.id,
                 name: cat.name || '',
-                description: cat.description || '',
-                icon: cat.icon || 'folder'
+                description: cat.description || ''
             };
             this.editModal = true;
             $nextTick(() => { if (window.lucide) lucide.createIcons(); });
@@ -109,7 +77,7 @@ $presetIcons = [
             </div>
 
             <?php if ($isAdmin): ?>
-                <button type="button" @click="createModal = true; createIcon = 'folder'; $nextTick(() => { if (window.lucide) lucide.createIcons(); });" 
+                <button type="button" @click="createModal = true; $nextTick(() => { if (window.lucide) lucide.createIcons(); });" 
                         class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs sm:text-sm font-bold shadow-md shadow-emerald-500/20 hover:shadow-lg transition-all cursor-pointer">
                     <i data-lucide="plus-circle" class="w-4 h-4"></i>
                     <span>เพิ่มประเภทโครงการ</span>
@@ -205,8 +173,6 @@ $presetIcons = [
     <div x-show="activeTab === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         <?php foreach ($categories as $cat): ?>
             <?php
-            $catIcon = $cat['icon'] ?: 'folder';
-            $theme = $colorThemes[$catIcon] ?? $defaultTheme;
             $pCount = (int)$cat['project_count'];
             $subCount = (int)$cat['sub_project_count'];
             $bTotal = (float)$cat['total_budget'];
@@ -217,23 +183,22 @@ $presetIcons = [
             ?>
             <div class="bg-white dark:bg-[#181a20] rounded-3xl border border-slate-200/80 dark:border-white/10 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
                 <div>
-                    <!-- Card Top: Icon & Action Menu -->
+                    <!-- Card Top: Category ID, Title & Action Menu -->
                     <div class="flex items-start justify-between gap-3">
-                        <div class="flex items-center gap-3 min-w-0">
-                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border <?= $theme['bg'] ?> shadow-sm">
-                                <i data-lucide="<?= htmlspecialchars($catIcon) ?>" class="w-6 h-6"></i>
-                            </div>
-                            <div class="min-w-0">
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold font-mono bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                    #<?= $cat['id'] ?>
+                                </span>
                                 <h3 class="font-bold text-base text-slate-900 dark:text-white truncate font-heading group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors" title="<?= htmlspecialchars($cat['name']) ?>">
                                     <?= htmlspecialchars($cat['name']) ?>
                                 </h3>
-                                <span class="text-[11px] font-medium text-slate-400">รหัสหมวดหมู่ #<?= $cat['id'] ?></span>
                             </div>
                         </div>
 
                         <!-- Dropdown Actions for Admin -->
                         <?php if ($isAdmin): ?>
-                            <div class="flex items-center gap-1">
+                            <div class="flex items-center gap-1 shrink-0">
                                 <button type="button" 
                                         @click="openEdit(<?= htmlspecialchars(json_encode($cat)) ?>)"
                                         class="p-2 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition cursor-pointer" title="แก้ไข">
@@ -249,7 +214,7 @@ $presetIcons = [
                     </div>
 
                     <!-- Category Description -->
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-3 line-clamp-2 leading-relaxed min-h-[36px]">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-2.5 line-clamp-2 leading-relaxed min-h-[36px]">
                         <?= htmlspecialchars($cat['description'] ?: 'ไม่มีรายละเอียดคำอธิบายเพิ่มเติมสำหรับหมวดหมู่นี้') ?>
                     </p>
 
@@ -342,8 +307,6 @@ $presetIcons = [
                 <tbody class="divide-y divide-slate-100 dark:divide-white/[0.04] text-slate-700 dark:text-slate-200">
                     <?php $idx = 1; foreach ($categories as $cat): ?>
                         <?php
-                        $catIcon = $cat['icon'] ?: 'folder';
-                        $theme = $colorThemes[$catIcon] ?? $defaultTheme;
                         $pCount = (int)$cat['project_count'];
                         $subCount = (int)$cat['sub_project_count'];
                         $bTotal = (float)$cat['total_budget'];
@@ -471,29 +434,8 @@ $presetIcons = [
                     <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                         รายละเอียดคำอธิบาย
                     </label>
-                    <textarea name="description" rows="2" placeholder="ระบุขอบเขตหรือลักษณะโครงการที่อยู่ในหมวดหมู่นี้..."
+                    <textarea name="description" rows="3" placeholder="ระบุขอบเขตหรือลักษณะโครงการที่อยู่ในหมวดหมู่นี้..."
                               class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-white/10 bg-slate-50 dark:bg-[#12141a] text-slate-900 dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"></textarea>
-                </div>
-
-                <!-- Icon Picker -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
-                        เลือกไอคอนประจำหมวดหมู่
-                    </label>
-                    <input type="hidden" name="icon" :value="createIcon">
-
-                    <div class="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-40 overflow-y-auto p-2 bg-slate-50 dark:bg-[#12141a] rounded-2xl border border-slate-200 dark:border-white/10">
-                        <?php foreach ($presetIcons as $p): ?>
-                            <button type="button" 
-                                    @click="createIcon = '<?= $p['icon'] ?>'; $nextTick(() => { if (window.lucide) lucide.createIcons(); });"
-                                    :class="createIcon === '<?= $p['icon'] ?>' ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20 ring-2 ring-emerald-500' : 'bg-white dark:bg-[#181a20] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] border border-slate-200/80 dark:border-white/10'"
-                                    class="p-2 rounded-xl flex flex-col items-center justify-center gap-1 transition cursor-pointer"
-                                    title="<?= htmlspecialchars($p['label']) ?>">
-                                <i data-lucide="<?= $p['icon'] ?>" class="w-4 h-4"></i>
-                                <span class="text-[9px] truncate max-w-full text-center"><?= explode('/', $p['label'])[0] ?></span>
-                            </button>
-                        <?php endforeach; ?>
-                    </div>
                 </div>
 
                 <!-- Form Buttons -->
@@ -565,29 +507,8 @@ $presetIcons = [
                     <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                         รายละเอียดคำอธิบาย
                     </label>
-                    <textarea name="description" x-model="editData.description" rows="2"
+                    <textarea name="description" x-model="editData.description" rows="3"
                               class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-white/10 bg-slate-50 dark:bg-[#12141a] text-slate-900 dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
-                </div>
-
-                <!-- Icon Picker -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
-                        เลือกไอคอนประจำหมวดหมู่
-                    </label>
-                    <input type="hidden" name="icon" :value="editData.icon">
-
-                    <div class="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-40 overflow-y-auto p-2 bg-slate-50 dark:bg-[#12141a] rounded-2xl border border-slate-200 dark:border-white/10">
-                        <?php foreach ($presetIcons as $p): ?>
-                            <button type="button" 
-                                    @click="editData.icon = '<?= $p['icon'] ?>'; $nextTick(() => { if (window.lucide) lucide.createIcons(); });"
-                                    :class="editData.icon === '<?= $p['icon'] ?>' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 ring-2 ring-blue-500' : 'bg-white dark:bg-[#181a20] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] border border-slate-200/80 dark:border-white/10'"
-                                    class="p-2 rounded-xl flex flex-col items-center justify-center gap-1 transition cursor-pointer"
-                                    title="<?= htmlspecialchars($p['label']) ?>">
-                                <i data-lucide="<?= $p['icon'] ?>" class="w-4 h-4"></i>
-                                <span class="text-[9px] truncate max-w-full text-center"><?= explode('/', $p['label'])[0] ?></span>
-                            </button>
-                        <?php endforeach; ?>
-                    </div>
                 </div>
 
                 <!-- Form Buttons -->
