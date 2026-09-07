@@ -547,17 +547,19 @@
                     <i data-lucide="menu" class="w-5 h-5 sm:w-6 sm:h-6"></i>
                 </button>
                 <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="shrink-0 flex items-center gap-1.5 sm:gap-2 group" title="ระบบติดตามและบริหารโครงการเทศบาล">
-                    <!-- โลโก้เทศบาล -->
-                    <img src="<?= \App\Core\Router::url('/images/mobile-logo.webp') ?>" 
-                         alt="โลโก้เทศบาล" 
-                         class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl object-contain shrink-0 shadow-sm border border-slate-200/80 dark:border-white/10 bg-white dark:bg-white/5 p-0.5 group-hover:scale-105 transition-transform"
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                    <div style="display:none;" class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 items-center justify-center text-slate-950 font-bold shadow-neon-green shrink-0">
-                        <i data-lucide="activity" class="w-4 h-4 sm:w-6 sm:h-6"></i>
+                    <!-- โลโก้เทศบาล (พื้นหลังขาวคมชัดทุกธีม) -->
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-white p-1 shadow-sm border border-slate-200/80 dark:border-white/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                        <img src="<?= \App\Core\Router::url('/images/mobile-logo.webp') ?>" 
+                             alt="โลโก้เทศบาล" 
+                             class="w-full h-full object-contain"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div style="display:none;" class="w-full h-full rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-400 items-center justify-center text-slate-950 font-bold shadow-neon-green">
+                            <i data-lucide="activity" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                        </div>
                     </div>
 
-                    <!-- โลโก้ กปท. (กองทุนหลักประกันสุขภาพท้องถิ่น) -->
-                    <div class="h-8 sm:h-10 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-white/5 shadow-sm flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <!-- โลโก้ กปท. (กองทุนหลักประกันสุขภาพท้องถิ่น - พื้นหลังขาวคมชัดทุกธีม) -->
+                    <div class="h-8 sm:h-10 px-2 sm:px-2.5 py-1 rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-white/20 bg-white shadow-sm flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                         <img src="<?= \App\Core\Router::url('/images/kpth-logo.png') ?>" 
                              alt="โลโก้ กปท. กองทุนหลักประกันสุขภาพท้องถิ่น" 
                              class="h-5 sm:h-7 w-auto max-w-[70px] sm:max-w-[105px] object-contain shrink-0">
