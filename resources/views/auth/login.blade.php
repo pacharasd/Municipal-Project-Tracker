@@ -100,13 +100,18 @@ $success = Session::flash('success');
             
             <div class="relative z-10 space-y-6">
                 <!-- Municipality Emblem / Brand -->
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2.5">
                     <div class="w-12 h-12 rounded-2xl bg-white/10 border border-white/20 p-1 shadow-lg shadow-teal-900/40 flex items-center justify-center shrink-0 backdrop-blur-sm">
                         <img src="<?= \App\Core\Router::url('/images/mobile-logo.webp') ?>" 
                              alt="โลโก้เทศบาล" 
                              class="w-full h-full object-contain rounded-xl"
                              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                         <i data-lucide="building-2" style="display:none;" class="w-6 h-6 text-[#20c997]"></i>
+                    </div>
+                    <div class="h-12 px-2.5 rounded-2xl bg-white/10 border border-white/20 shadow-lg shadow-teal-900/40 flex items-center justify-center shrink-0 backdrop-blur-sm">
+                        <img src="<?= \App\Core\Router::url('/images/kpth-logo.png') ?>" 
+                             alt="โลโก้ กปท. กองทุนหลักประกันสุขภาพท้องถิ่น" 
+                             class="h-7 w-auto object-contain">
                     </div>
                     <div>
                         <h2 class="font-heading font-bold text-base tracking-wide text-white">เทศบาลตำบล / เมือง</h2>

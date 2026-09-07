@@ -37,6 +37,7 @@ foreach ($projects as $p) {
         'search_text' => mb_strtolower(
             ($p['project_code'] ?? '') . ' ' . 
             ($p['name'] ?? '') . ' ' . 
+            ($p['responsible_person'] ?? '') . ' ' . 
             ($p['department_name'] ?? '') . ' ' . 
             ($p['fiscal_year'] ?? '') . ' ' . 
             ($p['description'] ?? '') . ' ' . 
@@ -80,7 +81,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                 <i data-lucide="search" class="w-4 h-4"></i>
             </div>
-            <input type="text" name="search" x-model="search" @input="currentPage = 1; syncUrl()" value="<?= htmlspecialchars($filters['search']) ?>" placeholder="ค้นหาชื่อ รหัสโครงการ หรือโครงการย่อย..." class="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+            <input type="text" name="search" x-model.debounce.250ms="search" @input.debounce.250ms="currentPage = 1; syncUrl()" value="<?= htmlspecialchars($filters['search']) ?>" placeholder="ค้นหาชื่อ รหัสโครงการ หรือโครงการย่อย..." class="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
         </div>
 
         <!-- Fiscal Year Filter (Custom Dropdown) -->
@@ -274,7 +275,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
             ?>
             <div class="bg-white dark:bg-[#181a20] rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm overflow-hidden" 
                  x-show="isProjectVisible(<?= $p['id'] ?>)" 
-                 style="<?= $isInitiallyVisible ? '' : 'display: none;' ?>"
+                 style="content-visibility: auto; contain-intrinsic-size: 0 160px; <?= $isInitiallyVisible ? '' : 'display: none;' ?>"
                  x-data="{ expanded: true }">
                 <!-- Main Project Bar -->
                 <div class="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 dark:border-white/[0.06]">
@@ -285,7 +286,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                         <div>
                             <div class="flex flex-wrap items-center gap-2">
                                 <span class="px-2 py-0.5 text-xs font-mono font-bold rounded bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/[0.08]"><?= htmlspecialchars($p['project_code']) ?></span>
-                                <span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40"><?= htmlspecialchars($p['department_name']) ?></span>
+                                <span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40"><?= htmlspecialchars(!empty($p['responsible_person']) ? $p['responsible_person'] : $p['department_name']) ?></span>
                                 <span class="px-2 py-0.5 text-xs text-slate-500 dark:text-slate-400">ปีงบ <?= $p['fiscal_year'] ?></span>
                             </div>
                             <h2 class="text-lg font-bold text-slate-900 dark:text-white mt-1">
@@ -500,7 +501,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                 <form action="<?= \App\Core\Router::url('/projects') ?>" method="POST" 
                       @submit="
                         const cat = $el.querySelector('input[name=category_id]')?.value;
-                        const dept = $el.querySelector('input[name=department_id]')?.value;
+                        const resp = $el.querySelector('input[name=responsible_person]')?.value;
                         const start = $el.querySelector('input[name=start_date]')?.value;
                         const end = $el.querySelector('input[name=end_date]')?.value;
                         if (!cat) {
@@ -508,8 +509,8 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                             $event.preventDefault();
                             return false;
                         }
-                        if (!dept) {
-                            alert('กรุณาเลือกหน่วยงาน / สำนัก / กอง');
+                        if (!resp || !resp.trim()) {
+                            alert('กรุณาระบุชื่อผู้รับผิดชอบโครงการ');
                             $event.preventDefault();
                             return false;
                         }
@@ -652,47 +653,12 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                             </div>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">หน่วยงาน / สำนัก / กอง <span class="text-rose-500">*</span></label>
-                            <div class="relative" x-data="{
-                                open: false,
-                                val: '',
-                                label: '-- เลือกหน่วยงาน / สำนัก / กอง --',
-                                select(id, name) {
-                                    this.val = id;
-                                    this.label = name;
-                                    this.open = false;
-                                }
-                            }" @click.outside="open = false">
-                                <input type="hidden" name="department_id" :value="val">
-                                <button type="button" 
-                                        @click="open = !open" 
-                                        class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white flex items-center justify-between focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-colors cursor-pointer">
-                                    <span x-text="label" :class="{ 'text-slate-400 dark:text-slate-500 font-normal': !val, 'text-slate-900 dark:text-white font-medium': val }" class="truncate"></span>
-                                    <svg class="w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                    </svg>
-                                </button>
-                                <div x-show="open" 
-                                     x-transition:enter="transition ease-out duration-100"
-                                     x-transition:enter-start="transform opacity-0 scale-95"
-                                     x-transition:enter-end="transform opacity-100 scale-100"
-                                     x-transition:leave="transition ease-in duration-75"
-                                     x-transition:leave-start="transform opacity-100 scale-100"
-                                     x-transition:leave-end="transform opacity-0 scale-95"
-                                     class="absolute z-50 mt-1.5 w-full bg-white dark:bg-[#1f222e] rounded-xl shadow-xl border border-slate-200 dark:border-white/10 py-1 max-h-56 overflow-y-auto" 
-                                     style="display: none;">
-                                    <?php foreach ($departments as $dept): ?>
-                                        <div @click="select('<?= $dept['id'] ?>', '<?= htmlspecialchars(addslashes($dept['name'])) ?>')" 
-                                             class="px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer flex items-center justify-between transition-colors"
-                                             :class="{ 'bg-emerald-50/70 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-semibold': val == '<?= $dept['id'] ?>' }">
-                                            <span><?= htmlspecialchars($dept['name']) ?></span>
-                                            <svg x-show="val == '<?= $dept['id'] ?>'" class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                            </svg>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                            </div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ผู้รับผิดชอบโครงการ <span class="text-rose-500">*</span></label>
+                            <input type="text" 
+                                   name="responsible_person" 
+                                   required 
+                                   placeholder="ระบุชื่อผู้รับผิดชอบโครงการ..." 
+                                   class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                         </div>
                     </div>
 
@@ -923,14 +889,24 @@ function mainProjectsPage() {
             return Math.max(1, Math.ceil(this.filteredProjects.length / per));
         },
 
+        _cachedPaginatedIds: null,
+        _lastFilterKey: '',
+
         get paginatedIds() {
-            if (this.perPage === 'all') {
-                return new Set(this.filteredProjects.map(p => p.id));
+            const currentKey = `${this.search}|${this.fiscalYearFilter}|${this.departmentFilter}|${this.statusFilter}|${this.currentPage}|${this.perPage}`;
+            if (this._lastFilterKey === currentKey && this._cachedPaginatedIds) {
+                return this._cachedPaginatedIds;
             }
-            const per = parseInt(this.perPage) || 5;
-            const start = (this.currentPage - 1) * per;
-            const slice = this.filteredProjects.slice(start, start + per);
-            return new Set(slice.map(p => p.id));
+            this._lastFilterKey = currentKey;
+            if (this.perPage === 'all') {
+                this._cachedPaginatedIds = new Set(this.filteredProjects.map(p => p.id));
+            } else {
+                const per = parseInt(this.perPage) || 5;
+                const start = (this.currentPage - 1) * per;
+                const slice = this.filteredProjects.slice(start, start + per);
+                this._cachedPaginatedIds = new Set(slice.map(p => p.id));
+            }
+            return this._cachedPaginatedIds;
         },
 
         isProjectVisible(id) {

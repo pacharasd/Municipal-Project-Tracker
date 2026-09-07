@@ -267,11 +267,30 @@
         });
     </script>
 
-    <!-- Alpine.js & Lucide Icons -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Alpine.js, Lucide Icons & Chart.js (Local Offline-First with CDN fallback) -->
+    <script src="<?= \App\Core\Router::url('/js/chart.umd.min.js') ?>"></script>
+    <script>
+        if (typeof Chart === 'undefined') {
+            document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>');
+        }
+    </script>
+    <script src="<?= \App\Core\Router::url('/js/lucide.min.js') ?>"></script>
+    <script>
+        if (typeof lucide === 'undefined') {
+            document.write('<script src="https://unpkg.com/lucide@latest"><\/script>');
+        }
+    </script>
+    <script defer src="<?= \App\Core\Router::url('/js/alpine.min.js') ?>"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', function() {
+            if (typeof Alpine === 'undefined') {
+                const s = document.createElement('script');
+                s.src = 'https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js';
+                s.defer = true;
+                document.head.appendChild(s);
+            }
+        });
+    </script>
 
     <style>
         :root {
@@ -333,8 +352,7 @@
         select:focus, select:focus-visible,
         textarea:focus, textarea:focus-visible,
         button.cursor-pointer:focus, button.cursor-pointer:focus-visible,
-        .focus\:border-emerald-500:focus, .focus\:border-emerald-500:focus-visible,
-        [class*="focus:border-emerald-500"]:focus, [class*="focus:border-emerald-500"]:focus-visible {
+        .focus\:border-emerald-500:focus, .focus\:border-emerald-500:focus-visible {
             border: 1px solid #10b981 !important;
             border-color: #10b981 !important;
             box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
@@ -399,9 +417,6 @@
         html.dark .bg-slate-50, html.dark .bg-slate-100 {
             background-color: #121318 !important;
         }
-        html.dark [class*="bg-slate-50/"], html.dark [class*="bg-slate-100/"] {
-            background-color: #12141a !important;
-        }
         html.dark .bg-slate-200 {
             background-color: rgba(255, 255, 255, 0.08) !important;
         }
@@ -438,7 +453,6 @@
         html.dark textarea:focus, html.dark textarea:focus-visible,
         html.dark button.cursor-pointer:focus, html.dark button.cursor-pointer:focus-visible,
         html.dark .focus\:border-emerald-500:focus, html.dark .focus\:border-emerald-500:focus-visible,
-        html.dark [class*="focus:border-emerald-500"]:focus, html.dark [class*="focus:border-emerald-500"]:focus-visible,
         html.dark .dark\:border-white\/10:focus, html.dark .dark\:border-white\/10:focus-visible {
             border: 1px solid #10b981 !important;
             border-color: #10b981 !important;
@@ -521,7 +535,7 @@
          data-info="<?= htmlspecialchars($flashInfo ?? '', ENT_QUOTES) ?>"></div>
 
     <!-- Top Navigation Bar -->
-    <header class="bg-white/95 dark:bg-[#101115]/95 border-b border-slate-200 dark:border-white/[0.08] sticky top-0 z-30 shadow-sm dark:shadow-md backdrop-blur-md transition-colors duration-150 w-full max-w-full">
+    <header class="bg-white/98 dark:bg-[#101115]/98 border-b border-slate-200 dark:border-white/[0.08] sticky top-0 z-30 shadow-sm dark:shadow-md transition-colors duration-150 w-full max-w-full will-change-transform">
         <div class="px-2.5 sm:px-6 lg:px-8 flex items-center justify-between h-14 sm:h-16 w-full max-w-full">
             <!-- Left Logo & Title -->
             <div class="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1 sm:flex-initial">
@@ -532,13 +546,21 @@
                         aria-label="เปิด/ปิดแถบเมนู">
                     <i data-lucide="menu" class="w-5 h-5 sm:w-6 sm:h-6"></i>
                 </button>
-                <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="shrink-0 flex items-center group" title="ระบบติดตามและบริหารโครงการเทศบาล">
+                <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="shrink-0 flex items-center gap-1.5 sm:gap-2 group" title="ระบบติดตามและบริหารโครงการเทศบาล">
+                    <!-- โลโก้เทศบาล -->
                     <img src="<?= \App\Core\Router::url('/images/mobile-logo.webp') ?>" 
                          alt="โลโก้เทศบาล" 
                          class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl object-contain shrink-0 shadow-sm border border-slate-200/80 dark:border-white/10 bg-white dark:bg-white/5 p-0.5 group-hover:scale-105 transition-transform"
                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                     <div style="display:none;" class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 items-center justify-center text-slate-950 font-bold shadow-neon-green shrink-0">
                         <i data-lucide="activity" class="w-4 h-4 sm:w-6 sm:h-6"></i>
+                    </div>
+
+                    <!-- โลโก้ กปท. (กองทุนหลักประกันสุขภาพท้องถิ่น) -->
+                    <div class="h-8 sm:h-10 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-white/5 shadow-sm flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                        <img src="<?= \App\Core\Router::url('/images/kpth-logo.png') ?>" 
+                             alt="โลโก้ กปท. กองทุนหลักประกันสุขภาพท้องถิ่น" 
+                             class="h-5 sm:h-7 w-auto max-w-[70px] sm:max-w-[105px] object-contain shrink-0">
                     </div>
                 </a>
                 <div class="min-w-0">
@@ -559,7 +581,7 @@
                     open: false, 
                     mode: localStorage.getItem('theme') || 'system',
                     resolvedDark: document.documentElement.classList.contains('dark')
-                }" @theme-changed.window="mode = $event.detail.mode || localStorage.getItem('theme') || 'system'; resolvedDark = document.documentElement.classList.contains('dark')">
+                }" @theme-changed.window="mode = ($event.detail && $event.detail.mode) ? $event.detail.mode : (localStorage.getItem('theme') || 'system'); resolvedDark = document.documentElement.classList.contains('dark')">
                     
                     <button type="button" 
                             @click="open = !open" 
@@ -886,31 +908,9 @@
         document.addEventListener('alpine:initialized', safeCreateIcons);
         window.addEventListener('load', safeCreateIcons);
 
-        // Only observe when actual <i> tags with data-lucide are added (e.g. dynamic modals), avoiding infinite loops on <svg>
-        let lucideDebounce = null;
-        const observer = new MutationObserver((mutations) => {
-            let hasNewIcons = false;
-            for (const m of mutations) {
-                for (const node of m.addedNodes) {
-                    if (node.nodeType === 1) {
-                        if (node.tagName === 'I' && node.hasAttribute('data-lucide')) {
-                            hasNewIcons = true;
-                            break;
-                        }
-                        if (node.querySelector && node.querySelector('i[data-lucide]')) {
-                            hasNewIcons = true;
-                            break;
-                        }
-                    }
-                }
-                if (hasNewIcons) break;
-            }
-            if (hasNewIcons) {
-                clearTimeout(lucideDebounce);
-                lucideDebounce = setTimeout(safeCreateIcons, 30);
-            }
-        });
-        observer.observe(document.body, { childList: true, subtree: true });
+        window.safeCreateIcons = safeCreateIcons;
+        window.refreshIcons = safeCreateIcons;
+        window.addEventListener('icons:refresh', safeCreateIcons);
     </script>
 
     <!-- Seamless SPA Navigation & Mutation Engine (Persistent Sidebar, Header & Zero-Reload Forms) -->
@@ -1122,7 +1122,7 @@
                     safeCreateIcons();
 
                     // 10. Re-initialize charts if on dashboard
-                    if (typeof window.initDashboardCharts === 'function' && (document.getElementById('statusDonutChart') || document.getElementById('statusChart') || document.getElementById('budgetTrendChart'))) {
+                    if (typeof window.initDashboardCharts === 'function' && (document.getElementById('statusDonutChart') || document.getElementById('budgetDonutChart') || document.getElementById('deptBarChart'))) {
                         window.initDashboardCharts();
                     }
 
@@ -1302,7 +1302,7 @@
                     safeCreateIcons();
 
                     // 10. Re-initialize charts if on dashboard
-                    if (typeof window.initDashboardCharts === 'function' && (document.getElementById('statusDonutChart') || document.getElementById('statusChart') || document.getElementById('budgetTrendChart'))) {
+                    if (typeof window.initDashboardCharts === 'function' && (document.getElementById('statusDonutChart') || document.getElementById('budgetDonutChart') || document.getElementById('deptBarChart'))) {
                         window.initDashboardCharts();
                     }
 

@@ -64,16 +64,23 @@ class ProjectController
             exit;
         }
 
-        $v = Validator::make($_POST, [
+        $rules = [
             'name'           => 'required|min:3|max:255',
             'project_code'   => 'required|min:2|max:50',
             'fiscal_year_id' => 'required|numeric',
             'category_id'    => 'required|numeric',
-            'department_id'  => 'required|numeric',
             'budget'         => 'required|numeric|min:0',
             'start_date'     => 'required|date',
             'end_date'       => 'required|date',
-        ]);
+        ];
+
+        if (!empty($_POST['department_id'])) {
+            $rules['department_id'] = 'required|numeric';
+        } else {
+            $rules['responsible_person'] = 'required|min:2|max:255';
+        }
+
+        $v = Validator::make($_POST, $rules);
 
         if ($v->fails()) {
             Session::flash('error', $v->firstError());
@@ -89,6 +96,32 @@ class ProjectController
             exit;
         }
 
+        $responsiblePerson = trim($_POST['responsible_person'] ?? '');
+        $deptId = !empty($_POST['department_id']) ? (int)$_POST['department_id'] : null;
+        $responsibleUserId = !empty($_POST['responsible_user_id']) ? (int)$_POST['responsible_user_id'] : null;
+
+        if (!$deptId && $responsiblePerson) {
+            $matchedDept = Database::fetch("SELECT id FROM departments WHERE name LIKE ? LIMIT 1", ["%{$responsiblePerson}%"]);
+            if ($matchedDept) {
+                $deptId = (int)$matchedDept['id'];
+            } else {
+                $matchedUser = Database::fetch("SELECT id, department_id FROM users WHERE name LIKE ? LIMIT 1", ["%{$responsiblePerson}%"]);
+                if ($matchedUser) {
+                    $responsibleUserId = (int)$matchedUser['id'];
+                    $deptId = !empty($matchedUser['department_id']) ? (int)$matchedUser['department_id'] : 1;
+                } else {
+                    $user = Auth::user();
+                    $deptId = !empty($user['department_id']) ? (int)$user['department_id'] : 1;
+                }
+            }
+        }
+        if (!$deptId) {
+            $deptId = 1;
+        }
+        if (!$responsibleUserId) {
+            $responsibleUserId = Auth::id() ?: 1;
+        }
+
         try {
             $projectId = Database::insert('projects', [
                 'parent_id'           => null,
@@ -97,8 +130,9 @@ class ProjectController
                 'description'         => trim($_POST['description'] ?? ''),
                 'fiscal_year_id'      => (int)$_POST['fiscal_year_id'],
                 'category_id'         => (int)$_POST['category_id'],
-                'department_id'       => (int)$_POST['department_id'],
-                'responsible_user_id' => !empty($_POST['responsible_user_id']) ? (int)$_POST['responsible_user_id'] : Auth::id(),
+                'department_id'       => $deptId,
+                'responsible_user_id' => $responsibleUserId,
+                'responsible_person'  => $responsiblePerson ?: null,
                 'start_date'          => $_POST['start_date'],
                 'end_date'            => $_POST['end_date'],
                 'budget'              => (float)$_POST['budget'],
@@ -155,14 +189,19 @@ class ProjectController
             exit;
         }
 
-        Database::update('projects', [
+        $updateData = [
             'name'                => trim($_POST['name']),
             'description'         => trim($_POST['description'] ?? ''),
             'responsible_user_id' => !empty($_POST['responsible_user_id']) ? (int)$_POST['responsible_user_id'] : $project['responsible_user_id'],
             'start_date'          => $_POST['start_date'],
             'end_date'            => $_POST['end_date'],
             'notes'               => trim($_POST['notes'] ?? ''),
-        ], "id = ?", [$projectId]);
+        ];
+        if (isset($_POST['responsible_person'])) {
+            $updateData['responsible_person'] = trim($_POST['responsible_person']);
+        }
+
+        Database::update('projects', $updateData, "id = ?", [$projectId]);
 
         AuditLogService::log('UPDATE', 'Project', $projectId, ['name' => $project['name']], ['name' => $_POST['name']]);
         Session::flash('success', 'อัปเดตข้อมูลโครงการเรียบร้อยแล้ว');

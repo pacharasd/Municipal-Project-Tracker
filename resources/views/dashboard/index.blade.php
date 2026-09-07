@@ -216,7 +216,7 @@ $tierNotStartedPct = round(($tierNotStarted / $subCount) * 100, 1);
                 <div class="grid grid-cols-1 sm:grid-cols-12 items-center gap-6 py-2">
                     <!-- Donut with Glassmorphic Center Badge (6 cols) -->
                     <div class="sm:col-span-6 flex justify-center">
-                        <div class="w-36 h-36 xs:w-44 xs:h-44 sm:w-52 sm:h-52 relative flex items-center justify-center max-w-full">
+                        <div class="w-40 h-40 sm:w-48 sm:h-48 relative max-w-full aspect-square mx-auto">
                             <canvas id="statusDonutChart"></canvas>
                             <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
                                 <span class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-sans">รวม</span>
@@ -336,7 +336,7 @@ $tierNotStartedPct = round(($tierNotStarted / $subCount) * 100, 1);
 
                     <!-- Right Donut Gauge (6 cols) -->
                     <div class="sm:col-span-6 flex justify-center">
-                        <div class="w-36 h-36 xs:w-44 xs:h-44 sm:w-52 sm:h-52 relative flex items-center justify-center max-w-full">
+                        <div class="w-40 h-40 sm:w-48 sm:h-48 relative max-w-full aspect-square mx-auto">
                             <canvas id="budgetDonutChart"></canvas>
                             <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
                                 <span class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-sans">เบิกจ่ายแล้ว</span>
@@ -381,7 +381,7 @@ $tierNotStartedPct = round(($tierNotStarted / $subCount) * 100, 1);
 
                 <!-- Vertical Bar Chart Canvas -->
                 <div class="h-64 sm:h-72 relative w-full max-w-full overflow-hidden pt-2">
-                    <canvas id="deptBarChart"></canvas>
+                    <canvas id="deptBarChart" class="w-full h-full block"></canvas>
                 </div>
             </div>
 
@@ -674,11 +674,18 @@ $tierNotStartedPct = round(($tierNotStarted / $subCount) * 100, 1);
 
 <!-- สคริปต์ Chart.js กำหนดสีกราฟให้สวยงามระดับพรีเมียม (Gradient & Pill Arcs) -->
 <script>
-function initDashboardCharts(isThemeChange = false) {
+let chartInitRetries = 0;
+function renderDashboardCharts(isThemeChange = false) {
     if (typeof Chart === 'undefined') {
-        setTimeout(() => initDashboardCharts(isThemeChange), 50);
+        if (chartInitRetries < 30) {
+            chartInitRetries++;
+            setTimeout(() => renderDashboardCharts(isThemeChange), 100);
+        } else {
+            console.error('MPT: Chart.js library is not available');
+        }
         return;
     }
+    chartInitRetries = 0;
 
     const isDark = document.documentElement.classList.contains('dark');
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : '#f1f5f9';
@@ -688,287 +695,320 @@ function initDashboardCharts(isThemeChange = false) {
     const tooltipTitle = isDark ? '#ffffff' : '#0f172a';
     const tooltipBody = isDark ? '#e2e8f0' : '#334155';
     const tooltipBorder = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
-    const donutBorder = isDark ? '#161922' : '#ffffff';
 
     // ทำลายกราฟเดิมเพื่อป้องกันทับซ้อนเมื่อมีการรีเฟรช SPA หรือเปลี่ยนธีม
     ['statusDonutChart', 'budgetDonutChart', 'deptBarChart'].forEach(id => {
         try {
-            const existing = Chart.getChart(id);
-            if (existing) existing.destroy();
-        } catch (e) {}
+            const canvasEl = document.getElementById(id);
+            if (canvasEl) {
+                const existing = Chart.getChart(canvasEl) || Chart.getChart(id);
+                if (existing) existing.destroy();
+            }
+        } catch (e) {
+            console.warn('Destroy chart error:', e);
+        }
     });
 
     // -------------------------------------------------------------
     // กราฟที่ 1: สถานะโครงการ (Status Doughnut Ring with Rounded Pills & Spacing)
     // -------------------------------------------------------------
-    const statusCtx = document.getElementById('statusDonutChart')?.getContext('2d');
-    if (statusCtx) {
-        new Chart(statusCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['กำลังดำเนินการ', 'ยังไม่เริ่ม', 'เสร็จแล้ว', 'มีปัญหา/ล่าช้า'],
-                datasets: [{
-                    data: [
-                        <?= (int)$stats['in_progress'] ?>,
-                        <?= (int)$stats['not_started'] ?>,
-                        <?= (int)$stats['completed'] ?>,
-                        <?= (int)$stats['has_problem'] ?>
-                    ],
-                    backgroundColor: [
-                        '#3b82f6', // กำลังดำเนินการ (Vivid Royal Blue)
-                        '#f59e0b', // ยังไม่เริ่ม (Golden Amber)
-                        '#10b981', // เสร็จแล้ว (Fresh Emerald)
-                        '#f43f5e'  // มีปัญหา/ล่าช้า (Rose Red)
-                    ],
-                    hoverBackgroundColor: [
-                        '#2563eb',
-                        '#d97706',
-                        '#059669',
-                        '#e11d48'
-                    ],
-                    borderWidth: 0,
-                    borderRadius: 8,
-                    spacing: 5
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '76%',
-                animation: isThemeChange ? false : {
-                    duration: 800,
-                    easing: 'easeOutQuart'
+    try {
+        const statusCanvas = document.getElementById('statusDonutChart');
+        if (statusCanvas) {
+            new Chart(statusCanvas, {
+                type: 'doughnut',
+                data: {
+                    labels: ['กำลังดำเนินการ', 'ยังไม่เริ่ม', 'เสร็จแล้ว', 'มีปัญหา/ล่าช้า'],
+                    datasets: [{
+                        data: [
+                            <?= (int)$stats['in_progress'] ?>,
+                            <?= (int)$stats['not_started'] ?>,
+                            <?= (int)$stats['completed'] ?>,
+                            <?= (int)$stats['has_problem'] ?>
+                        ],
+                        backgroundColor: [
+                            '#3b82f6', // กำลังดำเนินการ (Vivid Royal Blue)
+                            '#f59e0b', // ยังไม่เริ่ม (Golden Amber)
+                            '#10b981', // เสร็จแล้ว (Fresh Emerald)
+                            '#f43f5e'  // มีปัญหา/ล่าช้า (Rose Red)
+                        ],
+                        hoverBackgroundColor: [
+                            '#2563eb',
+                            '#d97706',
+                            '#059669',
+                            '#e11d48'
+                        ],
+                        borderWidth: 0,
+                        borderRadius: 6,
+                        spacing: 3
+                    }]
                 },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: tooltipBg,
-                        titleColor: tooltipTitle,
-                        bodyColor: tooltipBody,
-                        borderColor: tooltipBorder,
-                        borderWidth: 1,
-                        padding: 10,
-                        cornerRadius: 10,
-                        boxPadding: 4,
-                        callbacks: {
-                            label: function(context) {
-                                const total = <?= max(1, (int)$stats['sub_total']) ?>;
-                                const val = context.raw;
-                                const pct = ((val / total) * 100).toFixed(1);
-                                return ` ${context.label}: ${val} โครงการ (${pct}%)`;
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    cutout: '72%',
+                    animation: isThemeChange ? false : {
+                        duration: 350,
+                        easing: 'easeOutQuad'
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: tooltipBg,
+                            titleColor: tooltipTitle,
+                            bodyColor: tooltipBody,
+                            borderColor: tooltipBorder,
+                            borderWidth: 1,
+                            padding: 10,
+                            cornerRadius: 10,
+                            boxPadding: 4,
+                            callbacks: {
+                                label: function(context) {
+                                    const total = <?= max(1, (int)$stats['sub_total']) ?>;
+                                    const val = context.raw;
+                                    const pct = ((val / total) * 100).toFixed(1);
+                                    return ` ${context.label}: ${val} โครงการ (${pct}%)`;
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
+    } catch (err) {
+        console.error('Error creating Status Donut Chart:', err);
     }
 
     // -------------------------------------------------------------
     // กราฟที่ 2: งบประมาณ (Budget Donut Gauge with Rounded Arc)
     // -------------------------------------------------------------
-    const budgetCtx = document.getElementById('budgetDonutChart')?.getContext('2d');
-    if (budgetCtx) {
-        const remainingColor = isDark ? 'rgba(255, 255, 255, 0.08)' : '#f1f5f9';
-        new Chart(budgetCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['เบิกจ่ายแล้ว', 'คงเหลือ'],
-                datasets: [{
-                    data: [
-                        <?= (float)$stats['total_disbursed'] ?>,
-                        <?= max(0, (float)$stats['total_remaining']) ?>
-                    ],
-                    backgroundColor: [
-                        '#3b82f6', // เบิกจ่ายแล้ว
-                        remainingColor // คงเหลือ
-                    ],
-                    hoverBackgroundColor: [
-                        '#2563eb',
-                        isDark ? 'rgba(255, 255, 255, 0.14)' : '#e2e8f0'
-                    ],
-                    borderWidth: 0,
-                    borderRadius: 8,
-                    spacing: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '76%',
-                animation: isThemeChange ? false : {
-                    duration: 800,
-                    easing: 'easeOutQuart'
+    try {
+        const budgetCanvas = document.getElementById('budgetDonutChart');
+        if (budgetCanvas) {
+            const remainingColor = isDark ? 'rgba(255, 255, 255, 0.08)' : '#f1f5f9';
+            new Chart(budgetCanvas, {
+                type: 'doughnut',
+                data: {
+                    labels: ['เบิกจ่ายแล้ว', 'คงเหลือ'],
+                    datasets: [{
+                        data: [
+                            <?= (float)$stats['total_disbursed'] ?>,
+                            <?= max(0, (float)$stats['total_remaining']) ?>
+                        ],
+                        backgroundColor: [
+                            '#3b82f6', // เบิกจ่ายแล้ว
+                            remainingColor // คงเหลือ
+                        ],
+                        hoverBackgroundColor: [
+                            '#2563eb',
+                            isDark ? 'rgba(255, 255, 255, 0.14)' : '#e2e8f0'
+                        ],
+                        borderWidth: 0,
+                        borderRadius: 6,
+                        spacing: 3
+                    }]
                 },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: tooltipBg,
-                        titleColor: tooltipTitle,
-                        bodyColor: tooltipBody,
-                        borderColor: tooltipBorder,
-                        borderWidth: 1,
-                        padding: 10,
-                        cornerRadius: 10,
-                        boxPadding: 4,
-                        callbacks: {
-                            label: function(context) {
-                                const val = Number(context.raw).toLocaleString('th-TH');
-                                return ` ${context.label}: ${val} บาท`;
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    cutout: '72%',
+                    animation: isThemeChange ? false : {
+                        duration: 350,
+                        easing: 'easeOutQuad'
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: tooltipBg,
+                            titleColor: tooltipTitle,
+                            bodyColor: tooltipBody,
+                            borderColor: tooltipBorder,
+                            borderWidth: 1,
+                            padding: 10,
+                            cornerRadius: 10,
+                            boxPadding: 4,
+                            callbacks: {
+                                label: function(context) {
+                                    const val = Number(context.raw).toLocaleString('th-TH');
+                                    return ` ${context.label}: ${val} บาท`;
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
+    } catch (err) {
+        console.error('Error creating Budget Donut Chart:', err);
     }
 
     // -------------------------------------------------------------
     // กราฟที่ 3: โครงการตามหน่วยงาน (Department Vertical Bar Chart with Linear Gradient)
     // -------------------------------------------------------------
-    const deptCtx = document.getElementById('deptBarChart')?.getContext('2d');
-    const deptData = <?= json_encode($stats['department_data'] ?? [], JSON_UNESCAPED_UNICODE) ?>;
-    if (deptCtx && deptData.length > 0) {
-        const activeDepts = deptData.filter(d => parseInt(d.project_count || 0) > 0);
-        const isMobile = window.innerWidth < 640;
-        
-        // ฟังก์ชันตัดแบ่งคำภาษาไทยอย่างเป็นระเบียบ ไม่ให้ตัวหนังสือเอียงหรือซ้อนทับกัน
-        const formatThaiDeptLabel = (name) => {
-            if (!name) return '';
-            if (name === 'กองสาธารณสุขและสิ่งแวดล้อม') {
-                return ['กองสาธารณสุข', 'และสิ่งแวดล้อม'];
-            }
-            if (name === 'สำนักปลัดเทศบาล') {
-                return ['สำนักปลัด', 'เทศบาล'];
-            }
-            if (name === 'สำนักการศึกษา') {
-                return ['สำนัก', 'การศึกษา'];
-            }
-            if (name === 'กองสวัสดิการสังคม') {
-                return ['กองสวัสดิการ', 'สังคม'];
-            }
-            if (name === 'กองยุทธศาสตร์และงบประมาณ') {
-                return ['กองยุทธศาสตร์', 'และงบประมาณ'];
-            }
-            if (name.includes('และ')) {
-                const parts = name.split('และ');
-                return [parts[0], 'และ' + parts.slice(1).join('และ')];
-            }
-            if (name.length > 12) {
-                const mid = Math.ceil(name.length / 2);
-                return [name.slice(0, mid), name.slice(mid)];
-            }
-            return name;
-        };
+    try {
+        const deptCanvas = document.getElementById('deptBarChart');
+        const deptData = <?= json_encode($stats['department_data'] ?? [], JSON_UNESCAPED_UNICODE) ?>;
+        if (deptCanvas && deptData && deptData.length > 0) {
+            const deptCtx = deptCanvas.getContext('2d');
+            const activeDepts = deptData.filter(d => parseInt(d.project_count || 0) > 0);
+            const isMobile = window.innerWidth < 640;
+            
+            // ฟังก์ชันตัดแบ่งคำภาษาไทยอย่างเป็นระเบียบ ไม่ให้ตัวหนังสือเอียงหรือซ้อนทับกัน
+            const formatThaiDeptLabel = (name) => {
+                if (!name) return '';
+                if (name === 'กองสาธารณสุขและสิ่งแวดล้อม') {
+                    return ['กองสาธารณสุข', 'และสิ่งแวดล้อม'];
+                }
+                if (name === 'สำนักปลัดเทศบาล') {
+                    return ['สำนักปลัด', 'เทศบาล'];
+                }
+                if (name === 'สำนักการศึกษา') {
+                    return ['สำนัก', 'การศึกษา'];
+                }
+                if (name === 'กองสวัสดิการสังคม') {
+                    return ['กองสวัสดิการ', 'สังคม'];
+                }
+                if (name === 'กองยุทธศาสตร์และงบประมาณ') {
+                    return ['กองยุทธศาสตร์', 'และงบประมาณ'];
+                }
+                if (name.includes('และ')) {
+                    const parts = name.split('และ');
+                    return [parts[0], 'และ' + parts.slice(1).join('และ')];
+                }
+                if (name.length > 12) {
+                    const mid = Math.ceil(name.length / 2);
+                    return [name.slice(0, mid), name.slice(mid)];
+                }
+                return name;
+            };
 
-        const labels = activeDepts.map(d => formatThaiDeptLabel(d.name));
-        const counts = activeDepts.map(d => parseInt(d.project_count) || 0);
+            const labels = activeDepts.map(d => formatThaiDeptLabel(d.name));
+            const counts = activeDepts.map(d => parseInt(d.project_count) || 0);
 
-        // สร้าง Gradient สีน้ำเงินแนวตั้งแบบพรีเมียม
-        const barGrad = deptCtx.createLinearGradient(0, 0, 0, 240);
-        barGrad.addColorStop(0, '#3b82f6'); // ฟ้าสดด้านบน
-        barGrad.addColorStop(1, '#1d4ed8'); // น้ำเงินครามเข้มด้านล่าง
+            // สร้าง Gradient สีน้ำเงินแนวตั้งแบบพรีเมียม
+            const barGrad = deptCtx.createLinearGradient(0, 0, 0, 240);
+            barGrad.addColorStop(0, '#3b82f6'); // ฟ้าสดด้านบน
+            barGrad.addColorStop(1, '#1d4ed8'); // น้ำเงินครามเข้มด้านล่าง
 
-        const barHoverGrad = deptCtx.createLinearGradient(0, 0, 0, 240);
-        barHoverGrad.addColorStop(0, '#60a5fa');
-        barHoverGrad.addColorStop(1, '#2563eb');
+            const barHoverGrad = deptCtx.createLinearGradient(0, 0, 0, 240);
+            barHoverGrad.addColorStop(0, '#60a5fa');
+            barHoverGrad.addColorStop(1, '#2563eb');
 
-        new Chart(deptCtx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'จำนวนโครงการ',
-                    data: counts,
-                    backgroundColor: barGrad,
-                    hoverBackgroundColor: barHoverGrad,
-                    borderRadius: { topLeft: 8, topRight: 8, bottomLeft: 2, bottomRight: 2 },
-                    borderSkipped: false,
-                    barPercentage: isMobile ? 0.6 : 0.48,
-                    categoryPercentage: isMobile ? 0.85 : 0.72
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                layout: {
-                    padding: {
-                        top: 10,
-                        bottom: 4,
-                        left: 4,
-                        right: 4
-                    }
+            new Chart(deptCanvas, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'จำนวนโครงการ',
+                        data: counts,
+                        backgroundColor: barGrad,
+                        hoverBackgroundColor: barHoverGrad,
+                        borderRadius: { topLeft: 8, topRight: 8, bottomLeft: 2, bottomRight: 2 },
+                        borderSkipped: false,
+                        barPercentage: isMobile ? 0.6 : 0.48,
+                        categoryPercentage: isMobile ? 0.85 : 0.72
+                    }]
                 },
-                animation: isThemeChange ? false : {
-                    duration: 800,
-                    easing: 'easeOutQuart'
-                },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: tooltipBg,
-                        titleColor: tooltipTitle,
-                        bodyColor: tooltipBody,
-                        borderColor: tooltipBorder,
-                        borderWidth: 1,
-                        padding: 10,
-                        cornerRadius: 10,
-                        boxPadding: 4,
-                        callbacks: {
-                            title: (items) => {
-                                const idx = items[0]?.dataIndex;
-                                return activeDepts[idx]?.name || '';
-                            },
-                            label: (context) => ` จำนวน: ${context.parsed.y} โครงการ`
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 5,
-                            color: tickColor,
-                            font: { family: "'Prompt', 'Sarabun', sans-serif", size: isMobile ? 10 : 11 }
-                        },
-                        grid: { 
-                            color: gridColor,
-                            drawBorder: false
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            top: 10,
+                            bottom: 4,
+                            left: 4,
+                            right: 4
                         }
                     },
-                    x: {
-                        ticks: {
-                            color: labelColor,
-                            maxRotation: 0,
-                            minRotation: 0,
-                            autoSkip: false,
-                            font: { 
-                                family: "'Prompt', 'Sarabun', sans-serif", 
-                                size: isMobile ? 9.5 : 11.5,
-                                weight: '500',
-                                lineHeight: 1.3
+                    animation: isThemeChange ? false : {
+                        duration: 350,
+                        easing: 'easeOutQuad'
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: tooltipBg,
+                            titleColor: tooltipTitle,
+                            bodyColor: tooltipBody,
+                            borderColor: tooltipBorder,
+                            borderWidth: 1,
+                            padding: 10,
+                            cornerRadius: 10,
+                            boxPadding: 4,
+                            callbacks: {
+                                title: (items) => {
+                                    const idx = items[0]?.dataIndex;
+                                    return activeDepts[idx]?.name || '';
+                                },
+                                label: (context) => ` จำนวน: ${context.parsed.y} โครงการ`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 5,
+                                color: tickColor,
+                                font: { family: "'Prompt', 'Sarabun', sans-serif", size: isMobile ? 10 : 11 }
                             },
-                            padding: 8
+                            grid: { 
+                                color: gridColor
+                            },
+                            border: {
+                                display: false
+                            }
                         },
-                        grid: { display: false }
+                        x: {
+                            ticks: {
+                                color: labelColor,
+                                maxRotation: 0,
+                                minRotation: 0,
+                                autoSkip: false,
+                                font: { 
+                                    family: "'Prompt', 'Sarabun', sans-serif", 
+                                    size: isMobile ? 9.5 : 11.5,
+                                    weight: '500',
+                                    lineHeight: 1.3
+                                },
+                                padding: 8
+                            },
+                            grid: { display: false },
+                            border: {
+                                display: false
+                            }
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
+    } catch (err) {
+        console.error('Error creating Department Bar Chart:', err);
     }
 }
 
-window.initDashboardCharts = initDashboardCharts;
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initDashboardCharts);
-} else {
-    setTimeout(initDashboardCharts, 50);
+let dashboardChartsTimer = null;
+function scheduleDashboardChartsInit(isThemeChange = false) {
+    clearTimeout(dashboardChartsTimer);
+    dashboardChartsTimer = setTimeout(() => {
+        renderDashboardCharts(isThemeChange);
+    }, 30);
 }
+
+window.initDashboardCharts = scheduleDashboardChartsInit;
+window.renderDashboardCharts = renderDashboardCharts;
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => scheduleDashboardChartsInit(false));
+} else {
+    scheduleDashboardChartsInit(false);
+}
+window.addEventListener('load', () => scheduleDashboardChartsInit(false));
 
 // React dynamically when theme toggles (Dark <-> Light <-> System)
 window.addEventListener('theme-changed', function() {
     if (document.getElementById('statusDonutChart') || document.getElementById('budgetDonutChart') || document.getElementById('deptBarChart')) {
-        initDashboardCharts(true);
+        scheduleDashboardChartsInit(true);
     }
 });
 </script>

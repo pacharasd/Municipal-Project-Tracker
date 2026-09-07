@@ -14,7 +14,7 @@ class ProjectService
                        d.name as department_name, d.code as department_code,
                        c.name as category_name, c.icon as category_icon,
                        f.year as fiscal_year,
-                       u.name as responsible_name,
+                       COALESCE(NULLIF(p.responsible_person, ''), u.name, d.name) as responsible_name,
                        (SELECT COUNT(*) FROM projects sub WHERE sub.parent_id = p.id) as sub_project_count,
                        (SELECT COUNT(*) FROM projects sub WHERE sub.parent_id = p.id AND sub.status = 'completed') as completed_sub_count,
                        (SELECT COUNT(*) FROM projects sub WHERE sub.parent_id = p.id AND sub.status = 'has_problem') as problem_sub_count
@@ -40,7 +40,8 @@ class ProjectService
             $params[] = $filters['status'];
         }
         if (!empty($filters['search'])) {
-            $sql .= " AND (p.name LIKE ? OR p.project_code LIKE ?)";
+            $sql .= " AND (p.name LIKE ? OR p.project_code LIKE ? OR p.responsible_person LIKE ?)";
+            $params[] = "%{$filters['search']}%";
             $params[] = "%{$filters['search']}%";
             $params[] = "%{$filters['search']}%";
         }
@@ -69,7 +70,7 @@ class ProjectService
                        d.name as department_name, d.code as department_code,
                        c.name as category_name, c.icon as category_icon,
                        f.year as fiscal_year,
-                       u.name as responsible_name, u.position as responsible_position,
+                       COALESCE(NULLIF(p.responsible_person, ''), u.name, d.name) as responsible_name, u.position as responsible_position,
                        parent.name as parent_name, parent.project_code as parent_code
                 FROM projects p
                 LEFT JOIN departments d ON p.department_id = d.id
@@ -122,7 +123,7 @@ class ProjectService
 
     public static function getWatchlist(): array
     {
-        $sql = "SELECT p.*, parent.name as parent_name, d.name as department_name, u.name as responsible_name
+        $sql = "SELECT p.*, parent.name as parent_name, d.name as department_name, COALESCE(NULLIF(p.responsible_person, ''), u.name, d.name) as responsible_name
                 FROM projects p
                 LEFT JOIN projects parent ON p.parent_id = parent.id
                 LEFT JOIN departments d ON p.department_id = d.id

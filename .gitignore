@@ -42,3 +42,9 @@ database/
 municipal_project_tracker.sql
 /mobile-logo.webp
 public/mobile-logo.webp
+
+# User uploads
+app/public/uploads/*
+!app/public/uploads/.gitkeep
+public/uploads/*
+!public/uploads/.gitkeep
