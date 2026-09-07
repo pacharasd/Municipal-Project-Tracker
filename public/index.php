@@ -72,9 +72,15 @@ $reqUri = $_SERVER['REQUEST_URI'] ?? '';
 $isAuthRoute = strpos($reqUri, '/login') !== false || strpos($reqUri, '/logout') !== false;
 
 if (!$isAuthRoute && !\App\Core\Auth::check()) {
-    $admin = \App\Core\Database::fetch("SELECT u.*, r.name as role_name, r.display_name as role_label FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = 1");
-    if ($admin) {
-        \App\Core\Auth::login($admin);
+    try {
+        $admin = \App\Core\Database::fetch("SELECT u.*, r.name as role_name, r.display_name as role_label FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = 1");
+        if ($admin) {
+            \App\Core\Auth::login($admin);
+        }
+    } catch (\Throwable $e) {
+        error_log("Auto-login error / missing tables: " . $e->getMessage());
+        \App\Core\Database::renderMissingTablesError($e);
+        exit;
     }
 }
 
