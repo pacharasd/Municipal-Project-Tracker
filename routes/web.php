@@ -12,7 +12,6 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\AttachmentController;
-use App\Http\Controllers\FiscalYearController;
 
 // Root redirect
 Router::get('/', function() {
@@ -88,10 +87,10 @@ Router::post('/categories/seed-defaults', [CategoryController::class, 'seedDefau
 Router::post('/categories/{id}/update', [CategoryController::class, 'update']);
 Router::post('/categories/{id}/delete', [CategoryController::class, 'delete']);
 
-// Fiscal Years Management Routes
-Router::get('/fiscal-years', [FiscalYearController::class, 'index']);
-Router::post('/fiscal-years', [FiscalYearController::class, 'store']);
-Router::post('/fiscal-years/{id}/set-active', [FiscalYearController::class, 'setActive']);
-Router::post('/fiscal-years/{id}/update', [FiscalYearController::class, 'update']);
+// Fiscal Years Route (Redirect to Dashboard)
+Router::get('/fiscal-years', function() {
+    header('Location: ' . \App\Core\Router::url('/dashboard'));
+    exit;
+});
 
 
