@@ -52,15 +52,8 @@ $tierNotStartedPct = round(($tierNotStarted / $subCount) * 100, 1);
     <!-- 1. Header Section (Title & Fiscal Year Selector) -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 w-full max-w-full">
         <div>
-            <div class="flex items-center gap-2.5">
-                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center shadow-md shadow-blue-500/20 flex-shrink-0">
-                    <i data-lucide="landmark" class="w-4 h-4 sm:w-5 sm:h-5"></i>
-                </div>
-                <div class="min-w-0">
-                    <h1 class="text-xl sm:text-3xl font-extrabold font-heading text-slate-900 dark:text-white tracking-tight">Dashboard</h1>
-                    <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 truncate">ภาพรวมโครงการของเทศบาล</p>
-                </div>
-            </div>
+            <h1 class="text-xl sm:text-3xl font-extrabold font-heading text-slate-900 dark:text-white tracking-tight">Dashboard</h1>
+            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">ภาพรวมโครงการของเทศบาล</p>
         </div>
 
         <!-- Fiscal Year Dropdown (Right) -->
