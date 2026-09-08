@@ -409,50 +409,35 @@ class ProjectService
         }
 
         $fiscalMonthsMeta = [
-            ['name' => 'ต.ค.', 'full_name' => 'ตุลาคม', 'quarter' => 'Q1', 'month_num' => 10],
-            ['name' => 'พ.ย.', 'full_name' => 'พฤศจิกายน', 'quarter' => 'Q1', 'month_num' => 11],
-            ['name' => 'ธ.ค.', 'full_name' => 'ธันวาคม', 'quarter' => 'Q1', 'month_num' => 12],
-            ['name' => 'ม.ค.', 'full_name' => 'มกราคม', 'quarter' => 'Q2', 'month_num' => 1],
-            ['name' => 'ก.พ.', 'full_name' => 'กุมภาพันธ์', 'quarter' => 'Q2', 'month_num' => 2],
-            ['name' => 'มี.ค.', 'full_name' => 'มีนาคม', 'quarter' => 'Q2', 'month_num' => 3],
-            ['name' => 'เม.ย.', 'full_name' => 'เมษายน', 'quarter' => 'Q3', 'month_num' => 4],
-            ['name' => 'พ.ค.', 'full_name' => 'พฤษภาคม', 'quarter' => 'Q3', 'month_num' => 5],
-            ['name' => 'มิ.ย.', 'full_name' => 'มิถุนายน', 'quarter' => 'Q3', 'month_num' => 6],
-            ['name' => 'ก.ค.', 'full_name' => 'กรกฎาคม', 'quarter' => 'Q4', 'month_num' => 7],
-            ['name' => 'ส.ค.', 'full_name' => 'สิงหาคม', 'quarter' => 'Q4', 'month_num' => 8],
-            ['name' => 'ก.ย.', 'full_name' => 'กันยายน', 'quarter' => 'Q4', 'month_num' => 9],
+            ['name' => 'ต.ค.', 'full_name' => 'ตุลาคม', 'month_num' => 10],
+            ['name' => 'พ.ย.', 'full_name' => 'พฤศจิกายน', 'month_num' => 11],
+            ['name' => 'ธ.ค.', 'full_name' => 'ธันวาคม', 'month_num' => 12],
+            ['name' => 'ม.ค.', 'full_name' => 'มกราคม', 'month_num' => 1],
+            ['name' => 'ก.พ.', 'full_name' => 'กุมภาพันธ์', 'month_num' => 2],
+            ['name' => 'มี.ค.', 'full_name' => 'มีนาคม', 'month_num' => 3],
+            ['name' => 'เม.ย.', 'full_name' => 'เมษายน', 'month_num' => 4],
+            ['name' => 'พ.ค.', 'full_name' => 'พฤษภาคม', 'month_num' => 5],
+            ['name' => 'มิ.ย.', 'full_name' => 'มิถุนายน', 'month_num' => 6],
+            ['name' => 'ก.ค.', 'full_name' => 'กรกฎาคม', 'month_num' => 7],
+            ['name' => 'ส.ค.', 'full_name' => 'สิงหาคม', 'month_num' => 8],
+            ['name' => 'ก.ย.', 'full_name' => 'กันยายน', 'month_num' => 9],
         ];
 
         $disbursementTimeline = [];
-        $quarterSummary = [
-            'Q1' => ['label' => 'Q1 (ต.ค.-ธ.ค.)', 'amount' => 0.0, 'pct' => 0.0],
-            'Q2' => ['label' => 'Q2 (ม.ค.-มี.ค.)', 'amount' => 0.0, 'pct' => 0.0],
-            'Q3' => ['label' => 'Q3 (เม.ย.-มิ.ย.)', 'amount' => 0.0, 'pct' => 0.0],
-            'Q4' => ['label' => 'Q4 (ก.ค.-ก.ย.)', 'amount' => 0.0, 'pct' => 0.0],
-        ];
-
         $runningCumulative = 0.0;
         foreach ($fiscalMonthsMeta as $m) {
             $monthNum = $m['month_num'];
             $monthlyAmt = (float)($monthAmountMap[$monthNum] ?? 0.0);
             $runningCumulative += $monthlyAmt;
-            $quarter = $m['quarter'];
-            $quarterSummary[$quarter]['amount'] += $monthlyAmt;
 
             $disbursementTimeline[] = [
                 'name'         => $m['name'],
                 'full_name'    => $m['full_name'],
-                'quarter'      => $quarter,
                 'monthly'      => $monthlyAmt,
                 'cumulative'   => $runningCumulative,
                 'cum_pct'      => $totalBudget > 0 ? round(($runningCumulative / $totalBudget) * 100, 2) : 0.0,
             ];
         }
-
-        foreach ($quarterSummary as &$q) {
-            $q['pct'] = $totalBudget > 0 ? round(($q['amount'] / $totalBudget) * 100, 2) : 0.0;
-        }
-        unset($q);
 
         return [
             'main_total'            => $mainTotal,
@@ -472,7 +457,6 @@ class ProjectService
             'main_projects_data'    => $mainProjectsData,
             'category_data'         => $catData,
             'disbursement_timeline' => $disbursementTimeline,
-            'quarter_summary'       => $quarterSummary,
             'top_projects'          => $topProjects,
             'bottom_projects'       => $bottomProjects,
         ];

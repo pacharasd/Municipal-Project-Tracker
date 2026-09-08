@@ -951,7 +951,7 @@ function renderDashboardCharts(isThemeChange = false) {
                                 title: (items) => {
                                     const idx = items[0]?.dataIndex;
                                     const d = timelineData[idx];
-                                    return d ? `${d.full_name} (${d.quarter})` : '';
+                                    return d ? `เดือน${d.full_name}` : '';
                                 },
                                 label: (context) => {
                                     const val = context.parsed.y || 0;
