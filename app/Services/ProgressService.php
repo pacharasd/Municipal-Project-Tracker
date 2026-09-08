@@ -245,21 +245,23 @@ class ProgressService
         if (!$project) return;
 
         $totalActivities = (int)Database::fetchColumn("SELECT COUNT(*) FROM activities WHERE project_id = ?", [$subProjectId]);
-        if ($totalActivities === 0) return;
+        $actual = $totalActivities;
+        $planned = max((int)($project['planned_activity_count'] ?? 1), $totalActivities);
 
-        $completedActivities = (int)Database::fetchColumn("SELECT COUNT(*) FROM activities WHERE project_id = ? AND status = 'completed'", [$subProjectId]);
-
-        $planned = max((int)$project['planned_activity_count'], $totalActivities);
-        $actual = $completedActivities;
         if (($project['progress_mode'] ?? 'manual') === 'manual') {
             Database::update('projects', [
                 'planned_activity_count' => $planned,
                 'actual_activity_count'  => $actual,
             ], "id = ?", [$subProjectId]);
+
+            if (!empty($project['parent_id'])) {
+                self::syncParentProjectProgress((int)$project['parent_id']);
+            }
             return;
         }
 
-        $progress = $planned > 0 ? round(($actual / $planned) * 100, 2) : 0.0;
+        $completedActivities = (int)Database::fetchColumn("SELECT COUNT(*) FROM activities WHERE project_id = ? AND status = 'completed'", [$subProjectId]);
+        $progress = $planned > 0 ? round(($completedActivities / $planned) * 100, 2) : 0.0;
 
         $status = $project['status'];
         if ($status !== 'has_problem' && $status !== 'cancelled') {

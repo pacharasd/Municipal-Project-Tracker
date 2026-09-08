@@ -9,7 +9,8 @@ foreach ($projects as $p) {
     $completedCount = 0;
     $hasProblem = false;
     foreach ($p['sub_projects'] as $sub) {
-        $subKeywords[] = ($sub['project_code'] ?? '') . ' ' . ($sub['name'] ?? '') . ' ' . ($sub['responsible_name'] ?? '');
+        $subResp = !empty($sub['responsible_person']) ? $sub['responsible_person'] : ($sub['responsible_name'] ?? '');
+        $subKeywords[] = ($sub['name'] ?? '') . ' ' . $subResp;
         if (($sub['status'] ?? '') === 'completed') $completedCount++;
         if (($sub['status'] ?? '') === 'has_problem') $hasProblem = true;
     }
@@ -27,7 +28,6 @@ foreach ($projects as $p) {
 
     $projectsSummary[] = [
         'id' => (int)$p['id'],
-        'code' => (string)$p['project_code'],
         'name' => (string)$p['name'],
         'fiscal_year_id' => (string)$p['fiscal_year_id'],
         'department_id' => (string)$p['department_id'],
@@ -35,7 +35,6 @@ foreach ($projects as $p) {
         'sub_count' => count($p['sub_projects']),
         'status' => $calcStatus,
         'search_text' => mb_strtolower(
-            ($p['project_code'] ?? '') . ' ' . 
             ($p['name'] ?? '') . ' ' . 
             ($p['responsible_person'] ?? '') . ' ' . 
             ($p['department_name'] ?? '') . ' ' . 
@@ -81,7 +80,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                 <i data-lucide="search" class="w-4 h-4"></i>
             </div>
-            <input type="text" name="search" x-model.debounce.250ms="search" @input.debounce.250ms="currentPage = 1; syncUrl()" value="<?= htmlspecialchars($filters['search']) ?>" placeholder="ค้นหาชื่อ รหัสโครงการ หรือโครงการย่อย..." class="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+            <input type="text" name="search" x-model.debounce.250ms="search" @input.debounce.250ms="currentPage = 1; syncUrl()" value="<?= htmlspecialchars($filters['search']) ?>" placeholder="ค้นหาชื่อโครงการ หรือโครงการย่อย..." class="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
         </div>
 
         <!-- Fiscal Year Filter (Custom Dropdown) -->
@@ -310,7 +309,6 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                         </button>
                         <div>
                             <div class="flex flex-wrap items-center gap-2">
-                                <span class="px-2 py-0.5 text-xs font-mono font-bold rounded bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/[0.08]"><?= htmlspecialchars($p['project_code']) ?></span>
                                 <span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40"><?= htmlspecialchars(!empty($p['responsible_person']) ? $p['responsible_person'] : $p['department_name']) ?></span>
                                 <span class="px-2 py-0.5 text-xs text-slate-500 dark:text-slate-400">ปีงบ <?= $p['fiscal_year'] ?></span>
                             </div>
@@ -371,8 +369,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                                 <a href="<?= \App\Core\Router::url("/sub-projects/{$sub['id']}") ?>" 
                                    class="group flex flex-col justify-between p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/90 dark:border-white/[0.08] hover:border-emerald-500/50 dark:hover:border-emerald-500/50 shadow-sm hover:shadow-md transition-all">
                                     <div>
-                                        <div class="flex items-center justify-between gap-2">
-                                            <span class="text-[11px] font-mono text-slate-400 dark:text-slate-400 tracking-tight font-medium"><?= htmlspecialchars($sub['project_code']) ?></span>
+                                        <div class="flex items-center justify-end gap-2">
                                             <?php
                                             $statusClass = match($sub['status']) {
                                                 'completed' => 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/40',
@@ -409,7 +406,8 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
 
                                         <div class="mt-3 pt-2.5 pb-0.5 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
                                             <span>งบ: <strong class="font-semibold text-slate-700 dark:text-slate-300"><?= number_format($sub['budget'], 0) ?></strong> บ.</span>
-                                            <span class="truncate max-w-[150px] text-right" title="<?= htmlspecialchars($sub['responsible_name'] ?? 'ผู้รับผิดชอบ') ?>"><?= htmlspecialchars($sub['responsible_name'] ?? 'ผู้รับผิดชอบ') ?></span>
+                                            <?php $cardSubResp = !empty($sub['responsible_person']) ? $sub['responsible_person'] : ($sub['responsible_name'] ?? 'ผู้รับผิดชอบ'); ?>
+                                            <span class="truncate max-w-[150px] text-right" title="<?= htmlspecialchars($cardSubResp) ?>"><?= htmlspecialchars($cardSubResp) ?></span>
                                         </div>
                                     </div>
                                 </a>
@@ -511,8 +509,8 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
 
     <!-- Modal: Create Main Project -->
     <template x-teleport="body">
-        <div x-show="createModal" x-cloak @click.self="createModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div class="bg-white dark:bg-[#181a20] w-full max-w-2xl rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 relative">
+        <div x-show="createModal" x-cloak @click.self="createModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
+            <div class="bg-white dark:bg-[#181a20] w-full max-w-2xl rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 relative modal-box-smooth transform-gpu">
                 <div class="p-6 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
                     <div>
                         <h3 class="text-lg font-bold text-slate-900 dark:text-white">สร้างโครงการหลักใหม่</h3>
@@ -558,11 +556,12 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                       class="p-6 space-y-4">
                     <input type="hidden" name="_token" value="<?= $csrfToken ?>">
 
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ชื่อโครงการหลัก <span class="text-rose-500">*</span></label>
+                        <input type="text" name="name" required placeholder="ระบุชื่อโครงการหลัก..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+                    </div>
+
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">รหัสโครงการ <span class="text-rose-500">*</span></label>
-                            <input type="text" name="project_code" required placeholder="เช่น PRJ-<?= date('Y') + 543 ?>-001" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
-                        </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ปีงบประมาณ <span class="text-rose-500">*</span></label>
                             <?php 
@@ -621,19 +620,6 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ชื่อโครงการหลัก <span class="text-rose-500">*</span></label>
-                        <input type="text" name="name" required placeholder="ระบุชื่อโครงการหลัก..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">คำอธิบายและวัตถุประสงค์</label>
-                        <textarea name="description" rows="2" placeholder="รายละเอียดของโครงการ..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"></textarea>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ประเภทโครงการ <span class="text-rose-500">*</span></label>
                             <div class="relative" x-data="{
@@ -677,14 +663,20 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                                 </div>
                             </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ผู้รับผิดชอบโครงการ <span class="text-rose-500">*</span></label>
-                            <input type="text" 
-                                   name="responsible_person" 
-                                   required 
-                                   placeholder="ระบุชื่อผู้รับผิดชอบโครงการ..." 
-                                   class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
-                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">คำอธิบายและวัตถุประสงค์</label>
+                        <textarea name="description" rows="2" placeholder="รายละเอียดของโครงการ..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ผู้รับผิดชอบโครงการ <span class="text-rose-500">*</span></label>
+                        <input type="text" 
+                               name="responsible_person" 
+                               required 
+                               placeholder="ระบุชื่อผู้รับผิดชอบโครงการ..." 
+                               class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -695,7 +687,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">วันที่เริ่มต้น <span class="text-rose-500">*</span></label>
                             <div class="relative" x-data="thaiDatePicker({ name: 'start_date', value: '', align: 'left', placeholder: 'วว/ดด/ปปปป' })" @click.outside="open = false">
-                                <input type="hidden" :name="name" :value="value">
+                                <input type="hidden" name="start_date" :name="name" :value="value">
                                 <button type="button" 
                                         @click="toggle()" 
                                         class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white flex items-center justify-between focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-colors cursor-pointer">
@@ -707,17 +699,17 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                                     </svg>
                                 </button>
                                 <div x-show="open" 
+                                     x-cloak
                                      x-transition:enter="transition ease-out duration-100"
                                      x-transition:enter-start="transform opacity-0 scale-95"
                                      x-transition:enter-end="transform opacity-100 scale-100"
                                      x-transition:leave="transition ease-in duration-75"
                                      x-transition:leave-start="transform opacity-100 scale-100"
                                      x-transition:leave-end="transform opacity-0 scale-95"
-                                     class="absolute bottom-full mb-2 left-0 z-50 w-72 bg-white dark:bg-[#1f222e] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-3.5"
-                                     style="display: none;">
+                                     class="absolute bottom-full mb-2 left-0 z-50 w-72 bg-white dark:bg-[#1f222e] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-3.5">
                                     <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 dark:border-white/10">
                                         <div class="flex items-center gap-1">
-                                            <button type="button" @click="viewYear--" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีก่อนหน้า">
+                                            <button type="button" @click="prevYear()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีก่อนหน้า">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
                                             </button>
                                             <button type="button" @click="prevMonth()" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนก่อนหน้า">
@@ -729,7 +721,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                                             <button type="button" @click="nextMonth()" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนถัดไป">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                                             </button>
-                                            <button type="button" @click="viewYear++" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีถัดไป">
+                                            <button type="button" @click="nextYear()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีถัดไป">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
                                             </button>
                                         </div>
@@ -740,11 +732,11 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                                         </template>
                                     </div>
                                     <div class="grid grid-cols-7 gap-1 text-center">
-                                        <template x-for="item in days">
+                                        <template x-for="(item, index) in days" :key="item.dateStr || (item.day + '-' + index)">
                                             <div>
                                                 <button type="button" 
                                                         x-show="item.isCurrent"
-                                                        @click="selectDate(item)"
+                                                        @click.stop="selectDate(item)"
                                                         class="w-8 h-8 mx-auto text-xs flex items-center justify-center rounded-xl transition-all cursor-pointer"
                                                         :class="{
                                                             'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-600/30': value === item.date,
@@ -767,7 +759,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">วันที่สิ้นสุด <span class="text-rose-500">*</span></label>
                             <div class="relative" x-data="thaiDatePicker({ name: 'end_date', value: '', align: 'right', placeholder: 'วว/ดด/ปปปป' })" @click.outside="open = false">
-                                <input type="hidden" :name="name" :value="value">
+                                <input type="hidden" name="end_date" :name="name" :value="value">
                                 <button type="button" 
                                         @click="toggle()" 
                                         class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white flex items-center justify-between focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-colors cursor-pointer">
@@ -779,17 +771,17 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                                     </svg>
                                 </button>
                                 <div x-show="open" 
+                                     x-cloak
                                      x-transition:enter="transition ease-out duration-100"
                                      x-transition:enter-start="transform opacity-0 scale-95"
                                      x-transition:enter-end="transform opacity-100 scale-100"
                                      x-transition:leave="transition ease-in duration-75"
                                      x-transition:leave-start="transform opacity-100 scale-100"
                                      x-transition:leave-end="transform opacity-0 scale-95"
-                                     class="absolute bottom-full mb-2 right-0 z-50 w-72 bg-white dark:bg-[#1f222e] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-3.5"
-                                     style="display: none;">
+                                     class="absolute bottom-full mb-2 right-0 z-50 w-72 bg-white dark:bg-[#1f222e] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-3.5">
                                     <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 dark:border-white/10">
                                         <div class="flex items-center gap-1">
-                                            <button type="button" @click="viewYear--" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีก่อนหน้า">
+                                            <button type="button" @click="prevYear()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีก่อนหน้า">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
                                             </button>
                                             <button type="button" @click="prevMonth()" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนก่อนหน้า">
@@ -801,7 +793,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                                             <button type="button" @click="nextMonth()" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนถัดไป">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                                             </button>
-                                            <button type="button" @click="viewYear++" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีถัดไป">
+                                            <button type="button" @click="nextYear()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีถัดไป">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
                                             </button>
                                         </div>
@@ -812,11 +804,11 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                                         </template>
                                     </div>
                                     <div class="grid grid-cols-7 gap-1 text-center">
-                                        <template x-for="item in days">
+                                        <template x-for="(item, index) in days" :key="item.dateStr || (item.day + '-' + index)">
                                             <div>
                                                 <button type="button" 
                                                         x-show="item.isCurrent"
-                                                        @click="selectDate(item)"
+                                                        @click.stop="selectDate(item)"
                                                         class="w-8 h-8 mx-auto text-xs flex items-center justify-center rounded-xl transition-all cursor-pointer"
                                                         :class="{
                                                             'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-600/30': value === item.date,
@@ -856,15 +848,15 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
 function mainProjectsPage() {
     return {
         createModal: false,
-        allProjects: <?= $projectsJson ?>,
+        allProjects: Object.freeze(<?= $projectsJson ?>),
         search: <?= json_encode($filters['search'], JSON_UNESCAPED_UNICODE) ?> || '',
         fiscalYearFilter: <?= json_encode($filters['fiscal_year_id'], JSON_UNESCAPED_UNICODE) ?> || '',
         departmentFilter: <?= json_encode($filters['department_id'], JSON_UNESCAPED_UNICODE) ?> || '',
         statusFilter: 'all',
         currentPage: 1,
         perPage: 5,
-        fiscalYearOptions: <?= json_encode($fiscalYears, JSON_UNESCAPED_UNICODE) ?>,
-        departmentOptions: <?= json_encode($departments, JSON_UNESCAPED_UNICODE) ?>,
+        fiscalYearOptions: Object.freeze(<?= json_encode($fiscalYears, JSON_UNESCAPED_UNICODE) ?>),
+        departmentOptions: Object.freeze(<?= json_encode($departments, JSON_UNESCAPED_UNICODE) ?>),
 
         get currentFiscalYearLabel() {
             if (!this.fiscalYearFilter) return '-- ทุกปีงบประมาณ --';

@@ -555,7 +555,7 @@ $categoriesJson = json_encode($categoriesSummary, JSON_HEX_TAG | JSON_HEX_APOS |
     <div x-show="createModal" 
          x-cloak
          @click.self="createModal = false"
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
@@ -563,7 +563,7 @@ $categoriesJson = json_encode($categoriesSummary, JSON_HEX_TAG | JSON_HEX_APOS |
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0">
         
-        <div class="bg-white dark:bg-[#181a20] rounded-3xl max-w-lg w-full border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden"
+        <div class="bg-white dark:bg-[#181a20] rounded-3xl max-w-lg w-full border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden modal-box-smooth transform-gpu"
              @click.outside="createModal = false"
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 scale-95"
@@ -632,7 +632,7 @@ $categoriesJson = json_encode($categoriesSummary, JSON_HEX_TAG | JSON_HEX_APOS |
     <div x-show="editModal" 
          x-cloak
          @click.self="editModal = false"
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
@@ -640,7 +640,7 @@ $categoriesJson = json_encode($categoriesSummary, JSON_HEX_TAG | JSON_HEX_APOS |
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0">
         
-        <div class="bg-white dark:bg-[#181a20] rounded-3xl max-w-lg w-full border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden"
+        <div class="bg-white dark:bg-[#181a20] rounded-3xl max-w-lg w-full border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden modal-box-smooth transform-gpu"
              @click.outside="editModal = false"
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 scale-95"
@@ -709,7 +709,7 @@ $categoriesJson = json_encode($categoriesSummary, JSON_HEX_TAG | JSON_HEX_APOS |
     <div x-show="deleteModal" 
          x-cloak
          @click.self="deleteModal = false"
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
@@ -717,7 +717,7 @@ $categoriesJson = json_encode($categoriesSummary, JSON_HEX_TAG | JSON_HEX_APOS |
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0">
         
-        <div class="bg-white dark:bg-[#181a20] rounded-3xl max-w-md w-full border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden"
+        <div class="bg-white dark:bg-[#181a20] rounded-3xl max-w-md w-full border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden modal-box-smooth transform-gpu"
              @click.outside="deleteModal = false"
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 scale-95"
@@ -727,7 +727,8 @@ $categoriesJson = json_encode($categoriesSummary, JSON_HEX_TAG | JSON_HEX_APOS |
                 <!-- Icon based on linked project count -->
                 <div class="w-14 h-14 rounded-3xl mx-auto flex items-center justify-center mb-4"
                      :class="deleteData.project_count > 0 ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20' : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'">
-                    <i :data-lucide="deleteData.project_count > 0 ? 'alert-triangle' : 'trash-2'" class="w-7 h-7"></i>
+                    <i x-show="deleteData.project_count > 0" data-lucide="alert-triangle" class="w-7 h-7"></i>
+                    <i x-show="!(deleteData.project_count > 0)" data-lucide="trash-2" class="w-7 h-7"></i>
                 </div>
 
                 <h3 class="font-bold text-lg font-heading text-slate-900 dark:text-white" x-text="'ยืนยันการลบประเภทโครงการ'"></h3>
@@ -794,7 +795,7 @@ $categoriesJson = json_encode($categoriesSummary, JSON_HEX_TAG | JSON_HEX_APOS |
 <script>
 function categoriesPage() {
     return {
-        allCategories: <?= $categoriesJson ?>,
+        allCategories: Object.freeze(<?= $categoriesJson ?>),
         createModal: false,
         editModal: false,
         deleteModal: false,
@@ -852,7 +853,7 @@ function categoriesPage() {
         setGridPage(p) {
             if (p === '...' || p < 1 || p > this.gridTotalPages || p === this.gridPage) return;
             this.gridPage = p;
-            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
         },
         prevGridPage() {
             if (this.gridPage > 1) this.setGridPage(this.gridPage - 1);
@@ -863,7 +864,7 @@ function categoriesPage() {
         setGridPerPage(val) {
             this.gridPerPage = val === 'all' ? 'all' : parseInt(val);
             this.gridPage = 1;
-            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
         },
 
         // Table getters
@@ -901,7 +902,7 @@ function categoriesPage() {
         setTablePage(p) {
             if (p === '...' || p < 1 || p > this.tableTotalPages || p === this.tablePage) return;
             this.tablePage = p;
-            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
         },
         prevTablePage() {
             if (this.tablePage > 1) this.setTablePage(this.tablePage - 1);
@@ -912,7 +913,7 @@ function categoriesPage() {
         setTablePerPage(val) {
             this.tablePerPage = val === 'all' ? 'all' : parseInt(val);
             this.tablePage = 1;
-            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
         },
 
         getVisiblePages(total, current) {
@@ -933,7 +934,7 @@ function categoriesPage() {
         onSearchChange() {
             this.gridPage = 1;
             this.tablePage = 1;
-            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
         },
 
         openEdit(cat) {
@@ -943,7 +944,7 @@ function categoriesPage() {
                 description: cat.description || ''
             };
             this.editModal = true;
-            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(); });
         },
 
         openDelete(cat) {
@@ -953,7 +954,7 @@ function categoriesPage() {
                 project_count: parseInt(cat.project_count || 0)
             };
             this.deleteModal = true;
-            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(); });
         }
     };
 }

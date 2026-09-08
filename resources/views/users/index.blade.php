@@ -305,7 +305,7 @@ $currentUserId = Auth::id();
     <div x-show="createModal" 
          x-cloak 
          @click.self="createModal = false" 
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
@@ -313,7 +313,7 @@ $currentUserId = Auth::id();
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0">
         
-        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-lg w-full overflow-hidden"
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-lg w-full overflow-hidden modal-box-smooth transform-gpu"
              @click.outside="createModal = false"
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 scale-95"
@@ -426,7 +426,7 @@ $currentUserId = Auth::id();
     <div x-show="editModal" 
          x-cloak 
          @click.self="editModal = false" 
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
@@ -434,7 +434,7 @@ $currentUserId = Auth::id();
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0">
         
-        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-lg w-full overflow-hidden"
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-lg w-full overflow-hidden modal-box-smooth transform-gpu"
              @click.outside="editModal = false"
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 scale-95"

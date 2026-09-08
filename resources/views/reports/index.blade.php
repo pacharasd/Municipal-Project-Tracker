@@ -64,11 +64,10 @@ $avgProgress = count($projects) > 0 ? round(array_sum(array_column($projects, 'p
         if (!q) return this.allProjects;
         return this.allProjects.filter(p => {
             const name = (p.name || '').toLowerCase();
-            const code = (p.project_code || '').toLowerCase();
             const dept = (p.department_name || '').toLowerCase();
             const parent = (p.parent_name || '').toLowerCase();
-            const resp = (p.responsible_name || '').toLowerCase();
-            return name.includes(q) || code.includes(q) || dept.includes(q) || parent.includes(q) || resp.includes(q);
+            const resp = (p.responsible_person || p.responsible_name || '').toLowerCase();
+            return name.includes(q) || dept.includes(q) || parent.includes(q) || resp.includes(q);
         });
     },
 
@@ -302,7 +301,6 @@ $avgProgress = count($projects) > 0 ? round(array_sum(array_column($projects, 'p
                 <thead>
                     <tr class="border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70 text-slate-600 dark:text-slate-400 font-semibold uppercase tracking-wider">
                         <th class="py-3 px-3 w-10 text-center whitespace-nowrap">#</th>
-                        <th class="py-3 px-3 whitespace-nowrap">รหัสโครงการ</th>
                         <th class="py-3 px-3 min-w-[220px]">ชื่อโครงการ / ระดับ</th>
                         <th class="py-3 px-3 whitespace-nowrap">สำนัก / กอง</th>
                         <th class="py-3 px-3 text-center whitespace-nowrap">ปีงบ</th>
@@ -317,7 +315,7 @@ $avgProgress = count($projects) > 0 ? round(array_sum(array_column($projects, 'p
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                     <template x-if="paginatedProjects.length === 0">
                         <tr>
-                            <td colspan="11" class="py-12 text-center text-slate-400 dark:text-slate-500">
+                            <td colspan="10" class="py-12 text-center text-slate-400 dark:text-slate-500">
                                 <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
                                 ไม่พบข้อมูลโครงการตามเงื่อนไขที่ค้นหา
                             </td>
@@ -329,8 +327,6 @@ $avgProgress = count($projects) > 0 ? round(array_sum(array_column($projects, 'p
                             :class="!p.parent_id ? 'bg-slate-50/40 dark:bg-slate-800/20 font-medium' : ''">
                             <td class="py-3 px-3 text-center text-slate-400 font-mono whitespace-nowrap"
                                 x-text="(perPage === 'all' ? idx + 1 : (currentPage - 1) * perPage + idx + 1)"></td>
-                            <td class="py-3 px-3 font-mono font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap"
-                                x-text="p.project_code"></td>
                             <td class="py-3 px-3">
                                 <div class="font-medium text-slate-900 dark:text-white" x-text="p.name"></div>
                                 <div class="text-[11px] text-slate-500">
@@ -369,7 +365,7 @@ $avgProgress = count($projects) > 0 ? round(array_sum(array_column($projects, 'p
                                       :class="getStatusBadge(p.status).class"
                                       x-text="getStatusBadge(p.status).label"></span>
                             </td>
-                            <td class="py-3 px-3 text-slate-600 dark:text-slate-400 whitespace-nowrap" x-text="p.responsible_name || '-'"></td>
+                            <td class="py-3 px-3 text-slate-600 dark:text-slate-400 whitespace-nowrap" x-text="p.responsible_person || p.responsible_name || '-'"></td>
                         </tr>
                     </template>
                 </tbody>

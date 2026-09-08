@@ -67,7 +67,6 @@ class ProjectController
 
         $rules = [
             'name'           => 'required|min:3|max:255',
-            'project_code'   => 'required|min:2|max:50',
             'fiscal_year_id' => 'required|numeric',
             'category_id'    => 'required|numeric',
             'budget'         => 'required|numeric|min:0',
@@ -85,14 +84,6 @@ class ProjectController
 
         if ($v->fails()) {
             Session::flash('error', $v->firstError());
-            header('Location: ' . Router::url('/projects'));
-            exit;
-        }
-
-        // Check duplicate code
-        $code = trim($_POST['project_code']);
-        if (Database::fetchColumn("SELECT COUNT(*) FROM projects WHERE project_code = ?", [$code]) > 0) {
-            Session::flash('error', "รหัสโครงการ '{$code}' มีอยู่ในระบบแล้ว กรุณาใช้รหัสอื่น");
             header('Location: ' . Router::url('/projects'));
             exit;
         }
@@ -126,7 +117,6 @@ class ProjectController
         try {
             $insertData = [
                 'parent_id'           => null,
-                'project_code'        => $code,
                 'name'                => trim($_POST['name']),
                 'description'         => trim($_POST['description'] ?? ''),
                 'fiscal_year_id'      => (int)$_POST['fiscal_year_id'],
@@ -154,7 +144,7 @@ class ProjectController
                 'disbursed_amount' => 0.00,
             ]);
 
-            AuditLogService::log('CREATE', 'Project', $projectId, null, ['code' => $code, 'name' => $_POST['name']]);
+            AuditLogService::log('CREATE', 'Project', $projectId, null, ['name' => $_POST['name']]);
             Session::flash('success', "บันทึกโครงการหลัก '{$_POST['name']}' เรียบร้อยแล้ว");
             header('Location: ' . Router::url("/projects/{$projectId}"));
             exit;
@@ -189,6 +179,33 @@ class ProjectController
 
         if ($v->fails()) {
             Session::flash('error', $v->firstError());
+            header('Location: ' . Router::url("/projects/{$projectId}"));
+            exit;
+        }
+
+        $newStartDate = trim($_POST['start_date']);
+        $newEndDate = trim($_POST['end_date']);
+
+        if ($newStartDate > $newEndDate) {
+            Session::flash('error', 'วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุดของโครงการ');
+            header('Location: ' . Router::url("/projects/{$projectId}"));
+            exit;
+        }
+
+        // Check if any subproject starts earlier than new start_date
+        $earliestSub = Database::fetch("SELECT id, name, start_date FROM projects WHERE parent_id = ? AND start_date < ? ORDER BY start_date ASC LIMIT 1", [$projectId, $newStartDate]);
+        if ($earliestSub) {
+            $subStartThai = date('d/m/', strtotime($earliestSub['start_date'])) . (date('Y', strtotime($earliestSub['start_date'])) + 543);
+            Session::flash('error', "ไม่สามารถเปลี่ยนวันเริ่มต้นโครงการหลักเป็นวันที่หลังโครงการย่อยได้ เนื่องจากมีโครงการย่อย '{$earliestSub['name']}' เริ่มต้นตั้งแต่วันที่ {$subStartThai}");
+            header('Location: ' . Router::url("/projects/{$projectId}"));
+            exit;
+        }
+
+        // Check if any subproject ends later than new end_date
+        $latestSub = Database::fetch("SELECT id, name, end_date FROM projects WHERE parent_id = ? AND end_date > ? ORDER BY end_date DESC LIMIT 1", [$projectId, $newEndDate]);
+        if ($latestSub) {
+            $subEndThai = date('d/m/', strtotime($latestSub['end_date'])) . (date('Y', strtotime($latestSub['end_date'])) + 543);
+            Session::flash('error', "ไม่สามารถเปลี่ยนวันสิ้นสุดโครงการหลักเป็นวันก่อนหน้าโครงการย่อยได้ เนื่องจากมีโครงการย่อย '{$latestSub['name']}' สิ้นสุดวันที่ {$subEndThai}");
             header('Location: ' . Router::url("/projects/{$projectId}"));
             exit;
         }

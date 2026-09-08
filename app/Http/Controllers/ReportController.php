@@ -69,7 +69,7 @@ class ReportController
         $departmentId = $_GET['department_id'] ?? '';
         $status       = $_GET['status'] ?? '';
 
-        $sql = "SELECT p.project_code, p.name, 
+        $sql = "SELECT p.name, 
                        CASE WHEN p.parent_id IS NULL THEN 'โครงการหลัก' ELSE 'โครงการย่อย' END as project_level,
                        f.year as fiscal_year,
                        d.name as department_name,
@@ -119,7 +119,6 @@ class ReportController
 
         // Header row
         fputcsv($output, [
-            'รหัสโครงการ',
             'ชื่อโครงการ',
             'ระดับโครงการ',
             'ปีงบประมาณ',
@@ -137,7 +136,6 @@ class ReportController
 
         foreach ($rows as $r) {
             fputcsv($output, [
-                $r['project_code'],
                 $r['name'],
                 $r['project_level'],
                 $r['fiscal_year'],

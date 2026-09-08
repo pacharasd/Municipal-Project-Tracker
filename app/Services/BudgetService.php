@@ -84,19 +84,26 @@ class BudgetService
                 FROM projects WHERE parent_id = ?";
         $totals = Database::fetch($sql, [$parentId]);
 
-        $newBudget = (float)($totals['total_budget'] ?? 0);
+        $allocated = (float)($totals['total_budget'] ?? 0);
         $newDisbursed = (float)($totals['total_disbursed'] ?? 0);
 
+        // Update disbursed amount on parent project (do NOT overwrite parent project's own allocated budget)
         Database::update('projects', [
-            'budget' => $newBudget,
             'disbursed_amount' => $newDisbursed
         ], "id = ?", [$parentId]);
 
         // Sync parent budget table
+        $budgetRec = Database::fetch("SELECT * FROM budgets WHERE project_id = ?", [$parentId]);
+        $received = $budgetRec ? (float)$budgetRec['received_amount'] : 0.0;
+        if ($received <= 0) {
+            $parentProj = Database::fetch("SELECT budget FROM projects WHERE id = ?", [$parentId]);
+            $received = (float)($parentProj['budget'] ?? 0);
+        }
+
         Database::update('budgets', [
-            'received_amount' => $newBudget,
-            'allocated_amount' => $newBudget,
-            'disbursed_amount' => $newDisbursed
+            'allocated_amount' => $allocated,
+            'disbursed_amount' => $newDisbursed,
+            'remaining_amount' => max(0, $received - $allocated),
         ], "project_id = ?", [$parentId]);
     }
 

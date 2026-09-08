@@ -90,7 +90,6 @@
                     boxShadow: {
                         'neon-green': '0 0 20px rgba(16, 185, 129, 0.35)',
                         'neon-yellow': '0 0 20px rgba(255, 209, 102, 0.35)',
-                        'neon-pink': '0 0 20px rgba(244, 114, 182, 0.35)',
                         'dark-card': '0 10px 30px -5px rgba(0, 0, 0, 0.5), 0 4px 10px -3px rgba(0, 0, 0, 0.3)',
                     }
                 }
@@ -119,6 +118,11 @@
                 open: false,
                 viewYear: viewDate.getFullYear(),
                 viewMonth: viewDate.getMonth(),
+                days: [],
+
+                init() {
+                    this.refreshDays();
+                },
 
                 monthNames: [
                     'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน',
@@ -146,12 +150,8 @@
                     return this.monthNames[this.viewMonth] + ' ' + (this.viewYear + 543);
                 },
 
-                get days() {
-                    return this.generateDays();
-                },
-
-                get calendarDays() {
-                    return this.generateDays();
+                refreshDays() {
+                    this.days = this.generateDays();
                 },
 
                 generateDays() {
@@ -210,13 +210,26 @@
 
                 toggle() {
                     this.open = !this.open;
-                    if (this.open && this.value) {
-                        const parts = String(this.value).split('-');
-                        if (parts.length === 3) {
-                            this.viewYear = parseInt(parts[0], 10);
-                            this.viewMonth = parseInt(parts[1], 10) - 1;
+                    if (this.open) {
+                        if (this.value) {
+                            const parts = String(this.value).split('-');
+                            if (parts.length === 3) {
+                                this.viewYear = parseInt(parts[0], 10);
+                                this.viewMonth = parseInt(parts[1], 10) - 1;
+                            }
                         }
+                        this.refreshDays();
                     }
+                },
+
+                prevYear() {
+                    this.viewYear--;
+                    this.refreshDays();
+                },
+
+                nextYear() {
+                    this.viewYear++;
+                    this.refreshDays();
                 },
 
                 prevMonth() {
@@ -226,6 +239,7 @@
                     } else {
                         this.viewMonth--;
                     }
+                    this.refreshDays();
                 },
 
                 nextMonth() {
@@ -235,6 +249,7 @@
                     } else {
                         this.viewMonth++;
                     }
+                    this.refreshDays();
                 },
 
                 selectDate(item) {
@@ -250,6 +265,7 @@
                     this.value = `${ty}-${tm}-${td}`;
                     this.viewYear = ty;
                     this.viewMonth = today.getMonth();
+                    this.refreshDays();
                     this.open = false;
                 },
 
@@ -311,6 +327,20 @@
             color: #0f172a;
         }
         [x-cloak] { display: none !important; }
+
+        /* Hardware Accelerated Smooth Modals & Overlays */
+        .modal-backdrop-smooth {
+            background-color: rgba(10, 15, 29, 0.72) !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+            will-change: opacity;
+        }
+        .modal-box-smooth {
+            will-change: transform, opacity;
+            transform: translateZ(0);
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+        }
 
         /* ========================================================= */
         /* Zero-Flicker Focus State (Eliminate Native Black Outline) */
@@ -897,7 +927,7 @@
         </aside>
 
         <!-- Backdrop for mobile sidebar -->
-        <div x-show="sidebarOpen" @click="sidebarOpen = false" x-cloak class="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"></div>
+        <div x-show="sidebarOpen" @click="sidebarOpen = false" x-cloak class="fixed inset-0 z-30 modal-backdrop-smooth lg:hidden"></div>
 
         <!-- Main Content Area -->
         <main id="main-content" class="flex-1 min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden p-3.5 sm:p-6 lg:p-8 bg-[#f8fafc] dark:bg-[#0f1014]">
@@ -908,18 +938,23 @@
 
     <!-- Initialize Lucide Icons -->
     <script>
-        function safeCreateIcons() {
+        function safeCreateIcons(root) {
             if (window.lucide && typeof lucide.createIcons === 'function') {
-                const unhandled = document.querySelectorAll('i[data-lucide]');
-                if (unhandled.length > 0) {
-                    lucide.createIcons();
+                try {
+                    const targetRoot = (root instanceof Element || root instanceof Document) ? root : document;
+                    const unhandled = targetRoot.querySelectorAll('i[data-lucide]');
+                    if (unhandled.length > 0) {
+                        lucide.createIcons({ root: targetRoot });
+                    }
+                } catch (e) {
+                    try { lucide.createIcons(); } catch (err) {}
                 }
             }
         }
 
-        document.addEventListener('DOMContentLoaded', safeCreateIcons);
-        document.addEventListener('alpine:initialized', safeCreateIcons);
-        window.addEventListener('load', safeCreateIcons);
+        document.addEventListener('DOMContentLoaded', () => safeCreateIcons());
+        document.addEventListener('alpine:initialized', () => safeCreateIcons());
+        window.addEventListener('load', () => safeCreateIcons());
 
         window.safeCreateIcons = safeCreateIcons;
         window.refreshIcons = safeCreateIcons;
@@ -1105,7 +1140,7 @@
                     }
 
                     // 5. Clean up any teleported modal overlays attached to body that might linger
-                    document.querySelectorAll('body > [x-teleport-target], body > [data-teleport-overlay]').forEach(el => el.remove());
+                    document.querySelectorAll('body > [data-teleport-target], body > [x-teleport-target], body > [data-teleport-overlay]').forEach(el => el.remove());
 
                     // 6. Replace Main Content & Scroll to Top
                     currentMain.innerHTML = newMain.innerHTML;
@@ -1286,7 +1321,7 @@
                     }
 
                     // 5. Clean up any teleported modal overlays attached to body
-                    document.querySelectorAll('body > [x-teleport-target], body > [data-teleport-overlay]').forEach(el => el.remove());
+                    document.querySelectorAll('body > [data-teleport-target], body > [x-teleport-target], body > [data-teleport-overlay]').forEach(el => el.remove());
 
                     // 6. Replace Main Content
                     currentMain.innerHTML = newMain.innerHTML;

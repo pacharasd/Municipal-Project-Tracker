@@ -12,9 +12,9 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
 ?>
 
 <div class="space-y-6" x-data="{ 
-    allBudgets: <?= htmlspecialchars(json_encode($mainBudgets, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8') ?>,
-    allDisbursements: <?= htmlspecialchars(json_encode($recentDisbursements, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8') ?>,
-    subProjects: <?= htmlspecialchars(json_encode($subProjects, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8') ?>,
+    allBudgets: Object.freeze(<?= htmlspecialchars(json_encode($mainBudgets, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8') ?>),
+    allDisbursements: Object.freeze(<?= htmlspecialchars(json_encode($recentDisbursements, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8') ?>),
+    subProjects: Object.freeze(<?= htmlspecialchars(json_encode($subProjects, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8') ?>),
     
     disburseModalOpen: false,
     selectedSubProject: '',
@@ -40,10 +40,9 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
         if (!q) return this.allBudgets;
         return this.allBudgets.filter(b => {
             const name = (b.name || '').toLowerCase();
-            const code = (b.project_code || '').toLowerCase();
             const dept = (b.department_name || '').toLowerCase();
             const fy = String(b.fiscal_year || '');
-            return name.includes(q) || code.includes(q) || dept.includes(q) || fy.includes(q);
+            return name.includes(q) || dept.includes(q) || fy.includes(q);
         });
     },
 
@@ -84,11 +83,10 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
         if (!q) return this.allDisbursements;
         return this.allDisbursements.filter(d => {
             const pName = (d.project_name || '').toLowerCase();
-            const pCode = (d.project_code || '').toLowerCase();
             const desc = (d.description || '').toLowerCase();
             const recip = (d.recipient || '').toLowerCase();
             const creator = (d.creator_name || '').toLowerCase();
-            return pName.includes(q) || pCode.includes(q) || desc.includes(q) || recip.includes(q) || creator.includes(q);
+            return pName.includes(q) || desc.includes(q) || recip.includes(q) || creator.includes(q);
         });
     },
 
@@ -270,15 +268,16 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
             <div class="flex flex-col sm:flex-row items-center gap-3">
                 <div class="relative w-full sm:w-64">
                     <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
-                    <input type="text" x-model="budgetSearch" @input="budgetPage = 1" placeholder="ค้นหาโครงการหลัก, รหัส..." 
-                           class="w-full pl-8 pr-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white">
+                    <input type="text" x-model="budgetSearch" @input="budgetPage = 1" placeholder="ค้นหาชื่อโครงการหลัก..." 
+                           class="w-full pl-8 pr-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white">
                 </div>
                 <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
                     <span>แสดง:</span>
-                    <select x-model="budgetPerPage" @change="budgetPage = 1" class="px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                    <select x-model="budgetPerPage" @change="budgetPage = 1" class="px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">
                         <option value="5">5</option>
                         <option value="10">10</option>
-                        <option value="20">20</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
                         <option value="all">ทั้งหมด</option>
                     </select>
                 </div>
@@ -289,7 +288,7 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-slate-600 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                        <th class="py-3.5 px-4">รหัส / โครงการหลัก</th>
+                        <th class="py-3.5 px-4">ชื่อโครงการหลัก</th>
                         <th class="py-3.5 px-4">ปีงบ / กองสำนัก</th>
                         <th class="py-3.5 px-4 text-right">งบประมาณที่ได้รับ</th>
                         <th class="py-3.5 px-4 text-right">เบิกจ่ายแล้ว</th>
@@ -312,7 +311,6 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
                         <tr class="hover:bg-slate-50/75 dark:hover:bg-slate-800/40 transition-colors">
                             <td class="py-3.5 px-4">
                                 <div class="font-medium text-slate-900 dark:text-white" x-text="b.name"></div>
-                                <div class="text-xs font-mono text-slate-400 dark:text-slate-500" x-text="b.project_code"></div>
                             </td>
                             <td class="py-3.5 px-4">
                                 <div class="text-slate-700 dark:text-slate-300" x-text="b.department_name || 'ไม่ระบุ'"></div>
@@ -473,7 +471,6 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
                                 <a :href="'<?= Router::url('/sub-projects/') ?>' + d.project_id" 
                                    class="font-medium text-blue-600 dark:text-blue-400 hover:underline"
                                    x-text="d.project_name"></a>
-                                <div class="text-xs font-mono text-slate-400" x-text="d.project_code"></div>
                             </td>
                             <td class="py-3.5 px-4 max-w-xs text-slate-700 dark:text-slate-300" x-text="d.description"></td>
                             <td class="py-3.5 px-4 text-slate-600 dark:text-slate-400" x-text="d.recipient || '-'"></td>
@@ -566,7 +563,7 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
     <div x-show="disburseModalOpen" 
          x-cloak 
          @click.self="disburseModalOpen = false" 
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
@@ -574,7 +571,7 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0">
         
-        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5"
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5 modal-box-smooth transform-gpu"
              @click.outside="disburseModalOpen = false">
             
             <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
@@ -606,7 +603,7 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
                         <option value="">-- กรุณาเลือกโครงการย่อย --</option>
                         <?php foreach ($subProjects as $p): ?>
                             <option value="<?= $p['id'] ?>">
-                                <?= htmlspecialchars($p['project_code'] . ' - ' . $p['name'] . ' (คงเหลือ ฿' . number_format($p['remaining'], 2) . ')') ?>
+                                <?= htmlspecialchars($p['name'] . ' (คงเหลือ ฿' . number_format($p['remaining'], 2) . ')') ?>
                             </option>
                         <?php endforeach; ?>
                     </select>

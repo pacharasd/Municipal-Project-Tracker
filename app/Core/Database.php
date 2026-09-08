@@ -281,6 +281,18 @@ class Database
                     PRIMARY KEY (`id`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             ");
+
+            // Auto-drop project_code column if present
+            $codeColCheck = $pdo->query("SHOW COLUMNS FROM `projects` LIKE 'project_code'")->fetch();
+            if ($codeColCheck) {
+                $idxCheck = $pdo->query("SHOW INDEX FROM `projects` WHERE Key_name = 'project_code'")->fetch();
+                if ($idxCheck) {
+                    try {
+                        $pdo->exec("ALTER TABLE `projects` DROP INDEX `project_code`");
+                    } catch (\Throwable $e) {}
+                }
+                $pdo->exec("ALTER TABLE `projects` DROP COLUMN `project_code`");
+            }
         } catch (\Throwable $e) {
             error_log("Auto schema migration notice: " . $e->getMessage());
         }

@@ -24,8 +24,8 @@ class DashboardController
         $departments = Database::query("SELECT * FROM departments ORDER BY id ASC");
 
         $subProjects = Database::query(
-            "SELECT s.id, s.project_code, s.name, s.parent_id, s.budget, s.disbursed_amount, s.progress, s.status, s.start_date, s.end_date,
-                    parent.project_code as parent_code, parent.name as parent_name,
+            "SELECT s.id, s.name, s.parent_id, s.budget, s.disbursed_amount, s.progress, s.status, s.start_date, s.end_date,
+                    parent.name as parent_name,
                     d.name as department_name,
                     u.name as responsible_name,
                     (SELECT COUNT(*) FROM activities WHERE project_id = s.id) as activity_count,
@@ -39,7 +39,7 @@ class DashboardController
         );
 
         $latestProjects = Database::query(
-            "SELECT s.id, s.project_code, s.name, s.budget, s.progress, s.status, s.updated_at, s.created_at,
+            "SELECT s.id, s.name, s.budget, s.progress, s.status, s.updated_at, s.created_at,
                     d.name as department_name
              FROM projects s
              LEFT JOIN departments d ON s.department_id = d.id

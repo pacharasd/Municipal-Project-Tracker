@@ -65,13 +65,11 @@ class ProjectService
         }
         if (!empty($filters['search'])) {
             if (self::hasResponsiblePersonColumn()) {
-                $sql .= " AND (p.name LIKE ? OR p.project_code LIKE ? OR p.responsible_person LIKE ?)";
-                $params[] = "%{$filters['search']}%";
+                $sql .= " AND (p.name LIKE ? OR p.responsible_person LIKE ?)";
                 $params[] = "%{$filters['search']}%";
                 $params[] = "%{$filters['search']}%";
             } else {
-                $sql .= " AND (p.name LIKE ? OR p.project_code LIKE ?)";
-                $params[] = "%{$filters['search']}%";
+                $sql .= " AND p.name LIKE ?";
                 $params[] = "%{$filters['search']}%";
             }
         }
@@ -83,7 +81,9 @@ class ProjectService
         // Attach sub-projects for each main project
         foreach ($projects as &$p) {
             $p['sub_projects'] = Database::query(
-                "SELECT sub.*, u.name as responsible_name 
+                "SELECT sub.*, 
+                        (SELECT COUNT(*) FROM activities a WHERE a.project_id = sub.id) as actual_activity_count,
+                        COALESCE(NULLIF(sub.responsible_person, ''), u.name) as responsible_name 
                  FROM projects sub 
                  LEFT JOIN users u ON sub.responsible_user_id = u.id
                  WHERE sub.parent_id = ? ORDER BY sub.id ASC",
@@ -101,17 +101,25 @@ class ProjectService
             : "COALESCE(u.name, d.name)";
 
         $sql = "SELECT p.*, 
-                       d.name as department_name, d.code as department_code,
-                       c.name as category_name, c.icon as category_icon,
-                       f.year as fiscal_year,
+                       COALESCE(d.name, parent_dept.name) as department_name, 
+                       COALESCE(d.code, parent_dept.code) as department_code,
+                       COALESCE(c.name, parent_cat.name) as category_name, 
+                       COALESCE(c.icon, parent_cat.icon) as category_icon,
+                       COALESCE(f.year, parent_fy.year) as fiscal_year,
                        {$respExpr} as responsible_name, u.position as responsible_position,
-                       parent.name as parent_name, parent.project_code as parent_code
+                       parent.name as parent_name,
+                       parent.budget as parent_budget,
+                       parent.start_date as parent_start_date,
+                       parent.end_date as parent_end_date
                 FROM projects p
                 LEFT JOIN departments d ON p.department_id = d.id
                 LEFT JOIN project_categories c ON p.category_id = c.id
                 LEFT JOIN fiscal_years f ON p.fiscal_year_id = f.id
                 LEFT JOIN users u ON p.responsible_user_id = u.id
                 LEFT JOIN projects parent ON p.parent_id = parent.id
+                LEFT JOIN departments parent_dept ON parent.department_id = parent_dept.id
+                LEFT JOIN project_categories parent_cat ON parent.category_id = parent_cat.id
+                LEFT JOIN fiscal_years parent_fy ON parent.fiscal_year_id = parent_fy.id
                 WHERE p.id = ? LIMIT 1";
 
         $project = Database::fetch($sql, [$id]);
@@ -122,7 +130,9 @@ class ProjectService
         if ($project['parent_id'] === null) {
             // Main project: fetch sub-projects
             $project['sub_projects'] = Database::query(
-                "SELECT s.*, u.name as responsible_name 
+                "SELECT s.*, 
+                        (SELECT COUNT(*) FROM activities a WHERE a.project_id = s.id) as actual_activity_count,
+                        COALESCE(NULLIF(s.responsible_person, ''), u.name) as responsible_name 
                  FROM projects s 
                  LEFT JOIN users u ON s.responsible_user_id = u.id
                  WHERE s.parent_id = ? ORDER BY s.id ASC",
@@ -137,6 +147,7 @@ class ProjectService
                  WHERE a.project_id = ? ORDER BY a.activity_date ASC",
                 [$id]
             );
+            $project['actual_activity_count'] = count($project['activities']);
 
             $project['disbursements'] = Database::query(
                 "SELECT d.*, u.name as creator_name 
@@ -150,6 +161,15 @@ class ProjectService
                 "SELECT * FROM attachments WHERE project_id = ? ORDER BY id DESC",
                 [$id]
             );
+
+            // Calculate parent remaining budget that this sub-project can occupy (Parent budget minus other sub-projects' budgets)
+            $otherSubsBudget = (float)Database::fetchColumn(
+                "SELECT COALESCE(SUM(budget), 0) FROM projects WHERE parent_id = ? AND id != ?",
+                [$project['parent_id'], $id]
+            );
+            $parentBudget = (float)($project['parent_budget'] ?? 0);
+            $project['other_subs_budget'] = $otherSubsBudget;
+            $project['parent_remaining_budget'] = max(0, $parentBudget - $otherSubsBudget);
         }
 
         return $project;
@@ -161,10 +181,13 @@ class ProjectService
             ? "COALESCE(NULLIF(p.responsible_person, ''), u.name, d.name)"
             : "COALESCE(u.name, d.name)";
 
-        $sql = "SELECT p.*, parent.name as parent_name, d.name as department_name, {$respExpr} as responsible_name
+        $sql = "SELECT p.*, parent.name as parent_name, 
+                       COALESCE(d.name, parent_dept.name) as department_name, 
+                       {$respExpr} as responsible_name
                 FROM projects p
                 LEFT JOIN projects parent ON p.parent_id = parent.id
                 LEFT JOIN departments d ON p.department_id = d.id
+                LEFT JOIN departments parent_dept ON parent.department_id = parent_dept.id
                 LEFT JOIN users u ON p.responsible_user_id = u.id
                 WHERE p.parent_id IS NOT NULL 
                   AND (p.status = 'has_problem' OR (p.end_date < CURDATE() AND p.status != 'completed'))
@@ -277,14 +300,14 @@ class ProjectService
 
         // 5. Main Projects Progress Data for Dashboard Chart
         $mainProjectsData = Database::query(
-            "SELECT p.id, p.project_code, p.name, p.progress, p.budget, p.disbursed_amount, p.status,
+            "SELECT p.id, p.name, p.progress, p.budget, p.disbursed_amount, p.status,
                     d.name as department_name,
                     COUNT(s.id) as sub_project_count
              FROM projects p
              LEFT JOIN departments d ON p.department_id = d.id
              LEFT JOIN projects s ON s.parent_id = p.id
              WHERE p.parent_id IS NULL
-             GROUP BY p.id, p.project_code, p.name, p.progress, p.budget, p.disbursed_amount, p.status, d.name
+             GROUP BY p.id, p.name, p.progress, p.budget, p.disbursed_amount, p.status, d.name
              ORDER BY p.id ASC"
         );
 

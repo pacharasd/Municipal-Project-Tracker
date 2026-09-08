@@ -71,7 +71,6 @@
             <thead>
                 <tr class="bg-slate-100 text-slate-800 border-b border-slate-300 font-bold">
                     <th class="p-2 border border-slate-300 text-center w-8">#</th>
-                    <th class="p-2 border border-slate-300 w-24">รหัสโครงการ</th>
                     <th class="p-2 border border-slate-300">ชื่อโครงการ</th>
                     <th class="p-2 border border-slate-300 w-24">สังกัด/กอง</th>
                     <th class="p-2 border border-slate-300 text-right w-24">งบประมาณ (บาท)</th>
@@ -89,7 +88,6 @@
                 ?>
                     <tr class="border-b border-slate-200 <?= $rowBg ?>">
                         <td class="p-2 border border-slate-200 text-center"><?= $idx + 1 ?></td>
-                        <td class="p-2 border border-slate-200 font-mono"><?= htmlspecialchars($p['project_code']) ?></td>
                         <td class="p-2 border border-slate-200">
                             <?= $isMain ? '📌 ' : '&nbsp;&nbsp;&nbsp;↳ ' ?>
                             <?= htmlspecialchars($p['name']) ?>

@@ -603,7 +603,6 @@ $tierNotStartedPct = round(($tierNotStarted / $subCount) * 100, 1);
             <table class="w-full text-left text-xs border-collapse min-w-[580px] sm:min-w-[640px]">
                 <thead>
                     <tr class="border-b border-slate-100 dark:border-white/[0.06] text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider">
-                        <th class="py-3 px-3 whitespace-nowrap min-w-[110px]">รหัสโครงการ</th>
                         <th class="py-3 px-3 min-w-[200px]">ชื่อโครงการ</th>
                         <th class="py-3 px-3 whitespace-nowrap min-w-[100px]">หน่วยงาน</th>
                         <th class="py-3 px-3 text-right whitespace-nowrap min-w-[110px]">งบประมาณ</th>
@@ -624,7 +623,6 @@ $tierNotStartedPct = round(($tierNotStarted / $subCount) * 100, 1);
                                 : ['label' => 'กำลังดำเนินการ', 'class' => 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60'];
                             ?>
                             <tr class="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition">
-                                <td class="py-3.5 px-3 font-mono font-medium text-slate-500 dark:text-slate-400"><?= htmlspecialchars($lp['project_code']) ?></td>
                                 <td class="py-3.5 px-3 font-semibold text-slate-900 dark:text-white">
                                     <a href="<?= \App\Core\Router::url("/sub-projects/{$lp['id']}") ?>" class="hover:text-blue-600 dark:hover:text-blue-400 transition">
                                         <?= htmlspecialchars($lp['name']) ?>
@@ -652,7 +650,7 @@ $tierNotStartedPct = round(($tierNotStarted / $subCount) * 100, 1);
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="7" class="py-8 text-center text-slate-400">
+                            <td colspan="6" class="py-8 text-center text-slate-400">
                                 ไม่พบข้อมูลโครงการ
                             </td>
                         </tr>
@@ -1006,11 +1004,14 @@ if (document.readyState === 'loading') {
 window.addEventListener('load', () => scheduleDashboardChartsInit(false));
 
 // React dynamically when theme toggles (Dark <-> Light <-> System)
-window.addEventListener('theme-changed', function() {
-    if (document.getElementById('statusDonutChart') || document.getElementById('budgetDonutChart') || document.getElementById('deptBarChart')) {
-        scheduleDashboardChartsInit(true);
-    }
-});
+if (!window._dashboardThemeListenerAttached) {
+    window._dashboardThemeListenerAttached = true;
+    window.addEventListener('theme-changed', function() {
+        if (document.getElementById('statusDonutChart') || document.getElementById('budgetDonutChart') || document.getElementById('deptBarChart')) {
+            scheduleDashboardChartsInit(true);
+        }
+    });
+}
 </script>
 
 <?php

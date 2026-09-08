@@ -15,7 +15,7 @@ class BudgetController
 {
     public function index(): void
     {
-        $sql = "SELECT p.id, p.project_code, p.name, p.budget, p.disbursed_amount, 
+        $sql = "SELECT p.id, p.name, p.budget, p.disbursed_amount, 
                        (p.budget - p.disbursed_amount) as remaining_amount,
                        CASE WHEN p.budget > 0 THEN ROUND((p.disbursed_amount / p.budget) * 100, 2) ELSE 0 END as disbursement_percentage,
                        d.name as department_name, f.year as fiscal_year, p.status
@@ -28,7 +28,7 @@ class BudgetController
         $mainBudgets = Database::query($sql);
 
         $recentDisbursements = Database::query(
-            "SELECT d.*, p.name as project_name, p.project_code, u.name as creator_name 
+            "SELECT d.*, p.name as project_name, u.name as creator_name 
              FROM budget_disbursements d 
              LEFT JOIN projects p ON d.project_id = p.id 
              LEFT JOIN users u ON d.created_by = u.id 
@@ -36,7 +36,7 @@ class BudgetController
         );
 
         $subProjects = Database::query(
-            "SELECT id, project_code, name, budget, disbursed_amount, (budget - disbursed_amount) as remaining 
+            "SELECT id, name, budget, disbursed_amount, (budget - disbursed_amount) as remaining 
              FROM projects WHERE parent_id IS NOT NULL ORDER BY name ASC"
         );
 

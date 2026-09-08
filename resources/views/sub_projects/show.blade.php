@@ -1,6 +1,6 @@
 <?php
 ob_start();
-$title = htmlspecialchars($project['name']);
+$title = htmlspecialchars($project['name'] ?? 'โครงการย่อย');
 
 // Prepare JSON summaries for Activities and Disbursements pagination & search
 $activitiesSummary = [];
@@ -46,7 +46,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
                 <!-- Delete Subproject button -->
                 <form action="<?= \App\Core\Router::url("/sub-projects/{$project['id']}/delete") ?>" method="POST"
-                      onsubmit="return confirm('ยืนยันการลบโครงการย่อย <?= addslashes($project['name']) ?> ? กิจกรรมและการเบิกจ่ายทั้งหมดจะถูกลบด้วย');">
+                      onsubmit="return confirm('ยืนยันการลบโครงการย่อย <?= htmlspecialchars(addslashes($project['name'] ?? ''), ENT_QUOTES, 'UTF-8') ?> ? กิจกรรมและการเบิกจ่ายทั้งหมดจะถูกลบด้วย');">
                     <input type="hidden" name="_token" value="<?= $csrfToken ?>">
                     <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl hover:bg-rose-100 transition-colors shadow-sm">
                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> ลบ
@@ -78,7 +78,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                     <span class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-rose-200 text-rose-900">อยู่ในบัญชีเฝ้าระวัง</span>
                 </div>
                 <p class="text-sm text-rose-800 mt-1 font-medium leading-relaxed">
-                    <b>รายละเอียดปัญหา:</b> <?= nl2br(htmlspecialchars($project['problem_description'])) ?>
+                    <b>รายละเอียดปัญหา:</b> <?= nl2br(htmlspecialchars($project['problem_description'] ?? '')) ?>
                 </p>
                 <div class="mt-3 flex items-center gap-2">
                     <button type="button" @click="resolveModal = true" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white text-rose-900 border border-rose-300 hover:bg-rose-100 transition-colors">
@@ -98,9 +98,8 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
     <div class="bg-white dark:bg-[#181a20] p-4 sm:p-8 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex flex-wrap items-center gap-2">
-                <span class="px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-slate-100 text-slate-800 border border-slate-200"><?= htmlspecialchars($project['project_code']) ?></span>
-                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200"><?= htmlspecialchars($project['department_name']) ?></span>
-                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">ปีงบประมาณ <?= $project['fiscal_year'] ?></span>
+                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200"><?= htmlspecialchars($project['department_name'] ?? 'ไม่ระบุหน่วยงาน') ?></span>
+                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">ปีงบประมาณ <?= htmlspecialchars((string)($project['fiscal_year'] ?? '-')) ?></span>
             </div>
 
             <?php
@@ -137,13 +136,13 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
         </div>
 
         <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mt-3">
-            <?= htmlspecialchars($project['name']) ?>
+            <?= htmlspecialchars($project['name'] ?? '') ?>
         </h1>
 
         <div class="text-xs text-slate-500 mt-1 flex items-center gap-2">
             <span>โครงการหลัก:</span>
             <a href="<?= \App\Core\Router::url("/projects/{$project['parent_id']}") ?>" class="text-emerald-600 font-semibold hover:underline">
-                <?= htmlspecialchars($project['parent_name']) ?>
+                <?= htmlspecialchars($project['parent_name'] ?? 'โครงการหลัก') ?>
             </a>
         </div>
 
@@ -159,7 +158,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                         <span class="text-sm font-semibold text-slate-500 dark:text-slate-400">ความสำเร็จโครงการ</span>
                         <?php if ($project['planned_activity_count'] >= 1): ?>
                             <span class="text-xs px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 font-mono font-medium">
-                                กิจกรรม: <?= $project['actual_activity_count'] ?> / <?= $project['planned_activity_count'] ?> ครั้ง
+                                กิจกรรม: <?= count($project['activities'] ?? []) ?> / <?= $project['planned_activity_count'] ?> ครั้ง
                             </span>
                         <?php endif; ?>
                     </div>
@@ -177,18 +176,6 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                                 class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-600/20 transition-all">
                              <i data-lucide="sliders" class="w-4 h-4"></i> ปรับสถานะ & ความคืบหน้า
                         </button>
-
-                        <?php if ($project['planned_activity_count'] >= 1): ?>
-                            <form action="<?= \App\Core\Router::url("/sub-projects/{$project['id']}/increment") ?>" method="POST" class="inline">
-                                <input type="hidden" name="_csrf_token" value="<?= $csrfToken ?>">
-                                <button type="submit" 
-                                        <?= $project['actual_activity_count'] >= $project['planned_activity_count'] ? 'disabled' : '' ?>
-                                        class="inline-flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-all shadow-sm <?= $project['actual_activity_count'] >= $project['planned_activity_count'] ? 'opacity-50 cursor-not-allowed' : '' ?>"
-                                        title="+1 ครั้งกิจกรรม">
-                                    <i data-lucide="plus" class="w-3.5 h-3.5 text-emerald-600"></i> +1 กิจกรรม
-                                </button>
-                            </form>
-                        <?php endif; ?>
                     <?php endif; ?>
                 </div>
             </div>
@@ -269,8 +256,8 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6 pt-6 border-t border-slate-100 text-sm">
             <div>
                 <div class="text-xs text-slate-400">ผู้รับผิดชอบโครงการ</div>
-                <div class="font-semibold text-slate-800 mt-1"><?= htmlspecialchars($project['responsible_name'] ?? 'ไม่ระบุ') ?></div>
-                <div class="text-xs text-slate-500"><?= htmlspecialchars($project['responsible_position'] ?? '') ?></div>
+                <div class="font-semibold text-slate-800 dark:text-slate-200 mt-1"><?= htmlspecialchars(!empty($project['responsible_person']) ? $project['responsible_person'] : ($project['responsible_name'] ?? 'ไม่ระบุ')) ?></div>
+                <div class="text-xs text-slate-500 dark:text-slate-400"><?= htmlspecialchars($project['responsible_position'] ?? '') ?></div>
             </div>
             <div>
                 <div class="text-xs text-slate-400">พื้นที่ดำเนินการ</div>
@@ -323,7 +310,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                         <span>รายละเอียด / คำอธิบายโครงการ</span>
                     </div>
                     <div class="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                        <?= nl2br(htmlspecialchars($project['description'])) ?>
+                        <?= nl2br(htmlspecialchars($project['description'] ?? '')) ?>
                     </div>
                 </div>
             <?php endif; ?>
@@ -337,7 +324,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                         <span>วิธีการดำเนินการ</span>
                     </div>
                     <div class="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                        <?= nl2br(htmlspecialchars($project['methodology'])) ?>
+                        <?= nl2br(htmlspecialchars($project['methodology'] ?? '')) ?>
                     </div>
                 </div>
             <?php endif; ?>
@@ -391,7 +378,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                              class="p-4 rounded-xl border border-slate-200 dark:border-white/[0.08] hover:border-blue-300 dark:hover:border-blue-500/40 transition-all bg-white dark:bg-[#12141a] flex items-start justify-between gap-3">
                             <div class="flex-1">
                                 <div class="flex items-center gap-2">
-                                    <h4 class="text-sm font-bold text-slate-900 dark:text-white"><?= htmlspecialchars($act['name']) ?></h4>
+                                    <h4 class="text-sm font-bold text-slate-900 dark:text-white"><?= htmlspecialchars($act['name'] ?? '') ?></h4>
                                     <?php if ($act['status'] === 'completed'): ?>
                                         <span class="px-2 py-0.5 text-[10px] font-bold rounded-full whitespace-nowrap bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">เสร็จแล้ว</span>
                                     <?php elseif ($act['status'] === 'in_progress'): ?>
@@ -402,7 +389,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                                         <span class="px-2 py-0.5 text-[10px] font-semibold rounded-full whitespace-nowrap bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40">ยังไม่เริ่ม</span>
                                     <?php endif; ?>
                                 </div>
-                                <p class="text-xs text-slate-500 mt-1"><?= htmlspecialchars($act['description'] ?: 'ไม่มีรายละเอียด') ?></p>
+                                <p class="text-xs text-slate-500 mt-1"><?= htmlspecialchars($act['description'] ?? 'ไม่มีรายละเอียด') ?></p>
                                 <?php 
                                     $actTarget = (int)($act['target_participant_count'] ?? 0);
                                     $actActual = (int)($act['actual_participant_count'] ?? $act['participant_count'] ?? 0);
@@ -432,7 +419,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                                     <?php if (!empty($act['location'])): ?>
                                         <span class="flex items-center gap-1 text-slate-500">
                                             <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400"></i>
-                                            <?= htmlspecialchars($act['location']) ?>
+                                            <?= htmlspecialchars($act['location'] ?? '') ?>
                                         </span>
                                     <?php endif; ?>
                                 </div>
@@ -450,27 +437,27 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                                 <?php endif; ?>
 
                                 <?php if (\App\Core\Auth::canManageProjects()): ?>
-                                    <?php $actJson = htmlspecialchars(json_encode([
-                                        'id'                       => $act['id'],
-                                        'name'                     => $act['name'],
-                                        'description'              => $act['description'] ?? '',
-                                        'activity_date'            => $act['activity_date'],
-                                        'location'                 => $act['location'] ?? '',
-                                        'target_participant_count' => (int)($act['target_participant_count'] ?? 0),
-                                        'actual_participant_count' => (int)($act['actual_participant_count'] ?? $act['participant_count'] ?? 0),
-                                        'participant_count'        => (int)($act['actual_participant_count'] ?? $act['participant_count'] ?? 0),
-                                        'budget'                   => $act['budget'],
-                                        'status'                   => $act['status'],
-                                        'progress'                 => $act['progress'] ?? 0,
-                                        'notes'                    => $act['notes'] ?? '',
-                                    ]), ENT_QUOTES, 'UTF-8'); ?>
-                                    <button type="button" @click="openEditAct(<?= $actJson ?>)"
-                                            class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="แก้ไขกิจกรรม">
-                                        <i data-lucide="edit-3" class="w-4 h-4"></i>
-                                    </button>
                                     <form action="<?= \App\Core\Router::url("/activities/{$act['id']}/delete") ?>" method="POST"
-                                          onsubmit="return confirm('ยืนยันการลบกิจกรรม <?= addslashes($act['name']) ?> ?');">
+                                          onsubmit="return confirm('ยืนยันการลบกิจกรรม <?= htmlspecialchars(addslashes($act['name'] ?? ''), ENT_QUOTES, 'UTF-8') ?> ?');">
                                         <input type="hidden" name="_token" value="<?= $csrfToken ?>">
+                                        <?php $actJson = htmlspecialchars(json_encode([
+                                            'id'                       => $act['id'],
+                                            'name'                     => $act['name'],
+                                            'description'              => $act['description'] ?? '',
+                                            'activity_date'            => $act['activity_date'],
+                                            'location'                 => $act['location'] ?? '',
+                                            'target_participant_count' => (int)($act['target_participant_count'] ?? 0),
+                                            'actual_participant_count' => (int)($act['actual_participant_count'] ?? $act['participant_count'] ?? 0),
+                                            'participant_count'        => (int)($act['actual_participant_count'] ?? $act['participant_count'] ?? 0),
+                                            'budget'                   => $act['budget'],
+                                            'status'                   => $act['status'],
+                                            'progress'                 => $act['progress'] ?? 0,
+                                            'notes'                    => $act['notes'] ?? '',
+                                        ]), ENT_QUOTES, 'UTF-8'); ?>
+                                        <button type="button" @click="openEditAct(<?= $actJson ?>)"
+                                                class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="แก้ไขกิจกรรม">
+                                            <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                        </button>
                                         <button type="submit" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="ลบกิจกรรม">
                                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                                         </button>
@@ -588,9 +575,9 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                         <div x-show="isDisbVisible(<?= $disb['id'] ?>)" 
                              class="p-3.5 rounded-xl border border-slate-100 dark:border-white/[0.06] bg-slate-50/80 dark:bg-white/[0.03] flex items-center justify-between gap-3 text-xs">
                             <div>
-                                <div class="font-semibold text-slate-900 dark:text-white"><?= htmlspecialchars($disb['description']) ?></div>
+                                <div class="font-semibold text-slate-900 dark:text-white"><?= htmlspecialchars($disb['description'] ?? '') ?></div>
                                 <div class="text-slate-400 text-[11px] mt-0.5">
-                                    ผู้รับ: <?= htmlspecialchars($disb['recipient'] ?: 'ไม่ระบุ') ?> | วันที่: <?= date('d/m/Y', strtotime($disb['disbursement_date'])) ?>
+                                    ผู้รับ: <?= htmlspecialchars($disb['recipient'] ?? 'ไม่ระบุ') ?> | วันที่: <?= date('d/m/Y', strtotime($disb['disbursement_date'])) ?>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2 flex-shrink-0">
@@ -705,16 +692,16 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                         <?php else: ?>
                             <a href="<?= $fileUrl ?>" target="_blank" class="block aspect-video bg-slate-50 flex flex-col items-center justify-center p-3 text-slate-600 hover:text-blue-600">
                                 <i data-lucide="file-text" class="w-8 h-8 mb-1 text-slate-400"></i>
-                                <span class="text-[11px] font-mono text-center truncate max-w-full"><?= htmlspecialchars($att['file_name']) ?></span>
+                                <span class="text-[11px] font-mono text-center truncate max-w-full"><?= htmlspecialchars($att['file_name'] ?? '') ?></span>
                             </a>
                         <?php endif; ?>
                         <div class="p-2.5 flex items-center justify-between gap-1 border-t border-slate-100 text-xs">
-                            <span class="truncate text-slate-700 font-medium" title="<?= htmlspecialchars($att['caption'] ?? $att['file_name']) ?>">
-                                <?= htmlspecialchars($att['caption'] ?: $att['file_name']) ?>
+                            <span class="truncate text-slate-700 font-medium" title="<?= htmlspecialchars($att['caption'] ?? $att['file_name'] ?? '') ?>">
+                                <?= htmlspecialchars($att['caption'] ?: ($att['file_name'] ?? '')) ?>
                             </span>
                             <?php if (\App\Core\Auth::canManageProjects()): ?>
                                 <form action="<?= \App\Core\Router::url("/attachments/{$att['id']}/delete") ?>" method="POST"
-                                      onsubmit="return confirm('ยืนยันการลบไฟล์แนบ <?= addslashes($att['file_name']) ?> ?');">
+                                      onsubmit="return confirm('ยืนยันการลบไฟล์แนบ <?= htmlspecialchars(addslashes($att['file_name'] ?? ''), ENT_QUOTES, 'UTF-8') ?> ?');">
                                     <input type="hidden" name="_token" value="<?= $csrfToken ?>">
                                     <button type="submit" class="p-1 text-slate-400 hover:text-rose-600 transition" title="ลบไฟล์">
                                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
@@ -730,8 +717,8 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
     <!-- Modal: Report Problem -->
     <template x-teleport="body">
-        <div x-show="problemModal" x-cloak @click.self="problemModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+        <div x-show="problemModal" x-cloak @click.self="problemModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
+            <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden modal-box-smooth transform-gpu">
                 <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-rose-50/50">
                     <div class="flex items-center gap-3">
                         <div class="p-2 rounded-xl bg-rose-100 text-rose-700">
@@ -768,8 +755,8 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
     <!-- Modal: Resolve Problem -->
     <template x-teleport="body">
-        <div x-show="resolveModal" x-cloak @click.self="resolveModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+        <div x-show="resolveModal" x-cloak @click.self="resolveModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
+            <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden modal-box-smooth transform-gpu">
                 <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-emerald-50/50">
                     <div class="flex items-center gap-3">
                         <div class="p-2 rounded-xl bg-emerald-100 text-emerald-700">
@@ -806,8 +793,8 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
     <!-- Modal: Add Activity -->
     <template x-teleport="body">
-        <div x-show="activityModal" x-cloak @click.self="activityModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div class="bg-white dark:bg-[#181a20] w-full max-w-xl rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 relative">
+        <div x-show="activityModal" x-cloak @click.self="activityModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
+            <div class="bg-white dark:bg-[#181a20] w-full max-w-xl rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 relative modal-box-smooth transform-gpu">
                 <div class="p-6 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
                     <h3 class="text-base font-bold text-slate-900 dark:text-white">เพิ่มกิจกรรมใหม่</h3>
                     <button type="button" @click.stop="activityModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
@@ -854,17 +841,11 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                                     </svg>
                                 </button>
                                 <div x-show="open" 
-                                     x-transition:enter="transition ease-out duration-100"
-                                     x-transition:enter-start="transform opacity-0 scale-95"
-                                     x-transition:enter-end="transform opacity-100 scale-100"
-                                     x-transition:leave="transition ease-in duration-75"
-                                     x-transition:leave-start="transform opacity-100 scale-100"
-                                     x-transition:leave-end="transform opacity-0 scale-95"
-                                     class="absolute top-full mt-1.5 left-0 z-50 w-72 bg-white dark:bg-[#1f222e] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-3.5"
-                                     style="display: none;">
+                                     x-cloak
+                                     class="absolute top-full mt-1.5 left-0 z-50 w-72 bg-white dark:bg-[#1f222e] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-3.5">
                                     <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 dark:border-white/10">
                                         <div class="flex items-center gap-1">
-                                            <button type="button" @click="viewYear--" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีก่อนหน้า">
+                                            <button type="button" @click="prevYear()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีก่อนหน้า">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
                                             </button>
                                             <button type="button" @click="prevMonth()" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนก่อนหน้า">
@@ -876,7 +857,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                                             <button type="button" @click="nextMonth()" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนถัดไป">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                                             </button>
-                                            <button type="button" @click="viewYear++" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีถัดไป">
+                                            <button type="button" @click="nextYear()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีถัดไป">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
                                             </button>
                                         </div>
@@ -887,11 +868,11 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                                         </template>
                                     </div>
                                     <div class="grid grid-cols-7 gap-1 text-center">
-                                        <template x-for="item in days">
+                                        <template x-for="(item, index) in days" :key="item.dateStr || (item.day + '-' + index)">
                                             <div>
                                                 <button type="button" 
                                                         x-show="item.isCurrent"
-                                                        @click="selectDate(item)"
+                                                        @click.stop="selectDate(item)"
                                                         class="w-8 h-8 mx-auto text-xs flex items-center justify-center rounded-xl transition-all cursor-pointer"
                                                         :class="{
                                                             'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-600/30': value === item.date,
@@ -944,8 +925,8 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
     <!-- Modal: Disburse Budget -->
     <template x-teleport="body">
-        <div x-show="disburseModal" x-cloak @click.self="disburseModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div class="bg-white dark:bg-[#181a20] w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 relative">
+        <div x-show="disburseModal" x-cloak @click.self="disburseModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
+            <div class="bg-white dark:bg-[#181a20] w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 relative modal-box-smooth transform-gpu">
                 <div class="p-6 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
                     <div>
                         <h3 class="text-base font-bold text-slate-900 dark:text-white">บันทึกการเบิกจ่ายงบประมาณ</h3>
@@ -996,17 +977,11 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                                     </svg>
                                 </button>
                                 <div x-show="open" 
-                                     x-transition:enter="transition ease-out duration-100"
-                                     x-transition:enter-start="transform opacity-0 scale-95"
-                                     x-transition:enter-end="transform opacity-100 scale-100"
-                                     x-transition:leave="transition ease-in duration-75"
-                                     x-transition:leave-start="transform opacity-100 scale-100"
-                                     x-transition:leave-end="transform opacity-0 scale-95"
-                                     class="absolute top-full mt-1.5 left-0 z-50 w-72 bg-white dark:bg-[#1f222e] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-3.5"
-                                     style="display: none;">
+                                     x-cloak
+                                     class="absolute top-full mt-1.5 left-0 z-50 w-72 bg-white dark:bg-[#1f222e] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-3.5">
                                     <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 dark:border-white/10">
                                         <div class="flex items-center gap-1">
-                                            <button type="button" @click="viewYear--" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีก่อนหน้า">
+                                            <button type="button" @click="prevYear()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีก่อนหน้า">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
                                             </button>
                                             <button type="button" @click="prevMonth()" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนก่อนหน้า">
@@ -1018,7 +993,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                                             <button type="button" @click="nextMonth()" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนถัดไป">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                                             </button>
-                                            <button type="button" @click="viewYear++" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีถัดไป">
+                                            <button type="button" @click="nextYear()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีถัดไป">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
                                             </button>
                                         </div>
@@ -1029,11 +1004,11 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                                         </template>
                                     </div>
                                     <div class="grid grid-cols-7 gap-1 text-center">
-                                        <template x-for="item in days">
+                                        <template x-for="(item, index) in days" :key="item.dateStr || (item.day + '-' + index)">
                                             <div>
                                                 <button type="button" 
                                                         x-show="item.isCurrent"
-                                                        @click="selectDate(item)"
+                                                        @click.stop="selectDate(item)"
                                                         class="w-8 h-8 mx-auto text-xs flex items-center justify-center rounded-xl transition-all cursor-pointer"
                                                         :class="{
                                                             'bg-purple-600 text-white font-bold shadow-md shadow-purple-600/30': value === item.date,
@@ -1075,8 +1050,8 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
     <!-- Modal: Manual Progress Override -->
     <template x-teleport="body">
-        <div x-show="manualModal" x-cloak @click.self="manualModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div class="bg-white w-full max-w-sm rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+        <div x-show="manualModal" x-cloak @click.self="manualModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
+            <div class="bg-white w-full max-w-sm rounded-2xl shadow-xl border border-slate-200 overflow-hidden modal-box-smooth transform-gpu">
                 <div class="p-5 border-b border-slate-100 flex items-center justify-between">
                     <h3 class="text-sm font-bold text-slate-900">กำหนดเปอร์เซ็นต์ความคืบหน้าเอง</h3>
                     <button type="button" @click.stop="manualModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
@@ -1100,7 +1075,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
     <!-- Modal: Update Status and Progress Directly -->
     <template x-teleport="body">
-        <div x-show="statusModal" x-cloak @click.self="statusModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+        <div x-show="statusModal" x-cloak @click.self="statusModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth"
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"
@@ -1108,7 +1083,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0">
             
-            <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden space-y-5 p-6">
+            <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden space-y-5 p-6 modal-box-smooth transform-gpu">
                 
                 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                     <div class="flex items-center gap-3">
@@ -1244,8 +1219,8 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
     <!-- Modal: Edit Sub-Project -->
     <template x-teleport="body">
-    <div x-show="editSubModal" x-cloak style="display: none;" @click.self="editSubModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-2xl w-full overflow-hidden max-h-[90vh] flex flex-col">
+    <div x-show="editSubModal" x-cloak style="display: none;" @click.self="editSubModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-2xl w-full overflow-hidden max-h-[90vh] flex flex-col modal-box-smooth transform-gpu">
             <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <div class="p-2 rounded-xl bg-blue-100 dark:bg-blue-950/50 text-blue-600">
@@ -1253,7 +1228,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                     </div>
                     <div>
                         <h3 class="font-heading font-bold text-base text-slate-900 dark:text-white">แก้ไขข้อมูลโครงการย่อย</h3>
-                        <p class="text-xs text-slate-400">รหัส: <?= htmlspecialchars($project['project_code']) ?></p>
+                        <p class="text-xs text-slate-400"><?= htmlspecialchars($project['name'] ?? '') ?></p>
                     </div>
                 </div>
                 <button type="button" @click.stop="editSubModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
@@ -1261,64 +1236,128 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                 </button>
             </div>
 
-            <form action="<?= \App\Core\Router::url("/sub-projects/{$project['id']}/update") ?>" method="POST" class="p-6 space-y-4 overflow-y-auto">
+            <?php 
+                $maxAllowedSubBudget = (float)($project['parent_remaining_budget'] ?? $project['parent_budget'] ?? 0); 
+                $parentStartRaw = $project['parent_start_date'] ?? '';
+                $parentEndRaw = $project['parent_end_date'] ?? '';
+                $parentStartThai = !empty($parentStartRaw) ? date('d/m/', strtotime($parentStartRaw)) . (date('Y', strtotime($parentStartRaw)) + 543) : 'ไม่ระบุ';
+                $parentEndThai = !empty($parentEndRaw) ? date('d/m/', strtotime($parentEndRaw)) . (date('Y', strtotime($parentEndRaw)) + 543) : 'ไม่ระบุ';
+            ?>
+            <form action="<?= \App\Core\Router::url("/sub-projects/{$project['id']}/update") ?>" method="POST" 
+                  @submit="
+                    const maxB = <?= $maxAllowedSubBudget ?>;
+                    const bVal = parseFloat($el.querySelector('input[name=budget]')?.value || 0);
+                    if (maxB > 0 && bVal > maxB) {
+                        alert('งบประมาณโครงการย่อย (' + bVal.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท) ต้องไม่เกินงบประมาณคงเหลือของโครงการหลักที่จัดสรรได้ (' + maxB.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท)');
+                        $event.preventDefault();
+                        return false;
+                    }
+                    const pStart = '<?= $parentStartRaw ?>';
+                    const pEnd = '<?= $parentEndRaw ?>';
+                    const sStart = $el.querySelector('input[name=start_date]')?.value || '';
+                    const sEnd = $el.querySelector('input[name=end_date]')?.value || '';
+                    if (!sStart || !sEnd) {
+                        alert('กรุณาระบุวันที่เริ่มต้นและวันที่สิ้นสุดของโครงการย่อย');
+                        $event.preventDefault();
+                        return false;
+                    }
+                    if (pStart && sStart < pStart) {
+                        alert('วันที่เริ่มต้นของโครงการย่อยต้องเท่ากับหรือมากกว่าวันที่เริ่มต้นของโครงการหลัก (<?= $parentStartThai ?>)');
+                        $event.preventDefault();
+                        return false;
+                    }
+                    if (pEnd && sEnd > pEnd) {
+                        alert('วันที่สิ้นสุดของโครงการย่อยต้องไม่เกินวันที่สิ้นสุดของโครงการหลัก (<?= $parentEndThai ?>)');
+                        $event.preventDefault();
+                        return false;
+                    }
+                    if (sStart > sEnd) {
+                        alert('วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุดของโครงการย่อย');
+                        $event.preventDefault();
+                        return false;
+                    }
+                  "
+                  class="p-6 space-y-4 overflow-y-auto">
                 <input type="hidden" name="_token" value="<?= $csrfToken ?>">
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                         ชื่อโครงการย่อย <span class="text-rose-500">*</span>
                     </label>
-                    <input type="text" name="name" value="<?= htmlspecialchars($project['name']) ?>" required
+                    <input type="text" name="name" value="<?= htmlspecialchars($project['name'] ?? '') ?>" required
                            class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white">
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                            งบประมาณโครงการ (บาท) <span class="text-rose-500">*</span>
+                    <div x-data="{ editBudget: '<?= (float)($project['budget'] ?? 0) ?>', maxParentBudget: <?= $maxAllowedSubBudget ?> }">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 h-5 flex items-center justify-between">
+                            <span>งบประมาณโครงการ (บาท) <span class="text-rose-500">*</span></span>
+                            <?php if ($maxAllowedSubBudget > 0): ?>
+                                <span class="text-[11px] text-slate-400 font-normal truncate" title="คงเหลือที่จัดสรรได้: <?= number_format($maxAllowedSubBudget, 2) ?> บาท">(คงเหลือ: <?= number_format($maxAllowedSubBudget, 2) ?> บ.)</span>
+                            <?php endif; ?>
                         </label>
-                        <input type="number" step="0.01" min="0" name="budget" value="<?= htmlspecialchars($project['budget']) ?>" required
-                               class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white font-mono">
+                        <input type="number" step="0.01" min="0" 
+                               <?php if ($maxAllowedSubBudget > 0): ?>
+                                   max="<?= $maxAllowedSubBudget ?>"
+                                <?php endif; ?>
+                               name="budget" x-model="editBudget" required
+                               :class="{ 'border-rose-400 dark:border-rose-500 focus:border-rose-500 focus:ring-rose-500/20 text-rose-600': maxParentBudget > 0 && parseFloat(editBudget || 0) > maxParentBudget }"
+                               class="w-full h-10 px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white font-mono">
+                        <template x-if="maxParentBudget > 0 && parseFloat(editBudget || 0) > maxParentBudget">
+                            <p class="text-[11px] text-rose-500 mt-1 font-medium flex items-center gap-1">
+                                <i data-lucide="alert-circle" class="w-3 h-3 inline"></i> ห้ามเกินงบประมาณคงเหลือของโครงการหลัก (จัดสรรได้สูงสุด: <?= number_format($maxAllowedSubBudget, 2) ?> บาท)
+                            </p>
+                        </template>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 h-5 flex items-center">
                             จำนวนครั้งที่วางแผนกิจกรรม
                         </label>
                         <input type="number" min="1" name="planned_activity_count" value="<?= htmlspecialchars($project['planned_activity_count'] ?? 1) ?>"
-                               class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white font-mono">
+                               class="w-full h-10 px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white font-mono">
                     </div>
                 </div>
+
+                <!-- Informational Box: Parent Project Date Bounds -->
+                <?php if (!empty($parentStartRaw) || !empty($parentEndRaw)): ?>
+                    <div class="p-3 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/60 text-xs text-blue-800 dark:text-blue-300 flex items-start gap-2.5">
+                        <i data-lucide="calendar" class="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5"></i>
+                        <div>
+                            <strong class="font-semibold">กรอบเวลาโครงการหลัก:</strong> 
+                            <?= $parentStartThai ?> ถึง <?= $parentEndThai ?>
+                            <div class="text-[11px] text-blue-600 dark:text-blue-400 mt-0.5">
+                                * โครงการย่อยต้องเริ่มต้นตั้งแต่วันที่ <?= $parentStartThai ?> เป็นต้นไป และต้องสิ้นสุดไม่เกินวันที่ <?= $parentEndThai ?>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                             วันที่เริ่มต้น <span class="text-rose-500">*</span>
                         </label>
-                        <input type="date" name="start_date" value="<?= htmlspecialchars($project['start_date']) ?>" required
-                               class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white">
+                        <input type="date" name="start_date" value="<?= htmlspecialchars($project['start_date'] ?? '') ?>" required
+                               class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                             วันที่สิ้นสุด <span class="text-rose-500">*</span>
                         </label>
-                        <input type="date" name="end_date" value="<?= htmlspecialchars($project['end_date']) ?>" required
-                               class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white">
+                        <input type="date" name="end_date" value="<?= htmlspecialchars($project['end_date'] ?? '') ?>" required
+                               class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                            ผู้รับผิดชอบโครงการ
+                            ผู้รับผิดชอบโครงการ <span class="text-rose-500">*</span>
                         </label>
-                        <select name="responsible_user_id"
-                                class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white">
-                            <?php foreach ($users as $u): ?>
-                                <option value="<?= $u['id'] ?>" <?= ($project['responsible_user_id'] == $u['id']) ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($u['name']) ?> (<?= htmlspecialchars($u['position'] ?: 'เจ้าหน้าที่') ?>)
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                        <input type="text" name="responsible_person" required maxlength="255"
+                               value="<?= htmlspecialchars(!empty($project['responsible_person']) ? $project['responsible_person'] : ($project['responsible_name'] ?? '')) ?>"
+                               placeholder="ระบุชื่อผู้รับผิดชอบ เช่น นางสาวสมใจ รักดี หรือ กองสาธารณสุข"
+                               class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
@@ -1377,8 +1416,8 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
     <!-- Modal: Edit Activity -->
     <template x-teleport="body">
-    <div x-show="editActModal" x-cloak style="display: none;" @click.self="editActModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-lg w-full overflow-hidden">
+    <div x-show="editActModal" x-cloak style="display: none;" @click.self="editActModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-lg w-full overflow-hidden modal-box-smooth transform-gpu">
             <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <div class="p-2 rounded-xl bg-blue-100 dark:bg-blue-950/50 text-blue-600">
@@ -1493,8 +1532,8 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
     <!-- Modal: Upload Attachment or Photo -->
     <template x-teleport="body">
-    <div x-show="uploadModal" x-cloak style="display: none;" @click.self="uploadModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-md w-full overflow-hidden">
+    <div x-show="uploadModal" x-cloak style="display: none;" @click.self="uploadModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-md w-full overflow-hidden modal-box-smooth transform-gpu">
             <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <div class="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600">
@@ -1532,7 +1571,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                                 class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white">
                             <option value="">-- ภาพรวมของโครงการ --</option>
                             <?php foreach ($project['activities'] as $act): ?>
-                                <option value="<?= $act['id'] ?>"><?= htmlspecialchars($act['name']) ?></option>
+                                <option value="<?= $act['id'] ?>"><?= htmlspecialchars($act['name'] ?? '') ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -1576,11 +1615,11 @@ function subProjectShowPage() {
         openEditAct(act) {
             this.selectedAct = Object.assign({}, act);
             this.editActModal = true;
-            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(); });
         },
         selectedStatus: '<?= $project['status'] ?>',
         currentProgress: <?= (float)$project['progress'] ?>,
-        statusNote: '<?= addslashes($project['problem_description'] ?? '') ?>',
+        statusNote: <?= json_encode((string)($project['problem_description'] ?? ''), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>,
         setStatus(s) {
             this.selectedStatus = s;
             if (s === 'completed') {
@@ -1603,7 +1642,7 @@ function subProjectShowPage() {
         },
 
         // Activities pagination & search
-        allActivities: <?= $activitiesJson ?>,
+        allActivities: Object.freeze(<?= $activitiesJson ?>),
         actSearch: '',
         actPage: 1,
         actPerPage: 5,
@@ -1647,7 +1686,7 @@ function subProjectShowPage() {
         setActPage(p) {
             if (p === '...' || p < 1 || p > this.actTotalPages || p === this.actPage) return;
             this.actPage = p;
-            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
         },
         prevActPage() {
             if (this.actPage > 1) this.setActPage(this.actPage - 1);
@@ -1658,11 +1697,11 @@ function subProjectShowPage() {
         setActPerPage(val) {
             this.actPerPage = val === 'all' ? 'all' : parseInt(val);
             this.actPage = 1;
-            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
         },
 
         // Disbursements pagination & search
-        allDisbursements: <?= $disbursementsJson ?>,
+        allDisbursements: Object.freeze(<?= $disbursementsJson ?>),
         disbSearch: '',
         disbPage: 1,
         disbPerPage: 5,
@@ -1706,7 +1745,7 @@ function subProjectShowPage() {
         setDisbPage(p) {
             if (p === '...' || p < 1 || p > this.disbTotalPages || p === this.disbPage) return;
             this.disbPage = p;
-            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
         },
         prevDisbPage() {
             if (this.disbPage > 1) this.setDisbPage(this.disbPage - 1);
@@ -1717,7 +1756,7 @@ function subProjectShowPage() {
         setDisbPerPage(val) {
             this.disbPerPage = val === 'all' ? 'all' : parseInt(val);
             this.disbPage = 1;
-            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
         },
 
         getVisiblePages(total, current) {

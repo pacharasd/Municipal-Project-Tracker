@@ -7,10 +7,9 @@ $subProjectsSummary = [];
 foreach ($project['sub_projects'] as $sub) {
     $subProjectsSummary[] = [
         'id' => (int)$sub['id'],
-        'code' => (string)$sub['project_code'],
         'name' => (string)$sub['name'],
         'status' => (string)($sub['status'] ?? 'not_started'),
-        'search_text' => mb_strtolower(($sub['project_code'] ?? '') . ' ' . ($sub['name'] ?? '') . ' ' . ($sub['responsible_name'] ?? ''), 'UTF-8'),
+        'search_text' => mb_strtolower(($sub['name'] ?? '') . ' ' . (!empty($sub['responsible_person']) ? $sub['responsible_person'] : ($sub['responsible_name'] ?? '')), 'UTF-8'),
     ];
 }
 $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
@@ -42,10 +41,9 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
     <!-- Main Project Info Card -->
     <div class="bg-white dark:bg-[#161922] p-6 sm:p-8 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm">
         <div class="flex flex-wrap items-center gap-2">
-            <span class="px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-slate-100 dark:bg-white/10 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-white/10"><?= htmlspecialchars($project['project_code']) ?></span>
-            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30"><?= htmlspecialchars(!empty($project['responsible_person']) ? $project['responsible_person'] : $project['department_name']) ?></span>
-            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-white/10">ปีงบประมาณ <?= $project['fiscal_year'] ?></span>
-            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-purple-50 dark:bg-purple-500/15 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/30"><?= htmlspecialchars($project['category_name']) ?></span>
+            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30"><?= htmlspecialchars(!empty($project['responsible_person']) ? $project['responsible_person'] : ($project['department_name'] ?? 'ไม่ระบุหน่วยงาน')) ?></span>
+            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-white/10">ปีงบประมาณ <?= htmlspecialchars((string)($project['fiscal_year'] ?? '-')) ?></span>
+            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-purple-50 dark:bg-purple-500/15 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/30"><?= htmlspecialchars($project['category_name'] ?? 'ทั่วไป') ?></span>
         </div>
 
         <h1 class="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900 dark:text-white tracking-tight mt-3">
@@ -63,11 +61,15 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                     วัตถุประสงค์โครงการ
                 </div>
                 <div class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                    <?= nl2br(htmlspecialchars($project['objective'])) ?>
+                    <?= nl2br(htmlspecialchars($project['objective'] ?? '')) ?>
                 </div>
             </div>
         <?php endif; ?>
 
+        <?php
+            $totalSubBudget = array_sum(array_column($project['sub_projects'] ?? [], 'budget'));
+            $remainingParentBudget = max(0, (float)($project['budget'] ?? 0) - $totalSubBudget);
+        ?>
         <!-- KPI Grid -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-100 dark:border-white/[0.08]">
             <div>
@@ -80,7 +82,7 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
             </div>
             <div>
                 <div class="text-xs text-slate-400 dark:text-slate-500">คงเหลือ</div>
-                <div class="text-lg sm:text-xl font-bold text-purple-600 dark:text-purple-400 mt-0.5"><?= number_format($project['budget'] - $project['disbursed_amount'], 2) ?> <span class="text-xs font-normal text-slate-500">บาท</span></div>
+                <div class="text-lg sm:text-xl font-bold text-purple-600 dark:text-purple-400 mt-0.5"><?= number_format($remainingParentBudget, 2) ?> <span class="text-xs font-normal text-slate-500">บาท</span></div>
             </div>
             <?php $pTier = \App\Services\ProgressService::getProgressTier((float)$project['progress'], $project['status'] ?? null); ?>
             <div>
@@ -110,7 +112,7 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
             <div class="flex flex-wrap items-center gap-2.5 shrink-0">
                 <?php if (!empty($project['sub_projects'])): ?>
                     <div class="relative min-w-[200px]">
-                        <input type="text" x-model="subSearch" @input="subPage = 1" placeholder="ค้นหารหัส หรือชื่อ..." 
+                        <input type="text" x-model="subSearch" @input="subPage = 1" placeholder="ค้นหาชื่อโครงการย่อย..." 
                                class="w-full pl-8 pr-8 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#1f222e] text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                         <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                         <button type="button" x-show="subSearch" @click="subSearch = ''; subPage = 1;" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 cursor-pointer">
@@ -120,7 +122,7 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                 <?php endif; ?>
 
                 <?php if (\App\Core\Auth::canManageProjects()): ?>
-                    <button type="button" @click="createSubModal = true; $nextTick(() => { if (window.lucide) lucide.createIcons(); });" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all shadow-md shadow-emerald-600/20 whitespace-nowrap cursor-pointer shrink-0">
+                    <button type="button" @click="createSubModal = true; $nextTick(() => { window.safeCreateIcons && window.safeCreateIcons($el); });" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all shadow-md shadow-emerald-600/20 whitespace-nowrap cursor-pointer shrink-0">
                         <i data-lucide="plus-circle" class="w-4 h-4"></i> เพิ่มโครงการย่อย
                     </button>
                 <?php endif; ?>
@@ -136,7 +138,6 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                 <table class="w-full text-left border-collapse min-w-[780px]">
                     <thead>
                         <tr class="border-b border-slate-200/80 dark:border-white/[0.08] text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                            <th class="py-3 px-4 whitespace-nowrap">รหัส</th>
                             <th class="py-3 px-4 min-w-[240px]">ชื่อโครงการย่อย</th>
                             <th class="py-3 px-4 whitespace-nowrap">งบประมาณ (บาท)</th>
                             <th class="py-3 px-4 whitespace-nowrap text-center">จำนวนครั้งกิจกรรม</th>
@@ -149,10 +150,9 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                         <?php foreach ($project['sub_projects'] as $sub): ?>
                             <tr class="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors"
                                 x-show="isSubVisible(<?= $sub['id'] ?>)">
-                                <td class="py-3.5 px-4 font-mono text-xs text-slate-700 dark:text-slate-300 font-bold whitespace-nowrap"><?= htmlspecialchars($sub['project_code']) ?></td>
                                 <td class="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">
                                     <a href="<?= \App\Core\Router::url("/sub-projects/{$sub['id']}") ?>" class="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                                        <?= htmlspecialchars($sub['name']) ?>
+                                        <?= htmlspecialchars($sub['name'] ?? '') ?>
                                     </a>
                                 </td>
                                 <td class="py-3.5 px-4 font-bold text-slate-900 dark:text-white whitespace-nowrap"><?= number_format($sub['budget'], 2) ?></td>
@@ -269,8 +269,8 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
 
     <!-- Modal: Create Sub-project -->
     <template x-teleport="body">
-        <div x-show="createSubModal" x-cloak @click.self="createSubModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div class="bg-white dark:bg-[#161922] w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden max-h-[90vh] flex flex-col">
+        <div x-show="createSubModal" x-cloak @click.self="createSubModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
+            <div class="bg-white dark:bg-[#161922] w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden max-h-[90vh] flex flex-col modal-box-smooth transform-gpu">
                 <div class="p-6 border-b border-slate-100 dark:border-white/[0.08] flex items-center justify-between flex-shrink-0">
                     <div>
                         <h3 class="text-lg font-bold font-heading text-slate-900 dark:text-white">เพิ่มโครงการย่อย</h3>
@@ -281,8 +281,16 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                     </button>
                 </div>
 
+                <?php
+                    $parentStartRaw = $project['start_date'] ?? '';
+                    $parentEndRaw = $project['end_date'] ?? '';
+                    $parentStartThai = !empty($parentStartRaw) ? date('d/m/', strtotime($parentStartRaw)) . (date('Y', strtotime($parentStartRaw)) + 543) : 'ไม่ระบุ';
+                    $parentEndThai = !empty($parentEndRaw) ? date('d/m/', strtotime($parentEndRaw)) . (date('Y', strtotime($parentEndRaw)) + 543) : 'ไม่ระบุ';
+                ?>
                 <form action="<?= \App\Core\Router::url('/sub-projects') ?>" method="POST" 
                       @submit="
+                        const pStart = '<?= $parentStartRaw ?>';
+                        const pEnd = '<?= $parentEndRaw ?>';
                         const start = $el.querySelector('input[name=start_date]')?.value;
                         const end = $el.querySelector('input[name=end_date]')?.value;
                         if (!start) {
@@ -295,8 +303,25 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                             $event.preventDefault();
                             return false;
                         }
+                        if (pStart && start < pStart) {
+                            alert('วันที่เริ่มต้นของโครงการย่อยต้องเท่ากับหรือมากกว่าวันที่เริ่มต้นของโครงการหลัก (<?= $parentStartThai ?>)');
+                            $event.preventDefault();
+                            return false;
+                        }
+                        if (pEnd && end > pEnd) {
+                            alert('วันที่สิ้นสุดของโครงการย่อยต้องไม่เกินวันที่สิ้นสุดของโครงการหลัก (<?= $parentEndThai ?>)');
+                            $event.preventDefault();
+                            return false;
+                        }
                         if (start > end) {
-                            alert('วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่มต้น');
+                            alert('วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุดของโครงการย่อย');
+                            $event.preventDefault();
+                            return false;
+                        }
+                        const maxBudget = <?= (float)$remainingParentBudget ?>;
+                        const budgetVal = parseFloat($el.querySelector('input[name=budget]')?.value || 0);
+                        if (budgetVal > maxBudget) {
+                            alert('งบประมาณโครงการย่อย (' + budgetVal.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท) ต้องไม่เกินงบประมาณคงเหลือของโครงการหลักที่จัดสรรได้ (' + maxBudget.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท)');
                             $event.preventDefault();
                             return false;
                         }
@@ -305,25 +330,14 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                     <input type="hidden" name="_token" value="<?= $csrfToken ?>">
                     <input type="hidden" name="parent_id" value="<?= $project['id'] ?>">
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">รหัสโครงการย่อย <span class="text-rose-500">*</span></label>
-                            <input type="text" name="project_code" required placeholder="เช่น SUB-2568-001-04" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ผู้รับผิดชอบโครงการ</label>
-                            <select name="responsible_user_id" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
-                                <option value="" disabled selected hidden>-- เลือกผู้รับผิดชอบโครงการ --</option>
-                                <?php foreach ($users as $u): ?>
-                                    <option value="<?= $u['id'] ?>"><?= htmlspecialchars($u['name']) ?> (<?= htmlspecialchars($u['position'] ?? '') ?>)</option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                    </div>
-
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ชื่อโครงการย่อย <span class="text-rose-500">*</span></label>
                         <input type="text" name="name" required placeholder="ระบุชื่อโครงการย่อย..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ผู้รับผิดชอบโครงการ <span class="text-rose-500">*</span></label>
+                        <input type="text" name="responsible_person" required maxlength="255" placeholder="ระบุชื่อผู้รับผิดชอบ เช่น นางสาวสมใจ รักดี หรือ กองสาธารณสุข" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -353,6 +367,20 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                         <textarea name="objective" rows="2" placeholder="วัตถุประสงค์ของโครงการ..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"></textarea>
                     </div>
 
+                    <!-- Informational Box: Parent Project Date Bounds -->
+                    <?php if (!empty($parentStartRaw) || !empty($parentEndRaw)): ?>
+                        <div class="p-3 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/60 text-xs text-blue-800 dark:text-blue-300 flex items-start gap-2.5">
+                            <i data-lucide="calendar" class="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5"></i>
+                            <div>
+                                <strong class="font-semibold">กรอบเวลาโครงการหลัก:</strong> 
+                                <?= $parentStartThai ?> ถึง <?= $parentEndThai ?>
+                                <div class="text-[11px] text-blue-600 dark:text-blue-400 mt-0.5">
+                                    * โครงการย่อยต้องเริ่มต้นตั้งแต่วันที่ <?= $parentStartThai ?> เป็นต้นไป และต้องสิ้นสุดไม่เกินวันที่ <?= $parentEndThai ?>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">วันที่เริ่มต้น <span class="text-rose-500">*</span></label>
@@ -369,17 +397,17 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                                     </svg>
                                 </button>
                                 <div x-show="open" 
+                                     x-cloak
                                      x-transition:enter="transition ease-out duration-100"
                                      x-transition:enter-start="transform opacity-0 scale-95"
                                      x-transition:enter-end="transform opacity-100 scale-100"
                                      x-transition:leave="transition ease-in duration-75"
                                      x-transition:leave-start="transform opacity-100 scale-100"
                                      x-transition:leave-end="transform opacity-0 scale-95"
-                                     class="absolute bottom-full mb-2 left-0 z-50 w-72 bg-white dark:bg-[#1f222e] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-3.5"
-                                     style="display: none;">
+                                     class="absolute bottom-full mb-2 left-0 z-50 w-72 bg-white dark:bg-[#1f222e] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-3.5">
                                     <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 dark:border-white/10">
                                         <div class="flex items-center gap-1">
-                                            <button type="button" @click="viewYear--" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีก่อนหน้า">
+                                            <button type="button" @click="prevYear()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีก่อนหน้า">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
                                             </button>
                                             <button type="button" @click="prevMonth()" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนก่อนหน้า">
@@ -391,7 +419,7 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                                             <button type="button" @click="nextMonth()" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนถัดไป">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                                             </button>
-                                            <button type="button" @click="viewYear++" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีถัดไป">
+                                            <button type="button" @click="nextYear()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีถัดไป">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
                                             </button>
                                         </div>
@@ -402,11 +430,11 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                                         </template>
                                     </div>
                                     <div class="grid grid-cols-7 gap-1 text-center">
-                                        <template x-for="item in days">
+                                        <template x-for="(item, index) in days" :key="item.dateStr || (item.day + '-' + index)">
                                             <div>
                                                 <button type="button" 
                                                         x-show="item.isCurrent"
-                                                        @click="selectDate(item)"
+                                                        @click.stop="selectDate(item)"
                                                         class="w-8 h-8 mx-auto text-xs flex items-center justify-center rounded-xl transition-all cursor-pointer"
                                                         :class="{
                                                             'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-600/30': value === item.date,
@@ -441,17 +469,17 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                                     </svg>
                                 </button>
                                 <div x-show="open" 
+                                     x-cloak
                                      x-transition:enter="transition ease-out duration-100"
                                      x-transition:enter-start="transform opacity-0 scale-95"
                                      x-transition:enter-end="transform opacity-100 scale-100"
                                      x-transition:leave="transition ease-in duration-75"
                                      x-transition:leave-start="transform opacity-100 scale-100"
                                      x-transition:leave-end="transform opacity-0 scale-95"
-                                     class="absolute bottom-full mb-2 right-0 z-50 w-72 bg-white dark:bg-[#1f222e] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-3.5"
-                                     style="display: none;">
+                                     class="absolute bottom-full mb-2 right-0 z-50 w-72 bg-white dark:bg-[#1f222e] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-3.5">
                                     <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 dark:border-white/10">
                                         <div class="flex items-center gap-1">
-                                            <button type="button" @click="viewYear--" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีก่อนหน้า">
+                                            <button type="button" @click="prevYear()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีก่อนหน้า">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
                                             </button>
                                             <button type="button" @click="prevMonth()" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนก่อนหน้า">
@@ -463,7 +491,7 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                                             <button type="button" @click="nextMonth()" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนถัดไป">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                                             </button>
-                                            <button type="button" @click="viewYear++" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีถัดไป">
+                                            <button type="button" @click="nextYear()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีถัดไป">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
                                             </button>
                                         </div>
@@ -474,11 +502,11 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                                         </template>
                                     </div>
                                     <div class="grid grid-cols-7 gap-1 text-center">
-                                        <template x-for="item in days">
+                                        <template x-for="(item, index) in days" :key="item.dateStr || (item.day + '-' + index)">
                                             <div>
                                                 <button type="button" 
                                                         x-show="item.isCurrent"
-                                                        @click="selectDate(item)"
+                                                        @click.stop="selectDate(item)"
                                                         class="w-8 h-8 mx-auto text-xs flex items-center justify-center rounded-xl transition-all cursor-pointer"
                                                         :class="{
                                                             'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-600/30': value === item.date,
@@ -501,21 +529,60 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">งบประมาณ (บาท) <span class="text-rose-500">*</span></label>
-                            <input type="number" step="0.01" min="0" name="budget" required placeholder="0.00" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+                        <div x-data="{ subBudget: '', maxBudget: <?= (float)$remainingParentBudget ?> }" class="flex flex-col justify-between">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 h-5 flex items-center truncate" title="งบประมาณ (บาท)">
+                                    งบประมาณ (บาท) <span class="text-rose-500 ml-0.5">*</span>
+                                </label>
+                                <input type="number" step="0.01" min="0" 
+                                       max="<?= (float)$remainingParentBudget ?>"
+                                       name="budget" x-model="subBudget" required placeholder="0.00" 
+                                       :class="{ 'border-rose-400 dark:border-rose-500 focus:border-rose-500 focus:ring-rose-500/20 text-rose-600': parseFloat(subBudget || 0) > maxBudget }"
+                                       class="w-full h-10 px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+                            </div>
+                            <div class="h-4 mt-1 flex items-center overflow-hidden">
+                                <template x-if="parseFloat(subBudget || 0) > maxBudget">
+                                    <p class="text-[11px] text-rose-500 font-medium truncate flex items-center gap-1" title="ห้ามเกินงบประมาณคงเหลือ: <?= number_format($remainingParentBudget, 2) ?> บาท">
+                                        <i data-lucide="alert-circle" class="w-3 h-3 inline shrink-0"></i> เกินงบจัดสรรได้ (สูงสุด <?= number_format($remainingParentBudget, 2) ?> บ.)
+                                    </p>
+                                </template>
+                                <template x-if="!(parseFloat(subBudget || 0) > maxBudget)">
+                                    <p class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium truncate" title="คงเหลือที่จัดสรรได้: <?= number_format($remainingParentBudget, 2) ?> บาท">
+                                        คงเหลือจัดสรรได้: <?= number_format($remainingParentBudget, 2) ?> บ.
+                                    </p>
+                                </template>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">จำนวนครั้งที่วางแผน <span class="text-rose-500">*</span></label>
-                            <input type="number" min="1" name="planned_activity_count" value="4" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
-                            <span class="text-[10px] text-slate-400">ใช้คำนวณ Progress ตาม Rule #46</span>
+                        <div class="flex flex-col justify-between">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 h-5 flex items-center truncate" title="จำนวนครั้งที่วางแผน">
+                                    จำนวนครั้งที่วางแผน <span class="text-rose-500 ml-0.5">*</span>
+                                </label>
+                                <input type="number" min="1" name="planned_activity_count" value="4" required 
+                                       class="w-full h-10 px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+                            </div>
+                            <div class="h-4 mt-1 flex items-center overflow-hidden">
+                                <p class="text-[11px] text-slate-400 dark:text-slate-500 truncate" title="ใช้คำนวณ Progress ตาม Rule #46">
+                                    ใช้คำนวณ Progress ตาม Rule #46
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">โหมดการคำนวณความสำเร็จ</label>
-                            <select name="progress_mode" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
-                                <option value="auto">คำนวณอัตโนมัติ (AUTO)</option>
-                                <option value="manual">ระบุเอง (MANUAL)</option>
-                            </select>
+                        <div class="flex flex-col justify-between">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 h-5 flex items-center truncate" title="โหมดการคำนวณความสำเร็จ">
+                                    โหมดการคำนวณความสำเร็จ
+                                </label>
+                                <select name="progress_mode" 
+                                        class="w-full h-10 px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+                                    <option value="auto">คำนวณอัตโนมัติ (AUTO)</option>
+                                    <option value="manual">ระบุเอง (MANUAL)</option>
+                                </select>
+                            </div>
+                            <div class="h-4 mt-1 flex items-center overflow-hidden">
+                                <p class="text-[11px] text-slate-400 dark:text-slate-500 truncate" title="ระบบคำนวณอัตโนมัติ หรือ ระบุเอง">
+                                    คำนวณอัตโนมัติ / ระบุเอง
+                                </p>
+                            </div>
                         </div>
                     </div>
 
@@ -534,12 +601,12 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
 
     <!-- Modal: Edit Project -->
     <template x-teleport="body">
-        <div x-show="editModal" x-cloak @click.self="editModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div class="bg-white dark:bg-[#161922] w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden max-h-[90vh] flex flex-col">
+        <div x-show="editModal" x-cloak @click.self="editModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
+            <div class="bg-white dark:bg-[#161922] w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden max-h-[90vh] flex flex-col modal-box-smooth transform-gpu">
                 <div class="p-6 border-b border-slate-100 dark:border-white/[0.08] flex items-center justify-between flex-shrink-0">
                     <div>
                         <h3 class="text-lg font-bold font-heading text-slate-900 dark:text-white">แก้ไขข้อมูลโครงการหลัก</h3>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5"><?= htmlspecialchars($project['project_code']) ?> - <?= htmlspecialchars($project['name']) ?></p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5"><?= htmlspecialchars($project['name']) ?></p>
                     </div>
                     <button type="button" @click.stop="editModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
                         <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
@@ -550,36 +617,19 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                     <input type="hidden" name="_token" value="<?= $csrfToken ?>">
                     <input type="hidden" name="_method" value="PUT">
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">รหัสโครงการ <span class="text-rose-500">*</span></label>
-                            <input type="text" name="project_code" value="<?= htmlspecialchars($project['project_code']) ?>" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ปีงบประมาณ <span class="text-rose-500">*</span></label>
-                            <input type="number" name="fiscal_year" value="<?= htmlspecialchars($project['fiscal_year']) ?>" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
-                        </div>
-                    </div>
-
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ชื่อโครงการหลัก <span class="text-rose-500">*</span></label>
-                        <input type="text" name="name" value="<?= htmlspecialchars($project['name']) ?>" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+                        <input type="text" name="name" value="<?= htmlspecialchars($project['name'] ?? '') ?>" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">คำอธิบายโครงการ</label>
-                        <textarea name="description" rows="2" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"><?= htmlspecialchars($project['description'] ?? '') ?></textarea>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">วัตถุประสงค์โครงการ</label>
-                        <textarea name="objective" rows="2" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"><?= htmlspecialchars($project['objective'] ?? '') ?></textarea>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ปีงบประมาณ <span class="text-rose-500">*</span></label>
+                            <input type="number" name="fiscal_year" value="<?= htmlspecialchars((string)($project['fiscal_year'] ?? '')) ?>" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+                        </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">งบประมาณรวม (บาท) <span class="text-rose-500">*</span></label>
-                            <input type="number" step="0.01" min="0" name="budget" value="<?= htmlspecialchars($project['budget']) ?>" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+                            <input type="number" step="0.01" min="0" name="budget" value="<?= htmlspecialchars((string)($project['budget'] ?? 0)) ?>" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">สถานะโครงการ</label>
@@ -591,6 +641,16 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                                 <option value="cancelled" <?= $project['status'] === 'cancelled' ? 'selected' : '' ?>>ยกเลิก</option>
                             </select>
                         </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">คำอธิบายโครงการ</label>
+                        <textarea name="description" rows="2" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"><?= htmlspecialchars($project['description'] ?? '') ?></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">วัตถุประสงค์โครงการ</label>
+                        <textarea name="objective" rows="2" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"><?= htmlspecialchars($project['objective'] ?? '') ?></textarea>
                     </div>
 
                     <div class="pt-4 border-t border-slate-100 dark:border-white/[0.08] flex items-center justify-end gap-3 flex-shrink-0">
@@ -612,7 +672,7 @@ function projectShowPage() {
     return {
         createSubModal: false,
         editModal: false,
-        allSubProjects: <?= $subProjectsJson ?>,
+        allSubProjects: Object.freeze(<?= $subProjectsJson ?>),
         subSearch: '',
         subPage: 1,
         subPerPage: 5,
@@ -676,7 +736,7 @@ function projectShowPage() {
         setSubPage(p) {
             if (p === '...' || p < 1 || p > this.subTotalPages || p === this.subPage) return;
             this.subPage = p;
-            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
         },
 
         prevSubPage() {
@@ -690,7 +750,7 @@ function projectShowPage() {
         setSubPerPage(val) {
             this.subPerPage = val === 'all' ? 'all' : parseInt(val);
             this.subPage = 1;
-            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
         }
     };
 }

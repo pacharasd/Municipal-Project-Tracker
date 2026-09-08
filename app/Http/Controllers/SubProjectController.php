@@ -51,7 +51,6 @@ class SubProjectController
 
         $v = Validator::make($_POST, [
             'name'                   => 'required|min:3|max:255',
-            'project_code'           => 'required|min:2|max:50',
             'budget'                 => 'required|numeric|min:0',
             'planned_activity_count' => 'required|numeric|min:1',
             'start_date'             => 'required|date',
@@ -64,24 +63,69 @@ class SubProjectController
             exit;
         }
 
-        $code = trim($_POST['project_code']);
-        if (Database::fetchColumn("SELECT COUNT(*) FROM projects WHERE project_code = ?", [$code]) > 0) {
-            Session::flash('error', "รหัสโครงการย่อย '{$code}' มีอยู่ในระบบแล้ว");
+        $startDate = !empty($_POST['start_date']) ? trim($_POST['start_date']) : null;
+        $endDate = !empty($_POST['end_date']) ? trim($_POST['end_date']) : null;
+
+        if ($startDate && $endDate && $startDate > $endDate) {
+            Session::flash('error', 'วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุดของโครงการย่อย');
+            header('Location: ' . Router::url("/projects/{$parentId}"));
+            exit;
+        }
+
+        $parentStartDate = !empty($parent['start_date']) ? $parent['start_date'] : null;
+        $parentEndDate = !empty($parent['end_date']) ? $parent['end_date'] : null;
+
+        if ($parentStartDate && $startDate && $startDate < $parentStartDate) {
+            $formattedParentStart = date('d/m/', strtotime($parentStartDate)) . (date('Y', strtotime($parentStartDate)) + 543);
+            Session::flash('error', "วันที่เริ่มต้นของโครงการย่อยต้องเท่ากับหรือมากกว่าวันที่เริ่มต้นของโครงการหลัก ({$formattedParentStart})");
+            header('Location: ' . Router::url("/projects/{$parentId}"));
+            exit;
+        }
+
+        if ($parentEndDate && $endDate && $endDate > $parentEndDate) {
+            $formattedParentEnd = date('d/m/', strtotime($parentEndDate)) . (date('Y', strtotime($parentEndDate)) + 543);
+            Session::flash('error', "วันที่สิ้นสุดของโครงการย่อยต้องไม่เกินวันที่สิ้นสุดของโครงการหลัก ({$formattedParentEnd})");
+            header('Location: ' . Router::url("/projects/{$parentId}"));
+            exit;
+        }
+
+        $budget = (float)$_POST['budget'];
+        $parentBudget = (float)($parent['budget'] ?? 0);
+        $totalAllocated = (float)Database::fetchColumn(
+            "SELECT COALESCE(SUM(budget), 0) FROM projects WHERE parent_id = ?",
+            [$parentId]
+        );
+        $remainingBudget = max(0, $parentBudget - $totalAllocated);
+        if ($budget > $remainingBudget) {
+            Session::flash('error', "งบประมาณโครงการย่อย (" . number_format($budget, 2) . " บาท) เกินกว่างบประมาณคงเหลือของโครงการหลักที่สามารถจัดสรรได้ (คงเหลือ: " . number_format($remainingBudget, 2) . " บาท)");
             header('Location: ' . Router::url("/projects/{$parentId}"));
             exit;
         }
 
         try {
-            $budget = (float)$_POST['budget'];
+            $responsiblePerson = trim($_POST['responsible_person'] ?? '');
+            $responsibleUserId = null;
+            if (!empty($_POST['responsible_user_id'])) {
+                $responsibleUserId = (int)$_POST['responsible_user_id'];
+            } elseif (!empty($responsiblePerson)) {
+                $matchedUser = Database::fetch("SELECT id FROM users WHERE name LIKE ? LIMIT 1", ["%{$responsiblePerson}%"]);
+                if ($matchedUser) {
+                    $responsibleUserId = (int)$matchedUser['id'];
+                }
+            }
+            if (!$responsibleUserId) {
+                $responsibleUserId = Auth::id() ?: 1;
+            }
+
             $subId = Database::insert('projects', [
                 'parent_id'              => $parentId,
-                'project_code'           => $code,
                 'name'                   => trim($_POST['name']),
                 'description'            => trim($_POST['description'] ?? ''),
                 'fiscal_year_id'         => $parent['fiscal_year_id'],
                 'category_id'            => $parent['category_id'],
                 'department_id'          => $parent['department_id'],
-                'responsible_user_id'    => !empty($_POST['responsible_user_id']) ? (int)$_POST['responsible_user_id'] : Auth::id(),
+                'responsible_user_id'    => $responsibleUserId,
+                'responsible_person'     => $responsiblePerson ?: null,
                 'activity_type'          => trim($_POST['activity_type'] ?? ''),
                 'objective'              => trim($_POST['objective'] ?? ''),
                 'target_group'           => trim($_POST['target_group'] ?? ''),
@@ -103,7 +147,7 @@ class SubProjectController
             BudgetService::syncParentProjectBudget($parentId);
             ProgressService::syncParentProjectProgress($parentId);
 
-            AuditLogService::log('CREATE_SUBPROJECT', 'Project', $subId, null, ['code' => $code, 'name' => $_POST['name']]);
+            AuditLogService::log('CREATE_SUBPROJECT', 'Project', $subId, null, ['name' => $_POST['name']]);
             Session::flash('success', "เพิ่มโครงการย่อย '{$_POST['name']}' เรียบร้อยแล้ว");
             header('Location: ' . Router::url("/sub-projects/{$subId}"));
             exit;
@@ -244,7 +288,56 @@ class SubProjectController
             exit;
         }
 
+        $parent = Database::fetch("SELECT * FROM projects WHERE id = ?", [$project['parent_id']]);
+        $startDate = !empty($_POST['start_date']) ? trim($_POST['start_date']) : null;
+        $endDate = !empty($_POST['end_date']) ? trim($_POST['end_date']) : null;
+
+        if ($startDate && $endDate && $startDate > $endDate) {
+            Session::flash('error', 'วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุดของโครงการย่อย');
+            header('Location: ' . Router::url("/sub-projects/{$subId}"));
+            exit;
+        }
+
+        $parentStartDate = !empty($parent['start_date']) ? $parent['start_date'] : null;
+        $parentEndDate = !empty($parent['end_date']) ? $parent['end_date'] : null;
+
+        if ($parentStartDate && $startDate && $startDate < $parentStartDate) {
+            $formattedParentStart = date('d/m/', strtotime($parentStartDate)) . (date('Y', strtotime($parentStartDate)) + 543);
+            Session::flash('error', "วันที่เริ่มต้นของโครงการย่อยต้องเท่ากับหรือมากกว่าวันที่เริ่มต้นของโครงการหลัก ({$formattedParentStart})");
+            header('Location: ' . Router::url("/sub-projects/{$subId}"));
+            exit;
+        }
+
+        if ($parentEndDate && $endDate && $endDate > $parentEndDate) {
+            $formattedParentEnd = date('d/m/', strtotime($parentEndDate)) . (date('Y', strtotime($parentEndDate)) + 543);
+            Session::flash('error', "วันที่สิ้นสุดของโครงการย่อยต้องไม่เกินวันที่สิ้นสุดของโครงการหลัก ({$formattedParentEnd})");
+            header('Location: ' . Router::url("/sub-projects/{$subId}"));
+            exit;
+        }
+
         $newBudget = (float)$_POST['budget'];
+        $parent = Database::fetch("SELECT * FROM projects WHERE id = ?", [$project['parent_id']]);
+        $parentBudget = (float)($parent['budget'] ?? 0);
+        $otherSubsBudget = (float)Database::fetchColumn(
+            "SELECT COALESCE(SUM(budget), 0) FROM projects WHERE parent_id = ? AND id != ?",
+            [$project['parent_id'], $subId]
+        );
+        $maxAllowed = max(0, $parentBudget - $otherSubsBudget);
+        if ($parent && $newBudget > $maxAllowed) {
+            Session::flash('error', "งบประมาณโครงการย่อย (" . number_format($newBudget, 2) . " บาท) เกินกว่างบประมาณคงเหลือของโครงการหลักที่สามารถจัดสรรได้ (สามารถจัดสรรได้สูงสุด: " . number_format($maxAllowed, 2) . " บาท)");
+            header('Location: ' . Router::url("/sub-projects/{$subId}"));
+            exit;
+        }
+        $responsiblePerson = isset($_POST['responsible_person']) ? trim($_POST['responsible_person']) : ($project['responsible_person'] ?? '');
+        $responsibleUserId = $project['responsible_user_id'];
+        if (!empty($_POST['responsible_user_id'])) {
+            $responsibleUserId = (int)$_POST['responsible_user_id'];
+        } elseif (!empty($responsiblePerson)) {
+            $matchedUser = Database::fetch("SELECT id FROM users WHERE name LIKE ? LIMIT 1", ["%{$responsiblePerson}%"]);
+            if ($matchedUser) {
+                $responsibleUserId = (int)$matchedUser['id'];
+            }
+        }
 
         Database::update('projects', [
             'name'                   => trim($_POST['name']),
@@ -255,7 +348,8 @@ class SubProjectController
             'target_quantity'        => (int)($_POST['target_quantity'] ?? 0),
             'location'               => trim($_POST['location'] ?? ''),
             'methodology'            => trim($_POST['methodology'] ?? ''),
-            'responsible_user_id'    => !empty($_POST['responsible_user_id']) ? (int)$_POST['responsible_user_id'] : $project['responsible_user_id'],
+            'responsible_user_id'    => $responsibleUserId,
+            'responsible_person'     => $responsiblePerson ?: null,
             'start_date'             => $_POST['start_date'],
             'end_date'               => $_POST['end_date'],
             'budget'                 => $newBudget,

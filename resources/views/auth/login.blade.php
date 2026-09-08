@@ -218,7 +218,8 @@ $success = Session::flash('success');
                                    class="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none text-slate-800 shadow-soft-sm font-mono">
                             <button type="button" @click="showPassword = !showPassword" 
                                     class="text-slate-400 hover:text-slate-600 absolute right-3.5 top-1/2 -translate-y-1/2">
-                                <i :data-lucide="showPassword ? 'eye-off' : 'eye'" class="w-4 h-4"></i>
+                                <i x-show="!showPassword" data-lucide="eye" class="w-4 h-4"></i>
+                                <i x-show="showPassword" x-cloak data-lucide="eye-off" class="w-4 h-4"></i>
                             </button>
                         </div>
                     </div>
