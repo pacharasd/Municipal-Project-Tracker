@@ -359,7 +359,7 @@ $tierNotStartedPct = round(($tierNotStarted / $subCount) * 100, 1);
     <!-- 4. Row 3: โครงการตามหน่วยงาน (ซ้าย) & ความก้าวหน้าโครงการ (ขวา) -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 w-full max-w-full">
 
-        <!-- กราฟที่ 3: โครงการตามประเภท (Project Categories Horizontal Bar Chart) -->
+        <!-- กราฟที่ 3: แนวโน้มการเบิกจ่ายงบประมาณ (Disbursement Trend Line Chart) -->
         <div class="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between w-full max-w-full min-w-0 overflow-hidden">
             <div>
                 <!-- Title Header -->
@@ -367,38 +367,58 @@ $tierNotStartedPct = round(($tierNotStarted / $subCount) * 100, 1);
                     <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-2">
                             <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                                <i data-lucide="shapes" class="w-4 h-4"></i>
+                                <i data-lucide="trending-up" class="w-4 h-4"></i>
                             </div>
-                            <h2 class="text-base font-bold text-slate-900 dark:text-white font-heading truncate">โครงการตามประเภท</h2>
+                            <h2 class="text-base font-bold text-slate-900 dark:text-white font-heading truncate">แนวโน้มการเบิกจ่ายงบประมาณ</h2>
                         </div>
-                        <div class="text-[11px] text-slate-400 mt-0.5 truncate">สัดส่วนโครงการและงบประมาณตามประเภท 1 - 8 (กปท.)</div>
+                        <div class="text-[11px] text-slate-400 mt-0.5 truncate">ไทม์ไลน์การเบิกจ่ายรายเดือนรอบปีงบประมาณ (ต.ค. - ก.ย.)</div>
                     </div>
-                    <!-- Right Legend Pills (Clean, no text wrapping) -->
+                    <!-- Right Legend Pills -->
                     <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-semibold whitespace-nowrap border border-emerald-200/60 dark:border-emerald-500/20 shadow-xs">
                             <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                            โครงการหลัก
+                            ยอดเบิกสะสม
                         </span>
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 text-xs font-semibold whitespace-nowrap border border-blue-200/60 dark:border-blue-500/20 shadow-xs">
                             <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                            โครงการย่อย
+                            ประจำเดือน
                         </span>
                     </div>
                 </div>
 
-                <!-- Horizontal Grouped Bar Chart Canvas -->
-                <div class="h-64 sm:h-72 relative w-full max-w-full overflow-hidden pt-2">
-                    <canvas id="categoryBarChart" class="w-full h-full block"></canvas>
+                <!-- Smooth Gradient Area Line Chart Canvas -->
+                <div class="h-60 sm:h-64 relative w-full max-w-full overflow-hidden pt-1">
+                    <canvas id="disbursementTrendChart" class="w-full h-full block"></canvas>
                 </div>
             </div>
 
-            <!-- Footer Timestamp -->
-            <?php 
-                $catWithProj = count(array_filter($stats['category_data'] ?? [], fn($c) => (int)($c['project_count'] ?? 0) > 0)); 
-            ?>
-            <div class="pt-3 mt-4 border-t border-slate-100 dark:border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] text-slate-400 dark:text-slate-500">
-                <span>มีโครงการดำเนินการ: <?= $catWithProj ?> จาก 8 ประเภท | โครงการหลักรวม: <?= (int)$stats['main_total'] ?> โครงการ</span>
-                <span>ข้อมูล ณ วันที่ <?= $currentDateThai ?></span>
+            <!-- Footer: 4 Quarters Breakdown Pills -->
+            <div class="pt-3 mt-3 border-t border-slate-100 dark:border-white/[0.06] space-y-2">
+                <div class="grid grid-cols-4 gap-1.5 sm:gap-2 text-center">
+                    <?php 
+                        $quarters = $stats['quarter_summary'] ?? [
+                            'Q1' => ['label' => 'Q1 (ต.ค.-ธ.ค.)', 'amount' => 0, 'pct' => 0],
+                            'Q2' => ['label' => 'Q2 (ม.ค.-มี.ค.)', 'amount' => 0, 'pct' => 0],
+                            'Q3' => ['label' => 'Q3 (เม.ย.-มิ.ย.)', 'amount' => 0, 'pct' => 0],
+                            'Q4' => ['label' => 'Q4 (ก.ค.-ก.ย.)', 'amount' => 0, 'pct' => 0],
+                        ];
+                    ?>
+                    <?php foreach ($quarters as $qKey => $qData): ?>
+                        <div class="p-2 rounded-xl bg-slate-50/80 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.04]">
+                            <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400"><?= $qKey ?></div>
+                            <div class="text-xs font-bold font-mono text-slate-900 dark:text-white mt-0.5">
+                                <?= number_format($qData['amount']) ?>
+                            </div>
+                            <div class="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400 font-mono">
+                                <?= $qData['pct'] ?>%
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <div class="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 px-1 pt-1">
+                    <span>เบิกจ่ายสะสม: <?= number_format($stats['total_disbursed']) ?> บ. (<?= number_format($stats['disbursement_pct'], 1) ?>%)</span>
+                    <span>ข้อมูล ณ วันที่ <?= $currentDateThai ?></span>
+                </div>
             </div>
         </div>
 
@@ -851,113 +871,95 @@ function renderDashboardCharts(isThemeChange = false) {
     }
 
     // -------------------------------------------------------------
-    // กราฟที่ 3: โครงการตามประเภท (Project Categories Horizontal Bar Chart)
+    // กราฟที่ 3: แนวโน้มการเบิกจ่ายงบประมาณ (Disbursement Trend Line Chart)
     // -------------------------------------------------------------
     try {
-        const catCanvas = document.getElementById('categoryBarChart');
-        const catData = <?= json_encode($stats['category_data'] ?? [], JSON_UNESCAPED_UNICODE) ?>;
-        if (catCanvas && catData && catData.length > 0) {
-            const catCtx = catCanvas.getContext('2d');
+        const trendCanvas = document.getElementById('disbursementTrendChart');
+        const timelineData = <?= json_encode($stats['disbursement_timeline'] ?? [], JSON_UNESCAPED_UNICODE) ?>;
+        if (trendCanvas && timelineData && timelineData.length > 0) {
+            const trendCtx = trendCanvas.getContext('2d');
             const isMobile = window.innerWidth < 640;
 
-            const labels = catData.map(c => c.short_name || ('ประเภท ' + c.id));
-            const mainCounts = catData.map(c => parseInt(c.project_count || 0));
-            const subCounts = catData.map(c => parseInt(c.sub_project_count || 0));
+            const labels = timelineData.map(d => d.name);
+            const cumulativeData = timelineData.map(d => parseFloat(d.cumulative || 0));
+            const monthlyData = timelineData.map(d => parseFloat(d.monthly || 0));
 
-            // Gradients for Main Projects (Emerald)
-            const mainGrad = catCtx.createLinearGradient(0, 0, 300, 0);
-            mainGrad.addColorStop(0, '#059669');
-            mainGrad.addColorStop(1, '#10b981');
+            // Area Gradient for Cumulative Line (Emerald)
+            const cumAreaGrad = trendCtx.createLinearGradient(0, 0, 0, 220);
+            cumAreaGrad.addColorStop(0, isDark ? 'rgba(16, 185, 129, 0.35)' : 'rgba(16, 185, 129, 0.22)');
+            cumAreaGrad.addColorStop(1, isDark ? 'rgba(16, 185, 129, 0.0)' : 'rgba(16, 185, 129, 0.0)');
 
-            const mainHoverGrad = catCtx.createLinearGradient(0, 0, 300, 0);
-            mainHoverGrad.addColorStop(0, '#10b981');
-            mainHoverGrad.addColorStop(1, '#34d399');
+            // Gradient for Monthly Bar (Blue)
+            const monthlyBarGrad = trendCtx.createLinearGradient(0, 0, 0, 220);
+            monthlyBarGrad.addColorStop(0, 'rgba(59, 130, 246, 0.7)');
+            monthlyBarGrad.addColorStop(1, 'rgba(37, 99, 235, 0.2)');
 
-            // Gradients for Sub Projects (Blue)
-            const subGrad = catCtx.createLinearGradient(0, 0, 300, 0);
-            subGrad.addColorStop(0, '#2563eb');
-            subGrad.addColorStop(1, '#60a5fa');
-
-            const subHoverGrad = catCtx.createLinearGradient(0, 0, 300, 0);
-            subHoverGrad.addColorStop(0, '#3b82f6');
-            subHoverGrad.addColorStop(1, '#93c5fd');
-
-            // Custom Plugin: แสดงตัวเลขโครงการกำกับที่ปลายแท่งกราฟเมื่อมีโครงการ
-            const categoryValueLabelsPlugin = {
-                id: 'categoryValueLabels',
-                afterDatasetsDraw(chart) {
-                    const { ctx } = chart;
-                    chart.data.datasets.forEach((dataset, datasetIndex) => {
-                        const meta = chart.getDatasetMeta(datasetIndex);
-                        if (!meta.hidden) {
-                            meta.data.forEach((element, index) => {
-                                const val = dataset.data[index];
-                                if (val > 0) {
-                                    ctx.save();
-                                    ctx.font = 'bold ' + (isMobile ? '9.5px' : '10.5px') + " 'Prompt', 'Sarabun', sans-serif";
-                                    ctx.fillStyle = datasetIndex === 0 
-                                        ? (isDark ? '#34d399' : '#059669') 
-                                        : (isDark ? '#60a5fa' : '#2563eb');
-                                    ctx.textAlign = 'left';
-                                    ctx.textBaseline = 'middle';
-                                    ctx.fillText(val.toString(), element.x + 5, element.y);
-                                    ctx.restore();
-                                }
-                            });
-                        }
-                    });
+            // Format Currency Helper
+            const formatCurrency = (val) => {
+                if (val >= 1000000) {
+                    return (val / 1000000).toLocaleString('th-TH', { maximumFractionDigits: 1 }) + 'M';
                 }
+                if (val >= 1000) {
+                    return (val / 1000).toLocaleString('th-TH', { maximumFractionDigits: 0 }) + 'k';
+                }
+                return val.toLocaleString('th-TH');
             };
 
-            const maxCount = Math.max(...mainCounts, ...subCounts, 1);
-
-            new Chart(catCanvas, {
-                type: 'bar',
+            new Chart(trendCtx, {
                 data: {
                     labels: labels,
                     datasets: [
                         {
-                            label: 'โครงการหลัก',
-                            data: mainCounts,
-                            backgroundColor: mainGrad,
-                            hoverBackgroundColor: mainHoverGrad,
-                            borderRadius: { topRight: 6, bottomRight: 6, topLeft: 2, bottomLeft: 2 },
-                            borderSkipped: false,
-                            barPercentage: 0.75,
-                            categoryPercentage: 0.82
+                            type: 'line',
+                            label: 'ยอดเบิกสะสม',
+                            data: cumulativeData,
+                            borderColor: isDark ? '#34d399' : '#059669',
+                            backgroundColor: cumAreaGrad,
+                            borderWidth: 2.5,
+                            tension: 0.35,
+                            fill: true,
+                            pointBackgroundColor: isDark ? '#34d399' : '#10b981',
+                            pointBorderColor: isDark ? '#161922' : '#ffffff',
+                            pointBorderWidth: 2,
+                            pointRadius: isMobile ? 3 : 4,
+                            pointHoverRadius: 6,
+                            order: 1
                         },
                         {
-                            label: 'โครงการย่อย',
-                            data: subCounts,
-                            backgroundColor: subGrad,
-                            hoverBackgroundColor: subHoverGrad,
-                            borderRadius: { topRight: 6, bottomRight: 6, topLeft: 2, bottomLeft: 2 },
-                            borderSkipped: false,
-                            barPercentage: 0.75,
-                            categoryPercentage: 0.82
+                            type: 'bar',
+                            label: 'ประจำเดือน',
+                            data: monthlyData,
+                            backgroundColor: monthlyBarGrad,
+                            borderColor: isDark ? '#60a5fa' : '#3b82f6',
+                            borderWidth: 1,
+                            borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
+                            barPercentage: 0.45,
+                            order: 2
                         }
                     ]
                 },
-                plugins: [categoryValueLabelsPlugin],
                 options: {
-                    indexAxis: 'y', // แนวนอน
                     responsive: true,
                     maintainAspectRatio: false,
                     layout: {
                         padding: {
-                            top: 4,
-                            bottom: 4,
-                            left: 4,
-                            right: isMobile ? 32 : 44
+                            top: 14,
+                            bottom: 2,
+                            left: 2,
+                            right: 6
                         }
                     },
                     animation: isThemeChange ? false : {
-                        duration: 350,
+                        duration: 400,
                         easing: 'easeOutQuad'
+                    },
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
                     },
                     plugins: {
                         legend: {
-                            display: false // มี Custom Pill บนหัวการ์ดแล้ว
+                            display: false
                         },
                         tooltip: {
                             backgroundColor: tooltipBg,
@@ -971,37 +973,33 @@ function renderDashboardCharts(isThemeChange = false) {
                             callbacks: {
                                 title: (items) => {
                                     const idx = items[0]?.dataIndex;
-                                    const c = catData[idx];
-                                    return c ? c.name : '';
+                                    const d = timelineData[idx];
+                                    return d ? `${d.full_name} (${d.quarter})` : '';
                                 },
                                 label: (context) => {
-                                    const val = context.parsed.x || 0;
+                                    const val = context.parsed.y || 0;
                                     const label = context.dataset.label || '';
-                                    return ` ${label}: ${val} โครงการ`;
+                                    return ` ${label}: ${val.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`;
                                 },
                                 afterBody: (items) => {
                                     const idx = items[0]?.dataIndex;
-                                    const c = catData[idx];
-                                    if (!c) return [];
-                                    const budget = parseFloat(c.total_budget || 0);
-                                    const disbursed = parseFloat(c.total_disbursed || 0);
+                                    const d = timelineData[idx];
+                                    if (!d) return [];
                                     return [
-                                        `งบประมาณรวม: ${budget.toLocaleString('th-TH')} บาท`,
-                                        `ยอดเบิกจ่าย: ${disbursed.toLocaleString('th-TH')} บาท`
+                                        `คิดเป็น: ${d.cum_pct}% ของงบประมาณรวม`
                                     ];
                                 }
                             }
                         }
                     },
                     scales: {
-                        x: {
+                        y: {
                             beginAtZero: true,
-                            suggestedMax: maxCount + (maxCount < 5 ? 1 : 2),
+                            grace: '15%',
                             ticks: {
-                                stepSize: 1,
-                                precision: 0,
                                 color: tickColor,
-                                font: { family: "'Prompt', 'Sarabun', sans-serif", size: isMobile ? 9.5 : 10.5 }
+                                font: { family: "'Prompt', 'Sarabun', sans-serif", size: isMobile ? 9.5 : 10.5 },
+                                callback: (val) => formatCurrency(val)
                             },
                             grid: {
                                 color: gridColor
@@ -1010,13 +1008,15 @@ function renderDashboardCharts(isThemeChange = false) {
                                 display: false
                             }
                         },
-                        y: {
+                        x: {
                             ticks: {
                                 color: labelColor,
+                                maxRotation: 0,
+                                minRotation: 0,
                                 font: {
                                     family: "'Prompt', 'Sarabun', sans-serif",
-                                    size: isMobile ? 9.5 : 11,
-                                    weight: '600'
+                                    size: isMobile ? 9.5 : 10.5,
+                                    weight: '500'
                                 },
                                 padding: 6
                             },
@@ -1030,7 +1030,7 @@ function renderDashboardCharts(isThemeChange = false) {
             });
         }
     } catch (err) {
-        console.error('Error creating Category Bar Chart:', err);
+        console.error('Error creating Disbursement Trend Chart:', err);
     }
 }
 
@@ -1056,7 +1056,7 @@ window.addEventListener('load', () => scheduleDashboardChartsInit(false));
 if (!window._dashboardThemeListenerAttached) {
     window._dashboardThemeListenerAttached = true;
     window.addEventListener('theme-changed', function() {
-        if (document.getElementById('statusDonutChart') || document.getElementById('budgetDonutChart') || document.getElementById('categoryBarChart')) {
+        if (document.getElementById('statusDonutChart') || document.getElementById('budgetDonutChart') || document.getElementById('disbursementTrendChart')) {
             scheduleDashboardChartsInit(true);
         }
     });

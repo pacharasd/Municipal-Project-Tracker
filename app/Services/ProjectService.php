@@ -389,25 +389,92 @@ class ProjectService
              ORDER BY fy.year ASC"
         );
 
+        // 7. Monthly Disbursement Timeline & Quarters (Disbursement Trend Line Chart)
+        $disbSql = "SELECT MONTH(d.disbursement_date) as month_num,
+                           COALESCE(SUM(d.amount), 0) as total_amount
+                    FROM budget_disbursements d
+                    INNER JOIN projects p ON d.project_id = p.id
+                    LEFT JOIN projects parent ON p.parent_id = parent.id";
+        $disbParams = [];
+        if ($fiscalYearId !== null) {
+            $disbSql .= " WHERE (p.fiscal_year_id = ? OR parent.fiscal_year_id = ?)";
+            $disbParams = [$fiscalYearId, $fiscalYearId];
+        }
+        $disbSql .= " GROUP BY MONTH(d.disbursement_date)";
+        $disbRows = Database::query($disbSql, $disbParams);
+
+        $monthAmountMap = [];
+        foreach ($disbRows as $r) {
+            $monthAmountMap[(int)$r['month_num']] = (float)$r['total_amount'];
+        }
+
+        $fiscalMonthsMeta = [
+            ['name' => 'ต.ค.', 'full_name' => 'ตุลาคม', 'quarter' => 'Q1', 'month_num' => 10],
+            ['name' => 'พ.ย.', 'full_name' => 'พฤศจิกายน', 'quarter' => 'Q1', 'month_num' => 11],
+            ['name' => 'ธ.ค.', 'full_name' => 'ธันวาคม', 'quarter' => 'Q1', 'month_num' => 12],
+            ['name' => 'ม.ค.', 'full_name' => 'มกราคม', 'quarter' => 'Q2', 'month_num' => 1],
+            ['name' => 'ก.พ.', 'full_name' => 'กุมภาพันธ์', 'quarter' => 'Q2', 'month_num' => 2],
+            ['name' => 'มี.ค.', 'full_name' => 'มีนาคม', 'quarter' => 'Q2', 'month_num' => 3],
+            ['name' => 'เม.ย.', 'full_name' => 'เมษายน', 'quarter' => 'Q3', 'month_num' => 4],
+            ['name' => 'พ.ค.', 'full_name' => 'พฤษภาคม', 'quarter' => 'Q3', 'month_num' => 5],
+            ['name' => 'มิ.ย.', 'full_name' => 'มิถุนายน', 'quarter' => 'Q3', 'month_num' => 6],
+            ['name' => 'ก.ค.', 'full_name' => 'กรกฎาคม', 'quarter' => 'Q4', 'month_num' => 7],
+            ['name' => 'ส.ค.', 'full_name' => 'สิงหาคม', 'quarter' => 'Q4', 'month_num' => 8],
+            ['name' => 'ก.ย.', 'full_name' => 'กันยายน', 'quarter' => 'Q4', 'month_num' => 9],
+        ];
+
+        $disbursementTimeline = [];
+        $quarterSummary = [
+            'Q1' => ['label' => 'Q1 (ต.ค.-ธ.ค.)', 'amount' => 0.0, 'pct' => 0.0],
+            'Q2' => ['label' => 'Q2 (ม.ค.-มี.ค.)', 'amount' => 0.0, 'pct' => 0.0],
+            'Q3' => ['label' => 'Q3 (เม.ย.-มิ.ย.)', 'amount' => 0.0, 'pct' => 0.0],
+            'Q4' => ['label' => 'Q4 (ก.ค.-ก.ย.)', 'amount' => 0.0, 'pct' => 0.0],
+        ];
+
+        $runningCumulative = 0.0;
+        foreach ($fiscalMonthsMeta as $m) {
+            $monthNum = $m['month_num'];
+            $monthlyAmt = (float)($monthAmountMap[$monthNum] ?? 0.0);
+            $runningCumulative += $monthlyAmt;
+            $quarter = $m['quarter'];
+            $quarterSummary[$quarter]['amount'] += $monthlyAmt;
+
+            $disbursementTimeline[] = [
+                'name'         => $m['name'],
+                'full_name'    => $m['full_name'],
+                'quarter'      => $quarter,
+                'monthly'      => $monthlyAmt,
+                'cumulative'   => $runningCumulative,
+                'cum_pct'      => $totalBudget > 0 ? round(($runningCumulative / $totalBudget) * 100, 2) : 0.0,
+            ];
+        }
+
+        foreach ($quarterSummary as &$q) {
+            $q['pct'] = $totalBudget > 0 ? round(($q['amount'] / $totalBudget) * 100, 2) : 0.0;
+        }
+        unset($q);
+
         return [
-            'main_total'         => $mainTotal,
-            'sub_total'          => $subTotal,
-            'not_started'        => $notStarted,
-            'in_progress'        => $inProgress,
-            'completed'          => $completed,
-            'has_problem'        => $hasProblem,
-            'cancelled'          => $cancelled,
-            'total_budget'       => $totalBudget,
-            'total_disbursed'    => $totalDisbursed,
-            'total_remaining'    => $totalRemaining,
-            'disbursement_pct'   => $disbursementPct,
-            'avg_progress'       => round($avgProgress, 2),
-            'department_data'    => $deptData,
-            'fiscal_year_data'   => $fiscalYearData,
-            'main_projects_data' => $mainProjectsData,
-            'category_data'      => $catData,
-            'top_projects'       => $topProjects,
-            'bottom_projects'    => $bottomProjects,
+            'main_total'            => $mainTotal,
+            'sub_total'             => $subTotal,
+            'not_started'           => $notStarted,
+            'in_progress'           => $inProgress,
+            'completed'             => $completed,
+            'has_problem'           => $hasProblem,
+            'cancelled'             => $cancelled,
+            'total_budget'          => $totalBudget,
+            'total_disbursed'       => $totalDisbursed,
+            'total_remaining'       => $totalRemaining,
+            'disbursement_pct'      => $disbursementPct,
+            'avg_progress'          => round($avgProgress, 2),
+            'department_data'       => $deptData,
+            'fiscal_year_data'      => $fiscalYearData,
+            'main_projects_data'    => $mainProjectsData,
+            'category_data'         => $catData,
+            'disbursement_timeline' => $disbursementTimeline,
+            'quarter_summary'       => $quarterSummary,
+            'top_projects'          => $topProjects,
+            'bottom_projects'       => $bottomProjects,
         ];
     }
 }
