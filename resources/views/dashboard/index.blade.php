@@ -387,38 +387,15 @@ $tierNotStartedPct = round(($tierNotStarted / $subCount) * 100, 1);
                 </div>
 
                 <!-- Smooth Gradient Area Line Chart Canvas -->
-                <div class="h-60 sm:h-64 relative w-full max-w-full overflow-hidden pt-1">
+                <div class="h-64 sm:h-[270px] relative w-full max-w-full overflow-hidden pt-1">
                     <canvas id="disbursementTrendChart" class="w-full h-full block"></canvas>
                 </div>
             </div>
 
-            <!-- Footer: 4 Quarters Breakdown Pills -->
-            <div class="pt-3 mt-3 border-t border-slate-100 dark:border-white/[0.06] space-y-2">
-                <div class="grid grid-cols-4 gap-1.5 sm:gap-2 text-center">
-                    <?php 
-                        $quarters = $stats['quarter_summary'] ?? [
-                            'Q1' => ['label' => 'Q1 (ต.ค.-ธ.ค.)', 'amount' => 0, 'pct' => 0],
-                            'Q2' => ['label' => 'Q2 (ม.ค.-มี.ค.)', 'amount' => 0, 'pct' => 0],
-                            'Q3' => ['label' => 'Q3 (เม.ย.-มิ.ย.)', 'amount' => 0, 'pct' => 0],
-                            'Q4' => ['label' => 'Q4 (ก.ค.-ก.ย.)', 'amount' => 0, 'pct' => 0],
-                        ];
-                    ?>
-                    <?php foreach ($quarters as $qKey => $qData): ?>
-                        <div class="p-2 rounded-xl bg-slate-50/80 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.04]">
-                            <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400"><?= $qKey ?></div>
-                            <div class="text-xs font-bold font-mono text-slate-900 dark:text-white mt-0.5">
-                                <?= number_format($qData['amount']) ?>
-                            </div>
-                            <div class="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400 font-mono">
-                                <?= $qData['pct'] ?>%
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-                <div class="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 px-1 pt-1">
-                    <span>เบิกจ่ายสะสม: <?= number_format($stats['total_disbursed']) ?> บ. (<?= number_format($stats['disbursement_pct'], 1) ?>%)</span>
-                    <span>ข้อมูล ณ วันที่ <?= $currentDateThai ?></span>
-                </div>
+            <!-- Footer Timestamp -->
+            <div class="pt-3 mt-4 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+                <span>เบิกจ่ายสะสม: <?= number_format($stats['total_disbursed']) ?> บาท (<?= number_format($stats['disbursement_pct'], 1) ?>%)</span>
+                <span>ข้อมูล ณ วันที่ <?= $currentDateThai ?></span>
             </div>
         </div>
 
