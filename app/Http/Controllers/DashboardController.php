@@ -10,8 +10,25 @@ class DashboardController
 {
     public function index(): void
     {
-        $stats = ProjectService::getDashboardStats();
-        $watchlist = ProjectService::getWatchlist();
+        $fiscalYears = \App\Services\FiscalYearService::getAll();
+        $activeYear = \App\Services\FiscalYearService::getActiveYear();
+
+        // Determine selected fiscal year
+        $rawYearParam = $_GET['fiscal_year_id'] ?? null;
+        if ($rawYearParam === null) {
+            // Default to active fiscal year if not provided in URL
+            $selectedYearId = $activeYear ? (int)$activeYear['id'] : 'all';
+            $filterYearId = $activeYear ? (int)$activeYear['id'] : null;
+        } elseif ($rawYearParam === 'all') {
+            $selectedYearId = 'all';
+            $filterYearId = null;
+        } else {
+            $selectedYearId = (int)$rawYearParam;
+            $filterYearId = $selectedYearId;
+        }
+
+        $stats = ProjectService::getDashboardStats($filterYearId);
+        $watchlist = ProjectService::getWatchlist($filterYearId);
         $recentAudit = Database::query(
             "SELECT a.*, u.name as user_name, r.display_name as role_label 
              FROM audit_logs a 
@@ -20,11 +37,9 @@ class DashboardController
              ORDER BY a.id DESC LIMIT 6"
         );
 
-        $fiscalYears = \App\Services\FiscalYearService::getAll();
         $departments = Database::query("SELECT * FROM departments ORDER BY id ASC");
 
-        $subProjects = Database::query(
-            "SELECT s.id, s.name, s.parent_id, s.budget, s.disbursed_amount, s.progress, s.status, s.start_date, s.end_date,
+        $subProjectSql = "SELECT s.id, s.name, s.parent_id, s.budget, s.disbursed_amount, s.progress, s.status, s.start_date, s.end_date,
                     parent.name as parent_name,
                     d.name as department_name,
                     u.name as responsible_name,
@@ -34,25 +49,36 @@ class DashboardController
              INNER JOIN projects parent ON s.parent_id = parent.id
              LEFT JOIN departments d ON s.department_id = d.id
              LEFT JOIN users u ON s.responsible_user_id = u.id
-             WHERE s.parent_id IS NOT NULL
-             ORDER BY s.id ASC"
-        );
+             WHERE s.parent_id IS NOT NULL";
+        $subParams = [];
+        if ($filterYearId !== null) {
+            $subProjectSql .= " AND (s.fiscal_year_id = ? OR parent.fiscal_year_id = ?)";
+            $subParams = [$filterYearId, $filterYearId];
+        }
+        $subProjectSql .= " ORDER BY s.id ASC";
+        $subProjects = Database::query($subProjectSql, $subParams);
 
-        $latestProjects = Database::query(
-            "SELECT s.id, s.name, s.budget, s.progress, s.status, s.updated_at, s.created_at,
+        $latestSql = "SELECT s.id, s.name, s.budget, s.progress, s.status, s.updated_at, s.created_at,
                     d.name as department_name
              FROM projects s
              INNER JOIN projects parent ON s.parent_id = parent.id
              LEFT JOIN departments d ON s.department_id = d.id
-             WHERE s.parent_id IS NOT NULL
-             ORDER BY s.id DESC LIMIT 5"
-        );
+             WHERE s.parent_id IS NOT NULL";
+        $latestParams = [];
+        if ($filterYearId !== null) {
+            $latestSql .= " AND (s.fiscal_year_id = ? OR parent.fiscal_year_id = ?)";
+            $latestParams = [$filterYearId, $filterYearId];
+        }
+        $latestSql .= " ORDER BY s.id DESC LIMIT 5";
+        $latestProjects = Database::query($latestSql, $latestParams);
 
         View::render('dashboard.index', [
             'stats'          => $stats,
             'watchlist'      => $watchlist,
             'recentAudit'    => $recentAudit,
             'fiscalYears'    => $fiscalYears,
+            'activeYear'     => $activeYear,
+            'selectedYearId' => $selectedYearId,
             'departments'    => $departments,
             'subProjects'    => $subProjects,
             'latestProjects' => $latestProjects,
@@ -61,7 +87,12 @@ class DashboardController
 
     public function statsJson(): void
     {
-        $stats = ProjectService::getDashboardStats();
+        $rawYearParam = $_GET['fiscal_year_id'] ?? null;
+        $filterYearId = null;
+        if ($rawYearParam !== null && $rawYearParam !== 'all') {
+            $filterYearId = (int)$rawYearParam;
+        }
+        $stats = ProjectService::getDashboardStats($filterYearId);
         View::json($stats);
     }
 }

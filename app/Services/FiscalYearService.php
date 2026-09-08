@@ -53,10 +53,91 @@ class FiscalYearService
                 }
             }
 
-            // ซิงค์ is_active ให้เป็นปีงบประมาณปัจจุบัน
-            Database::execute("UPDATE fiscal_years SET is_active = IF(year = ?, 1, 0)", [$currentFiscalYear]);
+            // ซิงค์ is_active เริ่มต้นหากยังไม่มีปีใดเป็น active เลย
+            $hasActive = (int)Database::fetchColumn("SELECT COUNT(*) FROM fiscal_years WHERE is_active = 1");
+            if ($hasActive === 0) {
+                Database::execute("UPDATE fiscal_years SET is_active = IF(year = ?, 1, 0)", [$currentFiscalYear]);
+            }
         } catch (Exception $e) {
             error_log("FiscalYearService ensureFiscalYears error: " . $e->getMessage());
         }
+    }
+
+    /**
+     * ดึงข้อมูลปีงบประมาณที่เป็นปีปัจจุบัน (is_active = 1)
+     */
+    public static function getActiveYear(): ?array
+    {
+        $year = Database::fetch("SELECT * FROM fiscal_years WHERE is_active = 1 LIMIT 1");
+        if (!$year) {
+            $currentYear = self::getCurrentFiscalYear();
+            $year = Database::fetch("SELECT * FROM fiscal_years WHERE year = ? LIMIT 1", [$currentYear]);
+        }
+        if (!$year) {
+            $year = Database::fetch("SELECT * FROM fiscal_years ORDER BY year DESC LIMIT 1");
+        }
+        return $year;
+    }
+
+    /**
+     * กำหนดให้ปีงบประมาณที่ระบุเป็นปีปัจจุบัน (is_active = 1)
+     */
+    public static function setActiveYear(int $id): bool
+    {
+        return Database::transaction(function () use ($id) {
+            Database::execute("UPDATE fiscal_years SET is_active = 0");
+            Database::execute("UPDATE fiscal_years SET is_active = 1 WHERE id = ?", [$id]);
+            return true;
+        });
+    }
+
+    /**
+     * ดึงข้อมูลปีงบประมาณทั้งหมดพร้อมสถิติจำนวนโครงการและงบประมาณ
+     */
+    public static function getYearsWithStats(): array
+    {
+        self::ensureFiscalYears();
+        $sql = "SELECT fy.*,
+                       COUNT(p.id) as project_count,
+                       COALESCE(SUM(p.budget), 0) as total_budget,
+                       COALESCE(SUM(p.disbursed_amount), 0) as total_disbursed,
+                       (SELECT COUNT(*) FROM projects s 
+                        WHERE s.parent_id IS NOT NULL 
+                          AND s.parent_id IN (SELECT m.id FROM projects m WHERE m.fiscal_year_id = fy.id AND m.parent_id IS NULL)
+                       ) as sub_project_count
+                FROM fiscal_years fy
+                LEFT JOIN projects p ON fy.id = p.fiscal_year_id AND p.parent_id IS NULL
+                GROUP BY fy.id, fy.year, fy.is_active, fy.start_date, fy.end_date, fy.created_at, fy.updated_at
+                ORDER BY fy.year DESC";
+        return Database::query($sql);
+    }
+
+    /**
+     * สร้างปีงบประมาณใหม่
+     */
+    public static function createYear(int $year, ?string $startDate = null, ?string $endDate = null): int
+    {
+        $ceYear = $year - 543;
+        $start = $startDate ?: (($ceYear - 1) . "-10-01");
+        $end = $endDate ?: ($ceYear . "-09-30");
+
+        return Database::insert('fiscal_years', [
+            'year'       => $year,
+            'is_active'  => 0,
+            'start_date' => $start,
+            'end_date'   => $end,
+        ]);
+    }
+
+    /**
+     * อัปเดตช่วงเวลาของปีงบประมาณ
+     */
+    public static function updateYear(int $id, string $startDate, string $endDate): bool
+    {
+        Database::update('fiscal_years', [
+            'start_date' => $startDate,
+            'end_date'   => $endDate,
+        ], "id = ?", [$id]);
+        return true;
     }
 }

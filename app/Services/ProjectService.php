@@ -175,7 +175,7 @@ class ProjectService
         return $project;
     }
 
-    public static function getWatchlist(): array
+    public static function getWatchlist(?int $fiscalYearId = null): array
     {
         $respExpr = self::hasResponsiblePersonColumn()
             ? "COALESCE(NULLIF(p.responsible_person, ''), u.name, d.name)"
@@ -190,9 +190,16 @@ class ProjectService
                 LEFT JOIN departments parent_dept ON parent.department_id = parent_dept.id
                 LEFT JOIN users u ON p.responsible_user_id = u.id
                 WHERE p.parent_id IS NOT NULL 
-                  AND (p.status = 'has_problem' OR (p.end_date < CURDATE() AND p.status != 'completed'))
-                ORDER BY p.status = 'has_problem' DESC, p.end_date ASC";
-        return Database::query($sql);
+                  AND (p.status = 'has_problem' OR (p.end_date < CURDATE() AND p.status != 'completed'))";
+        
+        $params = [];
+        if ($fiscalYearId !== null) {
+            $sql .= " AND (p.fiscal_year_id = ? OR parent.fiscal_year_id = ?)";
+            $params = [$fiscalYearId, $fiscalYearId];
+        }
+
+        $sql .= " ORDER BY p.status = 'has_problem' DESC, p.end_date ASC";
+        return Database::query($sql, $params);
     }
 
     public static function reportProblem(int $projectId, string $problemDescription): bool
@@ -248,78 +255,110 @@ class ProjectService
         return true;
     }
 
-    public static function getDashboardStats(): array
+    public static function getDashboardStats(?int $fiscalYearId = null): array
     {
-        // 1. Overall stats
-        $mainTotal = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects WHERE parent_id IS NULL");
-        $subTotal  = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects s INNER JOIN projects p ON s.parent_id = p.id WHERE p.parent_id IS NULL");
+        // 1. Overall stats filters
+        $mainCond = "WHERE parent_id IS NULL";
+        $mainParams = [];
+        if ($fiscalYearId !== null) {
+            $mainCond .= " AND fiscal_year_id = ?";
+            $mainParams[] = $fiscalYearId;
+        }
+
+        $subBase = "FROM projects s INNER JOIN projects p ON s.parent_id = p.id WHERE p.parent_id IS NULL";
+        $subParams = [];
+        if ($fiscalYearId !== null) {
+            $subBase .= " AND (s.fiscal_year_id = ? OR p.fiscal_year_id = ?)";
+            $subParams = [$fiscalYearId, $fiscalYearId];
+        }
+
+        $mainTotal = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects {$mainCond}", $mainParams);
+        $subTotal  = (int)Database::fetchColumn("SELECT COUNT(*) {$subBase}", $subParams);
         
-        $notStarted = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects s INNER JOIN projects p ON s.parent_id = p.id WHERE p.parent_id IS NULL AND s.status = 'not_started'");
-        $inProgress = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects s INNER JOIN projects p ON s.parent_id = p.id WHERE p.parent_id IS NULL AND s.status = 'in_progress'");
-        $completed  = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects s INNER JOIN projects p ON s.parent_id = p.id WHERE p.parent_id IS NULL AND s.status = 'completed'");
-        $hasProblem = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects s INNER JOIN projects p ON s.parent_id = p.id WHERE p.parent_id IS NULL AND s.status = 'has_problem'");
-        $cancelled  = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects s INNER JOIN projects p ON s.parent_id = p.id WHERE p.parent_id IS NULL AND s.status = 'cancelled'");
+        $notStarted = (int)Database::fetchColumn("SELECT COUNT(*) {$subBase} AND s.status = 'not_started'", $subParams);
+        $inProgress = (int)Database::fetchColumn("SELECT COUNT(*) {$subBase} AND s.status = 'in_progress'", $subParams);
+        $completed  = (int)Database::fetchColumn("SELECT COUNT(*) {$subBase} AND s.status = 'completed'", $subParams);
+        $hasProblem = (int)Database::fetchColumn("SELECT COUNT(*) {$subBase} AND s.status = 'has_problem'", $subParams);
+        $cancelled  = (int)Database::fetchColumn("SELECT COUNT(*) {$subBase} AND s.status = 'cancelled'", $subParams);
 
         // Budgets
-        $budgetRow = Database::fetch("SELECT SUM(budget) as total_budget, SUM(disbursed_amount) as total_disbursed FROM projects WHERE parent_id IS NULL");
+        $budgetRow = Database::fetch("SELECT SUM(budget) as total_budget, SUM(disbursed_amount) as total_disbursed FROM projects {$mainCond}", $mainParams);
         $totalBudget = (float)($budgetRow['total_budget'] ?? 0);
         $totalDisbursed = (float)($budgetRow['total_disbursed'] ?? 0);
         $totalRemaining = $totalBudget - $totalDisbursed;
         $disbursementPct = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) * 100, 2) : 0.0;
 
         // Average progress
-        $avgProgress = (float)Database::fetchColumn("SELECT AVG(progress) FROM projects WHERE parent_id IS NULL");
+        $avgProgress = (float)Database::fetchColumn("SELECT AVG(progress) FROM projects {$mainCond}", $mainParams);
 
         // 2. Department Chart Data
-        $deptData = Database::query(
-            "SELECT d.name, 
-                    COUNT(s.id) as project_count, 
-                    COALESCE(SUM(s.budget), 0) as total_budget, 
-                    COALESCE(SUM(s.disbursed_amount), 0) as total_disbursed, 
-                    COALESCE(AVG(s.progress), 0) as avg_progress 
-             FROM departments d 
-             LEFT JOIN projects s ON d.id = s.department_id AND s.parent_id IS NOT NULL AND s.parent_id IN (SELECT id FROM projects WHERE parent_id IS NULL)
-             GROUP BY d.id, d.name ORDER BY project_count DESC, d.id ASC"
-        );
+        if ($fiscalYearId !== null) {
+            $deptSql = "SELECT d.name, 
+                               COUNT(s.id) as project_count, 
+                               COALESCE(SUM(s.budget), 0) as total_budget, 
+                               COALESCE(SUM(s.disbursed_amount), 0) as total_disbursed, 
+                               COALESCE(AVG(s.progress), 0) as avg_progress 
+                        FROM departments d 
+                        LEFT JOIN projects s ON d.id = s.department_id AND s.parent_id IS NOT NULL AND (s.fiscal_year_id = ? OR s.parent_id IN (SELECT id FROM projects WHERE parent_id IS NULL AND fiscal_year_id = ?))
+                        GROUP BY d.id, d.name ORDER BY project_count DESC, d.id ASC";
+            $deptData = Database::query($deptSql, [$fiscalYearId, $fiscalYearId]);
+        } else {
+            $deptSql = "SELECT d.name, 
+                               COUNT(s.id) as project_count, 
+                               COALESCE(SUM(s.budget), 0) as total_budget, 
+                               COALESCE(SUM(s.disbursed_amount), 0) as total_disbursed, 
+                               COALESCE(AVG(s.progress), 0) as avg_progress 
+                        FROM departments d 
+                        LEFT JOIN projects s ON d.id = s.department_id AND s.parent_id IS NOT NULL AND s.parent_id IN (SELECT id FROM projects WHERE parent_id IS NULL)
+                        GROUP BY d.id, d.name ORDER BY project_count DESC, d.id ASC";
+            $deptData = Database::query($deptSql);
+        }
 
         // 3. Category Distribution
-        $catData = Database::query(
-            "SELECT c.name, COUNT(p.id) as project_count, SUM(p.budget) as total_budget 
-             FROM project_categories c 
-             LEFT JOIN projects p ON c.id = p.category_id AND p.parent_id IS NULL
-             GROUP BY c.id, c.name ORDER BY project_count DESC"
-        );
+        if ($fiscalYearId !== null) {
+            $catSql = "SELECT c.name, COUNT(p.id) as project_count, COALESCE(SUM(p.budget), 0) as total_budget 
+                       FROM project_categories c 
+                       LEFT JOIN projects p ON c.id = p.category_id AND p.parent_id IS NULL AND p.fiscal_year_id = ?
+                       GROUP BY c.id, c.name ORDER BY project_count DESC";
+            $catData = Database::query($catSql, [$fiscalYearId]);
+        } else {
+            $catSql = "SELECT c.name, COUNT(p.id) as project_count, COALESCE(SUM(p.budget), 0) as total_budget 
+                       FROM project_categories c 
+                       LEFT JOIN projects p ON c.id = p.category_id AND p.parent_id IS NULL
+                       GROUP BY c.id, c.name ORDER BY project_count DESC";
+            $catData = Database::query($catSql);
+        }
 
         // 4. Top and Bottom sub-projects
-        $topProjects = Database::query(
-            "SELECT s.name, s.progress, s.status, s.budget 
-             FROM projects s 
-             INNER JOIN projects p ON s.parent_id = p.id 
-             WHERE p.parent_id IS NULL 
-             ORDER BY s.progress DESC LIMIT 4"
-        );
-        $bottomProjects = Database::query(
-            "SELECT s.name, s.progress, s.status, s.budget 
-             FROM projects s 
-             INNER JOIN projects p ON s.parent_id = p.id 
-             WHERE p.parent_id IS NULL 
-             ORDER BY s.progress ASC LIMIT 4"
-        );
+        $topSql = "SELECT s.name, s.progress, s.status, s.budget 
+                   FROM projects s 
+                   INNER JOIN projects p ON s.parent_id = p.id 
+                   WHERE p.parent_id IS NULL";
+        $topParams = [];
+        if ($fiscalYearId !== null) {
+            $topSql .= " AND (s.fiscal_year_id = ? OR p.fiscal_year_id = ?)";
+            $topParams = [$fiscalYearId, $fiscalYearId];
+        }
+        $topProjects = Database::query($topSql . " ORDER BY s.progress DESC LIMIT 4", $topParams);
+        $bottomProjects = Database::query($topSql . " ORDER BY s.progress ASC LIMIT 4", $topParams);
 
         // 5. Main Projects Progress Data for Dashboard Chart
-        $mainProjectsData = Database::query(
-            "SELECT p.id, p.name, p.progress, p.budget, p.disbursed_amount, p.status,
-                    d.name as department_name,
-                    COUNT(s.id) as sub_project_count
-             FROM projects p
-             LEFT JOIN departments d ON p.department_id = d.id
-             LEFT JOIN projects s ON s.parent_id = p.id
-             WHERE p.parent_id IS NULL
-             GROUP BY p.id, p.name, p.progress, p.budget, p.disbursed_amount, p.status, d.name
-             ORDER BY p.id ASC"
-        );
+        $mainProjectsSql = "SELECT p.id, p.name, p.progress, p.budget, p.disbursed_amount, p.status,
+                                   d.name as department_name,
+                                   COUNT(s.id) as sub_project_count
+                            FROM projects p
+                            LEFT JOIN departments d ON p.department_id = d.id
+                            LEFT JOIN projects s ON s.parent_id = p.id
+                            WHERE p.parent_id IS NULL";
+        $mainProjParams = [];
+        if ($fiscalYearId !== null) {
+            $mainProjectsSql .= " AND p.fiscal_year_id = ?";
+            $mainProjParams[] = $fiscalYearId;
+        }
+        $mainProjectsSql .= " GROUP BY p.id, p.name, p.progress, p.budget, p.disbursed_amount, p.status, d.name ORDER BY p.id ASC";
+        $mainProjectsData = Database::query($mainProjectsSql, $mainProjParams);
 
-        // 6. Fiscal Year Budget Data (for Yearly Budget Chart)
+        // 6. Fiscal Year Budget Data (for Yearly Budget Comparison Chart)
         $fiscalYearData = Database::query(
             "SELECT fy.id, fy.year, fy.is_active,
                     COUNT(p.id) as project_count,

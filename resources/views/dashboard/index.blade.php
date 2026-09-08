@@ -57,20 +57,26 @@ $tierNotStartedPct = round(($tierNotStarted / $subCount) * 100, 1);
         </div>
 
         <!-- Fiscal Year Dropdown (Right) -->
-        <div class="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto bg-white dark:bg-[#161922] px-3 sm:px-3.5 py-2 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:border-blue-400/50 transition shrink-0">
+        <div class="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto bg-white dark:bg-[#161922] px-3 sm:px-3.5 py-2 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:border-emerald-400/50 transition shrink-0">
             <div class="flex items-center gap-1.5 sm:gap-2">
-                <i data-lucide="calendar" class="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0"></i>
-                <span class="text-xs font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap">ปีงบประมาณ</span>
+                <i data-lucide="calendar" class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0"></i>
+                <label for="dashboard-fiscal-year-select" class="text-xs font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap cursor-pointer">ปีงบประมาณ</label>
             </div>
             <div class="relative shrink-0">
-                <select class="pl-2 pr-6 py-1 rounded-xl bg-slate-50 dark:bg-[#1f222e] text-xs font-bold text-slate-800 dark:text-white border-0 focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                <select id="dashboard-fiscal-year-select" 
+                        onchange="window.location.href='<?= \App\Core\Router::url('/dashboard') ?>?fiscal_year_id=' + this.value"
+                        class="pl-2.5 pr-8 py-1.5 rounded-xl bg-slate-50 dark:bg-[#1f222e] text-xs font-bold text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-emerald-500 cursor-pointer transition">
+                    <option value="all" <?= (isset($selectedYearId) && $selectedYearId === 'all') ? 'selected' : '' ?>>ทุกปีงบประมาณ</option>
                     <?php if (!empty($fiscalYears)): ?>
                         <?php foreach ($fiscalYears as $fy): ?>
-                            <option value="<?= $fy['id'] ?>"><?= $fy['year'] ?></option>
+                            <?php 
+                                $isYearSelected = (isset($selectedYearId) && (string)$selectedYearId === (string)$fy['id']);
+                                $isActiveTag = !empty($fy['is_active']) ? ' (ปัจจุบัน)' : '';
+                            ?>
+                            <option value="<?= $fy['id'] ?>" <?= $isYearSelected ? 'selected' : '' ?>>
+                                <?= htmlspecialchars((string)$fy['year']) . $isActiveTag ?>
+                            </option>
                         <?php endforeach; ?>
-                    <?php else: ?>
-                        <option value="2568">2568</option>
-                        <option value="2569" selected>2569</option>
                     <?php endif; ?>
                 </select>
             </div>

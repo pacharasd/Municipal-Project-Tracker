@@ -599,7 +599,11 @@
                     <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="font-bold font-heading text-slate-900 dark:text-white tracking-tight flex items-center gap-1 sm:gap-2">
                         <span class="hidden md:inline text-base sm:text-lg whitespace-nowrap">ระบบติดตามและบริหารโครงการเทศบาล</span>
                         <span class="md:hidden text-xs sm:text-sm font-bold truncate max-w-[105px] xs:max-w-[160px] whitespace-nowrap">ติดตามโครงการ</span>
-                        <span class="hidden sm:inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 dark:border-emerald-500/40 font-sans shrink-0">ปี 2568</span>
+                        <?php 
+                            $navActiveFy = \App\Services\FiscalYearService::getActiveYear(); 
+                            $navActiveYearStr = $navActiveFy ? $navActiveFy['year'] : \App\Services\FiscalYearService::getCurrentFiscalYear();
+                        ?>
+                        <span class="hidden sm:inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 dark:border-emerald-500/40 font-sans shrink-0">ปี <?= htmlspecialchars((string)$navActiveYearStr) ?></span>
                     </a>
                     <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 hidden sm:block font-medium truncate">คณะอนุกรรมการฝ่ายติดตามและการประเมินผล</p>
                 </div>
@@ -897,6 +901,17 @@
                             <span>ประเภทโครงการ</span>
                         </div>
                         <i data-lucide="chevron-right" class="w-4 h-4 <?= $isCategories ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
+                    </a>
+
+                    <!-- ปีงบประมาณ -->
+                    <?php $isFiscalYears = str_contains($_SERVER['REQUEST_URI'], '/fiscal-years'); ?>
+                    <a href="<?= \App\Core\Router::url('/fiscal-years') ?>" 
+                       class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isFiscalYears ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="calendar-range" class="w-5 h-5 <?= $isFiscalYears ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
+                            <span>ปีงบประมาณ</span>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-4 h-4 <?= $isFiscalYears ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
                     </a>
 
                     <!-- Audit Log -->
