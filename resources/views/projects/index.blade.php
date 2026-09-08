@@ -311,6 +311,12 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                             <div class="flex flex-wrap items-center gap-2">
                                 <span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40"><?= htmlspecialchars(!empty($p['responsible_person']) ? $p['responsible_person'] : $p['department_name']) ?></span>
                                 <span class="px-2 py-0.5 text-xs text-slate-500 dark:text-slate-400">ปีงบ <?= $p['fiscal_year'] ?></span>
+                                <?php if (!empty($p['start_date']) || !empty($p['end_date'])): ?>
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-950/30 rounded-full border border-emerald-200/60 dark:border-emerald-800/40">
+                                        <i data-lucide="calendar" class="w-3 h-3 text-emerald-600 dark:text-emerald-400"></i>
+                                        <?= !empty($p['start_date']) ? date('d/m/', strtotime($p['start_date'])) . (date('Y', strtotime($p['start_date'])) + 543) : '-' ?> – <?= !empty($p['end_date']) ? date('d/m/', strtotime($p['end_date'])) . (date('Y', strtotime($p['end_date'])) + 543) : '-' ?>
+                                    </span>
+                                <?php endif; ?>
                             </div>
                             <h2 class="text-lg font-bold text-slate-900 dark:text-white mt-1">
                                 <a href="<?= \App\Core\Router::url("/projects/{$p['id']}") ?>" class="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
