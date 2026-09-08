@@ -364,27 +364,25 @@ $tierNotStartedPct = round(($tierNotStarted / $subCount) * 100, 1);
         <div class="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between w-full max-w-full min-w-0 overflow-hidden">
             <div>
                 <!-- Title Header -->
-                <div class="flex items-center justify-between pb-3 mb-2 border-b border-slate-100 dark:border-white/[0.06]">
-                    <div>
+                <div class="flex items-center justify-between gap-2 pb-3 mb-2 border-b border-slate-100 dark:border-white/[0.06]">
+                    <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-2">
-                            <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                            <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                                 <i data-lucide="wallet" class="w-4 h-4"></i>
                             </div>
-                            <h2 class="text-base font-bold text-slate-900 dark:text-white font-heading">งบประมาณแต่ละปี</h2>
+                            <h2 class="text-base font-bold text-slate-900 dark:text-white font-heading truncate">งบประมาณแต่ละปี</h2>
                         </div>
-                        <div class="text-[11px] text-slate-400 mt-1">เปรียบเทียบงบประมาณที่ได้รับและยอดเบิกจ่ายจำแนกตามปีงบประมาณ</div>
+                        <div class="text-[11px] text-slate-400 mt-0.5 truncate">เปรียบเทียบงบประมาณที่ได้รับและยอดเบิกจ่ายจริง</div>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <div class="hidden sm:flex items-center gap-3 text-[11px] font-medium">
-                            <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/30"></span> งบประมาณ: <strong class="text-emerald-600 dark:text-emerald-400 font-mono"><?= number_format($stats['total_budget']) ?></strong> บ.
-                            </span>
-                            <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                                <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/30"></span> เบิกจ่ายแล้ว: <strong class="text-blue-600 dark:text-blue-400 font-mono"><?= number_format($stats['total_disbursed']) ?></strong> บ.
-                            </span>
-                        </div>
-                        <span class="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-500/20">
-                            ปีงบประมาณ
+                    <!-- Right Legend Pills (Clean, no text wrapping) -->
+                    <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-semibold whitespace-nowrap border border-emerald-200/60 dark:border-emerald-500/20 shadow-xs">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            งบประมาณ
+                        </span>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 text-xs font-semibold whitespace-nowrap border border-blue-200/60 dark:border-blue-500/20 shadow-xs">
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                            เบิกจ่าย
                         </span>
                     </div>
                 </div>
@@ -397,7 +395,7 @@ $tierNotStartedPct = round(($tierNotStarted / $subCount) * 100, 1);
 
             <!-- Footer Timestamp -->
             <div class="pt-3 mt-4 border-t border-slate-100 dark:border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] text-slate-400 dark:text-slate-500">
-                <span>เปรียบเทียบงบประมาณจัดสรรและยอดเบิกจ่ายจริง (บาท)</span>
+                <span>งบประมาณรวม: <?= number_format($stats['total_budget']) ?> บ. | เบิกจ่ายแล้ว: <?= number_format($stats['total_disbursed']) ?> บ. (<?= number_format($stats['disbursement_pct'], 1) ?>%)</span>
                 <span>ข้อมูล ณ วันที่ <?= $currentDateThai ?></span>
             </div>
         </div>
@@ -860,21 +858,22 @@ function renderDashboardCharts(isThemeChange = false) {
             const yearlyCtx = yearlyCanvas.getContext('2d');
             const isMobile = window.innerWidth < 640;
 
-            // กรองแสดงปีที่มีข้อมูล หรือปีปัจจุบัน หรือปีข้างเคียง ไม่ให้มีปีว่างๆ 8 ปีบีบแท่งกราฟจนเล็กเกินไป
-            const filteredYears = yearlyData.filter((d, idx, arr) => {
-                const hasData = parseFloat(d.total_budget || 0) > 0 || parseFloat(d.total_disbursed || 0) > 0 || parseInt(d.project_count || 0) > 0;
-                const isActive = parseInt(d.is_active || 0) === 1;
-                const isAdjacent = arr.some(o => 
-                    (parseInt(o.is_active || 0) === 1 || parseFloat(o.total_budget || 0) > 0) &&
-                    Math.abs(parseInt(d.year) - parseInt(o.year)) <= 1
-                );
-                return hasData || isActive || isAdjacent;
-            });
-            const displayYears = filteredYears.length > 0 ? filteredYears : yearlyData;
+            // กรองแสดงเฉพาะปีที่มีข้อมูลจริง (หากยังไม่มี ให้แสดงปีปัจจุบัน)
+            const filteredYears = yearlyData.filter(d => 
+                parseFloat(d.total_budget || 0) > 0 || 
+                parseFloat(d.total_disbursed || 0) > 0
+            );
+            const displayYears = filteredYears.length > 0 ? filteredYears : yearlyData.filter(d => parseInt(d.is_active || 0) === 1);
 
             const labels = displayYears.map(d => 'ปี ' + d.year);
-            const budgets = displayYears.map(d => parseFloat(d.total_budget || 0));
-            const disbursed = displayYears.map(d => parseFloat(d.total_disbursed || 0));
+            const budgets = displayYears.map(d => {
+                const v = parseFloat(d.total_budget || 0);
+                return v > 0 ? v : null;
+            });
+            const disbursed = displayYears.map(d => {
+                const v = parseFloat(d.total_disbursed || 0);
+                return v > 0 ? v : null;
+            });
 
             // Gradient สำหรับงบประมาณรวม (Emerald)
             const budgetGrad = yearlyCtx.createLinearGradient(0, 0, 0, 240);
@@ -949,8 +948,8 @@ function renderDashboardCharts(isThemeChange = false) {
                             borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 2, bottomRight: 2 },
                             borderSkipped: false,
                             minBarLength: 14,
-                            barPercentage: isMobile ? 0.75 : 0.62,
-                            categoryPercentage: isMobile ? 0.82 : 0.72
+                            barPercentage: displayYears.length <= 2 ? (isMobile ? 0.55 : 0.38) : (isMobile ? 0.75 : 0.62),
+                            categoryPercentage: displayYears.length <= 2 ? (isMobile ? 0.65 : 0.48) : (isMobile ? 0.82 : 0.72)
                         },
                         {
                             label: 'ยอดเบิกจ่าย',
@@ -962,8 +961,8 @@ function renderDashboardCharts(isThemeChange = false) {
                             borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 2, bottomRight: 2 },
                             borderSkipped: false,
                             minBarLength: 14, // รับประกันว่าแม้จะเบิกจ่ายยอดน้อย (เช่น 4,000 บาทเทียบกับ 500,000 บาท) จะมองเห็นแท่งสีฟ้าชัดเจนเสมอ
-                            barPercentage: isMobile ? 0.75 : 0.62,
-                            categoryPercentage: isMobile ? 0.82 : 0.72
+                            barPercentage: displayYears.length <= 2 ? (isMobile ? 0.55 : 0.38) : (isMobile ? 0.75 : 0.62),
+                            categoryPercentage: displayYears.length <= 2 ? (isMobile ? 0.65 : 0.48) : (isMobile ? 0.82 : 0.72)
                         }
                     ]
                 },
