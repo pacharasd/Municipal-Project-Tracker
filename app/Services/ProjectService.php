@@ -252,13 +252,13 @@ class ProjectService
     {
         // 1. Overall stats
         $mainTotal = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects WHERE parent_id IS NULL");
-        $subTotal  = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects WHERE parent_id IS NOT NULL");
+        $subTotal  = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects s INNER JOIN projects p ON s.parent_id = p.id WHERE p.parent_id IS NULL");
         
-        $notStarted = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects WHERE parent_id IS NOT NULL AND status = 'not_started'");
-        $inProgress = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects WHERE parent_id IS NOT NULL AND status = 'in_progress'");
-        $completed  = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects WHERE parent_id IS NOT NULL AND status = 'completed'");
-        $hasProblem = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects WHERE parent_id IS NOT NULL AND status = 'has_problem'");
-        $cancelled  = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects WHERE parent_id IS NOT NULL AND status = 'cancelled'");
+        $notStarted = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects s INNER JOIN projects p ON s.parent_id = p.id WHERE p.parent_id IS NULL AND s.status = 'not_started'");
+        $inProgress = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects s INNER JOIN projects p ON s.parent_id = p.id WHERE p.parent_id IS NULL AND s.status = 'in_progress'");
+        $completed  = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects s INNER JOIN projects p ON s.parent_id = p.id WHERE p.parent_id IS NULL AND s.status = 'completed'");
+        $hasProblem = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects s INNER JOIN projects p ON s.parent_id = p.id WHERE p.parent_id IS NULL AND s.status = 'has_problem'");
+        $cancelled  = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects s INNER JOIN projects p ON s.parent_id = p.id WHERE p.parent_id IS NULL AND s.status = 'cancelled'");
 
         // Budgets
         $budgetRow = Database::fetch("SELECT SUM(budget) as total_budget, SUM(disbursed_amount) as total_disbursed FROM projects WHERE parent_id IS NULL");
@@ -278,7 +278,7 @@ class ProjectService
                     COALESCE(SUM(s.disbursed_amount), 0) as total_disbursed, 
                     COALESCE(AVG(s.progress), 0) as avg_progress 
              FROM departments d 
-             LEFT JOIN projects s ON d.id = s.department_id AND s.parent_id IS NOT NULL
+             LEFT JOIN projects s ON d.id = s.department_id AND s.parent_id IS NOT NULL AND s.parent_id IN (SELECT id FROM projects WHERE parent_id IS NULL)
              GROUP BY d.id, d.name ORDER BY project_count DESC, d.id ASC"
         );
 
@@ -292,10 +292,18 @@ class ProjectService
 
         // 4. Top and Bottom sub-projects
         $topProjects = Database::query(
-            "SELECT name, progress, status, budget FROM projects WHERE parent_id IS NOT NULL ORDER BY progress DESC LIMIT 4"
+            "SELECT s.name, s.progress, s.status, s.budget 
+             FROM projects s 
+             INNER JOIN projects p ON s.parent_id = p.id 
+             WHERE p.parent_id IS NULL 
+             ORDER BY s.progress DESC LIMIT 4"
         );
         $bottomProjects = Database::query(
-            "SELECT name, progress, status, budget FROM projects WHERE parent_id IS NOT NULL ORDER BY progress ASC LIMIT 4"
+            "SELECT s.name, s.progress, s.status, s.budget 
+             FROM projects s 
+             INNER JOIN projects p ON s.parent_id = p.id 
+             WHERE p.parent_id IS NULL 
+             ORDER BY s.progress ASC LIMIT 4"
         );
 
         // 5. Main Projects Progress Data for Dashboard Chart

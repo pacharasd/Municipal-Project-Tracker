@@ -42,6 +42,7 @@ class DashboardController
             "SELECT s.id, s.name, s.budget, s.progress, s.status, s.updated_at, s.created_at,
                     d.name as department_name
              FROM projects s
+             INNER JOIN projects parent ON s.parent_id = parent.id
              LEFT JOIN departments d ON s.department_id = d.id
              WHERE s.parent_id IS NOT NULL
              ORDER BY s.id DESC LIMIT 5"

@@ -247,10 +247,28 @@ class ProjectController
         }
 
         $name = $project['name'];
-        Database::execute("DELETE FROM projects WHERE id = ?", [$projectId]);
+        Database::transaction(function () use ($projectId) {
+            // Find all sub-project IDs
+            $subs = Database::query("SELECT id FROM projects WHERE parent_id = ?", [$projectId]);
+            $subIds = array_column($subs, 'id');
+            $allIds = array_merge([$projectId], $subIds);
+
+            if (!empty($allIds)) {
+                $placeholders = implode(',', array_fill(0, count($allIds), '?'));
+                Database::execute("DELETE FROM activities WHERE project_id IN ({$placeholders})", $allIds);
+                Database::execute("DELETE FROM budget_disbursements WHERE project_id IN ({$placeholders})", $allIds);
+                Database::execute("DELETE FROM attachments WHERE project_id IN ({$placeholders})", $allIds);
+                Database::execute("DELETE FROM budgets WHERE project_id IN ({$placeholders})", $allIds);
+            }
+
+            // Delete sub-projects and main project
+            Database::execute("DELETE FROM projects WHERE parent_id = ?", [$projectId]);
+            Database::execute("DELETE FROM projects WHERE id = ?", [$projectId]);
+        });
+
         AuditLogService::log('DELETE', 'Project', $projectId, ['name' => $name]);
 
-        Session::flash('success', "ลบโครงการ '{$name}' ออกจากระบบเรียบร้อยแล้ว");
+        Session::flash('success', "ลบโครงการ '{$name}' และโครงการย่อยทั้งหมดเรียบร้อยแล้ว");
         header('Location: ' . Router::url('/projects'));
         exit;
     }

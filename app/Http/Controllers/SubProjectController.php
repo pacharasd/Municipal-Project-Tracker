@@ -391,8 +391,13 @@ class SubProjectController
         $parentId = (int)$project['parent_id'];
         $name = $project['name'];
 
-        // Delete subproject
-        Database::execute("DELETE FROM projects WHERE id = ?", [$subId]);
+        Database::transaction(function () use ($subId) {
+            Database::execute("DELETE FROM activities WHERE project_id = ?", [$subId]);
+            Database::execute("DELETE FROM budget_disbursements WHERE project_id = ?", [$subId]);
+            Database::execute("DELETE FROM attachments WHERE project_id = ?", [$subId]);
+            Database::execute("DELETE FROM budgets WHERE project_id = ?", [$subId]);
+            Database::execute("DELETE FROM projects WHERE id = ?", [$subId]);
+        });
 
         // Recalculate parent project budget & progress
         BudgetService::syncParentProjectBudget($parentId);
