@@ -492,7 +492,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                             <span class="truncate">มากกว่า 75%</span>
                         </div>
                         <div class="flex-1 min-w-[50px] bg-slate-100 dark:bg-white/[0.06] h-3 rounded-full overflow-hidden p-0.5">
-                            <div class="bg-gradient-to-r from-emerald-400 to-teal-500 h-2 rounded-full transition-all duration-700 shadow-sm" style="width: <?= min(100, max(5, $tierOver75Pct)) ?>%"></div>
+                            <div class="bg-gradient-to-r from-emerald-400 to-teal-500 h-2 rounded-full transition-all duration-700 shadow-sm" style="width: <?= $tierOver75 > 0 ? min(100, max(5, $tierOver75Pct)) : 0 ?>%"></div>
                         </div>
                         <div class="flex items-center justify-end gap-1.5 sm:gap-2 text-right shrink-0">
                             <span class="text-[11px] sm:text-xs font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap"><?= $tierOver75 ?> <span class="hidden sm:inline">โครงการ</span><span class="sm:hidden">ค.</span></span>
@@ -507,7 +507,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                             <span class="truncate">50% - 75%</span>
                         </div>
                         <div class="flex-1 min-w-[50px] bg-slate-100 dark:bg-white/[0.06] h-3 rounded-full overflow-hidden p-0.5">
-                            <div class="bg-gradient-to-r from-blue-400 to-indigo-500 h-2 rounded-full transition-all duration-700 shadow-sm" style="width: <?= min(100, max(5, $tier50to75Pct)) ?>%"></div>
+                            <div class="bg-gradient-to-r from-blue-400 to-indigo-500 h-2 rounded-full transition-all duration-700 shadow-sm" style="width: <?= $tier50to75 > 0 ? min(100, max(5, $tier50to75Pct)) : 0 ?>%"></div>
                         </div>
                         <div class="flex items-center justify-end gap-1.5 sm:gap-2 text-right shrink-0">
                             <span class="text-[11px] sm:text-xs font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap"><?= $tier50to75 ?> <span class="hidden sm:inline">โครงการ</span><span class="sm:hidden">ค.</span></span>
@@ -522,7 +522,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                             <span class="truncate">25% - 50%</span>
                         </div>
                         <div class="flex-1 min-w-[50px] bg-slate-100 dark:bg-white/[0.06] h-3 rounded-full overflow-hidden p-0.5">
-                            <div class="bg-gradient-to-r from-amber-400 to-yellow-500 h-2 rounded-full transition-all duration-700 shadow-sm" style="width: <?= min(100, max(5, $tier25to50Pct)) ?>%"></div>
+                            <div class="bg-gradient-to-r from-amber-400 to-yellow-500 h-2 rounded-full transition-all duration-700 shadow-sm" style="width: <?= $tier25to50 > 0 ? min(100, max(5, $tier25to50Pct)) : 0 ?>%"></div>
                         </div>
                         <div class="flex items-center justify-end gap-1.5 sm:gap-2 text-right shrink-0">
                             <span class="text-[11px] sm:text-xs font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap"><?= $tier25to50 ?> <span class="hidden sm:inline">โครงการ</span><span class="sm:hidden">ค.</span></span>
@@ -537,7 +537,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                             <span class="truncate">น้อยกว่า 25%</span>
                         </div>
                         <div class="flex-1 min-w-[50px] bg-slate-100 dark:bg-white/[0.06] h-3 rounded-full overflow-hidden p-0.5">
-                            <div class="bg-gradient-to-r from-orange-400 to-amber-500 h-2 rounded-full transition-all duration-700 shadow-sm" style="width: <?= min(100, max(5, $tierUnder25Pct)) ?>%"></div>
+                            <div class="bg-gradient-to-r from-orange-400 to-amber-500 h-2 rounded-full transition-all duration-700 shadow-sm" style="width: <?= $tierUnder25 > 0 ? min(100, max(5, $tierUnder25Pct)) : 0 ?>%"></div>
                         </div>
                         <div class="flex items-center justify-end gap-1.5 sm:gap-2 text-right shrink-0">
                             <span class="text-[11px] sm:text-xs font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap"><?= $tierUnder25 ?> <span class="hidden sm:inline">โครงการ</span><span class="sm:hidden">ค.</span></span>
@@ -552,7 +552,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                             <span class="truncate">ยังไม่เริ่ม</span>
                         </div>
                         <div class="flex-1 min-w-[50px] bg-slate-100 dark:bg-white/[0.06] h-3 rounded-full overflow-hidden p-0.5">
-                            <div class="bg-gradient-to-r from-rose-500 to-red-500 h-2 rounded-full transition-all duration-700 shadow-sm" style="width: <?= min(100, max(5, $tierNotStartedPct)) ?>%"></div>
+                            <div class="bg-gradient-to-r from-rose-500 to-red-500 h-2 rounded-full transition-all duration-700 shadow-sm" style="width: <?= $tierNotStarted > 0 ? min(100, max(5, $tierNotStartedPct)) : 0 ?>%"></div>
                         </div>
                         <div class="flex items-center justify-end gap-1.5 sm:gap-2 text-right shrink-0">
                             <span class="text-[11px] sm:text-xs font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap"><?= $tierNotStarted ?> <span class="hidden sm:inline">โครงการ</span><span class="sm:hidden">ค.</span></span>
@@ -782,71 +782,119 @@ function renderDashboardCharts(isThemeChange = false) {
         }
     });
 
+    const emptyChartColor = isDark ? 'rgba(255, 255, 255, 0.1)' : '#e2e8f0';
+
     // -------------------------------------------------------------
     // กราฟที่ 1: สถานะโครงการ (Status Doughnut Ring with Rounded Pills & Spacing)
     // -------------------------------------------------------------
     try {
         const statusCanvas = document.getElementById('statusDonutChart');
         if (statusCanvas) {
-            new Chart(statusCanvas, {
-                type: 'doughnut',
-                data: {
-                    labels: ['กำลังดำเนินการ', 'ยังไม่เริ่ม', 'เสร็จแล้ว', 'มีปัญหา/ล่าช้า'],
-                    datasets: [{
-                        data: [
-                            <?= (int)$stats['in_progress'] ?>,
-                            <?= (int)$stats['not_started'] ?>,
-                            <?= (int)$stats['completed'] ?>,
-                            <?= (int)$stats['has_problem'] ?>
-                        ],
-                        backgroundColor: [
-                            '#3b82f6', // กำลังดำเนินการ (Vivid Royal Blue)
-                            '#f59e0b', // ยังไม่เริ่ม (Golden Amber)
-                            '#10b981', // เสร็จแล้ว (Fresh Emerald)
-                            '#f43f5e'  // มีปัญหา/ล่าช้า (Rose Red)
-                        ],
-                        hoverBackgroundColor: [
-                            '#2563eb',
-                            '#d97706',
-                            '#059669',
-                            '#e11d48'
-                        ],
-                        borderWidth: 0,
-                        borderRadius: 6,
-                        spacing: 3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    cutout: '72%',
-                    animation: isThemeChange ? false : {
-                        duration: 350,
-                        easing: 'easeOutQuad'
+            const statusTotal = <?= (int)$stats['in_progress'] + (int)$stats['not_started'] + (int)$stats['completed'] + (int)$stats['has_problem'] ?>;
+
+            if (statusTotal === 0) {
+                // หากไม่มีข้อมูลโครงการ แสดงวงแหวนสีเทาแทน
+                new Chart(statusCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['ไม่มีข้อมูลโครงการ'],
+                        datasets: [{
+                            data: [1],
+                            backgroundColor: [emptyChartColor],
+                            hoverBackgroundColor: [emptyChartColor],
+                            borderWidth: 0,
+                            borderRadius: 0
+                        }]
                     },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: tooltipBg,
-                            titleColor: tooltipTitle,
-                            bodyColor: tooltipBody,
-                            borderColor: tooltipBorder,
-                            borderWidth: 1,
-                            padding: 10,
-                            cornerRadius: 10,
-                            boxPadding: 4,
-                            callbacks: {
-                                label: function(context) {
-                                    const total = <?= max(1, (int)$stats['sub_total']) ?>;
-                                    const val = context.raw;
-                                    const pct = ((val / total) * 100).toFixed(1);
-                                    return ` ${context.label}: ${val} โครงการ (${pct}%)`;
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        cutout: '72%',
+                        animation: isThemeChange ? false : {
+                            duration: 350,
+                            easing: 'easeOutQuad'
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: tooltipBg,
+                                titleColor: tooltipTitle,
+                                bodyColor: tooltipBody,
+                                borderColor: tooltipBorder,
+                                borderWidth: 1,
+                                padding: 10,
+                                cornerRadius: 10,
+                                boxPadding: 4,
+                                callbacks: {
+                                    label: function() {
+                                        return ' ไม่มีข้อมูลโครงการในปีงบประมาณนี้';
+                                    }
                                 }
                             }
                         }
                     }
-                }
-            });
+                });
+            } else {
+                new Chart(statusCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['กำลังดำเนินการ', 'ยังไม่เริ่ม', 'เสร็จแล้ว', 'มีปัญหา/ล่าช้า'],
+                        datasets: [{
+                            data: [
+                                <?= (int)$stats['in_progress'] ?>,
+                                <?= (int)$stats['not_started'] ?>,
+                                <?= (int)$stats['completed'] ?>,
+                                <?= (int)$stats['has_problem'] ?>
+                            ],
+                            backgroundColor: [
+                                '#3b82f6', // กำลังดำเนินการ (Vivid Royal Blue)
+                                '#f59e0b', // ยังไม่เริ่ม (Golden Amber)
+                                '#10b981', // เสร็จแล้ว (Fresh Emerald)
+                                '#f43f5e'  // มีปัญหา/ล่าช้า (Rose Red)
+                            ],
+                            hoverBackgroundColor: [
+                                '#2563eb',
+                                '#d97706',
+                                '#059669',
+                                '#e11d48'
+                            ],
+                            borderWidth: 0,
+                            borderRadius: 6,
+                            spacing: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        cutout: '72%',
+                        animation: isThemeChange ? false : {
+                            duration: 350,
+                            easing: 'easeOutQuad'
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: tooltipBg,
+                                titleColor: tooltipTitle,
+                                bodyColor: tooltipBody,
+                                borderColor: tooltipBorder,
+                                borderWidth: 1,
+                                padding: 10,
+                                cornerRadius: 10,
+                                boxPadding: 4,
+                                callbacks: {
+                                    label: function(context) {
+                                        const total = <?= max(1, (int)$stats['sub_total']) ?>;
+                                        const val = context.raw;
+                                        const pct = ((val / total) * 100).toFixed(1);
+                                        return ` ${context.label}: ${val} โครงการ (${pct}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
         }
     } catch (err) {
         console.error('Error creating Status Donut Chart:', err);
@@ -858,58 +906,106 @@ function renderDashboardCharts(isThemeChange = false) {
     try {
         const budgetCanvas = document.getElementById('budgetDonutChart');
         if (budgetCanvas) {
-            const remainingColor = isDark ? 'rgba(255, 255, 255, 0.08)' : '#f1f5f9';
-            new Chart(budgetCanvas, {
-                type: 'doughnut',
-                data: {
-                    labels: ['เบิกจ่ายแล้ว', 'คงเหลือ'],
-                    datasets: [{
-                        data: [
-                            <?= (float)$stats['total_disbursed'] ?>,
-                            <?= max(0, (float)$stats['total_remaining']) ?>
-                        ],
-                        backgroundColor: [
-                            '#3b82f6', // เบิกจ่ายแล้ว
-                            remainingColor // คงเหลือ
-                        ],
-                        hoverBackgroundColor: [
-                            '#2563eb',
-                            isDark ? 'rgba(255, 255, 255, 0.14)' : '#e2e8f0'
-                        ],
-                        borderWidth: 0,
-                        borderRadius: 6,
-                        spacing: 3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    cutout: '72%',
-                    animation: isThemeChange ? false : {
-                        duration: 350,
-                        easing: 'easeOutQuad'
+            const totalBudget = <?= (float)($stats['total_budget'] ?? 0) ?>;
+            const totalDisbursed = <?= (float)($stats['total_disbursed'] ?? 0) ?>;
+            const totalRemaining = <?= max(0, (float)($stats['total_remaining'] ?? 0)) ?>;
+
+            if (totalBudget <= 0 && totalDisbursed <= 0) {
+                // หากไม่มีข้อมูลงบประมาณ แสดงวงแหวนสีเทาแทน
+                new Chart(budgetCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['ยังไม่มีข้อมูลงบประมาณ'],
+                        datasets: [{
+                            data: [1],
+                            backgroundColor: [emptyChartColor],
+                            hoverBackgroundColor: [emptyChartColor],
+                            borderWidth: 0,
+                            borderRadius: 0
+                        }]
                     },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: tooltipBg,
-                            titleColor: tooltipTitle,
-                            bodyColor: tooltipBody,
-                            borderColor: tooltipBorder,
-                            borderWidth: 1,
-                            padding: 10,
-                            cornerRadius: 10,
-                            boxPadding: 4,
-                            callbacks: {
-                                label: function(context) {
-                                    const val = Number(context.raw).toLocaleString('th-TH');
-                                    return ` ${context.label}: ${val} บาท`;
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        cutout: '72%',
+                        animation: isThemeChange ? false : {
+                            duration: 350,
+                            easing: 'easeOutQuad'
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: tooltipBg,
+                                titleColor: tooltipTitle,
+                                bodyColor: tooltipBody,
+                                borderColor: tooltipBorder,
+                                borderWidth: 1,
+                                padding: 10,
+                                cornerRadius: 10,
+                                boxPadding: 4,
+                                callbacks: {
+                                    label: function() {
+                                        return ' ยังไม่มีข้อมูลงบประมาณในปีนี้';
+                                    }
                                 }
                             }
                         }
                     }
-                }
-            });
+                });
+            } else {
+                const remainingColor = isDark ? 'rgba(255, 255, 255, 0.08)' : '#e2e8f0';
+                new Chart(budgetCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['เบิกจ่ายแล้ว', 'คงเหลือ'],
+                        datasets: [{
+                            data: [
+                                totalDisbursed,
+                                totalRemaining
+                            ],
+                            backgroundColor: [
+                                '#3b82f6', // เบิกจ่ายแล้ว
+                                remainingColor // คงเหลือ
+                            ],
+                            hoverBackgroundColor: [
+                                '#2563eb',
+                                isDark ? 'rgba(255, 255, 255, 0.14)' : '#cbd5e1'
+                            ],
+                            borderWidth: 0,
+                            borderRadius: 6,
+                            spacing: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        cutout: '72%',
+                        animation: isThemeChange ? false : {
+                            duration: 350,
+                            easing: 'easeOutQuad'
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: tooltipBg,
+                                titleColor: tooltipTitle,
+                                bodyColor: tooltipBody,
+                                borderColor: tooltipBorder,
+                                borderWidth: 1,
+                                padding: 10,
+                                cornerRadius: 10,
+                                boxPadding: 4,
+                                callbacks: {
+                                    label: function(context) {
+                                        const val = Number(context.raw).toLocaleString('th-TH');
+                                        return ` ${context.label}: ${val} บาท`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
         }
     } catch (err) {
         console.error('Error creating Budget Donut Chart:', err);
