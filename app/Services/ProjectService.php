@@ -319,6 +319,18 @@ class ProjectService
              ORDER BY p.id ASC"
         );
 
+        // 6. Fiscal Year Budget Data (for Yearly Budget Chart)
+        $fiscalYearData = Database::query(
+            "SELECT fy.id, fy.year, fy.is_active,
+                    COUNT(p.id) as project_count,
+                    COALESCE(SUM(p.budget), 0) as total_budget,
+                    COALESCE(SUM(p.disbursed_amount), 0) as total_disbursed
+             FROM fiscal_years fy
+             LEFT JOIN projects p ON fy.id = p.fiscal_year_id AND p.parent_id IS NULL
+             GROUP BY fy.id, fy.year, fy.is_active
+             ORDER BY fy.year ASC"
+        );
+
         return [
             'main_total'         => $mainTotal,
             'sub_total'          => $subTotal,
@@ -333,6 +345,7 @@ class ProjectService
             'disbursement_pct'   => $disbursementPct,
             'avg_progress'       => round($avgProgress, 2),
             'department_data'    => $deptData,
+            'fiscal_year_data'   => $fiscalYearData,
             'main_projects_data' => $mainProjectsData,
             'category_data'      => $catData,
             'top_projects'       => $topProjects,

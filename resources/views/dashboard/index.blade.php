@@ -360,34 +360,44 @@ $tierNotStartedPct = round(($tierNotStarted / $subCount) * 100, 1);
     <!-- 4. Row 3: โครงการตามหน่วยงาน (ซ้าย) & ความก้าวหน้าโครงการ (ขวา) -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 w-full max-w-full">
 
-        <!-- กราฟที่ 3: โครงการตามหน่วยงาน (Department Bar Chart with Gradient) -->
+        <!-- กราฟที่ 3: งบประมาณแต่ละปี (Yearly Budget Bar Chart with Gradient) -->
         <div class="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between w-full max-w-full min-w-0 overflow-hidden">
             <div>
                 <!-- Title Header -->
                 <div class="flex items-center justify-between pb-3 mb-2 border-b border-slate-100 dark:border-white/[0.06]">
                     <div>
                         <div class="flex items-center gap-2">
-                            <div class="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                                <i data-lucide="building-2" class="w-4 h-4"></i>
+                            <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                                <i data-lucide="wallet" class="w-4 h-4"></i>
                             </div>
-                            <h2 class="text-base font-bold text-slate-900 dark:text-white font-heading">โครงการตามหน่วยงาน</h2>
+                            <h2 class="text-base font-bold text-slate-900 dark:text-white font-heading">งบประมาณแต่ละปี</h2>
                         </div>
-                        <div class="text-[11px] text-slate-400 mt-1">จำนวนโครงการจำแนกรายหน่วยงาน</div>
+                        <div class="text-[11px] text-slate-400 mt-1">เปรียบเทียบงบประมาณที่ได้รับและยอดเบิกจ่ายจำแนกตามปีงบประมาณ</div>
                     </div>
-                    <span class="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">
-                        หน่วยงานเทศบาล
-                    </span>
+                    <div class="flex items-center gap-3">
+                        <div class="hidden sm:flex items-center gap-2.5 text-[11px] font-medium">
+                            <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/30"></span> งบประมาณ
+                            </span>
+                            <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                                <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/30"></span> เบิกจ่าย
+                            </span>
+                        </div>
+                        <span class="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-500/20">
+                            ปีงบประมาณ
+                        </span>
+                    </div>
                 </div>
 
-                <!-- Vertical Bar Chart Canvas -->
+                <!-- Vertical Grouped Bar Chart Canvas -->
                 <div class="h-64 sm:h-72 relative w-full max-w-full overflow-hidden pt-2">
-                    <canvas id="deptBarChart" class="w-full h-full block"></canvas>
+                    <canvas id="yearlyBudgetChart" class="w-full h-full block"></canvas>
                 </div>
             </div>
 
             <!-- Footer Timestamp -->
             <div class="pt-3 mt-4 border-t border-slate-100 dark:border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] text-slate-400 dark:text-slate-500">
-                <span>ครอบคลุมทุกกอง/สำนัก</span>
+                <span>เปรียบเทียบงบประมาณจัดสรรและยอดเบิกจ่ายจริง (บาท)</span>
                 <span>ข้อมูล ณ วันที่ <?= $currentDateThai ?></span>
             </div>
         </div>
@@ -695,7 +705,7 @@ function renderDashboardCharts(isThemeChange = false) {
     const tooltipBorder = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
 
     // ทำลายกราฟเดิมเพื่อป้องกันทับซ้อนเมื่อมีการรีเฟรช SPA หรือเปลี่ยนธีม
-    ['statusDonutChart', 'budgetDonutChart', 'deptBarChart'].forEach(id => {
+    ['statusDonutChart', 'budgetDonutChart', 'deptBarChart', 'yearlyBudgetChart'].forEach(id => {
         try {
             const canvasEl = document.getElementById(id);
             if (canvasEl) {
@@ -841,78 +851,81 @@ function renderDashboardCharts(isThemeChange = false) {
     }
 
     // -------------------------------------------------------------
-    // กราฟที่ 3: โครงการตามหน่วยงาน (Department Vertical Bar Chart with Linear Gradient)
+    // กราฟที่ 3: งบประมาณแต่ละปี (Yearly Budget Grouped Bar Chart)
     // -------------------------------------------------------------
     try {
-        const deptCanvas = document.getElementById('deptBarChart');
-        const deptData = <?= json_encode($stats['department_data'] ?? [], JSON_UNESCAPED_UNICODE) ?>;
-        if (deptCanvas && deptData && deptData.length > 0) {
-            const deptCtx = deptCanvas.getContext('2d');
-            const activeDepts = deptData.filter(d => parseInt(d.project_count || 0) > 0);
+        const yearlyCanvas = document.getElementById('yearlyBudgetChart');
+        const yearlyData = <?= json_encode($stats['fiscal_year_data'] ?? [], JSON_UNESCAPED_UNICODE) ?>;
+        if (yearlyCanvas && yearlyData && yearlyData.length > 0) {
+            const yearlyCtx = yearlyCanvas.getContext('2d');
             const isMobile = window.innerWidth < 640;
-            
-            // ฟังก์ชันตัดแบ่งคำภาษาไทยอย่างเป็นระเบียบ ไม่ให้ตัวหนังสือเอียงหรือซ้อนทับกัน
-            const formatThaiDeptLabel = (name) => {
-                if (!name) return '';
-                if (name === 'กองสาธารณสุขและสิ่งแวดล้อม') {
-                    return ['กองสาธารณสุข', 'และสิ่งแวดล้อม'];
+
+            const labels = yearlyData.map(d => 'ปี ' + d.year);
+            const budgets = yearlyData.map(d => parseFloat(d.total_budget || 0));
+            const disbursed = yearlyData.map(d => parseFloat(d.total_disbursed || 0));
+
+            // Gradient สำหรับงบประมาณรวม (Emerald)
+            const budgetGrad = yearlyCtx.createLinearGradient(0, 0, 0, 240);
+            budgetGrad.addColorStop(0, '#10b981'); // Emerald 500
+            budgetGrad.addColorStop(1, '#059669'); // Emerald 600
+
+            const budgetHoverGrad = yearlyCtx.createLinearGradient(0, 0, 0, 240);
+            budgetHoverGrad.addColorStop(0, '#34d399');
+            budgetHoverGrad.addColorStop(1, '#10b981');
+
+            // Gradient สำหรับยอดเบิกจ่าย (Blue)
+            const disbGrad = yearlyCtx.createLinearGradient(0, 0, 0, 240);
+            disbGrad.addColorStop(0, '#3b82f6'); // Blue 500
+            disbGrad.addColorStop(1, '#1d4ed8'); // Blue 700
+
+            const disbHoverGrad = yearlyCtx.createLinearGradient(0, 0, 0, 240);
+            disbHoverGrad.addColorStop(0, '#60a5fa');
+            disbHoverGrad.addColorStop(1, '#2563eb');
+
+            // ฟังก์ชันจัดรูปแบบย่อของตัวเลขเงินบาทสำหรับแกน Y
+            const formatCurrency = (val) => {
+                if (val >= 1000000) {
+                    return (val / 1000000).toLocaleString('th-TH', { maximumFractionDigits: 1 }) + 'M';
                 }
-                if (name === 'สำนักปลัดเทศบาล') {
-                    return ['สำนักปลัด', 'เทศบาล'];
+                if (val >= 1000) {
+                    return (val / 1000).toLocaleString('th-TH', { maximumFractionDigits: 0 }) + 'k';
                 }
-                if (name === 'สำนักการศึกษา') {
-                    return ['สำนัก', 'การศึกษา'];
-                }
-                if (name === 'กองสวัสดิการสังคม') {
-                    return ['กองสวัสดิการ', 'สังคม'];
-                }
-                if (name === 'กองยุทธศาสตร์และงบประมาณ') {
-                    return ['กองยุทธศาสตร์', 'และงบประมาณ'];
-                }
-                if (name.includes('และ')) {
-                    const parts = name.split('และ');
-                    return [parts[0], 'และ' + parts.slice(1).join('และ')];
-                }
-                if (name.length > 12) {
-                    const mid = Math.ceil(name.length / 2);
-                    return [name.slice(0, mid), name.slice(mid)];
-                }
-                return name;
+                return val.toLocaleString('th-TH');
             };
 
-            const labels = activeDepts.map(d => formatThaiDeptLabel(d.name));
-            const counts = activeDepts.map(d => parseInt(d.project_count) || 0);
-
-            // สร้าง Gradient สีน้ำเงินแนวตั้งแบบพรีเมียม
-            const barGrad = deptCtx.createLinearGradient(0, 0, 0, 240);
-            barGrad.addColorStop(0, '#3b82f6'); // ฟ้าสดด้านบน
-            barGrad.addColorStop(1, '#1d4ed8'); // น้ำเงินครามเข้มด้านล่าง
-
-            const barHoverGrad = deptCtx.createLinearGradient(0, 0, 0, 240);
-            barHoverGrad.addColorStop(0, '#60a5fa');
-            barHoverGrad.addColorStop(1, '#2563eb');
-
-            new Chart(deptCanvas, {
+            new Chart(yearlyCanvas, {
                 type: 'bar',
                 data: {
                     labels: labels,
-                    datasets: [{
-                        label: 'จำนวนโครงการ',
-                        data: counts,
-                        backgroundColor: barGrad,
-                        hoverBackgroundColor: barHoverGrad,
-                        borderRadius: { topLeft: 8, topRight: 8, bottomLeft: 2, bottomRight: 2 },
-                        borderSkipped: false,
-                        barPercentage: isMobile ? 0.6 : 0.48,
-                        categoryPercentage: isMobile ? 0.85 : 0.72
-                    }]
+                    datasets: [
+                        {
+                            label: 'งบประมาณรวม',
+                            data: budgets,
+                            backgroundColor: budgetGrad,
+                            hoverBackgroundColor: budgetHoverGrad,
+                            borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 2, bottomRight: 2 },
+                            borderSkipped: false,
+                            barPercentage: isMobile ? 0.7 : 0.58,
+                            categoryPercentage: isMobile ? 0.8 : 0.68
+                        },
+                        {
+                            label: 'ยอดเบิกจ่าย',
+                            data: disbursed,
+                            backgroundColor: disbGrad,
+                            hoverBackgroundColor: disbHoverGrad,
+                            borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 2, bottomRight: 2 },
+                            borderSkipped: false,
+                            barPercentage: isMobile ? 0.7 : 0.58,
+                            categoryPercentage: isMobile ? 0.8 : 0.68
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     layout: {
                         padding: {
-                            top: 10,
+                            top: 15,
                             bottom: 4,
                             left: 4,
                             right: 4
@@ -923,22 +936,47 @@ function renderDashboardCharts(isThemeChange = false) {
                         easing: 'easeOutQuad'
                     },
                     plugins: {
-                        legend: { display: false },
+                        legend: {
+                            display: isMobile,
+                            position: 'top',
+                            labels: {
+                                color: labelColor,
+                                font: { family: "'Prompt', 'Sarabun', sans-serif", size: 11 },
+                                boxWidth: 10,
+                                usePointStyle: true
+                            }
+                        },
                         tooltip: {
                             backgroundColor: tooltipBg,
                             titleColor: tooltipTitle,
                             bodyColor: tooltipBody,
                             borderColor: tooltipBorder,
                             borderWidth: 1,
-                            padding: 10,
+                            padding: 12,
                             cornerRadius: 10,
                             boxPadding: 4,
                             callbacks: {
                                 title: (items) => {
                                     const idx = items[0]?.dataIndex;
-                                    return activeDepts[idx]?.name || '';
+                                    const yr = yearlyData[idx];
+                                    return `ปีงบประมาณ ${yr?.year || ''}` + (parseInt(yr?.is_active) === 1 ? ' (ปีปัจจุบัน)' : '');
                                 },
-                                label: (context) => ` จำนวน: ${context.parsed.y} โครงการ`
+                                label: (context) => {
+                                    const val = context.parsed.y || 0;
+                                    const label = context.dataset.label || '';
+                                    return ` ${label}: ${val.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`;
+                                },
+                                afterBody: (items) => {
+                                    const idx = items[0]?.dataIndex;
+                                    const yr = yearlyData[idx];
+                                    const b = parseFloat(yr?.total_budget || 0);
+                                    const d = parseFloat(yr?.total_disbursed || 0);
+                                    const pct = b > 0 ? ((d / b) * 100).toFixed(1) : '0.0';
+                                    return [
+                                        `จำนวนโครงการ: ${yr?.project_count || 0} โครงการ`,
+                                        `อัตราการเบิกจ่าย: ${pct}%`
+                                    ];
+                                }
                             }
                         }
                     },
@@ -946,11 +984,11 @@ function renderDashboardCharts(isThemeChange = false) {
                         y: {
                             beginAtZero: true,
                             ticks: {
-                                stepSize: 5,
                                 color: tickColor,
-                                font: { family: "'Prompt', 'Sarabun', sans-serif", size: isMobile ? 10 : 11 }
+                                font: { family: "'Prompt', 'Sarabun', sans-serif", size: isMobile ? 9.5 : 10.5 },
+                                callback: (val) => formatCurrency(val)
                             },
-                            grid: { 
+                            grid: {
                                 color: gridColor
                             },
                             border: {
@@ -963,11 +1001,10 @@ function renderDashboardCharts(isThemeChange = false) {
                                 maxRotation: 0,
                                 minRotation: 0,
                                 autoSkip: false,
-                                font: { 
-                                    family: "'Prompt', 'Sarabun', sans-serif", 
-                                    size: isMobile ? 9.5 : 11.5,
-                                    weight: '500',
-                                    lineHeight: 1.3
+                                font: {
+                                    family: "'Prompt', 'Sarabun', sans-serif",
+                                    size: isMobile ? 9.5 : 11,
+                                    weight: '500'
                                 },
                                 padding: 8
                             },
@@ -981,7 +1018,7 @@ function renderDashboardCharts(isThemeChange = false) {
             });
         }
     } catch (err) {
-        console.error('Error creating Department Bar Chart:', err);
+        console.error('Error creating Yearly Budget Bar Chart:', err);
     }
 }
 
