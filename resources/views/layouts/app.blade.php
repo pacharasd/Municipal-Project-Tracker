@@ -390,20 +390,34 @@
             outline-offset: 0 !important;
         }
 
-        /* Light Scrollbar Styling */
+        /* Universal Smooth Scrollbar Styling (Transparent Track - Zero White Lines) */
         ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 5px;
+            height: 5px;
         }
         ::-webkit-scrollbar-track {
-            background: #f1f5f9;
+            background: transparent !important;
         }
         ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 3px;
+            background: rgba(148, 163, 184, 0.4);
+            border-radius: 9999px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #10b981;
+            background: rgba(16, 185, 129, 0.7);
+        }
+
+        /* Mobile & Touch Viewports (< 1024px): Completely hide desktop scrollbars to prevent white/gray vertical edges */
+        @media (max-width: 1023px) {
+            ::-webkit-scrollbar {
+                display: none !important;
+                width: 0px !important;
+                height: 0px !important;
+                background: transparent !important;
+            }
+            html, body, #main-content, aside, * {
+                -ms-overflow-style: none !important;
+                scrollbar-width: none !important;
+            }
         }
 
         /* ========================================================= */
@@ -493,22 +507,24 @@
 
         /* Dark Scrollbar Styling */
         html.dark ::-webkit-scrollbar-track {
-            background: #0f1014;
+            background: transparent !important;
         }
         html.dark ::-webkit-scrollbar-thumb {
-            background: #272a34;
-            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 9999px;
         }
         html.dark ::-webkit-scrollbar-thumb:hover {
-            background: #10b981;
+            background: rgba(16, 185, 129, 0.7);
         }
 
-        /* Strict Anti-Overflow & Responsive Viewport Rules */
+        /* Strict Anti-Overflow & Responsive Viewport Rules (Zero white edge artifact) */
         html, body {
             overflow-x: hidden !important;
-            max-width: 100vw !important;
+            max-width: 100% !important;
             width: 100% !important;
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
         *, *::before, *::after {
             box-sizing: border-box;
@@ -516,7 +532,6 @@
         #main-content {
             max-width: 100% !important;
             overflow-x: hidden !important;
-            contain: paint;
         }
         #main-content table,
         #main-content table * {
@@ -525,6 +540,7 @@
     </style>
 </head>
 <body class="h-full antialiased text-slate-800 dark:text-slate-100 bg-[#f8fafc] dark:bg-[#0f1014] flex flex-col transition-colors duration-150 w-full max-w-full overflow-x-hidden" 
+      :class="{ 'overflow-hidden': sidebarOpen }" 
       x-data="{ 
           sidebarOpen: false, 
           desktopSidebarOpen: (localStorage.getItem('mpt_desktop_sidebar') !== 'false'),
@@ -820,14 +836,14 @@
 
     <!-- Main Container Layout -->
     <div class="flex-1 flex overflow-hidden w-full max-w-full min-w-0">
-        <!-- Sidebar Navigation -->
+        <!-- Sidebar Navigation (Elevated z-50 above backdrop) -->
         <aside :class="{
                    'translate-x-0': sidebarOpen,
                    '-translate-x-full': !sidebarOpen,
                    'lg:ml-0': desktopSidebarOpen,
                    'lg:-ml-64 lg:pointer-events-none': !desktopSidebarOpen
                }" 
-               class="fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-[#0b0c0f] border-r border-slate-200 dark:border-white/[0.08] pt-0 transform lg:translate-x-0 lg:static transition-[margin-left,transform] duration-200 ease-out flex flex-col justify-between shadow-lg dark:shadow-2xl lg:shadow-none overflow-hidden shrink-0 will-change-[margin-left,transform]">
+               class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-[#0b0c0f] border-r border-slate-200 dark:border-white/[0.08] pt-0 transform lg:translate-x-0 lg:static transition-[margin-left,transform] duration-200 ease-out flex flex-col justify-between shadow-lg dark:shadow-2xl lg:shadow-none overflow-hidden shrink-0 will-change-[margin-left,transform]">
             <div class="w-64 h-full flex flex-col justify-between overflow-hidden">
                 
                 <!-- Mobile Sidebar Brand Header with Municipal Logo (Replaces empty top space) -->
@@ -983,8 +999,11 @@
             </div>
         </aside>
 
-        <!-- Backdrop for mobile sidebar -->
-        <div x-show="sidebarOpen" @click="sidebarOpen = false" x-cloak class="fixed inset-0 z-30 modal-backdrop-smooth lg:hidden"></div>
+        <!-- Backdrop for mobile sidebar (Covers entire screen smoothly with no right-edge white lines) -->
+        <div x-show="sidebarOpen" 
+             @click="sidebarOpen = false" 
+             x-cloak 
+             class="fixed inset-0 z-40 modal-backdrop-smooth lg:hidden w-screen h-screen"></div>
 
         <!-- Main Content Area -->
         <main id="main-content" class="flex-1 min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden p-3.5 sm:p-6 lg:p-8 bg-[#f8fafc] dark:bg-[#0f1014]">
