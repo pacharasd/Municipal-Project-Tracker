@@ -98,34 +98,74 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
     </div>
 
     <!-- Sub-projects Section -->
-    <div class="bg-white dark:bg-[#161922] p-6 sm:p-8 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm space-y-6">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-                <h2 class="text-lg font-bold font-heading text-slate-900 dark:text-white flex items-center gap-2">
-                    <i data-lucide="layers" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i>
-                    โครงการย่อยในความรับผิดชอบ (<?= count($project['sub_projects']) ?> โครงการ)
-                </h2>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">คลิกเพื่อดูรายละเอียดกิจกรรม งบประมาณ บันทึกปัญหา และอัปเดตความคืบหน้า</p>
-            </div>
-
-            <!-- Search and Action Button -->
-            <div class="flex flex-wrap items-center gap-2.5 shrink-0">
-                <?php if (!empty($project['sub_projects'])): ?>
-                    <div class="relative min-w-[200px]">
-                        <input type="text" x-model="subSearch" @input="subPage = 1" placeholder="ค้นหาชื่อโครงการย่อย..." 
-                               class="w-full pl-8 pr-8 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#1f222e] text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                        <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                        <button type="button" x-show="subSearch" @click="subSearch = ''; subPage = 1;" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 cursor-pointer">
-                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
-                        </button>
+    <div class="bg-white dark:bg-[#161922] p-4 sm:p-6 lg:p-8 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm space-y-4 sm:space-y-6">
+        
+        <!-- Header & Search Toolbar (Responsive & Polished) -->
+        <div class="pb-3 sm:pb-4 border-b border-slate-100 dark:border-white/[0.06] space-y-3">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4">
+                
+                <!-- Title, Badge & Subtitle (With Action button aligned on mobile) -->
+                <div class="flex items-center justify-between gap-3 w-full md:w-auto">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                            <i data-lucide="layers" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2">
+                                <h2 class="text-base sm:text-lg font-bold font-heading text-slate-900 dark:text-white truncate">
+                                    โครงการย่อย
+                                </h2>
+                                <span class="text-[11px] sm:text-xs font-bold font-mono px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 whitespace-nowrap shrink-0">
+                                    <?= count($project['sub_projects']) ?> โครงการ
+                                </span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block truncate mt-0.5">
+                                คลิกเพื่อดูรายละเอียดกิจกรรม งบประมาณ บันทึกปัญหา และอัปเดตความคืบหน้า
+                            </p>
+                        </div>
                     </div>
-                <?php endif; ?>
 
-                <?php if (\App\Core\Auth::canManageProjects()): ?>
-                    <button type="button" @click="createSubModal = true; $nextTick(() => { window.safeCreateIcons && window.safeCreateIcons($el); });" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all shadow-md shadow-emerald-600/20 whitespace-nowrap cursor-pointer shrink-0">
-                        <i data-lucide="plus-circle" class="w-4 h-4"></i> เพิ่มโครงการย่อย
-                    </button>
-                <?php endif; ?>
+                    <!-- Action Button: Visible on mobile aligned with title -->
+                    <?php if (\App\Core\Auth::canManageProjects()): ?>
+                        <button type="button" 
+                                @click="createSubModal = true; $nextTick(() => { window.safeCreateIcons && window.safeCreateIcons($el); });" 
+                                class="md:hidden inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-95 rounded-xl transition-all shadow-sm shadow-emerald-600/20 whitespace-nowrap cursor-pointer shrink-0">
+                            <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                            <span>เพิ่มโครงการย่อย</span>
+                        </button>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Desktop / Tablet Search & Action Button Container -->
+                <div class="flex items-center gap-2.5 w-full md:w-auto">
+                    <?php if (!empty($project['sub_projects'])): ?>
+                        <div class="relative w-full md:w-64">
+                            <input type="text" 
+                                   x-model="subSearch" 
+                                   @input="subPage = 1" 
+                                   placeholder="ค้นหาชื่อโครงการย่อย..." 
+                                   class="w-full pl-8 pr-8 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#1f222e] text-slate-900 dark:text-white placeholder-slate-400 focus:bg-white dark:focus:bg-[#161922] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition">
+                            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                            <button type="button" 
+                                    x-show="subSearch" 
+                                    @click="subSearch = ''; subPage = 1;" 
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 cursor-pointer">
+                                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Action Button: Visible on desktop side-by-side with search -->
+                    <?php if (\App\Core\Auth::canManageProjects()): ?>
+                        <button type="button" 
+                                @click="createSubModal = true; $nextTick(() => { window.safeCreateIcons && window.safeCreateIcons($el); });" 
+                                class="hidden md:inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-95 rounded-xl transition-all shadow-md shadow-emerald-600/20 whitespace-nowrap cursor-pointer shrink-0">
+                            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                            <span>เพิ่มโครงการย่อย</span>
+                        </button>
+                    <?php endif; ?>
+                </div>
+
             </div>
         </div>
 
