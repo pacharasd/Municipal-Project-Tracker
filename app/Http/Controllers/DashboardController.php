@@ -10,7 +10,7 @@ class DashboardController
 {
     public function index(): void
     {
-        $fiscalYears = \App\Services\FiscalYearService::getAll();
+        $fiscalYears = \App\Services\FiscalYearService::getFilterableYears();
         $activeYear = \App\Services\FiscalYearService::getActiveYear();
 
         // Determine selected fiscal year

@@ -50,7 +50,7 @@ class ReportController
         $sql .= " ORDER BY p.parent_id IS NULL DESC, p.id DESC";
 
         $projects = Database::query($sql, $params);
-        $fiscalYears = \App\Services\FiscalYearService::getAll();
+        $fiscalYears = \App\Services\FiscalYearService::getFilterableYears();
         $departments = Database::query("SELECT * FROM departments ORDER BY id ASC");
 
         View::render('reports.index', [

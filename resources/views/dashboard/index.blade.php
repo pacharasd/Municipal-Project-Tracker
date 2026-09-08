@@ -45,6 +45,19 @@ $tier50to75Pct = round(($tier50to75 / $subCount) * 100, 1);
 $tier25to50Pct = round(($tier25to50 / $subCount) * 100, 1);
 $tierUnder25Pct = round(($tierUnder25 / $subCount) * 100, 1);
 $tierNotStartedPct = round(($tierNotStarted / $subCount) * 100, 1);
+
+// Fiscal Year Label Resolution for Custom Dropdown
+$currentSelectedLabel = 'ทุกปีงบประมาณ';
+$currentSelectedIsActive = false;
+if (isset($selectedYearId) && $selectedYearId !== 'all') {
+    foreach ($fiscalYears as $fy) {
+        if ((string)$fy['id'] === (string)$selectedYearId) {
+            $currentSelectedLabel = 'ปี ' . $fy['year'];
+            $currentSelectedIsActive = !empty($fy['is_active']);
+            break;
+        }
+    }
+}
 ?>
 
 <div class="space-y-5 sm:space-y-6 w-full max-w-full min-w-0">
@@ -56,29 +69,84 @@ $tierNotStartedPct = round(($tierNotStarted / $subCount) * 100, 1);
             <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">ภาพรวมโครงการของเทศบาล</p>
         </div>
 
-        <!-- Fiscal Year Dropdown (Right) -->
-        <div class="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto bg-white dark:bg-[#161922] px-3 sm:px-3.5 py-2 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:border-emerald-400/50 transition shrink-0">
-            <div class="flex items-center gap-1.5 sm:gap-2">
-                <i data-lucide="calendar" class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0"></i>
-                <label for="dashboard-fiscal-year-select" class="text-xs font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap cursor-pointer">ปีงบประมาณ</label>
-            </div>
-            <div class="relative shrink-0">
-                <select id="dashboard-fiscal-year-select" 
-                        onchange="window.location.href='<?= \App\Core\Router::url('/dashboard') ?>?fiscal_year_id=' + this.value"
-                        class="pl-2.5 pr-8 py-1.5 rounded-xl bg-slate-50 dark:bg-[#1f222e] text-xs font-bold text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-emerald-500 cursor-pointer transition">
-                    <option value="all" <?= (isset($selectedYearId) && $selectedYearId === 'all') ? 'selected' : '' ?>>ทุกปีงบประมาณ</option>
+        <!-- Fiscal Year Custom Dropdown (Right) -->
+        <div class="relative w-full sm:w-auto shrink-0" 
+             x-data="{ open: false }" 
+             @click.outside="open = false" 
+             @keydown.escape.window="open = false">
+            
+            <!-- Trigger Button -->
+            <button type="button" 
+                    @click="open = !open; $nextTick(() => { if (window.lucide) lucide.createIcons(); })" 
+                    class="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2.5 px-3.5 py-2 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:border-emerald-400/60 dark:hover:border-emerald-500/40 hover:shadow transition-all cursor-pointer text-left">
+                <div class="flex items-center gap-2 min-w-0">
+                    <div class="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                        <i data-lucide="calendar" class="w-4 h-4"></i>
+                    </div>
+                    <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">ปีงบประมาณ:</span>
+                    <div class="flex items-center gap-1.5 truncate">
+                        <span class="text-xs font-bold text-slate-900 dark:text-white font-heading truncate"><?= htmlspecialchars($currentSelectedLabel) ?></span>
+                        <?php if ($currentSelectedIsActive): ?>
+                            <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 whitespace-nowrap shrink-0">ปัจจุบัน</span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ml-1" :class="{ 'rotate-180': open }"></i>
+            </button>
+
+            <!-- Custom Dropdown Menu Panel -->
+            <div x-show="open" 
+                 x-cloak 
+                 x-transition:enter="transition ease-out duration-100"
+                 x-transition:enter-start="transform opacity-0 scale-95"
+                 x-transition:enter-end="transform opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-75"
+                 x-transition:leave-start="transform opacity-100 scale-100"
+                 x-transition:leave-end="transform opacity-0 scale-95"
+                 class="absolute right-0 mt-2 w-full sm:w-64 bg-white dark:bg-[#181a20] rounded-2xl shadow-xl dark:shadow-2xl border border-slate-200 dark:border-white/10 p-1.5 z-50 text-left">
+                
+                <div class="px-3 py-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-heading border-b border-slate-100 dark:border-white/[0.06] mb-1 flex items-center justify-between">
+                    <span>เลือกปีงบประมาณ</span>
+                    <span class="text-[9px] text-emerald-600 dark:text-emerald-400 font-medium">ถึงปีล่าสุด</span>
+                </div>
+
+                <div class="space-y-0.5 max-h-60 overflow-y-auto">
+                    <!-- Option: ทุกปีงบประมาณ -->
+                    <?php $isAllSelected = (isset($selectedYearId) && $selectedYearId === 'all'); ?>
+                    <a href="<?= \App\Core\Router::url('/dashboard') ?>?fiscal_year_id=all" 
+                       @click="open = false"
+                       class="w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5 <?= $isAllSelected ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/20' : 'text-slate-700 dark:text-slate-200 font-medium' ?>">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="layers" class="w-3.5 h-3.5 <?= $isAllSelected ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
+                            <span>ทุกปีงบประมาณ</span>
+                        </div>
+                        <?php if ($isAllSelected): ?>
+                            <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>
+                        <?php endif; ?>
+                    </a>
+
+                    <!-- Options: รายการปีงบประมาณ (แสดงถึงปีล่าสุด 2569 ลงไป) -->
                     <?php if (!empty($fiscalYears)): ?>
                         <?php foreach ($fiscalYears as $fy): ?>
                             <?php 
                                 $isYearSelected = (isset($selectedYearId) && (string)$selectedYearId === (string)$fy['id']);
-                                $isActiveTag = !empty($fy['is_active']) ? ' (ปัจจุบัน)' : '';
                             ?>
-                            <option value="<?= $fy['id'] ?>" <?= $isYearSelected ? 'selected' : '' ?>>
-                                <?= htmlspecialchars((string)$fy['year']) . $isActiveTag ?>
-                            </option>
+                            <a href="<?= \App\Core\Router::url('/dashboard') ?>?fiscal_year_id=<?= $fy['id'] ?>" 
+                               @click="open = false"
+                               class="w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5 <?= $isYearSelected ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/20' : 'text-slate-700 dark:text-slate-200 font-medium' ?>">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-mono">ปี <?= htmlspecialchars((string)$fy['year']) ?></span>
+                                    <?php if (!empty($fy['is_active'])): ?>
+                                        <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">ปัจจุบัน</span>
+                                    <?php endif; ?>
+                                </div>
+                                <?php if ($isYearSelected): ?>
+                                    <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>
+                                <?php endif; ?>
+                            </a>
                         <?php endforeach; ?>
                     <?php endif; ?>
-                </select>
+                </div>
             </div>
         </div>
     </div>

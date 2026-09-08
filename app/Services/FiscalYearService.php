@@ -17,6 +17,24 @@ class FiscalYearService
     }
 
     /**
+     * ดึงข้อมูลปีงบประมาณสำหรับตัวกรอง (Dashboard/Reports)
+     * กรองเฉพาะปีที่ <= ปีปัจจุบันที่ active (หรือปีปัจจุบันของราชการ) หรือปีที่มีโครงการอยู่จริง
+     * เพื่อไม่ให้ปีล่วงหน้าที่ยังไม่มีข้อมูลมาแสดงให้รกตา
+     */
+    public static function getFilterableYears(): array
+    {
+        $activeFy = self::getActiveYear();
+        $currentYear = $activeFy ? (int)$activeFy['year'] : self::getCurrentFiscalYear();
+
+        $sql = "SELECT * FROM fiscal_years 
+                WHERE year <= ? 
+                   OR id IN (SELECT DISTINCT fiscal_year_id FROM projects WHERE fiscal_year_id IS NOT NULL)
+                ORDER BY year DESC";
+
+        return Database::query($sql, [$currentYear]);
+    }
+
+    /**
      * คำนวณปีงบประมาณปัจจุบันตามปฏิทินงบประมาณราชการไทย (พ.ศ.)
      * เริ่ม 1 ตุลาคม ของปีก่อนหน้า สิ้นสุด 30 กันยายน
      */
