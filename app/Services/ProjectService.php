@@ -314,20 +314,39 @@ class ProjectService
             $deptData = Database::query($deptSql);
         }
 
-        // 3. Category Distribution
+        // 3. Category Distribution (ประเภทโครงการ 1 - 8 กปท.)
         if ($fiscalYearId !== null) {
-            $catSql = "SELECT c.name, COUNT(p.id) as project_count, COALESCE(SUM(p.budget), 0) as total_budget 
+            $catSql = "SELECT c.id, c.name, c.icon,
+                              COUNT(p.id) as project_count, 
+                              COALESCE(SUM(p.budget), 0) as total_budget,
+                              COALESCE(SUM(p.disbursed_amount), 0) as total_disbursed,
+                              (SELECT COUNT(*) FROM projects sub WHERE sub.parent_id IN (SELECT p2.id FROM projects p2 WHERE p2.category_id = c.id AND p2.parent_id IS NULL AND p2.fiscal_year_id = ?)) as sub_project_count
                        FROM project_categories c 
                        LEFT JOIN projects p ON c.id = p.category_id AND p.parent_id IS NULL AND p.fiscal_year_id = ?
-                       GROUP BY c.id, c.name ORDER BY project_count DESC";
-            $catData = Database::query($catSql, [$fiscalYearId]);
+                       GROUP BY c.id, c.name, c.icon 
+                       ORDER BY c.id ASC";
+            $catData = Database::query($catSql, [$fiscalYearId, $fiscalYearId]);
         } else {
-            $catSql = "SELECT c.name, COUNT(p.id) as project_count, COALESCE(SUM(p.budget), 0) as total_budget 
+            $catSql = "SELECT c.id, c.name, c.icon,
+                              COUNT(p.id) as project_count, 
+                              COALESCE(SUM(p.budget), 0) as total_budget,
+                              COALESCE(SUM(p.disbursed_amount), 0) as total_disbursed,
+                              (SELECT COUNT(*) FROM projects sub WHERE sub.parent_id IN (SELECT p2.id FROM projects p2 WHERE p2.category_id = c.id AND p2.parent_id IS NULL)) as sub_project_count
                        FROM project_categories c 
                        LEFT JOIN projects p ON c.id = p.category_id AND p.parent_id IS NULL
-                       GROUP BY c.id, c.name ORDER BY project_count DESC";
+                       GROUP BY c.id, c.name, c.icon 
+                       ORDER BY c.id ASC";
             $catData = Database::query($catSql);
         }
+
+        foreach ($catData as &$cat) {
+            if (preg_match('/^(ประเภท\s*\d+)/u', $cat['name'], $m)) {
+                $cat['short_name'] = $m[1];
+            } else {
+                $cat['short_name'] = mb_substr($cat['name'], 0, 15, 'UTF-8') . (mb_strlen($cat['name'], 'UTF-8') > 15 ? '...' : '');
+            }
+        }
+        unset($cat);
 
         // 4. Top and Bottom sub-projects
         $topSql = "SELECT s.name, s.progress, s.status, s.budget 
