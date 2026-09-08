@@ -12,12 +12,144 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
 ?>
 
 <div class="space-y-6" x-data="{ 
+    allBudgets: <?= htmlspecialchars(json_encode($mainBudgets, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8') ?>,
+    allDisbursements: <?= htmlspecialchars(json_encode($recentDisbursements, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8') ?>,
+    subProjects: <?= htmlspecialchars(json_encode($subProjects, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8') ?>,
+    
     disburseModalOpen: false,
     selectedSubProject: '',
     disburseAmount: '',
-    subProjects: <?= htmlspecialchars(json_encode($subProjects), ENT_QUOTES, 'UTF-8') ?>,
+
+    // Pagination for Main Budgets
+    budgetSearch: '',
+    budgetPage: 1,
+    budgetPerPage: 10,
+
+    // Pagination for Disbursements
+    disbSearch: '',
+    disbPage: 1,
+    disbPerPage: 10,
+
     get selectedProjectInfo() {
         return this.subProjects.find(p => p.id == this.selectedSubProject) || null;
+    },
+
+    // --- Main Budgets Pagination Getters ---
+    get filteredBudgets() {
+        const q = this.budgetSearch.trim().toLowerCase();
+        if (!q) return this.allBudgets;
+        return this.allBudgets.filter(b => {
+            const name = (b.name || '').toLowerCase();
+            const code = (b.project_code || '').toLowerCase();
+            const dept = (b.department_name || '').toLowerCase();
+            const fy = String(b.fiscal_year || '');
+            return name.includes(q) || code.includes(q) || dept.includes(q) || fy.includes(q);
+        });
+    },
+
+    get totalBudgetPages() {
+        if (this.budgetPerPage === 'all') return 1;
+        const per = parseInt(this.budgetPerPage) || 10;
+        return Math.max(1, Math.ceil(this.filteredBudgets.length / per));
+    },
+
+    get paginatedBudgets() {
+        if (this.budgetPerPage === 'all') return this.filteredBudgets;
+        const per = parseInt(this.budgetPerPage) || 10;
+        const start = (this.budgetPage - 1) * per;
+        return this.filteredBudgets.slice(start, start + per);
+    },
+
+    get budgetStartIndex() {
+        if (this.filteredBudgets.length === 0) return 0;
+        if (this.budgetPerPage === 'all') return 1;
+        const per = parseInt(this.budgetPerPage) || 10;
+        return (this.budgetPage - 1) * per + 1;
+    },
+
+    get budgetEndIndex() {
+        if (this.filteredBudgets.length === 0) return 0;
+        if (this.budgetPerPage === 'all') return this.filteredBudgets.length;
+        const per = parseInt(this.budgetPerPage) || 10;
+        return Math.min(this.filteredBudgets.length, this.budgetPage * per);
+    },
+
+    get budgetVisiblePages() {
+        return this.calculateVisiblePages(this.budgetPage, this.totalBudgetPages);
+    },
+
+    // --- Disbursements Pagination Getters ---
+    get filteredDisbursements() {
+        const q = this.disbSearch.trim().toLowerCase();
+        if (!q) return this.allDisbursements;
+        return this.allDisbursements.filter(d => {
+            const pName = (d.project_name || '').toLowerCase();
+            const pCode = (d.project_code || '').toLowerCase();
+            const desc = (d.description || '').toLowerCase();
+            const recip = (d.recipient || '').toLowerCase();
+            const creator = (d.creator_name || '').toLowerCase();
+            return pName.includes(q) || pCode.includes(q) || desc.includes(q) || recip.includes(q) || creator.includes(q);
+        });
+    },
+
+    get totalDisbPages() {
+        if (this.disbPerPage === 'all') return 1;
+        const per = parseInt(this.disbPerPage) || 10;
+        return Math.max(1, Math.ceil(this.filteredDisbursements.length / per));
+    },
+
+    get paginatedDisbursements() {
+        if (this.disbPerPage === 'all') return this.filteredDisbursements;
+        const per = parseInt(this.disbPerPage) || 10;
+        const start = (this.disbPage - 1) * per;
+        return this.filteredDisbursements.slice(start, start + per);
+    },
+
+    get disbStartIndex() {
+        if (this.filteredDisbursements.length === 0) return 0;
+        if (this.disbPerPage === 'all') return 1;
+        const per = parseInt(this.disbPerPage) || 10;
+        return (this.disbPage - 1) * per + 1;
+    },
+
+    get disbEndIndex() {
+        if (this.filteredDisbursements.length === 0) return 0;
+        if (this.disbPerPage === 'all') return this.filteredDisbursements.length;
+        const per = parseInt(this.disbPerPage) || 10;
+        return Math.min(this.filteredDisbursements.length, this.disbPage * per);
+    },
+
+    get disbVisiblePages() {
+        return this.calculateVisiblePages(this.disbPage, this.totalDisbPages);
+    },
+
+    calculateVisiblePages(current, total) {
+        if (total <= 7) {
+            const pages = [];
+            for (let i = 1; i <= total; i++) pages.push(i);
+            return pages;
+        }
+        if (current <= 4) {
+            return [1, 2, 3, 4, 5, '...', total];
+        }
+        if (current >= total - 3) {
+            return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+        }
+        return [1, '...', current - 1, current, current + 1, '...', total];
+    },
+
+    formatCurrency(val) {
+        return Number(val || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    },
+
+    formatDate(dtStr) {
+        if (!dtStr) return '-';
+        const d = new Date(dtStr.replace(/-/g, '/'));
+        if (isNaN(d.getTime())) return dtStr;
+        const day = String(d.getDate()).padStart(2, '0');
+        const mon = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear() + 543;
+        return `${day}/${mon}/${year}`;
     }
 }">
 
@@ -37,7 +169,7 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
         <div class="flex items-center gap-3">
             <?php if (Auth::canManageProjects()): ?>
             <button @click="disburseModalOpen = true" 
-                    class="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium rounded-xl shadow-sm hover:shadow-md transition-all text-sm">
+                    class="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium rounded-xl shadow-sm hover:shadow-md transition-all text-sm cursor-pointer">
                 <i data-lucide="plus-circle" class="w-4 h-4"></i>
                 <span>บันทึกการเบิกจ่ายเงิน</span>
             </button>
@@ -98,8 +230,8 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
                     ฿<?= number_format($totalRemaining, 2) ?>
                 </div>
                 <div class="flex items-center gap-1.5 mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    <i data-lucide="percent" class="w-3.5 h-3.5 text-emerald-500"></i>
-                    <span>คงเหลือ <?= 100 - $overallPercentage ?>% ของงบทั้งหมด</span>
+                    <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-500"></i>
+                    <span>คงเหลือพร้อมจัดสรร</span>
                 </div>
             </div>
         </div>
@@ -107,13 +239,13 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
         <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden group">
             <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-amber-500/10 rounded-full blur-xl group-hover:scale-125 transition-transform duration-500"></div>
             <div class="flex items-center justify-between">
-                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">อัตราการเบิกจ่ายรวม</span>
+                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">ภาพรวมอัตราการเบิกจ่าย</span>
                 <span class="p-2 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-xl">
-                    <i data-lucide="trending-up" class="w-5 h-5"></i>
+                    <i data-lucide="percent" class="w-5 h-5"></i>
                 </span>
             </div>
             <div class="mt-3">
-                <div class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                <div class="text-2xl font-extrabold text-amber-600 dark:text-amber-400 tracking-tight">
                     <?= $overallPercentage ?>%
                 </div>
                 <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full mt-2 overflow-hidden">
@@ -123,15 +255,33 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
         </div>
     </div>
 
-    <!-- Main Project Budget Ceiling Table -->
+    <!-- 1. Main Project Budget Ceiling Table (with Search & Pagination) -->
     <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
-        <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <i data-lucide="pie-chart" class="w-5 h-5 text-blue-600 dark:text-blue-400"></i>
                     สถานะเพดานงบประมาณโครงการหลัก (Project Budget Allocations)
                 </h2>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">ยอดเบิกจ่ายจะคำนวณและสรุปอัตโนมัติจากโครงการย่อยทั้งหมดภายใต้โครงการหลัก</p>
+            </div>
+
+            <!-- Search & Per-Page Controls for Budgets -->
+            <div class="flex flex-col sm:flex-row items-center gap-3">
+                <div class="relative w-full sm:w-64">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                    <input type="text" x-model="budgetSearch" @input="budgetPage = 1" placeholder="ค้นหาโครงการหลัก, รหัส..." 
+                           class="w-full pl-8 pr-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white">
+                </div>
+                <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                    <span>แสดง:</span>
+                    <select x-model="budgetPerPage" @change="budgetPage = 1" class="px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="all">ทั้งหมด</option>
+                    </select>
+                </div>
             </div>
         </div>
 
@@ -149,85 +299,145 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
-                    <?php if (empty($mainBudgets)): ?>
+                    <template x-if="paginatedBudgets.length === 0">
                         <tr>
-                            <td colspan="7" class="py-8 text-center text-slate-400 dark:text-slate-500">
+                            <td colspan="7" class="py-12 text-center text-slate-400 dark:text-slate-500">
                                 <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
-                                ยังไม่มีข้อมูลโครงการในระบบ
+                                ไม่พบข้อมูลโครงการที่ค้นหา
                             </td>
                         </tr>
-                    <?php else: ?>
-                        <?php foreach ($mainBudgets as $b): ?>
-                            <tr class="hover:bg-slate-50/75 dark:hover:bg-slate-800/40 transition-colors">
-                                <td class="py-3.5 px-4">
-                                    <div class="font-medium text-slate-900 dark:text-white">
-                                        <?= htmlspecialchars($b['name']) ?>
+                    </template>
+
+                    <template x-for="b in paginatedBudgets" :key="b.id">
+                        <tr class="hover:bg-slate-50/75 dark:hover:bg-slate-800/40 transition-colors">
+                            <td class="py-3.5 px-4">
+                                <div class="font-medium text-slate-900 dark:text-white" x-text="b.name"></div>
+                                <div class="text-xs font-mono text-slate-400 dark:text-slate-500" x-text="b.project_code"></div>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <div class="text-slate-700 dark:text-slate-300" x-text="b.department_name || 'ไม่ระบุ'"></div>
+                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                                      x-text="`ปี ${b.fiscal_year || '-'}`"></span>
+                            </td>
+                            <td class="py-3.5 px-4 text-right font-mono font-semibold text-slate-900 dark:text-white"
+                                x-text="`฿${formatCurrency(b.budget)}`"></td>
+                            <td class="py-3.5 px-4 text-right font-mono font-medium text-purple-600 dark:text-purple-400"
+                                x-text="`฿${formatCurrency(b.disbursed_amount)}`"></td>
+                            <td class="py-3.5 px-4 text-right font-mono font-medium text-emerald-600 dark:text-emerald-400"
+                                x-text="`฿${formatCurrency(b.remaining_amount)}`"></td>
+                            <td class="py-3.5 px-4">
+                                <div class="w-36 mx-auto">
+                                    <div class="flex items-center justify-between text-xs mb-1">
+                                        <span class="font-medium text-slate-600 dark:text-slate-300" x-text="`${b.disbursement_percentage}%`"></span>
+                                        <template x-if="Number(b.disbursement_percentage) >= 100">
+                                            <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">ครบงบ</span>
+                                        </template>
+                                        <template x-if="Number(b.disbursement_percentage) >= 80 && Number(b.disbursement_percentage) < 100">
+                                            <span class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">ใกล้เต็ม</span>
+                                        </template>
                                     </div>
-                                    <div class="text-xs font-mono text-slate-400 dark:text-slate-500">
-                                        <?= htmlspecialchars($b['project_code']) ?>
+                                    <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                                        <div class="h-full rounded-full transition-all duration-500"
+                                             :class="Number(b.disbursement_percentage) > 90 ? 'bg-amber-500' : 'bg-blue-600'"
+                                             :style="`width: ${Math.min(100, Number(b.disbursement_percentage))}%`"></div>
                                     </div>
-                                </td>
-                                <td class="py-3.5 px-4">
-                                    <div class="text-slate-700 dark:text-slate-300">
-                                        <?= htmlspecialchars($b['department_name'] ?? 'ไม่ระบุ') ?>
-                                    </div>
-                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                                        ปี <?= htmlspecialchars($b['fiscal_year'] ?? '-') ?>
-                                    </span>
-                                </td>
-                                <td class="py-3.5 px-4 text-right font-mono font-semibold text-slate-900 dark:text-white">
-                                    ฿<?= number_format($b['budget'], 2) ?>
-                                </td>
-                                <td class="py-3.5 px-4 text-right font-mono font-medium text-purple-600 dark:text-purple-400">
-                                    ฿<?= number_format($b['disbursed_amount'], 2) ?>
-                                </td>
-                                <td class="py-3.5 px-4 text-right font-mono font-medium text-emerald-600 dark:text-emerald-400">
-                                    ฿<?= number_format($b['remaining_amount'], 2) ?>
-                                </td>
-                                <td class="py-3.5 px-4">
-                                    <div class="w-36 mx-auto">
-                                        <div class="flex items-center justify-between text-xs mb-1">
-                                            <span class="font-medium text-slate-600 dark:text-slate-300"><?= $b['disbursement_percentage'] ?>%</span>
-                                            <?php if ($b['disbursement_percentage'] >= 100): ?>
-                                                <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">ครบงบ</span>
-                                            <?php elseif ($b['disbursement_percentage'] >= 80): ?>
-                                                <span class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">ใกล้เต็ม</span>
-                                            <?php endif; ?>
-                                        </div>
-                                        <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-                                            <div class="h-full rounded-full transition-all duration-500 <?= $b['disbursement_percentage'] > 90 ? 'bg-amber-500' : 'bg-blue-600' ?>"
-                                                 style="width: <?= min(100, (float)$b['disbursement_percentage']) ?>%"></div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="py-3.5 px-4 text-center">
-                                    <a href="<?= Router::url('/projects/' . $b['id']) ?>" 
-                                       class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
-                                        <span>ดูโครงการ</span>
-                                        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
+                                </div>
+                            </td>
+                            <td class="py-3.5 px-4 text-center">
+                                <a :href="'<?= Router::url('/projects/') ?>' + b.id" 
+                                   class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
+                                    <span>ดูโครงการ</span>
+                                    <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    </template>
                 </tbody>
             </table>
         </div>
+
+        <!-- Budget Pagination Bar -->
+        <div class="p-4 bg-slate-50/60 dark:bg-slate-900/50 border-t border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+            <div>
+                <template x-if="filteredBudgets.length > 0">
+                    <span>
+                        แสดง <strong class="text-slate-800 dark:text-slate-200" x-text="budgetStartIndex"></strong> ถึง <strong class="text-slate-800 dark:text-slate-200" x-text="budgetEndIndex"></strong> จากทั้งหมด <strong class="text-slate-800 dark:text-slate-200" x-text="filteredBudgets.length"></strong> โครงการหลัก
+                    </span>
+                </template>
+                <template x-if="filteredBudgets.length === 0">
+                    <span>ไม่มีข้อมูลสำหรับแสดงผล</span>
+                </template>
+            </div>
+
+            <!-- Page Navigation Buttons -->
+            <template x-if="totalBudgetPages > 1 && budgetPerPage !== 'all'">
+                <div class="flex items-center gap-1">
+                    <button type="button" @click="budgetPage = 1" :disabled="budgetPage === 1"
+                            class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="หน้าแรก">
+                        <i data-lucide="chevrons-left" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button type="button" @click="if(budgetPage > 1) budgetPage--" :disabled="budgetPage === 1"
+                            class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed font-medium transition cursor-pointer flex items-center gap-1">
+                        <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+                        <span class="hidden sm:inline">ก่อนหน้า</span>
+                    </button>
+                    <div class="flex items-center gap-1">
+                        <template x-for="(p, i) in budgetVisiblePages" :key="i">
+                            <div>
+                                <template x-if="p === '...'">
+                                    <span class="px-2 py-1 text-slate-400 select-none">...</span>
+                                </template>
+                                <template x-if="p !== '...'">
+                                    <button type="button" @click="budgetPage = p"
+                                            :class="budgetPage === p ? 'bg-emerald-600 text-white font-bold shadow-sm shadow-emerald-600/30 border-emerald-600' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700'"
+                                            class="w-8 h-8 rounded-lg border text-xs flex items-center justify-center font-medium transition cursor-pointer"
+                                            x-text="p"></button>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                    <button type="button" @click="if(budgetPage < totalBudgetPages) budgetPage++" :disabled="budgetPage === totalBudgetPages"
+                            class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed font-medium transition cursor-pointer flex items-center gap-1">
+                        <span class="hidden sm:inline">ถัดไป</span>
+                        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button type="button" @click="budgetPage = totalBudgetPages" :disabled="budgetPage === totalBudgetPages"
+                            class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="หน้าสุดท้าย">
+                        <i data-lucide="chevrons-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            </template>
+        </div>
     </div>
 
-    <!-- Recent Disbursements Log -->
+    <!-- 2. Recent Disbursements Log Table (with Search & Pagination) -->
     <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
-        <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <i data-lucide="receipt" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i>
-                    ประวัติรายการเบิกจ่ายงบประมาณล่าสุด (Recent Disbursement Logs)
+                    ประวัติรายการเบิกจ่ายงบประมาณ (Disbursement Logs)
                 </h2>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">บันทึกประวัติการเบิกเงินพร้อมรายละเอียดผู้รับเงินและเอกสารหลักฐาน</p>
             </div>
-            <span class="text-xs px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg">
-                แสดง 15 รายการล่าสุด
-            </span>
+
+            <!-- Search & Per-Page Controls for Disbursements -->
+            <div class="flex flex-col sm:flex-row items-center gap-3">
+                <div class="relative w-full sm:w-64">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                    <input type="text" x-model="disbSearch" @input="disbPage = 1" placeholder="ค้นหารายการ, ผู้รับเงิน, โครงการ..." 
+                           class="w-full pl-8 pr-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white">
+                </div>
+                <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                    <span>แสดง:</span>
+                    <select x-model="disbPerPage" @change="disbPage = 1" class="px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="all">ทั้งหมด</option>
+                    </select>
+                </div>
+            </div>
         </div>
 
         <div class="overflow-x-auto">
@@ -245,70 +455,109 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
-                    <?php if (empty($recentDisbursements)): ?>
+                    <template x-if="paginatedDisbursements.length === 0">
                         <tr>
-                            <td colspan="8" class="py-8 text-center text-slate-400 dark:text-slate-500">
+                            <td colspan="8" class="py-12 text-center text-slate-400 dark:text-slate-500">
                                 <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
-                                ยังไม่มีประวัติการเบิกจ่ายในระบบ
+                                ไม่พบข้อมูลรายการเบิกจ่ายตามเงื่อนไขที่ค้นหา
                             </td>
                         </tr>
-                    <?php else: ?>
-                        <?php foreach ($recentDisbursements as $d): ?>
-                            <tr class="hover:bg-slate-50/75 dark:hover:bg-slate-800/40 transition-colors">
-                                <td class="py-3.5 px-4 whitespace-nowrap">
-                                    <div class="font-medium text-slate-900 dark:text-white">
-                                        <?= date('d/m/Y', strtotime($d['disbursement_date'])) ?>
-                                    </div>
-                                    <div class="text-[11px] text-slate-400">
-                                        <?= date('H:i น.', strtotime($d['created_at'])) ?>
-                                    </div>
-                                </td>
-                                <td class="py-3.5 px-4">
-                                    <a href="<?= Router::url('/sub-projects/' . $d['project_id']) ?>" 
-                                       class="font-medium text-blue-600 dark:text-blue-400 hover:underline">
-                                        <?= htmlspecialchars($d['project_name']) ?>
+                    </template>
+
+                    <template x-for="d in paginatedDisbursements" :key="d.id">
+                        <tr class="hover:bg-slate-50/75 dark:hover:bg-slate-800/40 transition-colors">
+                            <td class="py-3.5 px-4 whitespace-nowrap">
+                                <div class="font-medium text-slate-900 dark:text-white" x-text="formatDate(d.disbursement_date)"></div>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <a :href="'<?= Router::url('/sub-projects/') ?>' + d.project_id" 
+                                   class="font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                                   x-text="d.project_name"></a>
+                                <div class="text-xs font-mono text-slate-400" x-text="d.project_code"></div>
+                            </td>
+                            <td class="py-3.5 px-4 max-w-xs text-slate-700 dark:text-slate-300" x-text="d.description"></td>
+                            <td class="py-3.5 px-4 text-slate-600 dark:text-slate-400" x-text="d.recipient || '-'"></td>
+                            <td class="py-3.5 px-4 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400"
+                                x-text="`฿${formatCurrency(d.amount)}`"></td>
+                            <td class="py-3.5 px-4 text-slate-500 dark:text-slate-400 text-xs" x-text="d.creator_name || 'ระบบ'"></td>
+                            <td class="py-3.5 px-4 text-center">
+                                <template x-if="d.evidence_file">
+                                    <a :href="'<?= Router::url('/uploads/') ?>' + d.evidence_file" target="_blank"
+                                       class="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                                        <i data-lucide="paperclip" class="w-3.5 h-3.5"></i>
+                                        <span>ไฟล์</span>
                                     </a>
-                                    <div class="text-xs font-mono text-slate-400">
-                                        <?= htmlspecialchars($d['project_code']) ?>
-                                    </div>
-                                </td>
-                                <td class="py-3.5 px-4 max-w-xs text-slate-700 dark:text-slate-300">
-                                    <?= htmlspecialchars($d['description']) ?>
-                                </td>
-                                <td class="py-3.5 px-4 text-slate-600 dark:text-slate-400">
-                                    <?= htmlspecialchars($d['recipient'] ?: '-') ?>
-                                </td>
-                                <td class="py-3.5 px-4 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                                    ฿<?= number_format($d['amount'], 2) ?>
-                                </td>
-                                <td class="py-3.5 px-4 text-slate-500 dark:text-slate-400 text-xs">
-                                    <?= htmlspecialchars($d['creator_name'] ?? 'ระบบ') ?>
-                                </td>
-                                <td class="py-3.5 px-4 text-center">
-                                    <?php if (!empty($d['evidence_file'])): ?>
-                                        <a href="<?= Router::url('/uploads/' . $d['evidence_file']) ?>" target="_blank"
-                                           class="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline">
-                                            <i data-lucide="paperclip" class="w-3.5 h-3.5"></i>
-                                            <span>ไฟล์</span>
-                                        </a>
-                                    <?php else: ?>
-                                        <span class="text-slate-300 dark:text-slate-600 text-xs">-</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="py-3.5 px-4 text-center">
-                                    <form action="<?= Router::url('/budgets/disbursements/' . $d['id'] . '/delete') ?>" method="POST"
-                                          onsubmit="return confirm('ยืนยันยกเลิกรายการเบิกจ่ายจำนวน <?= number_format($d['amount'], 2) ?> บาท? (ยอดเงินจะคืนกลับเข้างบโครงการ)');">
-                                        <input type="hidden" name="_token" value="<?= $csrfToken ?>">
-                                        <button type="submit" class="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded transition" title="ยกเลิกรายการเบิกจ่าย">
-                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
+                                </template>
+                                <template x-if="!d.evidence_file">
+                                    <span class="text-slate-300 dark:text-slate-600 text-xs">-</span>
+                                </template>
+                            </td>
+                            <td class="py-3.5 px-4 text-center">
+                                <form :action="'<?= Router::url('/budgets/disbursements/') ?>' + d.id + '/delete'" method="POST"
+                                      @submit="if(!confirm(`ยืนยันยกเลิกรายการเบิกจ่ายจำนวน ฿${formatCurrency(d.amount)} บาท? (ยอดเงินจะคืนกลับเข้างบโครงการ)`)) $event.preventDefault();">
+                                    <input type="hidden" name="_token" value="<?= $csrfToken ?>">
+                                    <button type="submit" class="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded transition cursor-pointer" title="ยกเลิกรายการเบิกจ่าย">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    </template>
                 </tbody>
             </table>
+        </div>
+
+        <!-- Disbursements Pagination Bar -->
+        <div class="p-4 bg-slate-50/60 dark:bg-slate-900/50 border-t border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+            <div>
+                <template x-if="filteredDisbursements.length > 0">
+                    <span>
+                        แสดง <strong class="text-slate-800 dark:text-slate-200" x-text="disbStartIndex"></strong> ถึง <strong class="text-slate-800 dark:text-slate-200" x-text="disbEndIndex"></strong> จากทั้งหมด <strong class="text-slate-800 dark:text-slate-200" x-text="filteredDisbursements.length"></strong> รายการเบิกจ่าย
+                    </span>
+                </template>
+                <template x-if="filteredDisbursements.length === 0">
+                    <span>ไม่มีข้อมูลสำหรับแสดงผล</span>
+                </template>
+            </div>
+
+            <!-- Page Navigation Buttons -->
+            <template x-if="totalDisbPages > 1 && disbPerPage !== 'all'">
+                <div class="flex items-center gap-1">
+                    <button type="button" @click="disbPage = 1" :disabled="disbPage === 1"
+                            class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="หน้าแรก">
+                        <i data-lucide="chevrons-left" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button type="button" @click="if(disbPage > 1) disbPage--" :disabled="disbPage === 1"
+                            class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed font-medium transition cursor-pointer flex items-center gap-1">
+                        <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+                        <span class="hidden sm:inline">ก่อนหน้า</span>
+                    </button>
+                    <div class="flex items-center gap-1">
+                        <template x-for="(p, i) in disbVisiblePages" :key="i">
+                            <div>
+                                <template x-if="p === '...'">
+                                    <span class="px-2 py-1 text-slate-400 select-none">...</span>
+                                </template>
+                                <template x-if="p !== '...'">
+                                    <button type="button" @click="disbPage = p"
+                                            :class="disbPage === p ? 'bg-emerald-600 text-white font-bold shadow-sm shadow-emerald-600/30 border-emerald-600' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700'"
+                                            class="w-8 h-8 rounded-lg border text-xs flex items-center justify-center font-medium transition cursor-pointer"
+                                            x-text="p"></button>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                    <button type="button" @click="if(disbPage < totalDisbPages) disbPage++" :disabled="disbPage === totalDisbPages"
+                            class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed font-medium transition cursor-pointer flex items-center gap-1">
+                        <span class="hidden sm:inline">ถัดไป</span>
+                        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button type="button" @click="disbPage = totalDisbPages" :disabled="disbPage === totalDisbPages"
+                            class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="หน้าสุดท้าย">
+                        <i data-lucide="chevrons-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            </template>
         </div>
     </div>
 
@@ -316,8 +565,8 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
     <template x-teleport="body">
     <div x-show="disburseModalOpen" 
          x-cloak 
-         @click.self="disburseModalOpen = false"
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+         @click.self="disburseModalOpen = false" 
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
@@ -325,7 +574,8 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0">
         
-        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5"
+             @click.outside="disburseModalOpen = false">
             
             <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
                 <div class="flex items-center gap-3">
@@ -428,11 +678,11 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
 
                 <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
                     <button type="button" @click="disburseModalOpen = false" 
-                            class="px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
+                            class="px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer">
                         ยกเลิก
                     </button>
                     <button type="submit" 
-                            class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl shadow-sm transition-all text-sm">
+                            class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl shadow-sm transition-all text-sm cursor-pointer">
                         <i data-lucide="check-circle" class="w-4 h-4"></i>
                         <span>ยืนยันการเบิกจ่าย</span>
                     </button>
@@ -448,4 +698,3 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
 $content = ob_get_clean();
 include dirname(__DIR__) . '/layouts/app.blade.php';
 ?>
-

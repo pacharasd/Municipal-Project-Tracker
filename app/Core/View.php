@@ -30,6 +30,7 @@ class View
         $csrfToken = Session::csrfToken();
         $flashSuccess = Session::flash('success');
         $flashError = Session::flash('error');
+        $flashInfo = Session::flash('info');
 
         extract($data);
 

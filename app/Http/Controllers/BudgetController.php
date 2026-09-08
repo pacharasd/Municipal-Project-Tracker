@@ -32,7 +32,7 @@ class BudgetController
              FROM budget_disbursements d 
              LEFT JOIN projects p ON d.project_id = p.id 
              LEFT JOIN users u ON d.created_by = u.id 
-             ORDER BY d.disbursement_date DESC LIMIT 15"
+             ORDER BY d.disbursement_date DESC LIMIT 100"
         );
 
         $subProjects = Database::query(

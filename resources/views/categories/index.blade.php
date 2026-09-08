@@ -6,38 +6,22 @@ use App\Core\Auth;
 use App\Services\ProgressService;
 
 $isAdmin = Auth::isAdmin();
+
+// Prepare JSON summary for Alpine search & pagination
+$categoriesSummary = [];
+foreach ($categories as $cat) {
+    $categoriesSummary[] = [
+        'id' => (int)$cat['id'],
+        'name' => (string)$cat['name'],
+        'description' => (string)($cat['description'] ?? ''),
+        'search_text' => mb_strtolower(($cat['name'] ?? '') . ' ' . ($cat['description'] ?? ''), 'UTF-8'),
+    ];
+}
+$categoriesJson = json_encode($categoriesSummary, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
 ?>
 
 <div class="space-y-6 max-w-7xl mx-auto pb-12"
-     x-data="{
-        createModal: false,
-        editModal: false,
-        deleteModal: false,
-        activeTab: 'grid', // 'grid' | 'table'
-        searchQuery: '',
-        editData: { id: '', name: '', description: '' },
-        deleteData: { id: '', name: '', project_count: 0 },
-
-        openEdit(cat) {
-            this.editData = {
-                id: cat.id,
-                name: cat.name || '',
-                description: cat.description || ''
-            };
-            this.editModal = true;
-            $nextTick(() => { if (window.lucide) lucide.createIcons(); });
-        },
-
-        openDelete(cat) {
-            this.deleteData = {
-                id: cat.id,
-                name: cat.name,
-                project_count: parseInt(cat.project_count || 0)
-            };
-            this.deleteModal = true;
-            $nextTick(() => { if (window.lucide) lucide.createIcons(); });
-        }
-     }">
+     x-data="categoriesPage()">
 
     <!-- Breadcrumb & Header Title -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -58,17 +42,27 @@ $isAdmin = Auth::isAdmin();
             </p>
         </div>
 
-        <!-- Action Button -->
-        <div class="flex items-center gap-2.5 shrink-0">
+        <!-- Action Button & Toolbar -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
+            <!-- Search Input (shared across Grid and Table) -->
+            <div class="relative min-w-[220px]">
+                <input type="text" x-model="searchQuery" @input="onSearchChange" placeholder="ค้นหาประเภทโครงการ..." 
+                       class="w-full pl-9 pr-8 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#181a20] text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none shadow-sm">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                <button type="button" x-show="searchQuery" @click="searchQuery = ''; onSearchChange();" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 cursor-pointer">
+                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                </button>
+            </div>
+
             <!-- View Mode Switcher -->
             <div class="flex items-center p-1 bg-slate-100 dark:bg-white/[0.06] rounded-xl border border-slate-200 dark:border-white/10 text-xs font-semibold">
-                <button type="button" @click="activeTab = 'grid'" 
+                <button type="button" @click="activeTab = 'grid'; $nextTick(() => { if (window.lucide) lucide.createIcons(); });" 
                         :class="activeTab === 'grid' ? 'bg-white dark:bg-[#181c26] text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
                         class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer">
                     <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
                     <span class="hidden sm:inline">การ์ดสรุป</span>
                 </button>
-                <button type="button" @click="activeTab = 'table'" 
+                <button type="button" @click="activeTab = 'table'; $nextTick(() => { if (window.lucide) lucide.createIcons(); });" 
                         :class="activeTab === 'table' ? 'bg-white dark:bg-[#181c26] text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
                         class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer">
                     <i data-lucide="table-2" class="w-3.5 h-3.5"></i>
@@ -78,7 +72,7 @@ $isAdmin = Auth::isAdmin();
 
             <?php if ($isAdmin): ?>
                 <button type="button" @click="createModal = true; $nextTick(() => { if (window.lucide) lucide.createIcons(); });" 
-                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs sm:text-sm font-bold shadow-md shadow-emerald-500/20 hover:shadow-lg transition-all cursor-pointer">
+                        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs sm:text-sm font-bold shadow-md shadow-emerald-500/20 hover:shadow-lg transition-all cursor-pointer">
                     <i data-lucide="plus-circle" class="w-4 h-4"></i>
                     <span>เพิ่มประเภทโครงการ</span>
                 </button>
@@ -170,110 +164,181 @@ $isAdmin = Auth::isAdmin();
     </div>
 
     <!-- TAB 1: Grid Cards View -->
-    <div x-show="activeTab === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        <?php foreach ($categories as $cat): ?>
-            <?php
-            $pCount = (int)$cat['project_count'];
-            $subCount = (int)$cat['sub_project_count'];
-            $bTotal = (float)$cat['total_budget'];
-            $dTotal = (float)$cat['total_disbursed'];
-            $avgProg = (float)$cat['avg_progress'];
-            $disbPct = $bTotal > 0 ? ($dTotal / $bTotal) * 100 : 0;
-            $tier = ProgressService::getProgressTier($avgProg);
-            ?>
-            <div class="bg-white dark:bg-[#181a20] rounded-3xl border border-slate-200/80 dark:border-white/10 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
-                <div>
-                    <!-- Card Top: Category ID, Title & Action Menu -->
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                            <div class="flex items-center gap-2">
-                                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold font-mono bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                                    #<?= $cat['id'] ?>
-                                </span>
-                                <h3 class="font-bold text-base text-slate-900 dark:text-white truncate font-heading group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors" title="<?= htmlspecialchars($cat['name']) ?>">
-                                    <?= htmlspecialchars($cat['name']) ?>
-                                </h3>
+    <div x-show="activeTab === 'grid'" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <?php foreach ($categories as $cat): ?>
+                <?php
+                $pCount = (int)$cat['project_count'];
+                $subCount = (int)$cat['sub_project_count'];
+                $bTotal = (float)$cat['total_budget'];
+                $dTotal = (float)$cat['total_disbursed'];
+                $avgProg = (float)$cat['avg_progress'];
+                $disbPct = $bTotal > 0 ? ($dTotal / $bTotal) * 100 : 0;
+                $tier = ProgressService::getProgressTier($avgProg);
+                ?>
+                <div x-show="isGridVisible(<?= $cat['id'] ?>)"
+                     class="bg-white dark:bg-[#181a20] rounded-3xl border border-slate-200/80 dark:border-white/10 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+                    <div>
+                        <!-- Card Top: Category ID, Title & Action Menu -->
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold font-mono bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                        #<?= $cat['id'] ?>
+                                    </span>
+                                    <h3 class="font-bold text-base text-slate-900 dark:text-white truncate font-heading group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors" title="<?= htmlspecialchars($cat['name']) ?>">
+                                        <?= htmlspecialchars($cat['name']) ?>
+                                    </h3>
+                                </div>
+                            </div>
+
+                            <!-- Dropdown Actions for Admin -->
+                            <?php if ($isAdmin): ?>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <button type="button" 
+                                            @click="openEdit(<?= htmlspecialchars(json_encode($cat)) ?>)"
+                                            class="p-2 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition cursor-pointer" title="แก้ไข">
+                                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                    </button>
+                                    <button type="button" 
+                                            @click="openDelete(<?= htmlspecialchars(json_encode($cat)) ?>)"
+                                            class="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition cursor-pointer" title="ลบ">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- Category Description -->
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-2.5 line-clamp-2 leading-relaxed min-h-[36px]">
+                            <?= htmlspecialchars($cat['description'] ?: 'ไม่มีรายละเอียดคำอธิบายเพิ่มเติมสำหรับหมวดหมู่นี้') ?>
+                        </p>
+
+                        <!-- Stats Pill Grid -->
+                        <div class="grid grid-cols-2 gap-2.5 mt-4 p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.05]">
+                            <div>
+                                <span class="text-[10px] uppercase font-bold text-slate-400">โครงการหลัก</span>
+                                <div class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5 mt-0.5">
+                                    <i data-lucide="folder-kanban" class="w-3.5 h-3.5 text-emerald-500"></i>
+                                    <span><?= number_format($pCount) ?> โครงการ</span>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="text-[10px] uppercase font-bold text-slate-400">โครงการย่อย</span>
+                                <div class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5 mt-0.5">
+                                    <i data-lucide="layers" class="w-3.5 h-3.5 text-blue-500"></i>
+                                    <span><?= number_format($subCount) ?> รายการ</span>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Dropdown Actions for Admin -->
-                        <?php if ($isAdmin): ?>
-                            <div class="flex items-center gap-1 shrink-0">
-                                <button type="button" 
-                                        @click="openEdit(<?= htmlspecialchars(json_encode($cat)) ?>)"
-                                        class="p-2 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition cursor-pointer" title="แก้ไข">
-                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
-                                </button>
-                                <button type="button" 
-                                        @click="openDelete(<?= htmlspecialchars(json_encode($cat)) ?>)"
-                                        class="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition cursor-pointer" title="ลบ">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                </button>
+                        <!-- Budget & Disbursement Bar -->
+                        <div class="mt-4 space-y-1.5">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="text-slate-500 dark:text-slate-400">งบประมาณที่ได้รับ</span>
+                                <span class="font-bold font-mono text-slate-900 dark:text-white"><?= number_format($bTotal) ?> ฿</span>
                             </div>
-                        <?php endif; ?>
+                            <div class="flex items-center justify-between text-[11px] text-slate-400">
+                                <span>เบิกจ่ายแล้ว <?= number_format($dTotal) ?> ฿</span>
+                                <span class="font-bold text-emerald-600 dark:text-emerald-400"><?= number_format($disbPct, 1) ?>%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 dark:bg-white/[0.06] h-2 rounded-full overflow-hidden p-0.5">
+                                <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full" style="width: <?= min(100, $disbPct) ?>%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Progress Average Status -->
+                        <div class="mt-4 pt-3 border-t border-slate-100 dark:border-white/[0.06]">
+                            <div class="flex items-center justify-between text-xs mb-1.5">
+                                <span class="text-slate-500 dark:text-slate-400 font-medium">ความคืบหน้าเฉลี่ย</span>
+                                <span class="font-mono font-bold <?= $tier['textClass'] ?>"><?= number_format($avgProg, 1) ?>%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 dark:bg-white/[0.06] h-2 rounded-full overflow-hidden p-0.5">
+                                <div class="bg-gradient-to-r <?= $tier['gradient'] ?> h-full rounded-full transition-all duration-500" 
+                                     style="width: <?= $avgProg > 0 ? min(100, max(5, $avgProg)) : 0 ?>%"></div>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Category Description -->
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-2.5 line-clamp-2 leading-relaxed min-h-[36px]">
-                        <?= htmlspecialchars($cat['description'] ?: 'ไม่มีรายละเอียดคำอธิบายเพิ่มเติมสำหรับหมวดหมู่นี้') ?>
-                    </p>
-
-                    <!-- Stats Pill Grid -->
-                    <div class="grid grid-cols-2 gap-2.5 mt-4 p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.05]">
-                        <div>
-                            <span class="text-[10px] uppercase font-bold text-slate-400">โครงการหลัก</span>
-                            <div class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5 mt-0.5">
-                                <i data-lucide="folder-kanban" class="w-3.5 h-3.5 text-emerald-500"></i>
-                                <span><?= number_format($pCount) ?> โครงการ</span>
-                            </div>
-                        </div>
-                        <div>
-                            <span class="text-[10px] uppercase font-bold text-slate-400">โครงการย่อย</span>
-                            <div class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5 mt-0.5">
-                                <i data-lucide="layers" class="w-3.5 h-3.5 text-blue-500"></i>
-                                <span><?= number_format($subCount) ?> รายการ</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Budget & Disbursement Bar -->
-                    <div class="mt-4 space-y-1.5">
-                        <div class="flex items-center justify-between text-xs">
-                            <span class="text-slate-500 dark:text-slate-400">งบประมาณที่ได้รับ</span>
-                            <span class="font-bold font-mono text-slate-900 dark:text-white"><?= number_format($bTotal) ?> ฿</span>
-                        </div>
-                        <div class="flex items-center justify-between text-[11px] text-slate-400">
-                            <span>เบิกจ่ายแล้ว <?= number_format($dTotal) ?> ฿</span>
-                            <span class="font-bold text-emerald-600 dark:text-emerald-400"><?= number_format($disbPct, 1) ?>%</span>
-                        </div>
-                        <div class="w-full bg-slate-100 dark:bg-white/[0.06] h-2 rounded-full overflow-hidden p-0.5">
-                            <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full" style="width: <?= min(100, $disbPct) ?>%"></div>
-                        </div>
-                    </div>
-
-                    <!-- Progress Average Status -->
-                    <div class="mt-4 pt-3 border-t border-slate-100 dark:border-white/[0.06]">
-                        <div class="flex items-center justify-between text-xs mb-1.5">
-                            <span class="text-slate-500 dark:text-slate-400 font-medium">ความคืบหน้าเฉลี่ย</span>
-                            <span class="font-mono font-bold <?= $tier['textClass'] ?>"><?= number_format($avgProg, 1) ?>%</span>
-                        </div>
-                        <div class="w-full bg-slate-100 dark:bg-white/[0.06] h-2 rounded-full overflow-hidden p-0.5">
-                            <div class="bg-gradient-to-r <?= $tier['gradient'] ?> h-full rounded-full transition-all duration-500" 
-                                 style="width: <?= $avgProg > 0 ? min(100, max(5, $avgProg)) : 0 ?>%"></div>
-                        </div>
+                    <!-- Footer Card Action: Filter Projects -->
+                    <div class="mt-5 pt-3 border-t border-slate-100 dark:border-white/[0.06]">
+                        <a href="<?= Router::url('/projects?category_id=' . $cat['id']) ?>" 
+                           class="w-full py-2 px-3 rounded-xl bg-slate-100 dark:bg-white/[0.05] hover:bg-emerald-50 dark:hover:bg-emerald-500/15 text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-300 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer">
+                            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                            <span>ดูโครงการในหมวดหมู่นี้ (<?= number_format($pCount) ?>)</span>
+                        </a>
                     </div>
                 </div>
+            <?php endforeach; ?>
 
-                <!-- Footer Card Action: Filter Projects -->
-                <div class="mt-5 pt-3 border-t border-slate-100 dark:border-white/[0.06]">
-                    <a href="<?= Router::url('/projects?category_id=' . $cat['id']) ?>" 
-                       class="w-full py-2 px-3 rounded-xl bg-slate-100 dark:bg-white/[0.05] hover:bg-emerald-50 dark:hover:bg-emerald-500/15 text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-300 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer">
-                        <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-                        <span>ดูโครงการในหมวดหมู่นี้ (<?= number_format($pCount) ?>)</span>
-                    </a>
+            <!-- Empty State when search returns 0 results -->
+            <div x-show="filteredCategories.length === 0" class="col-span-full p-12 text-center bg-white dark:bg-[#181a20] rounded-3xl border border-dashed border-slate-200 dark:border-white/10">
+                <div class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/[0.05] text-slate-400 flex items-center justify-center mx-auto mb-3">
+                    <i data-lucide="search-x" class="w-6 h-6"></i>
+                </div>
+                <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200">ไม่พบประเภทโครงการที่ค้นหา</h4>
+                <p class="text-xs text-slate-400 mt-1">ไม่มีหมวดหมู่ที่ตรงกับ "<span class="font-semibold text-slate-600 dark:text-slate-300" x-text="searchQuery"></span>"</p>
+                <button type="button" @click="searchQuery = ''; onSearchChange();" class="mt-3.5 px-3.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition cursor-pointer">
+                    ล้างคำค้นหา
+                </button>
+            </div>
+        </div>
+
+        <!-- Grid View Pagination Bar -->
+        <div x-show="filteredCategories.length > 0" class="p-4 rounded-2xl bg-white dark:bg-[#181a20] border border-slate-200/80 dark:border-white/10 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+            <div class="flex items-center gap-3">
+                <span class="text-slate-500 dark:text-slate-400">
+                    แสดง <span class="font-bold text-slate-900 dark:text-white font-mono" x-text="gridStartIndex"></span> ถึง 
+                    <span class="font-bold text-slate-900 dark:text-white font-mono" x-text="gridEndIndex"></span> จาก 
+                    <span class="font-bold text-emerald-600 dark:text-emerald-400 font-mono" x-text="filteredCategories.length"></span> หมวดหมู่
+                </span>
+                <div class="flex items-center gap-1.5 ml-2 border-l border-slate-200 dark:border-white/10 pl-3">
+                    <span class="text-slate-400 text-[11px]">แสดงต่อหน้า:</span>
+                    <select :value="gridPerPage" @change="setGridPerPage($event.target.value)" 
+                            class="px-2 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#12141a] text-slate-700 dark:text-slate-200 text-xs font-medium focus:ring-1 focus:ring-emerald-500 focus:outline-none cursor-pointer">
+                        <option value="6">6</option>
+                        <option value="9">9</option>
+                        <option value="12">12</option>
+                        <option value="all">ทั้งหมด</option>
+                    </select>
                 </div>
             </div>
-        <?php endforeach; ?>
+
+            <!-- Pagination buttons -->
+            <template x-if="gridTotalPages > 1 && gridPerPage !== 'all'">
+                <div class="flex items-center gap-1">
+                    <button type="button" @click="setGridPage(1)" :disabled="gridPage === 1"
+                            class="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="หน้าแรก">
+                        <i data-lucide="chevrons-left" class="w-4 h-4"></i>
+                    </button>
+                    <button type="button" @click="prevGridPage()" :disabled="gridPage === 1"
+                            class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer flex items-center gap-1">
+                        <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">ก่อนหน้า</span>
+                    </button>
+                    <div class="flex items-center gap-1 px-1">
+                        <template x-for="(p, idx) in gridVisiblePages" :key="idx">
+                            <button type="button" 
+                                    @click="setGridPage(p)"
+                                    :disabled="p === '...'"
+                                    :class="p === gridPage ? 'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-500/20 border border-emerald-600' : (p === '...' ? 'text-slate-400 cursor-default' : 'bg-white dark:bg-[#12141a] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5')"
+                                    class="min-w-[32px] h-8 px-2 rounded-lg text-xs font-mono font-semibold transition cursor-pointer flex items-center justify-center"
+                                    x-text="p">
+                            </button>
+                        </template>
+                    </div>
+                    <button type="button" @click="nextGridPage()" :disabled="gridPage === gridTotalPages"
+                            class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer flex items-center gap-1">
+                        <span class="hidden sm:inline">ถัดไป</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </button>
+                    <button type="button" @click="setGridPage(gridTotalPages)" :disabled="gridPage === gridTotalPages"
+                            class="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="หน้าสุดท้าย">
+                        <i data-lucide="chevrons-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </template>
+        </div>
     </div>
 
     <!-- TAB 2: Table Comparison View -->
@@ -283,10 +348,8 @@ $isAdmin = Auth::isAdmin();
                 <h3 class="text-base font-bold font-heading text-slate-900 dark:text-white">ตารางเปรียบเทียบสถิติทุกประเภทโครงการ</h3>
                 <p class="text-xs text-slate-500 dark:text-slate-400">เปรียบเทียบความคืบหน้า งบประมาณ และยอดเบิกจ่ายตามหมวดหมู่</p>
             </div>
-            <div class="w-full sm:w-64 relative">
-                <input type="text" x-model="searchQuery" placeholder="ค้นหาชื่อประเภท..." 
-                       class="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#12141a] text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2"></i>
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-400">พบ <span class="font-bold text-emerald-600 dark:text-emerald-400" x-text="filteredCategories.length"></span> หมวดหมู่</span>
             </div>
         </div>
 
@@ -316,7 +379,7 @@ $isAdmin = Auth::isAdmin();
                         $tier = ProgressService::getProgressTier($avgProg);
                         ?>
                         <tr class="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition"
-                            x-show="!searchQuery || '<?= addslashes(mb_strtolower($cat['name'], 'UTF-8')) ?>'.includes(searchQuery.toLowerCase())">
+                            x-show="isTableVisible(<?= $cat['id'] ?>)">
                             <td class="py-4 px-4 text-center text-slate-400 font-mono font-medium">
                                 <?= $idx++ ?>
                             </td>
@@ -377,16 +440,85 @@ $isAdmin = Auth::isAdmin();
                             </td>
                         </tr>
                     <?php endforeach; ?>
+
+                    <!-- Empty state in Table -->
+                    <tr x-show="filteredCategories.length === 0">
+                        <td colspan="8" class="text-center py-10 text-slate-400">
+                            <div class="flex flex-col items-center justify-center">
+                                <i data-lucide="search-x" class="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2"></i>
+                                <span class="font-medium text-slate-600 dark:text-slate-400">ไม่พบประเภทโครงการที่ค้นหา</span>
+                                <span class="text-xs text-slate-400 mt-0.5">ไม่มีข้อมูลที่ตรงกับคำค้นหา</span>
+                            </div>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
+        </div>
+
+        <!-- Table View Pagination Bar -->
+        <div x-show="filteredCategories.length > 0" class="p-4 border-t border-slate-100 dark:border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+            <div class="flex items-center gap-3">
+                <span class="text-slate-500 dark:text-slate-400">
+                    แสดง <span class="font-bold text-slate-900 dark:text-white font-mono" x-text="tableStartIndex"></span> ถึง 
+                    <span class="font-bold text-slate-900 dark:text-white font-mono" x-text="tableEndIndex"></span> จาก 
+                    <span class="font-bold text-emerald-600 dark:text-emerald-400 font-mono" x-text="filteredCategories.length"></span> หมวดหมู่
+                </span>
+                <div class="flex items-center gap-1.5 ml-2 border-l border-slate-200 dark:border-white/10 pl-3">
+                    <span class="text-slate-400 text-[11px]">แสดงต่อหน้า:</span>
+                    <select :value="tablePerPage" @change="setTablePerPage($event.target.value)" 
+                            class="px-2 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#12141a] text-slate-700 dark:text-slate-200 text-xs font-medium focus:ring-1 focus:ring-emerald-500 focus:outline-none cursor-pointer">
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="all">ทั้งหมด</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Pagination buttons -->
+            <template x-if="tableTotalPages > 1 && tablePerPage !== 'all'">
+                <div class="flex items-center gap-1">
+                    <button type="button" @click="setTablePage(1)" :disabled="tablePage === 1"
+                            class="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="หน้าแรก">
+                        <i data-lucide="chevrons-left" class="w-4 h-4"></i>
+                    </button>
+                    <button type="button" @click="prevTablePage()" :disabled="tablePage === 1"
+                            class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer flex items-center gap-1">
+                        <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">ก่อนหน้า</span>
+                    </button>
+                    <div class="flex items-center gap-1 px-1">
+                        <template x-for="(p, idx) in tableVisiblePages" :key="idx">
+                            <button type="button" 
+                                    @click="setTablePage(p)"
+                                    :disabled="p === '...'"
+                                    :class="p === tablePage ? 'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-500/20 border border-emerald-600' : (p === '...' ? 'text-slate-400 cursor-default' : 'bg-white dark:bg-[#12141a] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5')"
+                                    class="min-w-[32px] h-8 px-2 rounded-lg text-xs font-mono font-semibold transition cursor-pointer flex items-center justify-center"
+                                    x-text="p">
+                            </button>
+                        </template>
+                    </div>
+                    <button type="button" @click="nextTablePage()" :disabled="tablePage === tableTotalPages"
+                            class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer flex items-center gap-1">
+                        <span class="hidden sm:inline">ถัดไป</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </button>
+                    <button type="button" @click="setTablePage(tableTotalPages)" :disabled="tablePage === tableTotalPages"
+                            class="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="หน้าสุดท้าย">
+                        <i data-lucide="chevrons-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </template>
         </div>
     </div>
 
     <!-- MODAL 1: Create New Category -->
     <?php if ($isAdmin): ?>
+    <template x-teleport="body">
     <div x-show="createModal" 
          x-cloak
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm"
+         @click.self="createModal = false"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
@@ -425,8 +557,9 @@ $isAdmin = Auth::isAdmin();
                     <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                         ชื่อประเภทโครงการ <span class="text-rose-500">*</span>
                     </label>
-                    <input type="text" name="name" required placeholder="เช่น งานป้องกันและบรรเทาสาธารณภัย"
+                    <input type="text" name="name" required maxlength="255" placeholder="เช่น กิจกรรมเพื่อสนับสนุนและส่งเสริมการจัดบริการสาธารณสุข หรือ งานป้องกันและบรรเทาสาธารณภัย"
                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/10 bg-slate-50 dark:bg-[#12141a] text-slate-900 dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">ความยาว 2 - 255 ตัวอักษร (รองรับชื่อหมวดหมู่ตามระเบียบ สปสช. / กองทุนสุขภาพ)</p>
                 </div>
 
                 <!-- Description -->
@@ -453,13 +586,16 @@ $isAdmin = Auth::isAdmin();
             </form>
         </div>
     </div>
+    </template>
     <?php endif; ?>
 
     <!-- MODAL 2: Edit Category -->
     <?php if ($isAdmin): ?>
+    <template x-teleport="body">
     <div x-show="editModal" 
          x-cloak
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm"
+         @click.self="editModal = false"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
@@ -498,8 +634,9 @@ $isAdmin = Auth::isAdmin();
                     <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                         ชื่อประเภทโครงการ <span class="text-rose-500">*</span>
                     </label>
-                    <input type="text" name="name" x-model="editData.name" required
+                    <input type="text" name="name" x-model="editData.name" required maxlength="255"
                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/10 bg-slate-50 dark:bg-[#12141a] text-slate-900 dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">ความยาว 2 - 255 ตัวอักษร (รองรับชื่อหมวดหมู่ตามระเบียบ สปสช. / กองทุนสุขภาพ)</p>
                 </div>
 
                 <!-- Description -->
@@ -526,13 +663,16 @@ $isAdmin = Auth::isAdmin();
             </form>
         </div>
     </div>
+    </template>
     <?php endif; ?>
 
     <!-- MODAL 3: Delete Confirmation Modal (with Safety Protection) -->
     <?php if ($isAdmin): ?>
+    <template x-teleport="body">
     <div x-show="deleteModal" 
          x-cloak
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm"
+         @click.self="deleteModal = false"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
@@ -609,9 +749,178 @@ $isAdmin = Auth::isAdmin();
             </div>
         </div>
     </div>
+    </template>
     <?php endif; ?>
 
 </div>
+
+<script>
+function categoriesPage() {
+    return {
+        allCategories: <?= $categoriesJson ?>,
+        createModal: false,
+        editModal: false,
+        deleteModal: false,
+        activeTab: 'grid', // 'grid' | 'table'
+        searchQuery: '',
+        editData: { id: '', name: '', description: '' },
+        deleteData: { id: '', name: '', project_count: 0 },
+
+        // Grid pagination
+        gridPage: 1,
+        gridPerPage: 6,
+
+        // Table pagination
+        tablePage: 1,
+        tablePerPage: 10,
+
+        get filteredCategories() {
+            if (!this.searchQuery.trim()) return this.allCategories;
+            const q = this.searchQuery.toLowerCase().trim();
+            return this.allCategories.filter(c => c.search_text.includes(q));
+        },
+
+        // Grid getters
+        get gridTotalPages() {
+            if (this.gridPerPage === 'all') return 1;
+            const per = parseInt(this.gridPerPage) || 6;
+            return Math.ceil(this.filteredCategories.length / per) || 1;
+        },
+        get paginatedGridIds() {
+            if (this.gridPerPage === 'all') {
+                return new Set(this.filteredCategories.map(c => c.id));
+            }
+            const per = parseInt(this.gridPerPage) || 6;
+            const start = (this.gridPage - 1) * per;
+            return new Set(this.filteredCategories.slice(start, start + per).map(c => c.id));
+        },
+        isGridVisible(id) {
+            return this.paginatedGridIds.has(id);
+        },
+        get gridStartIndex() {
+            if (this.filteredCategories.length === 0) return 0;
+            if (this.gridPerPage === 'all') return 1;
+            const per = parseInt(this.gridPerPage) || 6;
+            return (this.gridPage - 1) * per + 1;
+        },
+        get gridEndIndex() {
+            if (this.filteredCategories.length === 0) return 0;
+            if (this.gridPerPage === 'all') return this.filteredCategories.length;
+            const per = parseInt(this.gridPerPage) || 6;
+            return Math.min(this.gridPage * per, this.filteredCategories.length);
+        },
+        get gridVisiblePages() {
+            return this.getVisiblePages(this.gridTotalPages, this.gridPage);
+        },
+        setGridPage(p) {
+            if (p === '...' || p < 1 || p > this.gridTotalPages || p === this.gridPage) return;
+            this.gridPage = p;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+        prevGridPage() {
+            if (this.gridPage > 1) this.setGridPage(this.gridPage - 1);
+        },
+        nextGridPage() {
+            if (this.gridPage < this.gridTotalPages) this.setGridPage(this.gridPage + 1);
+        },
+        setGridPerPage(val) {
+            this.gridPerPage = val === 'all' ? 'all' : parseInt(val);
+            this.gridPage = 1;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+
+        // Table getters
+        get tableTotalPages() {
+            if (this.tablePerPage === 'all') return 1;
+            const per = parseInt(this.tablePerPage) || 10;
+            return Math.ceil(this.filteredCategories.length / per) || 1;
+        },
+        get paginatedTableIds() {
+            if (this.tablePerPage === 'all') {
+                return new Set(this.filteredCategories.map(c => c.id));
+            }
+            const per = parseInt(this.tablePerPage) || 10;
+            const start = (this.tablePage - 1) * per;
+            return new Set(this.filteredCategories.slice(start, start + per).map(c => c.id));
+        },
+        isTableVisible(id) {
+            return this.paginatedTableIds.has(id);
+        },
+        get tableStartIndex() {
+            if (this.filteredCategories.length === 0) return 0;
+            if (this.tablePerPage === 'all') return 1;
+            const per = parseInt(this.tablePerPage) || 10;
+            return (this.tablePage - 1) * per + 1;
+        },
+        get tableEndIndex() {
+            if (this.filteredCategories.length === 0) return 0;
+            if (this.tablePerPage === 'all') return this.filteredCategories.length;
+            const per = parseInt(this.tablePerPage) || 10;
+            return Math.min(this.tablePage * per, this.filteredCategories.length);
+        },
+        get tableVisiblePages() {
+            return this.getVisiblePages(this.tableTotalPages, this.tablePage);
+        },
+        setTablePage(p) {
+            if (p === '...' || p < 1 || p > this.tableTotalPages || p === this.tablePage) return;
+            this.tablePage = p;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+        prevTablePage() {
+            if (this.tablePage > 1) this.setTablePage(this.tablePage - 1);
+        },
+        nextTablePage() {
+            if (this.tablePage < this.tableTotalPages) this.setTablePage(this.tablePage + 1);
+        },
+        setTablePerPage(val) {
+            this.tablePerPage = val === 'all' ? 'all' : parseInt(val);
+            this.tablePage = 1;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+
+        getVisiblePages(total, current) {
+            if (total <= 7) {
+                const pages = [];
+                for (let i = 1; i <= total; i++) pages.push(i);
+                return pages;
+            }
+            if (current <= 4) {
+                return [1, 2, 3, 4, 5, '...', total];
+            }
+            if (current >= total - 3) {
+                return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+            }
+            return [1, '...', current - 1, current, current + 1, '...', total];
+        },
+
+        onSearchChange() {
+            this.gridPage = 1;
+            this.tablePage = 1;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+
+        openEdit(cat) {
+            this.editData = {
+                id: cat.id,
+                name: cat.name || '',
+                description: cat.description || ''
+            };
+            this.editModal = true;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+
+        openDelete(cat) {
+            this.deleteData = {
+                id: cat.id,
+                name: cat.name,
+                project_count: parseInt(cat.project_count || 0)
+            };
+            this.deleteModal = true;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        }
+    };
+}
+</script>
 
 <?php
 $content = ob_get_clean();

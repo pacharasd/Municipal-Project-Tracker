@@ -4,14 +4,121 @@ $title = 'ประวัติการใช้งานและการต�
 ?>
 
 <div class="space-y-6" x-data="{
+    allLogs: <?= htmlspecialchars(json_encode($logs, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8') ?>,
     selectedLog: null,
     searchQuery: '',
+    currentPage: 1,
+    perPage: 15,
+    
+    get filteredLogs() {
+        const q = this.searchQuery.trim().toLowerCase();
+        if (!q) return this.allLogs;
+        return this.allLogs.filter(log => {
+            const act = (log.action || '').toLowerCase();
+            const mod = (log.module || '').toLowerCase();
+            const user = (log.user_name || '').toLowerCase();
+            const ip = (log.ip_address || '').toLowerCase();
+            const rec = String(log.record_id || '');
+            return act.includes(q) || mod.includes(q) || user.includes(q) || ip.includes(q) || rec.includes(q);
+        });
+    },
+
+    get totalPages() {
+        if (this.perPage === 'all') return 1;
+        const per = parseInt(this.perPage) || 15;
+        return Math.max(1, Math.ceil(this.filteredLogs.length / per));
+    },
+
+    get paginatedLogs() {
+        if (this.perPage === 'all') return this.filteredLogs;
+        const per = parseInt(this.perPage) || 15;
+        const start = (this.currentPage - 1) * per;
+        return this.filteredLogs.slice(start, start + per);
+    },
+
+    get startIndex() {
+        if (this.filteredLogs.length === 0) return 0;
+        if (this.perPage === 'all') return 1;
+        const per = parseInt(this.perPage) || 15;
+        return (this.currentPage - 1) * per + 1;
+    },
+
+    get endIndex() {
+        if (this.filteredLogs.length === 0) return 0;
+        if (this.perPage === 'all') return this.filteredLogs.length;
+        const per = parseInt(this.perPage) || 15;
+        return Math.min(this.filteredLogs.length, this.currentPage * per);
+    },
+
+    get visiblePages() {
+        const total = this.totalPages;
+        const current = this.currentPage;
+        if (total <= 7) {
+            const pages = [];
+            for (let i = 1; i <= total; i++) pages.push(i);
+            return pages;
+        }
+        if (current <= 4) {
+            return [1, 2, 3, 4, 5, '...', total];
+        }
+        if (current >= total - 3) {
+            return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+        }
+        return [1, '...', current - 1, current, current + 1, '...', total];
+    },
+
+    setPage(p) {
+        if (p === '...') return;
+        this.currentPage = Math.max(1, Math.min(this.totalPages, parseInt(p)));
+    },
+
+    prevPage() {
+        if (this.currentPage > 1) this.currentPage--;
+    },
+
+    nextPage() {
+        if (this.currentPage < this.totalPages) this.currentPage++;
+    },
+
     formatJson(jsonStr) {
         if (!jsonStr) return '-';
         try {
             return JSON.stringify(JSON.parse(jsonStr), null, 2);
         } catch (e) {
             return jsonStr;
+        }
+    },
+
+    formatDate(dtStr) {
+        if (!dtStr) return '-';
+        const d = new Date(dtStr.replace(/-/g, '/'));
+        if (isNaN(d.getTime())) return dtStr;
+        const day = String(d.getDate()).padStart(2, '0');
+        const mon = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear() + 543;
+        return `${day}/${mon}/${year}`;
+    },
+
+    formatTime(dtStr) {
+        if (!dtStr) return '';
+        const d = new Date(dtStr.replace(/-/g, '/'));
+        if (isNaN(d.getTime())) return '';
+        const hh = String(d.getHours()).padStart(2, '0');
+        const mm = String(d.getMinutes()).padStart(2, '0');
+        const ss = String(d.getSeconds()).padStart(2, '0');
+        return `${hh}:${mm}:${ss} น.`;
+    },
+
+    getActionClass(act) {
+        switch (act) {
+            case 'CREATE': return 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800';
+            case 'UPDATE': return 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800';
+            case 'INCREMENT_PROGRESS': return 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800';
+            case 'DELETE':
+            case 'REPORT_PROBLEM': return 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900';
+            case 'RESOLVE_PROBLEM': return 'bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 border-teal-200 dark:border-teal-800';
+            case 'DISBURSE': return 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800';
+            default: return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700';
         }
     }
 }">
@@ -38,15 +145,29 @@ $title = 'ประวัติการใช้งานและการต�
         </div>
     </div>
 
-    <!-- Search / Filter Bar -->
+    <!-- Search & Control Bar -->
     <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div class="relative w-full sm:w-80">
             <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-            <input type="text" x-model="searchQuery" placeholder="ค้นหาการกระทำ, ผู้ใช้, โมดูล..."
+            <input type="text" x-model="searchQuery" @input="currentPage = 1" placeholder="ค้นหาการกระทำ, ผู้ใช้, โมดูล, IP..."
                    class="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none dark:text-white">
         </div>
-        <div class="text-xs text-slate-500 dark:text-slate-400">
-            แสดง 100 รายการล่าสุดจากฐานข้อมูล
+        
+        <!-- Per Page Selector & Total Counter -->
+        <div class="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 w-full sm:w-auto justify-between sm:justify-end">
+            <div class="flex items-center gap-1.5">
+                <span>แสดงหน้าละ:</span>
+                <select x-model="perPage" @change="currentPage = 1" class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer">
+                    <option value="10">10 รายการ</option>
+                    <option value="15">15 รายการ</option>
+                    <option value="25">25 รายการ</option>
+                    <option value="50">50 รายการ</option>
+                    <option value="all">ทั้งหมด</option>
+                </select>
+            </div>
+            <div class="font-medium text-slate-600 dark:text-slate-300">
+                รวม <span class="font-bold text-slate-900 dark:text-white" x-text="filteredLogs.length"></span> รายการ
+            </div>
         </div>
     </div>
 
@@ -67,75 +188,117 @@ $title = 'ประวัติการใช้งานและการต�
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                    <?php if (empty($logs)): ?>
+                    <template x-if="paginatedLogs.length === 0">
                         <tr>
-                            <td colspan="8" class="py-8 text-center text-slate-400">
-                                ยังไม่มีบันทึก Audit Log ในระบบ
+                            <td colspan="8" class="py-12 text-center text-slate-400 dark:text-slate-500">
+                                <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
+                                ไม่พบบันทึกประวัติการตรวจสอบตามเงื่อนไขที่ค้นหา
                             </td>
                         </tr>
-                    <?php else: ?>
-                        <?php foreach ($logs as $log): 
-                            $hasChanges = !empty($log['old_values']) || !empty($log['new_values']);
-                            
-                            // Badge color by action
-                            $actionColor = match($log['action']) {
-                                'CREATE'             => 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
-                                'UPDATE'             => 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800',
-                                'INCREMENT_PROGRESS' => 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800',
-                                'DELETE'             => 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900',
-                                'REPORT_PROBLEM'     => 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900',
-                                'RESOLVE_PROBLEM'    => 'bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 border-teal-200 dark:border-teal-800',
-                                'DISBURSE'           => 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800',
-                                default              => 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'
-                            };
-                        ?>
-                            <tr class="hover:bg-slate-50/75 dark:hover:bg-slate-800/40 transition-colors"
-                                x-show="!searchQuery || '<?= strtolower($log['action'] . ' ' . $log['module'] . ' ' . ($log['user_name'] ?? '') . ' ' . $log['ip_address']) ?>'.includes(searchQuery.toLowerCase())">
-                                <td class="py-3 px-3 text-center text-slate-400 font-mono"><?= $log['id'] ?></td>
-                                <td class="py-3 px-3 whitespace-nowrap text-slate-600 dark:text-slate-400 font-mono">
-                                    <div><?= date('d/m/Y', strtotime($log['created_at'])) ?></div>
-                                    <div class="text-[10px] text-slate-400"><?= date('H:i:s น.', strtotime($log['created_at'])) ?></div>
-                                </td>
-                                <td class="py-3 px-3">
-                                    <div class="font-medium text-slate-900 dark:text-white">
-                                        <?= htmlspecialchars($log['user_name'] ?? 'ระบบอัตโนมัติ') ?>
-                                    </div>
-                                    <div class="text-[10px] text-slate-400">
-                                        <?= htmlspecialchars($log['role_label'] ?? 'System') ?>
-                                    </div>
-                                </td>
-                                <td class="py-3 px-3 text-center">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                                        <?= htmlspecialchars($log['module']) ?>
-                                    </span>
-                                </td>
-                                <td class="py-3 px-3 text-center">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border <?= $actionColor ?>">
-                                        <?= htmlspecialchars($log['action']) ?>
-                                    </span>
-                                </td>
-                                <td class="py-3 px-3 text-center font-mono text-slate-600 dark:text-slate-400">
-                                    #<?= htmlspecialchars($log['record_id'] ?? '-') ?>
-                                </td>
-                                <td class="py-3 px-3 font-mono text-[11px] text-slate-500 dark:text-slate-400">
-                                    <?= htmlspecialchars($log['ip_address'] ?? '127.0.0.1') ?>
-                                </td>
-                                <td class="py-3 px-3 text-center">
-                                    <?php if ($hasChanges): ?>
-                                        <button @click='selectedLog = <?= json_encode($log, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>'
-                                                class="inline-flex items-center gap-1 px-2 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/60 rounded-lg text-[11px] font-medium transition-colors">
-                                            <i data-lucide="eye" class="w-3 h-3"></i>
-                                            <span>ดูการเปลี่ยนแปลง</span>
-                                        </button>
-                                    <?php else: ?>
-                                        <span class="text-slate-300 dark:text-slate-600">-</span>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
+                    </template>
+
+                    <template x-for="log in paginatedLogs" :key="log.id">
+                        <tr class="hover:bg-slate-50/75 dark:hover:bg-slate-800/40 transition-colors">
+                            <td class="py-3 px-3 text-center text-slate-400 font-mono" x-text="log.id"></td>
+                            <td class="py-3 px-3 whitespace-nowrap text-slate-600 dark:text-slate-400 font-mono">
+                                <div x-text="formatDate(log.created_at)"></div>
+                                <div class="text-[10px] text-slate-400" x-text="formatTime(log.created_at)"></div>
+                            </td>
+                            <td class="py-3 px-3">
+                                <div class="font-medium text-slate-900 dark:text-white" x-text="log.user_name || 'ระบบอัตโนมัติ'"></div>
+                                <div class="text-[10px] text-slate-400" x-text="log.role_label || 'System'"></div>
+                            </td>
+                            <td class="py-3 px-3 text-center">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300" x-text="log.module"></span>
+                            </td>
+                            <td class="py-3 px-3 text-center">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border"
+                                      :class="getActionClass(log.action)"
+                                      x-text="log.action"></span>
+                            </td>
+                            <td class="py-3 px-3 text-center font-mono text-slate-600 dark:text-slate-400" x-text="log.record_id ? `#${log.record_id}` : '-'"></td>
+                            <td class="py-3 px-3 font-mono text-[11px] text-slate-500 dark:text-slate-400" x-text="log.ip_address || '127.0.0.1'"></td>
+                            <td class="py-3 px-3 text-center">
+                                <template x-if="log.old_values || log.new_values">
+                                    <button type="button" 
+                                            @click="selectedLog = log"
+                                            class="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/60 rounded-lg text-[11px] font-medium transition-colors cursor-pointer">
+                                        <i data-lucide="eye" class="w-3 h-3"></i>
+                                        <span>ดูการเปลี่ยนแปลง</span>
+                                    </button>
+                                </template>
+                                <template x-if="!log.old_values && !log.new_values">
+                                    <span class="text-slate-300 dark:text-slate-600">-</span>
+                                </template>
+                            </td>
+                        </tr>
+                    </template>
                 </tbody>
             </table>
+        </div>
+
+        <!-- Pagination Bar -->
+        <div class="p-4 bg-slate-50/60 dark:bg-slate-900/50 border-t border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+            <div>
+                <template x-if="filteredLogs.length > 0">
+                    <span>
+                        แสดง <strong class="text-slate-800 dark:text-slate-200" x-text="startIndex"></strong> ถึง <strong class="text-slate-800 dark:text-slate-200" x-text="endIndex"></strong> จากทั้งหมด <strong class="text-slate-800 dark:text-slate-200" x-text="filteredLogs.length"></strong> รายการ
+                    </span>
+                </template>
+                <template x-if="filteredLogs.length === 0">
+                    <span>ไม่มีข้อมูลสำหรับแสดงผล</span>
+                </template>
+            </div>
+
+            <!-- Page Navigation Buttons -->
+            <template x-if="totalPages > 1 && perPage !== 'all'">
+                <div class="flex items-center gap-1">
+                    <!-- First Page -->
+                    <button type="button" @click="setPage(1)" :disabled="currentPage === 1"
+                            class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="หน้าแรก">
+                        <i data-lucide="chevrons-left" class="w-3.5 h-3.5"></i>
+                    </button>
+
+                    <!-- Prev Page -->
+                    <button type="button" @click="prevPage()" :disabled="currentPage === 1"
+                            class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed font-medium transition cursor-pointer flex items-center gap-1">
+                        <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+                        <span class="hidden sm:inline">ก่อนหน้า</span>
+                    </button>
+
+                    <!-- Page Numbers -->
+                    <div class="flex items-center gap-1">
+                        <template x-for="(p, i) in visiblePages" :key="i">
+                            <div>
+                                <template x-if="p === '...'">
+                                    <span class="px-2 py-1 text-slate-400 select-none">...</span>
+                                </template>
+                                <template x-if="p !== '...'">
+                                    <button type="button" 
+                                            @click="setPage(p)" 
+                                            :class="currentPage === p ? 'bg-emerald-600 text-white font-bold shadow-sm shadow-emerald-600/30 border-emerald-600' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700'"
+                                            class="w-8 h-8 rounded-lg border text-xs flex items-center justify-center font-medium transition cursor-pointer"
+                                            x-text="p">
+                                    </button>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Next Page -->
+                    <button type="button" @click="nextPage()" :disabled="currentPage === totalPages"
+                            class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed font-medium transition cursor-pointer flex items-center gap-1">
+                        <span class="hidden sm:inline">ถัดไป</span>
+                        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    </button>
+
+                    <!-- Last Page -->
+                    <button type="button" @click="setPage(totalPages)" :disabled="currentPage === totalPages"
+                            class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="หน้าสุดท้าย">
+                        <i data-lucide="chevrons-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            </template>
         </div>
     </div>
 
@@ -144,7 +307,7 @@ $title = 'ประวัติการใช้งานและการต�
     <div x-show="selectedLog" 
          x-cloak 
          @click.self="selectedLog = null"
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
@@ -152,7 +315,8 @@ $title = 'ประวัติการใช้งานและการต�
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0">
         
-        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4"
+             @click.outside="selectedLog = null">
             
             <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div class="flex items-center gap-2">
@@ -202,7 +366,7 @@ $title = 'ประวัติการใช้งานและการต�
 
             <div class="flex justify-end pt-2">
                 <button type="button" @click="selectedLog = null"
-                        class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl text-xs transition-colors">
+                        class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl text-xs transition-colors cursor-pointer">
                     ปิดหน้าต่าง
                 </button>
             </div>
@@ -216,4 +380,3 @@ $title = 'ประวัติการใช้งานและการต�
 $content = ob_get_clean();
 include dirname(__DIR__) . '/layouts/app.blade.php';
 ?>
-

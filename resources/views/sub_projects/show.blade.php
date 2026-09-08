@@ -1,47 +1,32 @@
 <?php
 ob_start();
 $title = htmlspecialchars($project['name']);
+
+// Prepare JSON summaries for Activities and Disbursements pagination & search
+$activitiesSummary = [];
+foreach ($project['activities'] ?? [] as $act) {
+    $activitiesSummary[] = [
+        'id' => (int)$act['id'],
+        'name' => (string)$act['name'],
+        'status' => (string)($act['status'] ?? 'not_started'),
+        'search_text' => mb_strtolower(($act['name'] ?? '') . ' ' . ($act['description'] ?? '') . ' ' . ($act['location'] ?? ''), 'UTF-8'),
+    ];
+}
+$activitiesJson = json_encode($activitiesSummary, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
+
+$disbursementsSummary = [];
+foreach ($project['disbursements'] ?? [] as $disb) {
+    $disbursementsSummary[] = [
+        'id' => (int)$disb['id'],
+        'description' => (string)$disb['description'],
+        'recipient' => (string)($disb['recipient'] ?? ''),
+        'search_text' => mb_strtolower(($disb['description'] ?? '') . ' ' . ($disb['recipient'] ?? ''), 'UTF-8'),
+    ];
+}
+$disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
 ?>
 
-<div class="space-y-6" x-data="{ 
-    problemModal: false, 
-    resolveModal: false, 
-    disburseModal: false, 
-    activityModal: false, 
-    manualModal: false,
-    statusModal: false,
-    editSubModal: false,
-    editActModal: false,
-    uploadModal: false,
-    selectedAct: { id: '', name: '', description: '', activity_date: '', location: '', budget: '', target_participant_count: 0, actual_participant_count: 0, participant_count: 0, status: '', progress: '', notes: '' },
-    openEditAct(act) {
-        this.selectedAct = Object.assign({}, act);
-        this.editActModal = true;
-    },
-    selectedStatus: '<?= $project['status'] ?>',
-    currentProgress: <?= (float)$project['progress'] ?>,
-    statusNote: '<?= addslashes($project['problem_description'] ?? '') ?>',
-    setStatus(s) {
-        this.selectedStatus = s;
-        if (s === 'completed') {
-            this.currentProgress = 100;
-        } else if (s === 'not_started') {
-            this.currentProgress = 0;
-        } else if (s === 'in_progress' && (this.currentProgress == 0 || this.currentProgress == 100)) {
-            this.currentProgress = 50;
-        }
-    },
-    setProgress(p) {
-        this.currentProgress = p;
-        if (p >= 100) {
-            this.selectedStatus = 'completed';
-        } else if (p == 0) {
-            this.selectedStatus = 'not_started';
-        } else if (this.selectedStatus === 'not_started' || this.selectedStatus === 'completed') {
-            this.selectedStatus = 'in_progress';
-        }
-    }
-}">
+<div class="space-y-6" x-data="subProjectShowPage()">
     <!-- Breadcrumb & Back Navigation -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <a href="<?= \App\Core\Router::url("/projects/{$project['parent_id']}") ?>" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
@@ -363,7 +348,7 @@ $title = htmlspecialchars($project['name']);
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Activities Column -->
         <div class="bg-white dark:bg-[#181a20] p-4 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm space-y-4">
-            <div class="flex items-center justify-between gap-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div class="min-w-0 flex-1">
                     <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <i data-lucide="calendar-check" class="w-5 h-5 text-blue-600 shrink-0"></i>
@@ -373,22 +358,37 @@ $title = htmlspecialchars($project['name']);
                         (<?= count($project['activities'] ?? []) ?> รายการ)
                     </p>
                 </div>
-                <?php if (\App\Core\Auth::canManageProjects()): ?>
-                    <button type="button" @click="activityModal = true" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors shadow-sm shrink-0 whitespace-nowrap cursor-pointer">
-                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                        <span>เพิ่มกิจกรรม</span>
-                    </button>
-                <?php endif; ?>
+
+                <div class="flex items-center gap-2 shrink-0">
+                    <?php if (!empty($project['activities'])): ?>
+                        <div class="relative min-w-[130px] sm:w-36">
+                            <input type="text" x-model="actSearch" @input="actPage = 1" placeholder="ค้นหากิจกรรม..." 
+                                   class="w-full pl-7 pr-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#12141a] text-slate-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none">
+                            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                            <button type="button" x-show="actSearch" @click="actSearch = ''; actPage = 1;" class="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 cursor-pointer">
+                                <i data-lucide="x" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if (\App\Core\Auth::canManageProjects()): ?>
+                        <button type="button" @click="activityModal = true" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors shadow-sm shrink-0 whitespace-nowrap cursor-pointer">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                            <span class="hidden sm:inline">เพิ่มกิจกรรม</span>
+                        </button>
+                    <?php endif; ?>
+                </div>
             </div>
 
             <?php if (empty($project['activities'])): ?>
-                <div class="p-6 text-center text-xs text-slate-400 bg-slate-50 rounded-xl border border-slate-200">
+                <div class="p-6 text-center text-xs text-slate-400 bg-slate-50 dark:bg-[#12141a] rounded-xl border border-slate-200 dark:border-white/[0.08]">
                     ยังไม่มีรายการกิจกรรมในโครงการนี้
                 </div>
             <?php else: ?>
                 <div class="space-y-3">
                     <?php foreach ($project['activities'] as $act): ?>
-                        <div class="p-4 rounded-xl border border-slate-200 dark:border-white/[0.08] hover:border-blue-300 dark:hover:border-blue-500/40 transition-all bg-white dark:bg-[#12141a] flex items-start justify-between gap-3">
+                        <div x-show="isActVisible(<?= $act['id'] ?>)" 
+                             class="p-4 rounded-xl border border-slate-200 dark:border-white/[0.08] hover:border-blue-300 dark:hover:border-blue-500/40 transition-all bg-white dark:bg-[#12141a] flex items-start justify-between gap-3">
                             <div class="flex-1">
                                 <div class="flex items-center gap-2">
                                     <h4 class="text-sm font-bold text-slate-900 dark:text-white"><?= htmlspecialchars($act['name']) ?></h4>
@@ -479,13 +479,59 @@ $title = htmlspecialchars($project['name']);
                             </div>
                         </div>
                     <?php endforeach; ?>
+
+                    <!-- Empty state when search returns 0 -->
+                    <div x-show="filteredActivities.length === 0" class="p-6 text-center text-xs text-slate-400 bg-slate-50 dark:bg-[#12141a] rounded-xl border border-slate-200 dark:border-white/[0.08]">
+                        ไม่พบกิจกรรมที่ค้นหา
+                    </div>
+                </div>
+
+                <!-- Activities Pagination Footer -->
+                <div x-show="filteredActivities.length > 0" class="pt-3 border-t border-slate-100 dark:border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                    <div class="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                        <span>แสดง <strong class="text-slate-800 dark:text-white" x-text="actStartIndex"></strong>-<strong class="text-slate-800 dark:text-white" x-text="actEndIndex"></strong> จาก <strong class="text-emerald-600 dark:text-emerald-400" x-text="filteredActivities.length"></strong></span>
+                        <div class="flex items-center gap-1 border-l border-slate-200 dark:border-white/10 pl-2">
+                            <span class="text-slate-400">ต่อหน้า:</span>
+                            <select :value="actPerPage" @change="setActPerPage($event.target.value)" 
+                                    class="px-1.5 py-0.5 rounded border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#12141a] text-slate-700 dark:text-slate-200 text-[11px] font-medium focus:outline-none cursor-pointer">
+                                <option value="5">5</option>
+                                <option value="10">10</option>
+                                <option value="all">ทั้งหมด</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Pagination buttons -->
+                    <template x-if="actTotalPages > 1 && actPerPage !== 'all'">
+                        <div class="flex items-center gap-1">
+                            <button type="button" @click="prevActPage()" :disabled="actPage === 1"
+                                    class="p-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="ก่อนหน้า">
+                                <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <div class="flex items-center gap-1">
+                                <template x-for="(p, idx) in actVisiblePages" :key="idx">
+                                    <button type="button" 
+                                            @click="setActPage(p)"
+                                            :disabled="p === '...'"
+                                            :class="p === actPage ? 'bg-emerald-600 text-white font-bold shadow-sm shadow-emerald-600/30 border-emerald-600' : (p === '...' ? 'text-slate-400 cursor-default' : 'bg-white dark:bg-[#12141a] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5')"
+                                            class="min-w-[26px] h-6 px-1.5 rounded text-[11px] font-mono font-semibold transition cursor-pointer flex items-center justify-center"
+                                            x-text="p">
+                                    </button>
+                                </template>
+                            </div>
+                            <button type="button" @click="nextActPage()" :disabled="actPage === actTotalPages"
+                                    class="p-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="ถัดไป">
+                                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </template>
                 </div>
             <?php endif; ?>
         </div>
 
         <!-- Budget Column -->
         <div class="bg-white dark:bg-[#181a20] p-4 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm space-y-4">
-            <div class="flex items-center justify-between gap-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div class="min-w-0 flex-1">
                     <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <i data-lucide="wallet" class="w-5 h-5 text-purple-600 shrink-0"></i>
@@ -495,12 +541,26 @@ $title = htmlspecialchars($project['name']);
                         (<?= number_format($project['disbursed_amount'], 2) ?> / <?= number_format($project['budget'], 2) ?> บาท)
                     </p>
                 </div>
-                <?php if (\App\Core\Auth::canManageProjects()): ?>
-                    <button type="button" @click="disburseModal = true" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-xl transition-colors shadow-sm shrink-0 whitespace-nowrap cursor-pointer">
-                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                        <span>เบิกจ่ายงบประมาณ</span>
-                    </button>
-                <?php endif; ?>
+
+                <div class="flex items-center gap-2 shrink-0">
+                    <?php if (!empty($project['disbursements'])): ?>
+                        <div class="relative min-w-[130px] sm:w-36">
+                            <input type="text" x-model="disbSearch" @input="disbPage = 1" placeholder="ค้นหารายการ..." 
+                                   class="w-full pl-7 pr-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#12141a] text-slate-900 dark:text-white focus:ring-1 focus:ring-purple-500 focus:outline-none">
+                            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                            <button type="button" x-show="disbSearch" @click="disbSearch = ''; disbPage = 1;" class="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 cursor-pointer">
+                                <i data-lucide="x" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if (\App\Core\Auth::canManageProjects()): ?>
+                        <button type="button" @click="disburseModal = true" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-xl transition-colors shadow-sm shrink-0 whitespace-nowrap cursor-pointer">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                            <span class="hidden sm:inline">เบิกจ่ายงบประมาณ</span>
+                        </button>
+                    <?php endif; ?>
+                </div>
             </div>
 
             <!-- Budget bar -->
@@ -525,15 +585,16 @@ $title = htmlspecialchars($project['name']);
             <?php else: ?>
                 <div class="space-y-2">
                     <?php foreach ($project['disbursements'] as $disb): ?>
-                        <div class="p-3.5 rounded-xl border border-slate-100 dark:border-white/[0.06] bg-slate-50/80 dark:bg-white/[0.03] flex items-center justify-between gap-3 text-xs">
+                        <div x-show="isDisbVisible(<?= $disb['id'] ?>)" 
+                             class="p-3.5 rounded-xl border border-slate-100 dark:border-white/[0.06] bg-slate-50/80 dark:bg-white/[0.03] flex items-center justify-between gap-3 text-xs">
                             <div>
-                                <div class="font-semibold text-slate-900"><?= htmlspecialchars($disb['description']) ?></div>
+                                <div class="font-semibold text-slate-900 dark:text-white"><?= htmlspecialchars($disb['description']) ?></div>
                                 <div class="text-slate-400 text-[11px] mt-0.5">
                                     ผู้รับ: <?= htmlspecialchars($disb['recipient'] ?: 'ไม่ระบุ') ?> | วันที่: <?= date('d/m/Y', strtotime($disb['disbursement_date'])) ?>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2 flex-shrink-0">
-                                <span class="text-sm font-bold text-purple-600"><?= number_format($disb['amount'], 2) ?> บ.</span>
+                                <span class="text-sm font-bold text-purple-600 dark:text-purple-400"><?= number_format($disb['amount'], 2) ?> บ.</span>
                                 <?php if (!empty($disb['evidence_file'])): ?>
                                     <a href="<?= \App\Core\Router::url('/uploads/' . $disb['evidence_file']) ?>" target="_blank"
                                        class="p-1 text-slate-400 hover:text-blue-600 rounded transition" title="ดูหลักฐานการเบิกจ่าย">
@@ -552,6 +613,52 @@ $title = htmlspecialchars($project['name']);
                             </div>
                         </div>
                     <?php endforeach; ?>
+
+                    <!-- Empty state when search returns 0 -->
+                    <div x-show="filteredDisbursements.length === 0" class="p-6 text-center text-xs text-slate-400 bg-slate-50 dark:bg-[#12141a] rounded-xl border border-slate-200 dark:border-white/[0.08]">
+                        ไม่พบรายการเบิกจ่ายที่ค้นหา
+                    </div>
+                </div>
+
+                <!-- Disbursements Pagination Footer -->
+                <div x-show="filteredDisbursements.length > 0" class="pt-3 border-t border-slate-100 dark:border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                    <div class="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                        <span>แสดง <strong class="text-slate-800 dark:text-white" x-text="disbStartIndex"></strong>-<strong class="text-slate-800 dark:text-white" x-text="disbEndIndex"></strong> จาก <strong class="text-emerald-600 dark:text-emerald-400" x-text="filteredDisbursements.length"></strong></span>
+                        <div class="flex items-center gap-1 border-l border-slate-200 dark:border-white/10 pl-2">
+                            <span class="text-slate-400">ต่อหน้า:</span>
+                            <select :value="disbPerPage" @change="setDisbPerPage($event.target.value)" 
+                                    class="px-1.5 py-0.5 rounded border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#12141a] text-slate-700 dark:text-slate-200 text-[11px] font-medium focus:outline-none cursor-pointer">
+                                <option value="5">5</option>
+                                <option value="10">10</option>
+                                <option value="all">ทั้งหมด</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Pagination buttons -->
+                    <template x-if="disbTotalPages > 1 && disbPerPage !== 'all'">
+                        <div class="flex items-center gap-1">
+                            <button type="button" @click="prevDisbPage()" :disabled="disbPage === 1"
+                                    class="p-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="ก่อนหน้า">
+                                <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <div class="flex items-center gap-1">
+                                <template x-for="(p, idx) in disbVisiblePages" :key="idx">
+                                    <button type="button" 
+                                            @click="setDisbPage(p)"
+                                            :disabled="p === '...'"
+                                            :class="p === disbPage ? 'bg-emerald-600 text-white font-bold shadow-sm shadow-emerald-600/30 border-emerald-600' : (p === '...' ? 'text-slate-400 cursor-default' : 'bg-white dark:bg-[#12141a] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5')"
+                                            class="min-w-[26px] h-6 px-1.5 rounded text-[11px] font-mono font-semibold transition cursor-pointer flex items-center justify-center"
+                                            x-text="p">
+                                    </button>
+                                </template>
+                            </div>
+                            <button type="button" @click="nextDisbPage()" :disabled="disbPage === disbTotalPages"
+                                    class="p-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="ถัดไป">
+                                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </template>
                 </div>
             <?php endif; ?>
         </div>
@@ -1452,6 +1559,184 @@ $title = htmlspecialchars($project['name']);
     </div>
     </template>
 </div>
+
+<script>
+function subProjectShowPage() {
+    return {
+        problemModal: false, 
+        resolveModal: false, 
+        disburseModal: false, 
+        activityModal: false, 
+        manualModal: false,
+        statusModal: false,
+        editSubModal: false,
+        editActModal: false,
+        uploadModal: false,
+        selectedAct: { id: '', name: '', description: '', activity_date: '', location: '', budget: '', target_participant_count: 0, actual_participant_count: 0, participant_count: 0, status: '', progress: '', notes: '' },
+        openEditAct(act) {
+            this.selectedAct = Object.assign({}, act);
+            this.editActModal = true;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+        selectedStatus: '<?= $project['status'] ?>',
+        currentProgress: <?= (float)$project['progress'] ?>,
+        statusNote: '<?= addslashes($project['problem_description'] ?? '') ?>',
+        setStatus(s) {
+            this.selectedStatus = s;
+            if (s === 'completed') {
+                this.currentProgress = 100;
+            } else if (s === 'not_started') {
+                this.currentProgress = 0;
+            } else if (s === 'in_progress' && (this.currentProgress == 0 || this.currentProgress == 100)) {
+                this.currentProgress = 50;
+            }
+        },
+        setProgress(p) {
+            this.currentProgress = p;
+            if (p >= 100) {
+                this.selectedStatus = 'completed';
+            } else if (p == 0) {
+                this.selectedStatus = 'not_started';
+            } else if (this.selectedStatus === 'not_started' || this.selectedStatus === 'completed') {
+                this.selectedStatus = 'in_progress';
+            }
+        },
+
+        // Activities pagination & search
+        allActivities: <?= $activitiesJson ?>,
+        actSearch: '',
+        actPage: 1,
+        actPerPage: 5,
+
+        get filteredActivities() {
+            if (!this.actSearch.trim()) return this.allActivities;
+            const q = this.actSearch.toLowerCase().trim();
+            return this.allActivities.filter(a => a.search_text.includes(q));
+        },
+        get actTotalPages() {
+            if (this.actPerPage === 'all') return 1;
+            const per = parseInt(this.actPerPage) || 5;
+            return Math.ceil(this.filteredActivities.length / per) || 1;
+        },
+        get paginatedActIds() {
+            if (this.actPerPage === 'all') {
+                return new Set(this.filteredActivities.map(a => a.id));
+            }
+            const per = parseInt(this.actPerPage) || 5;
+            const start = (this.actPage - 1) * per;
+            return new Set(this.filteredActivities.slice(start, start + per).map(a => a.id));
+        },
+        isActVisible(id) {
+            return this.paginatedActIds.has(id);
+        },
+        get actStartIndex() {
+            if (this.filteredActivities.length === 0) return 0;
+            if (this.actPerPage === 'all') return 1;
+            const per = parseInt(this.actPerPage) || 5;
+            return (this.actPage - 1) * per + 1;
+        },
+        get actEndIndex() {
+            if (this.filteredActivities.length === 0) return 0;
+            if (this.actPerPage === 'all') return this.filteredActivities.length;
+            const per = parseInt(this.actPerPage) || 5;
+            return Math.min(this.actPage * per, this.filteredActivities.length);
+        },
+        get actVisiblePages() {
+            return this.getVisiblePages(this.actTotalPages, this.actPage);
+        },
+        setActPage(p) {
+            if (p === '...' || p < 1 || p > this.actTotalPages || p === this.actPage) return;
+            this.actPage = p;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+        prevActPage() {
+            if (this.actPage > 1) this.setActPage(this.actPage - 1);
+        },
+        nextActPage() {
+            if (this.actPage < this.actTotalPages) this.setActPage(this.actPage + 1);
+        },
+        setActPerPage(val) {
+            this.actPerPage = val === 'all' ? 'all' : parseInt(val);
+            this.actPage = 1;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+
+        // Disbursements pagination & search
+        allDisbursements: <?= $disbursementsJson ?>,
+        disbSearch: '',
+        disbPage: 1,
+        disbPerPage: 5,
+
+        get filteredDisbursements() {
+            if (!this.disbSearch.trim()) return this.allDisbursements;
+            const q = this.disbSearch.toLowerCase().trim();
+            return this.allDisbursements.filter(d => d.search_text.includes(q));
+        },
+        get disbTotalPages() {
+            if (this.disbPerPage === 'all') return 1;
+            const per = parseInt(this.disbPerPage) || 5;
+            return Math.ceil(this.filteredDisbursements.length / per) || 1;
+        },
+        get paginatedDisbIds() {
+            if (this.disbPerPage === 'all') {
+                return new Set(this.filteredDisbursements.map(d => d.id));
+            }
+            const per = parseInt(this.disbPerPage) || 5;
+            const start = (this.disbPage - 1) * per;
+            return new Set(this.filteredDisbursements.slice(start, start + per).map(d => d.id));
+        },
+        isDisbVisible(id) {
+            return this.paginatedDisbIds.has(id);
+        },
+        get disbStartIndex() {
+            if (this.filteredDisbursements.length === 0) return 0;
+            if (this.disbPerPage === 'all') return 1;
+            const per = parseInt(this.disbPerPage) || 5;
+            return (this.disbPage - 1) * per + 1;
+        },
+        get disbEndIndex() {
+            if (this.filteredDisbursements.length === 0) return 0;
+            if (this.disbPerPage === 'all') return this.filteredDisbursements.length;
+            const per = parseInt(this.disbPerPage) || 5;
+            return Math.min(this.disbPage * per, this.filteredDisbursements.length);
+        },
+        get disbVisiblePages() {
+            return this.getVisiblePages(this.disbTotalPages, this.disbPage);
+        },
+        setDisbPage(p) {
+            if (p === '...' || p < 1 || p > this.disbTotalPages || p === this.disbPage) return;
+            this.disbPage = p;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+        prevDisbPage() {
+            if (this.disbPage > 1) this.setDisbPage(this.disbPage - 1);
+        },
+        nextDisbPage() {
+            if (this.disbPage < this.disbTotalPages) this.setDisbPage(this.disbPage + 1);
+        },
+        setDisbPerPage(val) {
+            this.disbPerPage = val === 'all' ? 'all' : parseInt(val);
+            this.disbPage = 1;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+
+        getVisiblePages(total, current) {
+            if (total <= 7) {
+                const pages = [];
+                for (let i = 1; i <= total; i++) pages.push(i);
+                return pages;
+            }
+            if (current <= 4) {
+                return [1, 2, 3, 4, 5, '...', total];
+            }
+            if (current >= total - 3) {
+                return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+            }
+            return [1, '...', current - 1, current, current + 1, '...', total];
+        }
+    };
+}
+</script>
 
 <?php
 $content = ob_get_clean();

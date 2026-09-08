@@ -23,7 +23,7 @@ class AuditLogController
              FROM audit_logs a 
              LEFT JOIN users u ON a.user_id = u.id 
              LEFT JOIN roles r ON u.role_id = r.id 
-             ORDER BY a.id DESC LIMIT 100"
+             ORDER BY a.id DESC LIMIT 500"
         );
 
         View::render('audit_logs.index', [

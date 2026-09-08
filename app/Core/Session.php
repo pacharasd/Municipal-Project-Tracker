@@ -35,17 +35,32 @@ class Session
         unset($_SESSION[$key]);
     }
 
+    private static array $flashCache = [];
+
     public static function flash(string $key, mixed $value = null): mixed
     {
         self::start();
         if ($value !== null) {
             $_SESSION['_flash'][$key] = $value;
+            unset(self::$flashCache[$key]);
             return null;
         }
 
+        if (array_key_exists($key, self::$flashCache)) {
+            return self::$flashCache[$key];
+        }
+
         $msg = $_SESSION['_flash'][$key] ?? null;
+        self::$flashCache[$key] = $msg;
         unset($_SESSION['_flash'][$key]);
         return $msg;
+    }
+
+    public static function hasFlash(string $key): bool
+    {
+        self::start();
+        return array_key_exists($key, self::$flashCache) && self::$flashCache[$key] !== null 
+            || !empty($_SESSION['_flash'][$key]);
     }
 
     public static function csrfToken(): string

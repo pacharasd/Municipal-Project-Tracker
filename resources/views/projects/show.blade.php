@@ -1,9 +1,22 @@
 <?php
 ob_start();
 $title = htmlspecialchars($project['name']);
+
+// Prepare JSON summary for sub-projects reactive pagination & search
+$subProjectsSummary = [];
+foreach ($project['sub_projects'] as $sub) {
+    $subProjectsSummary[] = [
+        'id' => (int)$sub['id'],
+        'code' => (string)$sub['project_code'],
+        'name' => (string)$sub['name'],
+        'status' => (string)($sub['status'] ?? 'not_started'),
+        'search_text' => mb_strtolower(($sub['project_code'] ?? '') . ' ' . ($sub['name'] ?? '') . ' ' . ($sub['responsible_name'] ?? ''), 'UTF-8'),
+    ];
+}
+$subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
 ?>
 
-<div class="space-y-6 w-full max-w-full min-w-0" x-data="{ createSubModal: false, editModal: false }">
+<div class="space-y-6 w-full max-w-full min-w-0" x-data="projectShowPage()">
     <!-- Breadcrumb & Back -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <a href="<?= \App\Core\Router::url('/projects') ?>" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
@@ -84,7 +97,7 @@ $title = htmlspecialchars($project['name']);
 
     <!-- Sub-projects Section -->
     <div class="bg-white dark:bg-[#161922] p-6 sm:p-8 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm space-y-6">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
                 <h2 class="text-lg font-bold font-heading text-slate-900 dark:text-white flex items-center gap-2">
                     <i data-lucide="layers" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i>
@@ -92,11 +105,26 @@ $title = htmlspecialchars($project['name']);
                 </h2>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">คลิกเพื่อดูรายละเอียดกิจกรรม งบประมาณ บันทึกปัญหา และอัปเดตความคืบหน้า</p>
             </div>
-            <?php if (\App\Core\Auth::canManageProjects()): ?>
-                <button type="button" @click="createSubModal = true" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all shadow-md shadow-emerald-600/20 whitespace-nowrap cursor-pointer shrink-0">
-                    <i data-lucide="plus-circle" class="w-4 h-4"></i> เพิ่มโครงการย่อย
-                </button>
-            <?php endif; ?>
+
+            <!-- Search and Action Button -->
+            <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+                <?php if (!empty($project['sub_projects'])): ?>
+                    <div class="relative min-w-[200px]">
+                        <input type="text" x-model="subSearch" @input="subPage = 1" placeholder="ค้นหารหัส หรือชื่อ..." 
+                               class="w-full pl-8 pr-8 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#1f222e] text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                        <button type="button" x-show="subSearch" @click="subSearch = ''; subPage = 1;" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 cursor-pointer">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                <?php endif; ?>
+
+                <?php if (\App\Core\Auth::canManageProjects()): ?>
+                    <button type="button" @click="createSubModal = true; $nextTick(() => { if (window.lucide) lucide.createIcons(); });" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all shadow-md shadow-emerald-600/20 whitespace-nowrap cursor-pointer shrink-0">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> เพิ่มโครงการย่อย
+                    </button>
+                <?php endif; ?>
+            </div>
         </div>
 
         <?php if (empty($project['sub_projects'])): ?>
@@ -119,7 +147,8 @@ $title = htmlspecialchars($project['name']);
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-white/[0.06] text-sm">
                         <?php foreach ($project['sub_projects'] as $sub): ?>
-                            <tr class="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors">
+                            <tr class="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors"
+                                x-show="isSubVisible(<?= $sub['id'] ?>)">
                                 <td class="py-3.5 px-4 font-mono text-xs text-slate-700 dark:text-slate-300 font-bold whitespace-nowrap"><?= htmlspecialchars($sub['project_code']) ?></td>
                                 <td class="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">
                                     <a href="<?= \App\Core\Router::url("/sub-projects/{$sub['id']}") ?>" class="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
@@ -165,8 +194,75 @@ $title = htmlspecialchars($project['name']);
                                 </td>
                             </tr>
                         <?php endforeach; ?>
+
+                        <!-- Empty state when search has no match -->
+                        <tr x-show="filteredSubProjects.length === 0">
+                            <td colspan="7" class="py-10 text-center text-slate-400">
+                                <div class="flex flex-col items-center justify-center">
+                                    <i data-lucide="search-x" class="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2"></i>
+                                    <span class="font-medium text-slate-600 dark:text-slate-400">ไม่พบโครงการย่อยที่ค้นหา</span>
+                                    <span class="text-xs text-slate-400 mt-0.5">ไม่มีข้อมูลที่ตรงกับคำค้นหา</span>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Sub-projects Pagination Footer -->
+            <div x-show="filteredSubProjects.length > 0" class="pt-4 border-t border-slate-100 dark:border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+                <div class="flex items-center gap-3">
+                    <span class="text-slate-500 dark:text-slate-400">
+                        แสดง <span class="font-bold text-slate-900 dark:text-white font-mono" x-text="subStartIndex"></span> ถึง 
+                        <span class="font-bold text-slate-900 dark:text-white font-mono" x-text="subEndIndex"></span> จาก 
+                        <span class="font-bold text-emerald-600 dark:text-emerald-400 font-mono" x-text="filteredSubProjects.length"></span> โครงการย่อย
+                    </span>
+                    <div class="flex items-center gap-1.5 ml-2 border-l border-slate-200 dark:border-white/10 pl-3">
+                        <span class="text-slate-400 text-[11px]">แสดงต่อหน้า:</span>
+                        <select :value="subPerPage" @change="setSubPerPage($event.target.value)" 
+                                class="px-2 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#1f222e] text-slate-700 dark:text-slate-200 text-xs font-medium focus:ring-1 focus:ring-emerald-500 focus:outline-none cursor-pointer">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="all">ทั้งหมด</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Pagination buttons -->
+                <template x-if="subTotalPages > 1 && subPerPage !== 'all'">
+                    <div class="flex items-center gap-1">
+                        <button type="button" @click="setSubPage(1)" :disabled="subPage === 1"
+                                class="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="หน้าแรก">
+                            <i data-lucide="chevrons-left" class="w-4 h-4"></i>
+                        </button>
+                        <button type="button" @click="prevSubPage()" :disabled="subPage === 1"
+                                class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer flex items-center gap-1">
+                            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                            <span class="hidden sm:inline">ก่อนหน้า</span>
+                        </button>
+                        <div class="flex items-center gap-1 px-1">
+                            <template x-for="(p, idx) in subVisiblePages" :key="idx">
+                                <button type="button" 
+                                        @click="setSubPage(p)"
+                                        :disabled="p === '...'"
+                                        :class="p === subPage ? 'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-500/20 border border-emerald-600' : (p === '...' ? 'text-slate-400 cursor-default' : 'bg-white dark:bg-[#1f222e] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5')"
+                                        class="min-w-[32px] h-8 px-2 rounded-lg text-xs font-mono font-semibold transition cursor-pointer flex items-center justify-center"
+                                        x-text="p">
+                                </button>
+                            </template>
+                        </div>
+                        <button type="button" @click="nextSubPage()" :disabled="subPage === subTotalPages"
+                                class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer flex items-center gap-1">
+                            <span class="hidden sm:inline">ถัดไป</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </button>
+                        <button type="button" @click="setSubPage(subTotalPages)" :disabled="subPage === subTotalPages"
+                                class="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="หน้าสุดท้าย">
+                            <i data-lucide="chevrons-right" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </template>
             </div>
         <?php endif; ?>
     </div>
@@ -510,6 +606,95 @@ $title = htmlspecialchars($project['name']);
         </div>
     </template>
 </div>
+
+<script>
+function projectShowPage() {
+    return {
+        createSubModal: false,
+        editModal: false,
+        allSubProjects: <?= $subProjectsJson ?>,
+        subSearch: '',
+        subPage: 1,
+        subPerPage: 5,
+
+        get filteredSubProjects() {
+            if (!this.subSearch.trim()) return this.allSubProjects;
+            const q = this.subSearch.toLowerCase().trim();
+            return this.allSubProjects.filter(s => s.search_text.includes(q));
+        },
+
+        get subTotalPages() {
+            if (this.subPerPage === 'all') return 1;
+            const per = parseInt(this.subPerPage) || 5;
+            return Math.ceil(this.filteredSubProjects.length / per) || 1;
+        },
+
+        get paginatedSubIds() {
+            if (this.subPerPage === 'all') {
+                return new Set(this.filteredSubProjects.map(s => s.id));
+            }
+            const per = parseInt(this.subPerPage) || 5;
+            const start = (this.subPage - 1) * per;
+            return new Set(this.filteredSubProjects.slice(start, start + per).map(s => s.id));
+        },
+
+        isSubVisible(id) {
+            return this.paginatedSubIds.has(id);
+        },
+
+        get subStartIndex() {
+            if (this.filteredSubProjects.length === 0) return 0;
+            if (this.subPerPage === 'all') return 1;
+            const per = parseInt(this.subPerPage) || 5;
+            return (this.subPage - 1) * per + 1;
+        },
+
+        get subEndIndex() {
+            if (this.filteredSubProjects.length === 0) return 0;
+            if (this.subPerPage === 'all') return this.filteredSubProjects.length;
+            const per = parseInt(this.subPerPage) || 5;
+            return Math.min(this.subPage * per, this.filteredSubProjects.length);
+        },
+
+        get subVisiblePages() {
+            const total = this.subTotalPages;
+            const current = this.subPage;
+            if (total <= 7) {
+                const pages = [];
+                for (let i = 1; i <= total; i++) pages.push(i);
+                return pages;
+            }
+            if (current <= 4) {
+                return [1, 2, 3, 4, 5, '...', total];
+            }
+            if (current >= total - 3) {
+                return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+            }
+            return [1, '...', current - 1, current, current + 1, '...', total];
+        },
+
+        setSubPage(p) {
+            if (p === '...' || p < 1 || p > this.subTotalPages || p === this.subPage) return;
+            this.subPage = p;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+
+        prevSubPage() {
+            if (this.subPage > 1) this.setSubPage(this.subPage - 1);
+        },
+
+        nextSubPage() {
+            if (this.subPage < this.subTotalPages) this.setSubPage(this.subPage + 1);
+        },
+
+        setSubPerPage(val) {
+            this.subPerPage = val === 'all' ? 'all' : parseInt(val);
+            this.subPage = 1;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        }
+    };
+}
+</script>
 
 <?php
 $content = ob_get_clean();

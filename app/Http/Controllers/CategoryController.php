@@ -10,6 +10,8 @@ use App\Core\View;
 use App\Core\Router;
 use App\Core\Session;
 use App\Services\AuditLogService;
+use Exception;
+use Throwable;
 
 class CategoryController
 {
@@ -98,8 +100,8 @@ class CategoryController
                 exit;
             }
 
-            if (mb_strlen($name) < 2 || mb_strlen($name) > 100) {
-                Session::flash('error', 'ชื่อประเภทโครงการต้องมีความยาวระหว่าง 2 ถึง 100 ตัวอักษร');
+            if (mb_strlen($name) < 2 || mb_strlen($name) > 255) {
+                Session::flash('error', 'ชื่อประเภทโครงการต้องมีความยาวระหว่าง 2 ถึง 255 ตัวอักษร');
                 header('Location: ' . Router::url('/categories'));
                 exit;
             }
@@ -136,7 +138,7 @@ class CategoryController
             Session::flash('success', "เพิ่มประเภทโครงการ '{$name}' เรียบร้อยแล้ว");
             header('Location: ' . Router::url('/categories'));
             exit;
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             error_log("Category store error: " . $e->getMessage());
             Session::flash('error', "ไม่สามารถบันทึกประเภทโครงการได้: " . $e->getMessage());
             header('Location: ' . Router::url('/categories'));
@@ -170,8 +172,8 @@ class CategoryController
                 exit;
             }
 
-            if (mb_strlen($name) < 2 || mb_strlen($name) > 100) {
-                Session::flash('error', 'ชื่อประเภทโครงการต้องมีความยาวระหว่าง 2 ถึง 100 ตัวอักษร');
+            if (mb_strlen($name) < 2 || mb_strlen($name) > 255) {
+                Session::flash('error', 'ชื่อประเภทโครงการต้องมีความยาวระหว่าง 2 ถึง 255 ตัวอักษร');
                 header('Location: ' . Router::url('/categories'));
                 exit;
             }
@@ -207,7 +209,7 @@ class CategoryController
             Session::flash('success', "อัปเดตประเภทโครงการ '{$name}' เรียบร้อยแล้ว");
             header('Location: ' . Router::url('/categories'));
             exit;
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             error_log("Category update error: " . $e->getMessage());
             Session::flash('error', "ไม่สามารถอัปเดตประเภทโครงการได้: " . $e->getMessage());
             header('Location: ' . Router::url('/categories'));
@@ -257,7 +259,7 @@ class CategoryController
             Session::flash('success', "ลบประเภทโครงการ '{$category['name']}' เรียบร้อยแล้ว");
             header('Location: ' . Router::url('/categories'));
             exit;
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             error_log("Category delete error: " . $e->getMessage());
             Session::flash('error', "ไม่สามารถลบประเภทโครงการได้: " . $e->getMessage());
             header('Location: ' . Router::url('/categories'));
