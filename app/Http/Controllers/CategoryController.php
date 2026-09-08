@@ -266,4 +266,57 @@ class CategoryController
             exit;
         }
     }
+
+    public function seedDefaults(): void
+    {
+        try {
+            if (!Auth::isAdmin()) {
+                Session::flash('error', 'เฉพาะผู้ดูแลระบบ (Administrator) เท่านั้นที่มีสิทธิ์นำเข้าหมวดหมู่มาตรฐาน');
+                header('Location: ' . Router::url('/categories'));
+                exit;
+            }
+
+            $defaults = [
+                ['name' => 'โครงสร้างพื้นฐาน', 'description' => 'งานคมนาคม ไฟฟ้า ประปา ระบายน้ำ และผังเมือง'],
+                ['name' => 'สาธารณสุขและคุณภาพชีวิต', 'description' => 'การดูแลสุขภาพ สุขาภิบาล และการดูแลผู้สูงอายุ'],
+                ['name' => 'การศึกษาและวัฒนธรรม', 'description' => 'การส่งเสริมการเรียนรู้ ทักษะอาชีพ และศิลปวัฒนธรรม'],
+                ['name' => 'สิ่งแวดล้อมและทรัพยากร', 'description' => 'การจัดการขยะ น้ำเสีย พื้นที่สีเขียว และพลังงานทดแทน'],
+                ['name' => 'สังคมและเศรษฐกิจชุมชน', 'description' => 'การสงเคราะห์ผู้ด้อยโอกาส วิสาหกิจชุมชน และท่องเที่ยว'],
+            ];
+
+            $added = 0;
+            foreach ($defaults as $item) {
+                $exists = (int)Database::fetchColumn("SELECT COUNT(*) FROM project_categories WHERE name = ?", [$item['name']]);
+                if ($exists === 0) {
+                    Database::insert('project_categories', [
+                        'name' => $item['name'],
+                        'description' => $item['description'],
+                        'icon' => 'folder',
+                    ]);
+                    $added++;
+                }
+            }
+
+            try {
+                AuditLogService::log(
+                    'SEED_DEFAULTS',
+                    'ProjectCategory',
+                    0,
+                    null,
+                    ['added_count' => $added]
+                );
+            } catch (Exception $e) {
+                error_log("Audit log notice: " . $e->getMessage());
+            }
+
+            Session::flash('success', "นำเข้าหมวดหมู่มาตรฐานเทศบาล 5 ด้านสำเร็จ (เพิ่ม {$added} หมวดหมู่)");
+            header('Location: ' . Router::url('/categories'));
+            exit;
+        } catch (\Throwable $e) {
+            error_log("Category seed defaults error: " . $e->getMessage());
+            Session::flash('error', "ไม่สามารถนำเข้าหมวดหมู่มาตรฐานได้: " . $e->getMessage());
+            header('Location: ' . Router::url('/categories'));
+            exit;
+        }
+    }
 }

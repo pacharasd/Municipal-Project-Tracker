@@ -271,8 +271,34 @@ $categoriesJson = json_encode($categoriesSummary, JSON_HEX_TAG | JSON_HEX_APOS |
                 </div>
             <?php endforeach; ?>
 
+            <!-- Empty State when no categories exist at all -->
+            <div x-show="allCategories.length === 0" class="col-span-full p-12 text-center bg-white dark:bg-[#181a20] rounded-3xl border border-dashed border-slate-200 dark:border-white/10 shadow-sm">
+                <div class="w-16 h-16 rounded-3xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-4 border border-emerald-500/20 shadow-sm">
+                    <i data-lucide="folder-plus" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">ยังไม่มีประเภทโครงการในระบบ</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
+                    ท่านสามารถเริ่มต้นสร้างประเภทโครงการใหม่เพื่อจัดกลุ่มโครงการหลักและติดตามงบประมาณ หรือเลือกนำเข้าหมวดหมู่มาตรฐานของเทศบาล
+                </p>
+                <div class="mt-5 flex flex-wrap items-center justify-center gap-3">
+                    <?php if ($isAdmin): ?>
+                        <button type="button" @click="createModal = true" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-500/20 transition-all flex items-center gap-2 cursor-pointer">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            <span>เพิ่มประเภทโครงการใหม่</span>
+                        </button>
+                        <form action="<?= Router::url('/categories/seed-defaults') ?>" method="POST" onsubmit="return confirm('ต้องการนำเข้า 5 หมวดหมู่มาตรฐานของเทศบาลหรือไม่?');">
+                            <input type="hidden" name="_token" value="<?= $csrfToken ?>">
+                            <button type="submit" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/15 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer">
+                                <i data-lucide="download-cloud" class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></i>
+                                <span>นำเข้าหมวดหมู่มาตรฐาน 5 ด้าน</span>
+                            </button>
+                        </form>
+                    <?php endif; ?>
+                </div>
+            </div>
+
             <!-- Empty State when search returns 0 results -->
-            <div x-show="filteredCategories.length === 0" class="col-span-full p-12 text-center bg-white dark:bg-[#181a20] rounded-3xl border border-dashed border-slate-200 dark:border-white/10">
+            <div x-show="allCategories.length > 0 && filteredCategories.length === 0" class="col-span-full p-12 text-center bg-white dark:bg-[#181a20] rounded-3xl border border-dashed border-slate-200 dark:border-white/10">
                 <div class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/[0.05] text-slate-400 flex items-center justify-center mx-auto mb-3">
                     <i data-lucide="search-x" class="w-6 h-6"></i>
                 </div>
@@ -441,8 +467,19 @@ $categoriesJson = json_encode($categoriesSummary, JSON_HEX_TAG | JSON_HEX_APOS |
                         </tr>
                     <?php endforeach; ?>
 
-                    <!-- Empty state in Table -->
-                    <tr x-show="filteredCategories.length === 0">
+                    <!-- Empty state in Table when allCategories is empty -->
+                    <tr x-show="allCategories.length === 0">
+                        <td colspan="8" class="text-center py-12 text-slate-400">
+                            <div class="flex flex-col items-center justify-center">
+                                <i data-lucide="folder-plus" class="w-8 h-8 text-emerald-500/50 mb-2"></i>
+                                <span class="font-bold text-slate-700 dark:text-slate-300">ยังไม่มีประเภทโครงการในระบบ</span>
+                                <span class="text-xs text-slate-400 mt-0.5">กดปุ่ม "เพิ่มประเภทโครงการ" ด้านบน เพื่อสร้างประเภทโครงการใหม่</span>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Empty state in Table when search returns 0 -->
+                    <tr x-show="allCategories.length > 0 && filteredCategories.length === 0">
                         <td colspan="8" class="text-center py-10 text-slate-400">
                             <div class="flex flex-col items-center justify-center">
                                 <i data-lucide="search-x" class="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2"></i>

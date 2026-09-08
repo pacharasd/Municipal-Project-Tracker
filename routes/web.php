@@ -83,6 +83,7 @@ Router::post('/users/{id}/delete', [UserController::class, 'delete']);
 // Project Categories Management Routes (Master Data)
 Router::get('/categories', [CategoryController::class, 'index']);
 Router::post('/categories', [CategoryController::class, 'store']);
+Router::post('/categories/seed-defaults', [CategoryController::class, 'seedDefaults']);
 Router::post('/categories/{id}/update', [CategoryController::class, 'update']);
 Router::post('/categories/{id}/delete', [CategoryController::class, 'delete']);
 
