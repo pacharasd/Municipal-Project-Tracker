@@ -826,8 +826,49 @@
                    'lg:ml-0': desktopSidebarOpen,
                    'lg:-ml-64 lg:pointer-events-none': !desktopSidebarOpen
                }" 
-               class="fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-[#0b0c0f] border-r border-slate-200 dark:border-white/[0.08] pt-16 lg:pt-0 transform lg:translate-x-0 lg:static transition-[margin-left,transform] duration-200 ease-out flex flex-col justify-between shadow-lg dark:shadow-2xl lg:shadow-none overflow-hidden shrink-0 will-change-[margin-left,transform]">
+               class="fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-[#0b0c0f] border-r border-slate-200 dark:border-white/[0.08] pt-0 transform lg:translate-x-0 lg:static transition-[margin-left,transform] duration-200 ease-out flex flex-col justify-between shadow-lg dark:shadow-2xl lg:shadow-none overflow-hidden shrink-0 will-change-[margin-left,transform]">
             <div class="w-64 h-full flex flex-col justify-between overflow-hidden">
+                
+                <!-- Mobile Sidebar Brand Header with Municipal Logo (Replaces empty top space) -->
+                <div class="lg:hidden h-14 sm:h-16 px-3.5 flex items-center justify-between border-b border-slate-200/80 dark:border-white/[0.08] shrink-0 bg-slate-50/70 dark:bg-white/[0.02]">
+                    <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="flex items-center gap-2 min-w-0 group" title="ระบบติดตามและบริหารโครงการเทศบาล">
+                        <!-- โลโก้เทศบาล (พื้นหลังขาวคมชัดทุกธีม) -->
+                        <div class="w-8 h-8 rounded-xl bg-white p-1 shadow-sm border border-slate-200/80 dark:border-white/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                            <img src="<?= \App\Core\Router::url('/images/mobile-logo.webp') ?>" 
+                                 alt="โลโก้เทศบาล" 
+                                 class="w-full h-full object-contain"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div style="display:none;" class="w-full h-full rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-400 items-center justify-center text-slate-950 font-bold">
+                                <i data-lucide="activity" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+
+                        <!-- โลโก้ กปท. -->
+                        <div class="h-8 px-1.5 py-0.5 rounded-xl border border-slate-200/80 dark:border-white/20 bg-white shadow-sm flex items-center justify-center shrink-0">
+                            <img src="<?= \App\Core\Router::url('/images/kpth-logo.png') ?>" 
+                                 alt="กปท." 
+                                 class="h-5 w-auto max-w-[60px] object-contain shrink-0">
+                        </div>
+
+                        <div class="min-w-0 flex-1">
+                            <div class="font-bold text-xs font-heading text-slate-900 dark:text-white truncate">
+                                ติดตามโครงการ
+                            </div>
+                            <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold truncate">
+                                เทศบาลตำบล
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- Close Drawer Button on Mobile -->
+                    <button type="button" 
+                            @click="sidebarOpen = false" 
+                            class="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-white/10 transition shrink-0 cursor-pointer ml-1"
+                            aria-label="ปิดเมนู">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
                 <div id="sidebar-nav-items" class="p-4 space-y-2 overflow-y-auto flex-1">
                     <div class="px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 font-heading">
                         MENU
