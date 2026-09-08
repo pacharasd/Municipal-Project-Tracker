@@ -375,12 +375,12 @@ $tierNotStartedPct = round(($tierNotStarted / $subCount) * 100, 1);
                         <div class="text-[11px] text-slate-400 mt-1">เปรียบเทียบงบประมาณที่ได้รับและยอดเบิกจ่ายจำแนกตามปีงบประมาณ</div>
                     </div>
                     <div class="flex items-center gap-3">
-                        <div class="hidden sm:flex items-center gap-2.5 text-[11px] font-medium">
+                        <div class="hidden sm:flex items-center gap-3 text-[11px] font-medium">
                             <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/30"></span> งบประมาณ
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/30"></span> งบประมาณ: <strong class="text-emerald-600 dark:text-emerald-400 font-mono"><?= number_format($stats['total_budget']) ?></strong> บ.
                             </span>
                             <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                                <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/30"></span> เบิกจ่าย
+                                <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/30"></span> เบิกจ่ายแล้ว: <strong class="text-blue-600 dark:text-blue-400 font-mono"><?= number_format($stats['total_disbursed']) ?></strong> บ.
                             </span>
                         </div>
                         <span class="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-500/20">
@@ -860,9 +860,21 @@ function renderDashboardCharts(isThemeChange = false) {
             const yearlyCtx = yearlyCanvas.getContext('2d');
             const isMobile = window.innerWidth < 640;
 
-            const labels = yearlyData.map(d => 'ปี ' + d.year);
-            const budgets = yearlyData.map(d => parseFloat(d.total_budget || 0));
-            const disbursed = yearlyData.map(d => parseFloat(d.total_disbursed || 0));
+            // กรองแสดงปีที่มีข้อมูล หรือปีปัจจุบัน หรือปีข้างเคียง ไม่ให้มีปีว่างๆ 8 ปีบีบแท่งกราฟจนเล็กเกินไป
+            const filteredYears = yearlyData.filter((d, idx, arr) => {
+                const hasData = parseFloat(d.total_budget || 0) > 0 || parseFloat(d.total_disbursed || 0) > 0 || parseInt(d.project_count || 0) > 0;
+                const isActive = parseInt(d.is_active || 0) === 1;
+                const isAdjacent = arr.some(o => 
+                    (parseInt(o.is_active || 0) === 1 || parseFloat(o.total_budget || 0) > 0) &&
+                    Math.abs(parseInt(d.year) - parseInt(o.year)) <= 1
+                );
+                return hasData || isActive || isAdjacent;
+            });
+            const displayYears = filteredYears.length > 0 ? filteredYears : yearlyData;
+
+            const labels = displayYears.map(d => 'ปี ' + d.year);
+            const budgets = displayYears.map(d => parseFloat(d.total_budget || 0));
+            const disbursed = displayYears.map(d => parseFloat(d.total_disbursed || 0));
 
             // Gradient สำหรับงบประมาณรวม (Emerald)
             const budgetGrad = yearlyCtx.createLinearGradient(0, 0, 0, 240);
@@ -893,6 +905,37 @@ function renderDashboardCharts(isThemeChange = false) {
                 return val.toLocaleString('th-TH');
             };
 
+            // Custom Plugin: เขียนตัวเลขกำกับยอดเงินบนหัวแท่งกราฟอย่างชัดเจน
+            const yearlyValueLabelsPlugin = {
+                id: 'yearlyValueLabels',
+                afterDatasetsDraw(chart) {
+                    const { ctx } = chart;
+                    chart.data.datasets.forEach((dataset, datasetIndex) => {
+                        const meta = chart.getDatasetMeta(datasetIndex);
+                        if (!meta.hidden) {
+                            meta.data.forEach((element, index) => {
+                                const val = dataset.data[index];
+                                if (val > 0) {
+                                    ctx.save();
+                                    ctx.font = 'bold ' + (isMobile ? '9px' : '10.5px') + " 'Prompt', 'Sarabun', sans-serif";
+                                    ctx.fillStyle = datasetIndex === 0 
+                                        ? (isDark ? '#34d399' : '#059669') 
+                                        : (isDark ? '#60a5fa' : '#2563eb');
+                                    ctx.textAlign = 'center';
+                                    ctx.textBaseline = 'bottom';
+                                    
+                                    const text = val >= 1000000 
+                                        ? (val / 1000000).toLocaleString('th-TH', { maximumFractionDigits: 1 }) + 'M'
+                                        : val.toLocaleString('th-TH') + ' บ.';
+                                    ctx.fillText(text, element.x, element.y - 4);
+                                    ctx.restore();
+                                }
+                            });
+                        }
+                    });
+                }
+            };
+
             new Chart(yearlyCanvas, {
                 type: 'bar',
                 data: {
@@ -905,27 +948,32 @@ function renderDashboardCharts(isThemeChange = false) {
                             hoverBackgroundColor: budgetHoverGrad,
                             borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 2, bottomRight: 2 },
                             borderSkipped: false,
-                            barPercentage: isMobile ? 0.7 : 0.58,
-                            categoryPercentage: isMobile ? 0.8 : 0.68
+                            minBarLength: 14,
+                            barPercentage: isMobile ? 0.75 : 0.62,
+                            categoryPercentage: isMobile ? 0.82 : 0.72
                         },
                         {
                             label: 'ยอดเบิกจ่าย',
                             data: disbursed,
                             backgroundColor: disbGrad,
                             hoverBackgroundColor: disbHoverGrad,
+                            borderColor: isDark ? '#60a5fa' : '#2563eb',
+                            borderWidth: 1,
                             borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 2, bottomRight: 2 },
                             borderSkipped: false,
-                            barPercentage: isMobile ? 0.7 : 0.58,
-                            categoryPercentage: isMobile ? 0.8 : 0.68
+                            minBarLength: 14, // รับประกันว่าแม้จะเบิกจ่ายยอดน้อย (เช่น 4,000 บาทเทียบกับ 500,000 บาท) จะมองเห็นแท่งสีฟ้าชัดเจนเสมอ
+                            barPercentage: isMobile ? 0.75 : 0.62,
+                            categoryPercentage: isMobile ? 0.82 : 0.72
                         }
                     ]
                 },
+                plugins: [yearlyValueLabelsPlugin],
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     layout: {
                         padding: {
-                            top: 15,
+                            top: 22,
                             bottom: 4,
                             left: 4,
                             right: 4
@@ -958,7 +1006,7 @@ function renderDashboardCharts(isThemeChange = false) {
                             callbacks: {
                                 title: (items) => {
                                     const idx = items[0]?.dataIndex;
-                                    const yr = yearlyData[idx];
+                                    const yr = displayYears[idx];
                                     return `ปีงบประมาณ ${yr?.year || ''}` + (parseInt(yr?.is_active) === 1 ? ' (ปีปัจจุบัน)' : '');
                                 },
                                 label: (context) => {
@@ -968,7 +1016,7 @@ function renderDashboardCharts(isThemeChange = false) {
                                 },
                                 afterBody: (items) => {
                                     const idx = items[0]?.dataIndex;
-                                    const yr = yearlyData[idx];
+                                    const yr = displayYears[idx];
                                     const b = parseFloat(yr?.total_budget || 0);
                                     const d = parseFloat(yr?.total_disbursed || 0);
                                     const pct = b > 0 ? ((d / b) * 100).toFixed(1) : '0.0';
@@ -983,6 +1031,7 @@ function renderDashboardCharts(isThemeChange = false) {
                     scales: {
                         y: {
                             beginAtZero: true,
+                            grace: '20%', // เพิ่มพื้นที่ด้านบน 20% ให้ตัวเลขยอดเงินไม่ถูกขอบตัด
                             ticks: {
                                 color: tickColor,
                                 font: { family: "'Prompt', 'Sarabun', sans-serif", size: isMobile ? 9.5 : 10.5 },
