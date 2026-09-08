@@ -605,7 +605,7 @@
                         ?>
                         <span class="hidden sm:inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 dark:border-emerald-500/40 font-sans shrink-0">ปี <?= htmlspecialchars((string)$navActiveYearStr) ?></span>
                     </a>
-                    <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 hidden sm:block font-medium truncate">คณะอนุกรรมการฝ่ายติดตามและการประเมินผล</p>
+                    <p class="text-[11px] sm:text-xs text-emerald-600 dark:text-emerald-400 hidden sm:block font-semibold truncate">คณะอนุกรรมการฝ่ายติดตามและการประเมินผล</p>
                 </div>
             </div>
 
