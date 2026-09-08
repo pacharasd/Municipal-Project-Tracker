@@ -258,12 +258,17 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
     <!-- 1. Main Project Budget Ceiling Table -->
     <div class="bg-white dark:bg-[#181a20] rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm overflow-hidden">
         <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-white/[0.06] flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
-            <div>
-                <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 font-heading">
-                    <i data-lucide="pie-chart" class="w-5 h-5 text-blue-600 dark:text-blue-400"></i>
-                    <span>สถานะเพดานงบประมาณโครงการหลัก (Project Budget Allocations)</span>
-                </h2>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">ยอดเบิกจ่ายจะคำนวณและสรุปอัตโนมัติจากโครงการย่อยทั้งหมดภายใต้โครงการหลัก</p>
+            <div class="flex items-start gap-3 min-w-0">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200/70 dark:border-blue-800/50 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+                    <i data-lucide="landmark" class="w-5 h-5"></i>
+                </div>
+                <div class="min-w-0">
+                    <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-heading leading-snug">
+                        สถานะเพดานงบประมาณโครงการหลัก
+                        <span class="block sm:inline text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 sm:ml-1">(Project Budget Allocations)</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">ยอดเบิกจ่ายจะคำนวณและสรุปอัตโนมัติจากโครงการย่อยทั้งหมดภายใต้โครงการหลัก</p>
+                </div>
             </div>
 
             <!-- Search & Per-Page Controls (Aligned side-by-side on mobile) -->
@@ -425,12 +430,17 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
     <!-- 2. Recent Disbursements Log Table -->
     <div class="bg-white dark:bg-[#181a20] rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm overflow-hidden">
         <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-white/[0.06] flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
-            <div>
-                <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 font-heading">
-                    <i data-lucide="receipt" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i>
-                    <span>ประวัติรายการเบิกจ่ายงบประมาณ (Disbursement Logs)</span>
-                </h2>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">บันทึกประวัติการเบิกเงินพร้อมรายละเอียดผู้รับเงินและเอกสารหลักฐาน</p>
+            <div class="flex items-start gap-3 min-w-0">
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/70 dark:border-emerald-800/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+                    <i data-lucide="banknote" class="w-5 h-5"></i>
+                </div>
+                <div class="min-w-0">
+                    <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-heading leading-snug">
+                        ประวัติรายการเบิกจ่ายงบประมาณ
+                        <span class="block sm:inline text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 sm:ml-1">(Disbursement Logs)</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">บันทึกประวัติการเบิกเงินพร้อมรายละเอียดผู้รับเงินและเอกสารหลักฐาน</p>
+                </div>
             </div>
 
             <!-- Search & Per-Page Controls (Aligned side-by-side on mobile) -->
