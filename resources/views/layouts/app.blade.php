@@ -701,6 +701,7 @@
                 </div>
 
                 <?php
+                $currentUser = $currentUser ?? \App\Core\Auth::user() ?? [];
                 $userRole = $currentUser['role_name'] ?? 'admin';
                 $roleMeta = [
                     'admin'     => ['label' => 'ผู้ดูแลระบบ (Admin)', 'bg' => 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/60', 'icon' => 'shield-check'],
@@ -729,12 +730,12 @@
                                     <input type="hidden" name="_token" value="<?= $csrfToken ?>">
                                     <input type="hidden" name="user_id" value="<?= $su['id'] ?>">
                                     <input type="hidden" name="redirect" value="<?= htmlspecialchars($_SERVER['REQUEST_URI'] ?? '') ?>">
-                                    <button type="submit" class="w-full text-left px-3 py-2 rounded-xl text-xs hover:bg-slate-100 dark:hover:bg-white/5 flex items-center justify-between transition cursor-pointer <?= ($currentUser['id'] == $su['id']) ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/30' : 'text-slate-700 dark:text-slate-300' ?>">
+                                    <button type="submit" class="w-full text-left px-3 py-2 rounded-xl text-xs hover:bg-slate-100 dark:hover:bg-white/5 flex items-center justify-between transition cursor-pointer <?= (($currentUser['id'] ?? null) == $su['id']) ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/30' : 'text-slate-700 dark:text-slate-300' ?>">
                                         <div>
                                             <div class="font-medium text-slate-900 dark:text-white"><?= htmlspecialchars($su['name']) ?></div>
                                             <div class="text-[10px] text-slate-500 dark:text-slate-400"><?= htmlspecialchars($su['role_label']) ?></div>
                                         </div>
-                                        <?php if ($currentUser['id'] == $su['id']): ?>
+                                        <?php if (($currentUser['id'] ?? null) == $su['id']): ?>
                                              <i data-lucide="check" class="w-4 h-4 text-emerald-500 dark:text-emerald-400"></i>
                                         <?php endif; ?>
                                     </button>
