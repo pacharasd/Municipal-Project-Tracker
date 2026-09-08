@@ -854,8 +854,8 @@
                             <div class="font-bold text-xs font-heading text-slate-900 dark:text-white truncate">
                                 ติดตามโครงการ
                             </div>
-                            <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold truncate">
-                                เทศบาลตำบล
+                            <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold truncate" title="คณะอนุกรรมการฝ่ายติดตามและการประเมินผล">
+                                คณะอนุกรรมการฝ่ายติดตามและการประเมินผล
                             </div>
                         </div>
                     </a>
