@@ -611,17 +611,16 @@
                              class="h-5 sm:h-7 w-auto max-w-[70px] sm:max-w-[105px] object-contain shrink-0">
                     </div>
                 </a>
-                <div class="min-w-0">
+                <div class="min-w-0 hidden md:block">
                     <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="font-bold font-heading text-slate-900 dark:text-white tracking-tight flex items-center gap-1 sm:gap-2">
-                        <span class="hidden md:inline text-base sm:text-lg whitespace-nowrap">ระบบติดตามและบริหารโครงการเทศบาล</span>
-                        <span class="md:hidden text-xs sm:text-sm font-bold truncate max-w-[105px] xs:max-w-[160px] whitespace-nowrap">ติดตามโครงการ</span>
+                        <span class="text-base sm:text-lg whitespace-nowrap">ระบบติดตามและบริหารโครงการเทศบาล</span>
                         <?php 
                             $navActiveFy = \App\Services\FiscalYearService::getActiveYear(); 
                             $navActiveYearStr = $navActiveFy ? $navActiveFy['year'] : \App\Services\FiscalYearService::getCurrentFiscalYear();
                         ?>
-                        <span class="hidden sm:inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 dark:border-emerald-500/40 font-sans shrink-0">ปี <?= htmlspecialchars((string)$navActiveYearStr) ?></span>
+                        <span class="inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 dark:border-emerald-500/40 font-sans shrink-0">ปี <?= htmlspecialchars((string)$navActiveYearStr) ?></span>
                     </a>
-                    <p class="text-[11px] sm:text-xs text-emerald-600 dark:text-emerald-400 hidden sm:block font-semibold truncate">คณะอนุกรรมการฝ่ายติดตามและการประเมินผล</p>
+                    <p class="text-[11px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-semibold truncate">คณะอนุกรรมการฝ่ายติดตามและการประเมินผล</p>
                 </div>
             </div>
 
