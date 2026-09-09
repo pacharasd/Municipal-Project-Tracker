@@ -1053,22 +1053,22 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
     <!-- Modal: Manual Progress Override -->
     <template x-teleport="body">
         <div x-show="manualModal" x-cloak @click.self="manualModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
-            <div class="bg-white w-full max-w-sm rounded-2xl shadow-xl border border-slate-200 overflow-hidden modal-box-smooth transform-gpu">
-                <div class="p-5 border-b border-slate-100 flex items-center justify-between">
-                    <h3 class="text-sm font-bold text-slate-900">กำหนดเปอร์เซ็นต์ความคืบหน้าเอง</h3>
-                    <button type="button" @click.stop="manualModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
+            <div class="bg-white dark:bg-[#181a20] w-full max-w-sm rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 overflow-hidden modal-box-smooth transform-gpu">
+                <div class="p-5 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">กำหนดเปอร์เซ็นต์ความคืบหน้าเอง</h3>
+                    <button type="button" @click.stop="manualModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
                         <i data-lucide="x" class="w-4 h-4 pointer-events-none"></i>
                     </button>
                 </div>
                 <form action="<?= \App\Core\Router::url("/sub-projects/{$project['id']}/manual-progress") ?>" method="POST" class="p-5 space-y-4">
                     <input type="hidden" name="_token" value="<?= $csrfToken ?>">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">ความสำเร็จ (%) ระหว่าง 0-100</label>
-                        <input type="number" step="0.1" min="0" max="100" name="manual_progress" value="<?= $project['progress'] ?>" required class="w-full px-3 py-2 text-base font-bold text-center rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ความสำเร็จ (%) ระหว่าง 0-100</label>
+                        <input type="number" step="0.1" min="0" max="100" name="manual_progress" value="<?= $project['progress'] ?>" required class="w-full px-3 py-2 text-base font-bold text-center rounded-xl bg-white dark:bg-[#12141a] text-slate-900 dark:text-white border border-slate-300 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     </div>
                     <div class="flex items-center justify-end gap-2 pt-2">
-                        <button type="button" @click="manualModal = false" class="px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100 rounded-lg">ยกเลิก</button>
-                        <button type="submit" class="px-4 py-1.5 text-xs font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700">อัปเดต</button>
+                        <button type="button" @click="manualModal = false" class="px-3 py-1.5 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg cursor-pointer">ยกเลิก</button>
+                        <button type="submit" class="px-4 py-1.5 text-xs font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 cursor-pointer">อัปเดต</button>
                     </div>
                 </form>
             </div>
@@ -1085,19 +1085,19 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0">
             
-            <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden space-y-5 p-6 modal-box-smooth transform-gpu">
+            <div class="bg-white dark:bg-[#181a20] w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden space-y-5 p-6 modal-box-smooth transform-gpu">
                 
-                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/10">
                     <div class="flex items-center gap-3">
-                        <span class="p-2.5 bg-indigo-100 text-indigo-600 rounded-xl">
+                        <span class="p-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl">
                             <i data-lucide="sliders" class="w-5 h-5"></i>
                         </span>
                         <div>
-                            <h3 class="text-lg font-bold text-slate-900">ปรับสถานะและความคืบหน้าโครงการ</h3>
-                            <p class="text-xs text-slate-500">แอดมินและผู้ดูแลโครงการปรับสถานะและเปอร์เซ็นต์ได้โดยตรง</p>
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">ปรับสถานะและความคืบหน้าโครงการ</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">แอดมินและผู้ดูแลโครงการปรับสถานะและเปอร์เซ็นต์ได้โดยตรง</p>
                         </div>
                     </div>
-                    <button type="button" @click.stop="statusModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
+                    <button type="button" @click.stop="statusModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
                         <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
                     </button>
                 </div>
@@ -1107,62 +1107,142 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
                     <!-- 1. Status Selection -->
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-2">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
                             เลือกสถานะโครงการ <span class="text-rose-500">*</span>
                         </label>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <!-- Not Started -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <!-- 1. ยังไม่เริ่มดำเนินการ (not_started) -->
                             <button type="button" @click="setStatus('not_started')"
-                                    :class="selectedStatus === 'not_started' ? 'ring-2 ring-slate-500 bg-slate-100 border-slate-400' : 'bg-white border-slate-200 hover:bg-slate-50'"
-                                    class="p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all">
-                                <span class="w-3 h-3 rounded-full bg-slate-400"></span>
-                                <div>
-                                    <div class="text-xs font-bold text-slate-800">ยังไม่เริ่มดำเนินการ</div>
-                                    <div class="text-[10px] text-slate-400">ความคืบหน้า 0%</div>
+                                    :class="selectedStatus === 'not_started' 
+                                        ? 'ring-2 ring-slate-400 dark:ring-slate-400 bg-slate-100 dark:bg-slate-800/80 border-slate-400 dark:border-slate-400 shadow-sm' 
+                                        : 'bg-slate-50/70 dark:bg-[#12141a] border-slate-200 dark:border-white/10 hover:bg-slate-100/80 dark:hover:bg-white/5'"
+                                    class="p-3 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer group">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors"
+                                         :class="selectedStatus === 'not_started' ? 'bg-slate-600 dark:bg-slate-500 text-white' : 'bg-slate-200/80 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-slate-300 dark:group-hover:bg-slate-700'">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="12" r="10" stroke-width="2"/>
+                                            <polyline points="12 6 12 12 16 14" stroke-width="2" stroke-linecap="round"/>
+                                        </svg>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="text-xs font-bold text-slate-800 dark:text-white truncate">ยังไม่เริ่มดำเนินการ</div>
+                                        <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">ความคืบหน้า 0%</div>
+                                    </div>
+                                </div>
+                                <div x-show="selectedStatus === 'not_started'" class="w-5 h-5 rounded-full bg-slate-600 dark:bg-slate-400 text-white dark:text-slate-900 flex items-center justify-center shrink-0 shadow-sm">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                 </div>
                             </button>
 
-                            <!-- In Progress -->
+                            <!-- 2. กำลังดำเนินการ (in_progress) -->
                             <button type="button" @click="setStatus('in_progress')"
-                                    :class="selectedStatus === 'in_progress' ? 'ring-2 ring-blue-500 bg-blue-50/70 border-blue-400' : 'bg-white border-slate-200 hover:bg-slate-50'"
-                                    class="p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all">
-                                <span class="w-3 h-3 rounded-full bg-blue-500 animate-pulse"></span>
-                                <div>
-                                    <div class="text-xs font-bold text-blue-900">กำลังดำเนินการ</div>
-                                    <div class="text-[10px] text-blue-500">ปรับความคืบหน้าได้อิสระ</div>
+                                    :class="selectedStatus === 'in_progress' 
+                                        ? 'ring-2 ring-blue-500 dark:ring-blue-400 bg-blue-50 dark:bg-blue-600/25 border-blue-500 dark:border-blue-400 shadow-sm' 
+                                        : 'bg-slate-50/70 dark:bg-[#12141a] border-blue-200/60 dark:border-blue-500/20 hover:bg-blue-50/40 dark:hover:bg-blue-500/10 hover:border-blue-300 dark:hover:border-blue-500/30'"
+                                    class="p-3 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer group">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors"
+                                         :class="selectedStatus === 'in_progress' ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-sm shadow-blue-500/30' : 'bg-blue-100/80 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 group-hover:bg-blue-200 dark:group-hover:bg-blue-900/60'">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                            <polygon points="5 3 19 12 5 21 5 3"/>
+                                        </svg>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="text-xs font-bold transition-colors truncate"
+                                             :class="selectedStatus === 'in_progress' ? 'text-blue-950 dark:text-white' : 'text-slate-800 dark:text-slate-200'">
+                                            กำลังดำเนินการ
+                                        </div>
+                                        <div class="text-[11px] font-medium transition-colors"
+                                             :class="selectedStatus === 'in_progress' ? 'text-blue-700 dark:text-blue-300' : 'text-blue-600 dark:text-blue-400'">
+                                            ปรับความคืบหน้าได้อิสระ
+                                        </div>
+                                    </div>
+                                </div>
+                                <div x-show="selectedStatus === 'in_progress'" class="w-5 h-5 rounded-full bg-blue-600 dark:bg-blue-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                 </div>
                             </button>
 
-                            <!-- Completed -->
+                            <!-- 3. เสร็จสิ้นสมบูรณ์ (completed) -->
                             <button type="button" @click="setStatus('completed')"
-                                    :class="selectedStatus === 'completed' ? 'ring-2 ring-emerald-500 bg-emerald-50/70 border-emerald-400' : 'bg-white border-slate-200 hover:bg-slate-50'"
-                                    class="p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all">
-                                <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
-                                <div>
-                                    <div class="text-xs font-bold text-emerald-900">เสร็จสิ้นสมบูรณ์</div>
-                                    <div class="text-[10px] text-emerald-600">ความคืบหน้า 100%</div>
+                                    :class="selectedStatus === 'completed' 
+                                        ? 'ring-2 ring-emerald-500 dark:ring-emerald-400 bg-emerald-50 dark:bg-emerald-600/25 border-emerald-500 dark:border-emerald-400 shadow-sm' 
+                                        : 'bg-slate-50/70 dark:bg-[#12141a] border-emerald-200/60 dark:border-emerald-500/20 hover:bg-emerald-50/40 dark:hover:bg-emerald-500/10 hover:border-emerald-300 dark:hover:border-emerald-500/30'"
+                                    class="p-3 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer group">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors"
+                                         :class="selectedStatus === 'completed' ? 'bg-emerald-600 dark:bg-emerald-500 text-white shadow-sm shadow-emerald-500/30' : 'bg-emerald-100/80 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-200 dark:group-hover:bg-emerald-900/60'">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="text-xs font-bold transition-colors truncate"
+                                             :class="selectedStatus === 'completed' ? 'text-emerald-950 dark:text-white' : 'text-slate-800 dark:text-slate-200'">
+                                            เสร็จสิ้นสมบูรณ์
+                                        </div>
+                                        <div class="text-[11px] font-medium transition-colors"
+                                             :class="selectedStatus === 'completed' ? 'text-emerald-700 dark:text-emerald-300' : 'text-emerald-600 dark:text-emerald-400'">
+                                            ความคืบหน้า 100%
+                                        </div>
+                                    </div>
+                                </div>
+                                <div x-show="selectedStatus === 'completed'" class="w-5 h-5 rounded-full bg-emerald-600 dark:bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                 </div>
                             </button>
 
-                            <!-- Has Problem -->
+                            <!-- 4. มีปัญหา / อุปสรรค (has_problem) -->
                             <button type="button" @click="setStatus('has_problem')"
-                                    :class="selectedStatus === 'has_problem' ? 'ring-2 ring-rose-500 bg-rose-50/70 border-rose-400' : 'bg-white border-slate-200 hover:bg-slate-50'"
-                                    class="p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all">
-                                <span class="w-3 h-3 rounded-full bg-rose-500"></span>
-                                <div>
-                                    <div class="text-xs font-bold text-rose-900">มีปัญหา / อุปสรรค</div>
-                                    <div class="text-[10px] text-rose-500">เข้าสู่บัญชีเฝ้าระวัง</div>
+                                    :class="selectedStatus === 'has_problem' 
+                                        ? 'ring-2 ring-rose-500 dark:ring-rose-400 bg-rose-50 dark:bg-rose-600/25 border-rose-500 dark:border-rose-400 shadow-sm' 
+                                        : 'bg-slate-50/70 dark:bg-[#12141a] border-rose-200/60 dark:border-rose-500/20 hover:bg-rose-50/40 dark:hover:bg-rose-500/10 hover:border-rose-300 dark:hover:border-rose-500/30'"
+                                    class="p-3 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer group">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors"
+                                         :class="selectedStatus === 'has_problem' ? 'bg-rose-600 dark:bg-rose-500 text-white shadow-sm shadow-rose-500/30' : 'bg-rose-100/80 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 group-hover:bg-rose-200 dark:group-hover:bg-rose-900/60'">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="text-xs font-bold transition-colors truncate"
+                                             :class="selectedStatus === 'has_problem' ? 'text-rose-950 dark:text-white' : 'text-slate-800 dark:text-slate-200'">
+                                            มีปัญหา / อุปสรรค
+                                        </div>
+                                        <div class="text-[11px] font-medium transition-colors"
+                                             :class="selectedStatus === 'has_problem' ? 'text-rose-700 dark:text-rose-300' : 'text-rose-600 dark:text-rose-400'">
+                                            เข้าสู่บัญชีเฝ้าระวัง
+                                        </div>
+                                    </div>
+                                </div>
+                                <div x-show="selectedStatus === 'has_problem'" class="w-5 h-5 rounded-full bg-rose-600 dark:bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                 </div>
                             </button>
 
-                            <!-- Cancelled -->
+                            <!-- 5. ยกเลิกโครงการ (cancelled) -->
                             <button type="button" @click="setStatus('cancelled')"
-                                    :class="selectedStatus === 'cancelled' ? 'ring-2 ring-gray-600 bg-gray-100 border-gray-400' : 'bg-white border-slate-200 hover:bg-slate-50'"
-                                    class="p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all sm:col-span-2">
-                                <span class="w-3 h-3 rounded-full bg-gray-600"></span>
-                                <div>
-                                    <div class="text-xs font-bold text-gray-800">ยกเลิกโครงการ</div>
-                                    <div class="text-[10px] text-gray-500">ระงับการดำเนินงาน</div>
+                                    :class="selectedStatus === 'cancelled' 
+                                        ? 'ring-2 ring-slate-500 dark:ring-slate-400 bg-slate-100 dark:bg-slate-800/80 border-slate-500 dark:border-slate-400 shadow-sm' 
+                                        : 'bg-slate-50/70 dark:bg-[#12141a] border-slate-200 dark:border-white/10 hover:bg-slate-100/80 dark:hover:bg-white/5'"
+                                    class="p-3 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer group sm:col-span-2">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors"
+                                         :class="selectedStatus === 'cancelled' ? 'bg-slate-700 dark:bg-slate-600 text-white' : 'bg-slate-200/80 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-slate-300 dark:group-hover:bg-slate-700'">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="12" r="10" stroke-width="2"/>
+                                            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" stroke-width="2"/>
+                                        </svg>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="text-xs font-bold text-slate-800 dark:text-white truncate">ยกเลิกโครงการ</div>
+                                        <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">ระงับการดำเนินงาน</div>
+                                    </div>
+                                </div>
+                                <div x-show="selectedStatus === 'cancelled'" class="w-5 h-5 rounded-full bg-slate-700 dark:bg-slate-400 text-white dark:text-slate-900 flex items-center justify-center shrink-0 shadow-sm">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                 </div>
                             </button>
                         </div>
@@ -1170,47 +1250,57 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                     </div>
 
                     <!-- 2. Progress Percentage (%) Slider & Number -->
-                    <div class="pt-3 border-t border-slate-100">
-                        <div class="flex items-center justify-between mb-1.5">
-                            <label class="text-xs font-semibold text-slate-700">เปอร์เซ็นต์ความสำเร็จของโครงการ (%)</label>
-                            <span class="text-lg font-extrabold text-indigo-600" x-text="`${currentProgress}%`"></span>
+                    <div class="pt-4 border-t border-slate-100 dark:border-white/10">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">เปอร์เซ็นต์ความสำเร็จของโครงการ (%)</label>
+                            <span class="text-lg font-extrabold text-emerald-600 dark:text-emerald-400 font-mono" x-text="`${currentProgress}%`"></span>
                         </div>
 
                         <!-- Range Slider -->
                         <input type="range" min="0" max="100" step="1" x-model="currentProgress" @input="setProgress(Number($event.target.value))"
-                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                               class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500">
 
                         <!-- Direct input and presets -->
-                        <div class="flex items-center justify-between mt-3 gap-2">
-                            <div class="flex flex-wrap items-center gap-1 text-xs">
-                                <button type="button" @click="setProgress(0)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded font-medium text-slate-600">0%</button>
-                                <button type="button" @click="setProgress(25)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded font-medium text-slate-600">25%</button>
-                                <button type="button" @click="setProgress(50)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded font-medium text-slate-600">50%</button>
-                                <button type="button" @click="setProgress(75)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded font-medium text-slate-600">75%</button>
-                                <button type="button" @click="setProgress(100)" class="px-2 py-1 bg-emerald-100 hover:bg-emerald-200 rounded font-bold text-emerald-700">100%</button>
+                        <div class="flex items-center justify-between mt-3 gap-2 flex-wrap sm:flex-nowrap">
+                            <div class="flex flex-wrap items-center gap-1.5 text-xs">
+                                <button type="button" @click="setProgress(0)" 
+                                        :class="currentProgress == 0 ? 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white font-bold ring-1 ring-slate-400' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10'"
+                                        class="px-2.5 py-1 rounded-xl transition-all cursor-pointer">0%</button>
+                                <button type="button" @click="setProgress(25)" 
+                                        :class="currentProgress == 25 ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-bold ring-1 ring-blue-500' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10'"
+                                        class="px-2.5 py-1 rounded-xl transition-all cursor-pointer">25%</button>
+                                <button type="button" @click="setProgress(50)" 
+                                        :class="currentProgress == 50 ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-bold ring-1 ring-blue-500' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10'"
+                                        class="px-2.5 py-1 rounded-xl transition-all cursor-pointer">50%</button>
+                                <button type="button" @click="setProgress(75)" 
+                                        :class="currentProgress == 75 ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-bold ring-1 ring-blue-500' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10'"
+                                        class="px-2.5 py-1 rounded-xl transition-all cursor-pointer">75%</button>
+                                <button type="button" @click="setProgress(100)" 
+                                        :class="currentProgress == 100 ? 'bg-emerald-500 text-white font-bold ring-2 ring-emerald-500/50 shadow-sm' : 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-500/25 border border-emerald-500/30'"
+                                        class="px-2.5 py-1 rounded-xl font-bold transition-all cursor-pointer">100%</button>
                             </div>
-                            <div class="flex items-center gap-1">
+                            <div class="flex items-center gap-1.5 ml-auto">
                                 <input type="number" min="0" max="100" step="0.1" name="progress" x-model="currentProgress" @input="setProgress(Number($event.target.value))" required
-                                       class="w-20 px-2.5 py-1 text-sm font-bold text-center border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                                <span class="text-xs font-bold text-slate-600">%</span>
+                                       class="w-20 px-2.5 py-1.5 text-sm font-bold text-center bg-white dark:bg-[#12141a] text-slate-900 dark:text-white border border-slate-300 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                <span class="text-xs font-bold text-slate-500 dark:text-slate-400">%</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Problem note if has_problem -->
                     <div x-show="selectedStatus === 'has_problem'" class="pt-2">
-                        <label class="block text-xs font-semibold text-rose-700 mb-1">
+                        <label class="block text-xs font-semibold text-rose-600 dark:text-rose-400 mb-1">
                             ระบุรายละเอียดปัญหา / อุปสรรคที่พบ <span class="text-rose-500">*</span>
                         </label>
                         <textarea name="problem_description" rows="2" x-model="statusNote" placeholder="เช่น ผู้รับเหมาทิ้งงาน, รอย้ายจุดเสาไฟฟ้า, รอการอนุมัติ..."
-                                  class="w-full px-3 py-2 text-xs rounded-xl border border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-500"></textarea>
+                                  class="w-full px-3 py-2 text-xs rounded-xl bg-white dark:bg-[#12141a] text-slate-900 dark:text-white border border-rose-300 dark:border-rose-500/40 focus:outline-none focus:ring-2 focus:ring-rose-500 placeholder-slate-400"></textarea>
                     </div>
 
-                    <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
-                        <button type="button" @click="statusModal = false" class="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-xl">
+                    <div class="pt-4 border-t border-slate-100 dark:border-white/10 flex items-center justify-end gap-2.5">
+                        <button type="button" @click="statusModal = false" class="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition cursor-pointer">
                             ยกเลิก
                         </button>
-                        <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-600/20 transition-all">
+                        <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md shadow-emerald-600/20 hover:shadow-lg transition-all cursor-pointer">
                             บันทึกสถานะและความคืบหน้า
                         </button>
                     </div>

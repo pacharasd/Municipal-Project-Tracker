@@ -9,6 +9,32 @@
     <title><?= htmlspecialchars($title ?? 'ระบบติดตามและบริหารโครงการเทศบาล') ?> - เทศบาลตำบล/เมือง</title>
     <link rel="icon" type="image/webp" href="<?= \App\Core\Router::url('/images/mobile-logo.webp') ?>">
     <meta name="color-scheme" id="meta-color-scheme" content="light">
+
+    <!-- Browser DevTools / Web-Vitals Instrumentation Guard -->
+    <script>
+        (function() {
+            const originalOnError = window.onerror;
+            window.onerror = function(message, source, lineno, colno, error) {
+                const msg = String(message || '');
+                // Suppress known Chrome DevTools internal Soft-Navigation / Web-Vitals bug (reportAllChanges / startTime)
+                if (msg.includes("reading 'startTime'") || msg.includes('reportAllChanges')) {
+                    return true;
+                }
+                if (typeof originalOnError === 'function') {
+                    return originalOnError.apply(this, arguments);
+                }
+                return false;
+            };
+
+            window.addEventListener('unhandledrejection', function(event) {
+                const reason = event && event.reason;
+                const msg = String((reason && reason.message) || reason || '');
+                if (msg.includes("reading 'startTime'") || msg.includes('reportAllChanges')) {
+                    event.preventDefault();
+                }
+            });
+        })();
+    </script>
     
     <!-- Theme Detection & Anti-Flicker Script (Standard 3-State Tailwind Pattern: Light / Dark / System) -->
     <script>

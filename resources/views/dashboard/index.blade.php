@@ -84,6 +84,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
             
             <!-- Trigger Button -->
             <button type="button" 
+                    id="fiscal-year-selector-btn"
                     @click="open = !open; $nextTick(() => { if (window.lucide) lucide.createIcons(); })" 
                     class="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2.5 px-3.5 py-2 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:border-emerald-400/60 dark:hover:border-emerald-500/40 hover:shadow transition-all cursor-pointer text-left">
                 <div class="flex items-center gap-2 min-w-0">
@@ -120,7 +121,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                 <div class="space-y-0.5 max-h-60 overflow-y-auto">
                     <!-- Option: ทุกปีงบประมาณ -->
                     <?php $isAllSelected = (isset($selectedYearId) && $selectedYearId === 'all'); ?>
-                    <a href="<?= \App\Core\Router::url('/dashboard') ?>?fiscal_year_id=all" 
+                    <a href="<?= \App\Core\Router::url('/dashboard') ?>" 
                        @click="open = false"
                        class="w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5 <?= $isAllSelected ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/20' : 'text-slate-700 dark:text-slate-200 font-medium' ?>">
                         <div class="flex items-center gap-2">

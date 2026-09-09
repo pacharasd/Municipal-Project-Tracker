@@ -76,9 +76,9 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
     </div>
 
     <!-- Filters Section -->
-    <form action="<?= \App\Core\Router::url('/projects') ?>" method="GET" @submit.prevent="currentPage = 1; scrollToTop(); syncUrl()" class="bg-white dark:bg-[#181a20] p-4 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+    <form action="<?= \App\Core\Router::url('/projects') ?>" method="GET" @submit.prevent="currentPage = 1; scrollToTop(); syncUrl()" class="bg-white dark:bg-[#181a20] p-4 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm grid grid-cols-1 sm:grid-cols-12 gap-3">
         <!-- Search Keyword -->
-        <div class="lg:col-span-2 relative">
+        <div class="sm:col-span-6 lg:col-span-6 relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                 <i data-lucide="search" class="w-4 h-4"></i>
             </div>
@@ -86,7 +86,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
         </div>
 
         <!-- Fiscal Year Filter (Custom Dropdown) -->
-        <div class="relative" x-data="{ openFy: false }" @click.outside="openFy = false">
+        <div class="sm:col-span-4 lg:col-span-4 relative" x-data="{ openFy: false }" @click.outside="openFy = false">
             <input type="hidden" name="fiscal_year_id" :value="fiscalYearFilter">
             <button type="button" 
                     @click="openFy = !openFy" 
@@ -126,49 +126,8 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
             </div>
         </div>
 
-        <!-- Department Filter (Custom Dropdown) -->
-        <div class="relative" x-data="{ openDept: false }" @click.outside="openDept = false">
-            <input type="hidden" name="department_id" :value="departmentFilter">
-            <button type="button" 
-                    @click="openDept = !openDept" 
-                    class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer transition-all">
-                <span x-text="currentDepartmentLabel" class="truncate font-medium"></span>
-                <svg class="w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0" :class="{ 'rotate-180': openDept }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-            </button>
-            <div x-show="openDept" 
-                 x-transition:enter="transition ease-out duration-100"
-                 x-transition:enter-start="transform opacity-0 scale-95"
-                 x-transition:enter-end="transform opacity-100 scale-100"
-                 x-transition:leave="transition ease-in duration-75"
-                 x-transition:leave-start="transform opacity-100 scale-100"
-                 x-transition:leave-end="transform opacity-0 scale-95"
-                 class="absolute z-40 mt-1.5 w-full bg-white dark:bg-[#1f222e] rounded-xl shadow-xl border border-slate-200 dark:border-white/10 py-1 max-h-56 overflow-y-auto" 
-                 style="display: none;">
-                <div @click="departmentFilter = ''; currentPage = 1; syncUrl(); openDept = false" 
-                     class="px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 cursor-pointer flex items-center justify-between"
-                     :class="{ 'bg-emerald-50/70 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-semibold': !departmentFilter }">
-                    <span>-- ทุกสำนัก/กอง --</span>
-                    <svg x-show="!departmentFilter" class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                </div>
-                <template x-for="dept in departmentOptions" :key="dept.id">
-                    <div @click="departmentFilter = dept.id; currentPage = 1; syncUrl(); openDept = false" 
-                         class="px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 cursor-pointer flex items-center justify-between transition-colors"
-                         :class="{ 'bg-emerald-50/70 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-semibold': String(departmentFilter) === String(dept.id) }">
-                        <span x-text="dept.name"></span>
-                        <svg x-show="String(departmentFilter) === String(dept.id)" class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                    </div>
-                </template>
-            </div>
-        </div>
-
         <!-- Submit & Clear Buttons -->
-        <div class="flex items-center gap-2">
+        <div class="sm:col-span-2 lg:col-span-2 flex items-center gap-2">
             <button type="submit" class="w-full py-2 px-4 text-sm font-medium text-white bg-slate-800 dark:bg-slate-700 rounded-xl hover:bg-slate-900 dark:hover:bg-slate-600 transition-colors cursor-pointer">
                 ค้นหา
             </button>
@@ -909,7 +868,6 @@ function mainProjectsPage() {
         currentPage: 1,
         perPage: 5,
         fiscalYearOptions: Object.freeze(<?= json_encode($fiscalYears, JSON_UNESCAPED_UNICODE) ?>),
-        departmentOptions: Object.freeze(<?= json_encode($departments, JSON_UNESCAPED_UNICODE) ?>),
 
         get currentFiscalYearLabel() {
             if (!this.fiscalYearFilter) return '-- ทุกปีงบประมาณ --';
@@ -917,11 +875,6 @@ function mainProjectsPage() {
             return found ? 'ปี ' + found.year : '-- ทุกปีงบประมาณ --';
         },
 
-        get currentDepartmentLabel() {
-            if (!this.departmentFilter) return '-- ทุกสำนัก/กอง --';
-            const found = this.departmentOptions.find(d => String(d.id) === String(this.departmentFilter));
-            return found ? found.name : '-- ทุกสำนัก/กอง --';
-        },
 
         init() {
             const params = new URLSearchParams(window.location.search);

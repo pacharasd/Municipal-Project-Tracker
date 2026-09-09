@@ -13,33 +13,9 @@ class DashboardController
         $fiscalYears = \App\Services\FiscalYearService::getFilterableYears();
         $activeYear = \App\Services\FiscalYearService::getActiveYear();
 
-        // Determine selected fiscal year with Smart Fallback
+        // Determine selected fiscal year (Default to 'all' - ทุกปีงบประมาณ)
         $rawYearParam = $_GET['fiscal_year_id'] ?? null;
-        if ($rawYearParam === null) {
-            // Default to active fiscal year if not provided in URL
-            $defaultYearId = $activeYear ? (int)$activeYear['id'] : null;
-            if ($defaultYearId !== null) {
-                // Check if active fiscal year has projects
-                $hasProjectsInActive = (int)Database::fetchColumn(
-                    "SELECT COUNT(*) FROM projects WHERE fiscal_year_id = ? OR parent_id IN (SELECT id FROM projects WHERE fiscal_year_id = ?)",
-                    [$defaultYearId, $defaultYearId]
-                ) > 0;
-
-                if (!$hasProjectsInActive) {
-                    // Smart fallback: Check if there is another fiscal year that has projects
-                    $yearWithProjects = Database::fetch(
-                        "SELECT fy.id, fy.year FROM fiscal_years fy 
-                         INNER JOIN projects p ON p.fiscal_year_id = fy.id 
-                         ORDER BY fy.year DESC LIMIT 1"
-                    );
-                    if ($yearWithProjects) {
-                        $defaultYearId = (int)$yearWithProjects['id'];
-                    }
-                }
-            }
-            $selectedYearId = $defaultYearId !== null ? $defaultYearId : 'all';
-            $filterYearId = $defaultYearId;
-        } elseif ($rawYearParam === 'all') {
+        if ($rawYearParam === null || $rawYearParam === '' || $rawYearParam === 'all') {
             $selectedYearId = 'all';
             $filterYearId = null;
         } else {
@@ -120,11 +96,8 @@ class DashboardController
     public function statsJson(): void
     {
         $rawYearParam = $_GET['fiscal_year_id'] ?? null;
-        $activeYear = \App\Services\FiscalYearService::getActiveYear();
         $filterYearId = null;
-        if ($rawYearParam === null && $activeYear) {
-            $filterYearId = (int)$activeYear['id'];
-        } elseif ($rawYearParam !== null && $rawYearParam !== 'all') {
+        if ($rawYearParam !== null && $rawYearParam !== '' && $rawYearParam !== 'all') {
             $filterYearId = (int)$rawYearParam;
         }
         $stats = ProjectService::getDashboardStats($filterYearId);
