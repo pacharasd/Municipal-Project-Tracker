@@ -77,6 +77,12 @@ class ActivityController
 
     public function updateStatus(string $id): void
     {
+        if (!Auth::canManageProjects()) {
+            Session::flash('error', 'คุณไม่มีสิทธิ์ปรับสถานะกิจกรรม');
+            header('Location: ' . Router::url('/projects'));
+            exit;
+        }
+
         $actId = (int)$id;
         $act = Database::fetch("SELECT * FROM activities WHERE id = ?", [$actId]);
         if (!$act) {

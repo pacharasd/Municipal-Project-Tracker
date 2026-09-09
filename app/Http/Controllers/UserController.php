@@ -12,21 +12,24 @@ class UserController
 {
     public function index(): void
     {
+        if (!Auth::isAdmin()) {
+            Session::flash('error', 'เฉพาะผู้ดูแลระบบ (Administrator) เท่านั้นที่สามารถเข้าถึงระบบจัดการผู้ใช้งานได้');
+            header('Location: ' . Router::url('/dashboard'));
+            exit;
+        }
+
         $users = Database::query(
-            "SELECT u.*, r.display_name as role_label, r.name as role_name, d.name as department_name 
+            "SELECT u.*, r.display_name as role_label, r.name as role_name 
              FROM users u 
              LEFT JOIN roles r ON u.role_id = r.id 
-             LEFT JOIN departments d ON u.department_id = d.id 
              ORDER BY u.id ASC"
         );
 
         $roles = Database::query("SELECT * FROM roles ORDER BY id ASC");
-        $departments = Database::query("SELECT * FROM departments ORDER BY id ASC");
 
         View::render('users.index', [
-            'users'       => $users,
-            'roles'       => $roles,
-            'departments' => $departments,
+            'users' => $users,
+            'roles' => $roles,
         ]);
     }
 
@@ -41,7 +44,6 @@ class UserController
         $name = trim($_POST['name'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $password = $_POST['password'] ?? 'password';
-        $departmentId = !empty($_POST['department_id']) ? (int)$_POST['department_id'] : null;
         $position = trim($_POST['position'] ?? '');
         $phone = trim($_POST['phone'] ?? '');
 
@@ -63,13 +65,12 @@ class UserController
 
         $hash = password_hash($password ?: 'password', PASSWORD_BCRYPT);
         $userId = Database::insert('users', [
-            'name'          => $name,
-            'email'         => $email,
-            'password'      => $hash,
-            'role_id'       => $roleId,
-            'department_id' => $departmentId,
-            'position'      => $position,
-            'phone'         => $phone,
+            'name'     => $name,
+            'email'    => $email,
+            'password' => $hash,
+            'role_id'  => $roleId,
+            'position' => $position,
+            'phone'    => $phone,
         ]);
 
         \App\Services\AuditLogService::log('CREATE_USER', 'User', $userId, null, ['name' => $name, 'email' => $email, 'role_id' => $roleId]);
@@ -97,7 +98,6 @@ class UserController
         $name = trim($_POST['name'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $position = trim($_POST['position'] ?? '');
-        $departmentId = !empty($_POST['department_id']) ? (int)$_POST['department_id'] : null;
         $phone = trim($_POST['phone'] ?? '');
         $newPassword = $_POST['password'] ?? '';
 
@@ -116,11 +116,10 @@ class UserController
         }
 
         $updateData = [
-            'name'          => $name,
-            'email'         => $email,
-            'position'      => $position,
-            'department_id' => $departmentId,
-            'phone'         => $phone,
+            'name'     => $name,
+            'email'    => $email,
+            'position' => $position,
+            'phone'    => $phone,
         ];
 
         if (!empty($_POST['role_id'])) {

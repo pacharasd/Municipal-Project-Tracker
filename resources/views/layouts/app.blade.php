@@ -719,65 +719,400 @@
                 $currentUser = $currentUser ?? \App\Core\Auth::user() ?? [];
                 $userRole = $currentUser['role_name'] ?? 'admin';
                 $roleMeta = [
-                    'admin'     => ['label' => 'ผู้ดูแลระบบ (Admin)', 'bg' => 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/60', 'icon' => 'shield-check'],
-                    'executive' => ['label' => 'ผู้บริหาร (Executive)', 'bg' => 'bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800/60', 'icon' => 'briefcase'],
+                    'admin'     => ['label' => 'ผู้ดูแลระบบ', 'badge' => 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60', 'icon' => 'shield-check'],
+                    'executive' => ['label' => 'ผู้บริหาร (ดูอย่างเดียว)', 'badge' => 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60', 'icon' => 'eye'],
+                    'officer'   => ['label' => 'เจ้าหน้าที่', 'badge' => 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60', 'icon' => 'user-check'],
                 ];
-                $currentRoleInfo = $roleMeta[$userRole] ?? ['label' => $currentUser['role_label'] ?? 'ผู้ใช้งาน', 'bg' => 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700', 'icon' => 'user'];
-                $switchDemoUsers = \App\Core\Database::query("SELECT u.id, u.name, r.name as role_name, r.display_name as role_label FROM users u JOIN roles r ON u.role_id = r.id ORDER BY u.id ASC LIMIT 5");
+                $currentRoleInfo = $roleMeta[$userRole] ?? [
+                    'label' => $currentUser['role_label'] ?? 'ผู้ใช้งาน',
+                    'badge' => 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10',
+                    'icon'  => 'user'
+                ];
+                $userName = trim($currentUser['name'] ?? 'ผู้ใช้งาน');
+                $avatarInitials = mb_substr($userName, 0, 2, 'UTF-8');
                 ?>
 
-                <!-- Dynamic Role Badge & Quick Switcher Dropdown (Hidden on mobile <640px) -->
-                <div class="relative hidden sm:block shrink-0" x-data="{ open: false }">
-                    <button type="button" @click="open = !open" class="flex items-center gap-1.5 bg-slate-100 dark:bg-[#181a20] text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/[0.08] text-xs font-bold hover:bg-slate-200 dark:hover:bg-white/5 transition cursor-pointer" title="คลิกเพื่อสลับบทบาททดสอบระบบ">
-                        <i data-lucide="<?= $currentRoleInfo['icon'] ?>" class="w-4 h-4 text-emerald-500 dark:text-emerald-400"></i>
-                        <span><?= htmlspecialchars($currentRoleInfo['label']) ?></span>
-                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 opacity-60"></i>
+                <!-- Modern Interactive User Profile Dropdown Pill & Modals -->
+                <div class="relative shrink-0" 
+                     x-data="{ 
+                         userMenuOpen: false, 
+                         profileModalOpen: false, 
+                         passwordModalOpen: false 
+                     }"
+                     x-init="$watch('profileModalOpen', v => { if(v) setTimeout(() => { if (typeof safeCreateIcons === 'function') safeCreateIcons(); }, 50); }); $watch('passwordModalOpen', v => { if(v) setTimeout(() => { if (typeof safeCreateIcons === 'function') safeCreateIcons(); }, 50); })">
+                    
+                    <!-- Profile Button Trigger -->
+                    <button type="button" 
+                            @click="userMenuOpen = !userMenuOpen" 
+                            id="user-profile-menu-btn"
+                            class="flex items-center gap-2 p-1 sm:py-1 sm:pl-1.5 sm:pr-2.5 rounded-2xl bg-slate-100 dark:bg-[#181a20] hover:bg-slate-200/80 dark:hover:bg-white/5 border border-slate-200 dark:border-white/[0.08] hover:border-emerald-500/40 dark:hover:border-emerald-500/40 transition-all duration-150 cursor-pointer shadow-xs group"
+                            :class="{ 'ring-2 ring-emerald-500/25 border-emerald-500/50 bg-emerald-50/60 dark:bg-emerald-500/10': userMenuOpen }"
+                            title="ข้อมูลผู้ใช้งานและเมนูบัญชี">
+                        
+                        <!-- Refined Soft Avatar with Online Indicator -->
+                        <div class="relative shrink-0">
+                            <div class="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-heading font-semibold text-xs flex items-center justify-center shadow-sm">
+                                <?= htmlspecialchars($avatarInitials) ?>
+                            </div>
+                            <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#181a20]"></span>
+                        </div>
+
+                        <!-- User Name & Role (Hidden on mobile <640px) -->
+                        <div class="hidden sm:block text-left pr-0.5 max-w-[140px]">
+                            <div class="text-xs font-bold font-heading text-slate-800 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate">
+                                <?= htmlspecialchars($userName) ?>
+                            </div>
+                            <div class="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block shrink-0"></span>
+                                <span class="truncate"><?= htmlspecialchars($currentRoleInfo['label']) ?></span>
+                            </div>
+                        </div>
+
+                        <!-- Subtle Rotating Chevron -->
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 dark:text-slate-400 transition-transform duration-200" :class="{ 'rotate-180': userMenuOpen }"></i>
                     </button>
 
-                    <!-- Role Switcher Dropdown Menu -->
-                    <div x-show="open" @click.outside="open = false" x-cloak class="absolute right-0 mt-2 w-72 bg-white dark:bg-[#181a20] rounded-2xl shadow-xl dark:shadow-2xl border border-slate-200 dark:border-white/10 p-2 z-50 text-left">
-                        <div class="px-3 py-2 border-b border-slate-100 dark:border-white/[0.08] text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-heading">
-                            สลับบทบาททดสอบระบบ (RBAC)
+                    <!-- Dropdown Flyout Card -->
+                    <div x-show="userMenuOpen" 
+                         @click.outside="userMenuOpen = false" 
+                         x-cloak 
+                         x-transition:enter="transition ease-out duration-150"
+                         x-transition:enter-start="transform opacity-0 scale-95 -translate-y-1"
+                         x-transition:enter-end="transform opacity-100 scale-100 translate-y-0"
+                         x-transition:leave="transition ease-in duration-100"
+                         x-transition:leave-start="transform opacity-100 scale-100 translate-y-0"
+                         x-transition:leave-end="transform opacity-0 scale-95 -translate-y-1"
+                         class="absolute right-0 mt-2 w-80 bg-white dark:bg-[#181a20] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-2 z-50 text-left backdrop-blur-xl">
+                        
+                        <!-- Header User Info Card -->
+                        <div class="p-3 rounded-xl bg-gradient-to-br from-slate-50 to-emerald-50/40 dark:from-white/[0.03] dark:to-emerald-500/[0.06] border border-slate-100 dark:border-white/[0.06] mb-2">
+                            <div class="flex items-center gap-3">
+                                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-heading font-bold text-sm flex items-center justify-center shadow-md shrink-0">
+                                    <?= htmlspecialchars($avatarInitials) ?>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-xs sm:text-sm font-bold font-heading text-slate-900 dark:text-white truncate">
+                                        <?= htmlspecialchars($currentUser['name'] ?? 'ผู้ใช้งาน') ?>
+                                    </div>
+                                    <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                                        <?= htmlspecialchars($currentUser['email'] ?? 'user@municipal.go.th') ?>
+                                    </div>
+                                    <div class="mt-1 flex items-center gap-1.5 flex-wrap">
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold <?= $currentRoleInfo['badge'] ?>">
+                                            <i data-lucide="<?= $currentRoleInfo['icon'] ?>" class="w-3 h-3"></i>
+                                            <?= htmlspecialchars($currentRoleInfo['label']) ?>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="py-1 space-y-1">
-                            <?php foreach ($switchDemoUsers as $su): ?>
-                                <form action="<?= \App\Core\Router::url('/auth/switch') ?>" method="POST" data-no-spa>
-                                    <input type="hidden" name="_token" value="<?= $csrfToken ?>">
-                                    <input type="hidden" name="user_id" value="<?= $su['id'] ?>">
-                                    <input type="hidden" name="redirect" value="<?= htmlspecialchars($_SERVER['REQUEST_URI'] ?? '') ?>">
-                                    <button type="submit" class="w-full text-left px-3 py-2 rounded-xl text-xs hover:bg-slate-100 dark:hover:bg-white/5 flex items-center justify-between transition cursor-pointer <?= (($currentUser['id'] ?? null) == $su['id']) ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/30' : 'text-slate-700 dark:text-slate-300' ?>">
-                                        <div>
-                                            <div class="font-medium text-slate-900 dark:text-white"><?= htmlspecialchars($su['name']) ?></div>
-                                            <div class="text-[10px] text-slate-500 dark:text-slate-400"><?= htmlspecialchars($su['role_label']) ?></div>
+
+                        <!-- Action Items -->
+                        <div class="space-y-0.5 text-xs">
+                            <!-- 1. Open Profile Modal -->
+                            <button type="button" 
+                                    @click="userMenuOpen = false; profileModalOpen = true"
+                                    class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2.5 text-slate-700 dark:text-slate-200 transition cursor-pointer font-medium">
+                                <div class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                                    <i data-lucide="user" class="w-4 h-4"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-semibold text-slate-800 dark:text-slate-200">ข้อมูลส่วนตัว (My Profile)</div>
+                                    <div class="text-[10px] text-slate-400">ดูสังกัด ข้อมูลติดต่อ และตำแหน่ง</div>
+                                </div>
+                                <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>
+                            </button>
+
+                            <!-- 2. Open Password Modal -->
+                            <button type="button" 
+                                    @click="userMenuOpen = false; passwordModalOpen = true"
+                                    class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2.5 text-slate-700 dark:text-slate-200 transition cursor-pointer font-medium">
+                                <div class="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                                    <i data-lucide="key-round" class="w-4 h-4"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-semibold text-slate-800 dark:text-slate-200">เปลี่ยนรหัสผ่าน (Change Password)</div>
+                                    <div class="text-[10px] text-slate-400">ความปลอดภัยของบัญชีผู้ใช้งาน</div>
+                                </div>
+                                <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>
+                            </button>
+
+                            <?php if (\App\Core\Auth::isAdmin()): ?>
+                                <!-- 3. User Management (Admin Only) -->
+                                <a href="<?= \App\Core\Router::url('/users') ?>" 
+                                   class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2.5 text-slate-700 dark:text-slate-200 transition font-medium">
+                                    <div class="w-7 h-7 rounded-lg bg-purple-50 dark:bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                                        <i data-lucide="users" class="w-4 h-4"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="font-semibold text-slate-800 dark:text-slate-200">จัดการผู้ใช้งาน (User Management)</div>
+                                        <div class="text-[10px] text-slate-400">กำหนดสิทธิ์และเพิ่มบัญชีเจ้าหน้าที่</div>
+                                    </div>
+                                    <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>
+                                </a>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- Clean Logout Button in Menu -->
+                        <div class="mt-1 pt-1 border-t border-slate-100 dark:border-white/[0.06]">
+                            <form action="<?= \App\Core\Router::url('/logout') ?>" method="POST" data-no-spa>
+                                <input type="hidden" name="_token" value="<?= $csrfToken ?>">
+                                <button type="submit" 
+                                        class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 flex items-center justify-between transition cursor-pointer">
+                                    <div class="flex items-center gap-2">
+                                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                                        <span>ออกจากระบบ (Sign Out)</span>
+                                    </div>
+                                    <i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-60"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Modal: ข้อมูลส่วนตัว (My Profile Modal) -->
+                    <template x-teleport="body">
+                        <div x-show="profileModalOpen" 
+                             x-cloak 
+                             @click.self="profileModalOpen = false" 
+                             class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 modal-backdrop-smooth overflow-y-auto"
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0"
+                             x-transition:enter-end="opacity-100"
+                             x-transition:leave="transition ease-in duration-150"
+                             x-transition:leave-start="opacity-100"
+                             x-transition:leave-end="opacity-0">
+                            
+                            <div class="bg-white dark:bg-[#181a20] rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 max-w-lg w-full overflow-hidden max-h-[90vh] flex flex-col modal-box-smooth transform-gpu text-left my-auto"
+                                 @click.outside="profileModalOpen = false"
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0 scale-95"
+                                 x-transition:enter-end="opacity-100 scale-100">
+                                
+                                <!-- Modal Header -->
+                                <div class="px-6 py-4 border-b border-slate-100 dark:border-white/[0.08] flex items-center justify-between bg-slate-50/70 dark:bg-white/[0.02] shrink-0">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20">
+                                            <i data-lucide="user" class="w-5 h-5"></i>
                                         </div>
-                                        <?php if (($currentUser['id'] ?? null) == $su['id']): ?>
-                                             <i data-lucide="check" class="w-4 h-4 text-emerald-500 dark:text-emerald-400"></i>
-                                        <?php endif; ?>
+                                        <div>
+                                            <h3 class="font-heading font-bold text-slate-900 dark:text-white text-base">ข้อมูลส่วนตัวผู้ใช้งาน</h3>
+                                            <p class="text-xs text-slate-500 dark:text-slate-400">ตรวจสอบรายละเอียดบัญชีและข้อมูลสังกัด</p>
+                                        </div>
+                                    </div>
+                                    <button type="button" 
+                                            @click="profileModalOpen = false" 
+                                            class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition cursor-pointer"
+                                            title="ปิดหน้าต่าง">
+                                        <i data-lucide="x" class="w-5 h-5"></i>
                                     </button>
+                                </div>
+
+                                <!-- Modal Body: Profile Form -->
+                                <form action="<?= \App\Core\Router::url('/profile/update') ?>" method="POST" class="p-6 space-y-4 overflow-y-auto flex-1">
+                                    <input type="hidden" name="_token" value="<?= $csrfToken ?>">
+                                    <input type="hidden" name="redirect" value="<?= htmlspecialchars($_SERVER['REQUEST_URI'] ?? '') ?>">
+
+                                    <!-- User Card Overview -->
+                                    <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/[0.08] flex items-center gap-3.5">
+                                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-heading font-bold text-base flex items-center justify-center shadow-md shrink-0">
+                                            <?= htmlspecialchars($avatarInitials) ?>
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="text-sm font-bold font-heading text-slate-900 dark:text-white truncate">
+                                                <?= htmlspecialchars($currentUser['name'] ?? '') ?>
+                                            </div>
+                                            <div class="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                                <?= htmlspecialchars($currentUser['email'] ?? '') ?>
+                                            </div>
+                                            <div class="mt-1 flex items-center gap-1.5">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold <?= $currentRoleInfo['badge'] ?>">
+                                                    <i data-lucide="<?= $currentRoleInfo['icon'] ?>" class="w-3 h-3"></i>
+                                                    <?= htmlspecialchars($currentRoleInfo['label']) ?>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <!-- Name Field -->
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                                ชื่อ-นามสกุล <span class="text-rose-500">*</span>
+                                            </label>
+                                            <input type="text" 
+                                                   name="name" 
+                                                   value="<?= htmlspecialchars($currentUser['name'] ?? '') ?>" 
+                                                   required
+                                                   class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white dark:bg-[#121316] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none text-slate-900 dark:text-white transition">
+                                        </div>
+
+                                        <!-- Email Field (Read Only for Security) -->
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                                อีเมล (ใช้สำหรับเข้าสู่ระบบ)
+                                            </label>
+                                            <input type="email" 
+                                                   value="<?= htmlspecialchars($currentUser['email'] ?? '') ?>" 
+                                                   disabled
+                                                   class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-100/80 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.06] rounded-xl text-slate-500 dark:text-slate-400 cursor-not-allowed">
+                                        </div>
+
+                                        <!-- Position Field -->
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                                ตำแหน่งงาน
+                                            </label>
+                                            <input type="text" 
+                                                   name="position" 
+                                                   value="<?= htmlspecialchars($currentUser['position'] ?? '') ?>" 
+                                                   placeholder="เช่น นักวิเคราะห์นโยบายและแผน"
+                                                   class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white dark:bg-[#121316] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none text-slate-900 dark:text-white transition">
+                                        </div>
+
+                                        <!-- Phone Field -->
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                                เบอร์โทรศัพท์ติดต่อ
+                                            </label>
+                                            <input type="text" 
+                                                   name="phone" 
+                                                   value="<?= htmlspecialchars($currentUser['phone'] ?? '') ?>" 
+                                                   placeholder="เช่น 081-234-5678"
+                                                   class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white dark:bg-[#121316] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none text-slate-900 dark:text-white transition">
+                                        </div>
+                                    </div>
+
+                                    <!-- Modal Footer -->
+                                    <div class="pt-4 border-t border-slate-100 dark:border-white/[0.08] flex items-center justify-between shrink-0">
+                                        <button type="button" 
+                                                @click="profileModalOpen = false; passwordModalOpen = true"
+                                                class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer">
+                                            <i data-lucide="key-round" class="w-3.5 h-3.5"></i>
+                                            <span>ต้องการเปลี่ยนรหัสผ่าน?</span>
+                                        </button>
+                                        <div class="flex items-center gap-2">
+                                            <button type="button" 
+                                                    @click="profileModalOpen = false"
+                                                    class="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl cursor-pointer transition">
+                                                ยกเลิก
+                                            </button>
+                                            <button type="submit" 
+                                                    class="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 rounded-xl transition shadow-md shadow-emerald-500/20 cursor-pointer flex items-center gap-1.5">
+                                                <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                                                <span>บันทึกข้อมูล</span>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </form>
-                            <?php endforeach; ?>
+                            </div>
                         </div>
-                    </div>
-                </div>
+                    </template>
 
-                <!-- Current User Avatar -->
-                <div class="flex items-center gap-1.5 sm:gap-2 pl-1 sm:pl-2 border-l border-slate-200/80 dark:border-white/[0.08] shrink-0">
-                    <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 text-slate-950 flex items-center justify-center shadow-neon-green ring-1 sm:ring-2 ring-emerald-400/40 shrink-0">
-                        <i data-lucide="user" class="w-4 h-4 sm:w-4.5 sm:h-4.5 text-slate-950 stroke-[2.2]"></i>
-                    </div>
-                    <div class="hidden lg:block text-left">
-                        <div class="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[130px]"><?= htmlspecialchars($currentUser['name'] ?? 'ผู้ใช้งาน') ?></div>
-                        <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold"><?= htmlspecialchars($currentUser['role_label'] ?? 'เจ้าหน้าที่') ?></div>
-                    </div>
-                </div>
+                    <!-- Modal: เปลี่ยนรหัสผ่าน (Change Password Modal) -->
+                    <template x-teleport="body">
+                        <div x-show="passwordModalOpen" 
+                             x-cloak 
+                             @click.self="passwordModalOpen = false" 
+                             class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 modal-backdrop-smooth overflow-y-auto"
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0"
+                             x-transition:enter-end="opacity-100"
+                             x-transition:leave="transition ease-in duration-150"
+                             x-transition:leave-start="opacity-100"
+                             x-transition:leave-end="opacity-0">
+                            
+                            <div class="bg-white dark:bg-[#181a20] rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 max-w-md w-full overflow-hidden max-h-[90vh] flex flex-col modal-box-smooth transform-gpu text-left my-auto"
+                                 @click.outside="passwordModalOpen = false"
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0 scale-95"
+                                 x-transition:enter-end="opacity-100 scale-100">
+                                
+                                <!-- Modal Header -->
+                                <div class="px-6 py-4 border-b border-slate-100 dark:border-white/[0.08] flex items-center justify-between bg-slate-50/70 dark:bg-white/[0.02] shrink-0">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
+                                            <i data-lucide="key-round" class="w-5 h-5"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-heading font-bold text-slate-900 dark:text-white text-base">เปลี่ยนรหัสผ่านบัญชี</h3>
+                                            <p class="text-xs text-slate-500 dark:text-slate-400">รักษาความปลอดภัยของบัญชีผู้ใช้งาน</p>
+                                        </div>
+                                    </div>
+                                    <button type="button" 
+                                            @click="passwordModalOpen = false" 
+                                            class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition cursor-pointer"
+                                            title="ปิดหน้าต่าง">
+                                        <i data-lucide="x" class="w-5 h-5"></i>
+                                    </button>
+                                </div>
 
-                <!-- Logout Form -->
-                <form action="<?= \App\Core\Router::url('/logout') ?>" method="POST" class="shrink-0 flex items-center">
-                    <input type="hidden" name="_token" value="<?= $csrfToken ?>">
-                    <button type="submit" title="ออกจากระบบ" class="p-1.5 sm:p-2 text-slate-500 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-colors shrink-0 cursor-pointer">
-                        <i data-lucide="log-out" class="w-4 h-4"></i>
-                    </button>
-                </form>
+                                <!-- Modal Body: Password Form -->
+                                <form action="<?= \App\Core\Router::url('/profile/password') ?>" method="POST" class="p-6 space-y-4 overflow-y-auto flex-1">
+                                    <input type="hidden" name="_token" value="<?= $csrfToken ?>">
+                                    <input type="hidden" name="redirect" value="<?= htmlspecialchars($_SERVER['REQUEST_URI'] ?? '') ?>">
+
+                                    <!-- Current Password -->
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                            รหัสผ่านปัจจุบัน <span class="text-rose-500">*</span>
+                                        </label>
+                                        <input type="password" 
+                                               name="current_password" 
+                                               required
+                                               placeholder="••••••••"
+                                               class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white dark:bg-[#121316] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none text-slate-900 dark:text-white transition">
+                                    </div>
+
+                                    <!-- New Password -->
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                            รหัสผ่านใหม่ <span class="text-rose-500">*</span>
+                                        </label>
+                                        <input type="password" 
+                                               name="new_password" 
+                                               required
+                                               minlength="8"
+                                               placeholder="อย่างน้อย 8 ตัวอักษร"
+                                               class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white dark:bg-[#121316] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none text-slate-900 dark:text-white transition">
+                                    </div>
+
+                                    <!-- Confirm Password -->
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                            ยืนยันรหัสผ่านใหม่ <span class="text-rose-500">*</span>
+                                        </label>
+                                        <input type="password" 
+                                               name="new_password_confirmation" 
+                                               required
+                                               minlength="8"
+                                               placeholder="กรอกรหัสผ่านใหม่อีกครั้ง"
+                                               class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white dark:bg-[#121316] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none text-slate-900 dark:text-white transition">
+                                    </div>
+
+                                    <!-- Security Notice -->
+                                    <div class="p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200/60 dark:border-amber-500/20 text-[11px] text-amber-800 dark:text-amber-300 flex items-start gap-2">
+                                        <i data-lucide="info" class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"></i>
+                                        <div>รหัสผ่านต้องมีความยาวไม่น้อยกว่า 8 ตัวอักษร และจะถูกเข้ารหัสความปลอดภัยด้วยเทคโนโลยี Bcrypt</div>
+                                    </div>
+
+                                    <!-- Modal Footer -->
+                                    <div class="pt-4 border-t border-slate-100 dark:border-white/[0.08] flex items-center justify-end gap-2 shrink-0">
+                                        <button type="button" 
+                                                @click="passwordModalOpen = false"
+                                                class="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl cursor-pointer transition">
+                                            ยกเลิก
+                                        </button>
+                                        <button type="submit" 
+                                                class="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 rounded-xl transition shadow-md shadow-emerald-500/20 cursor-pointer flex items-center gap-1.5">
+                                            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                                            <span>เปลี่ยนรหัสผ่าน</span>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </template>
+                </div>
             </div>
         </div>
     </header>
@@ -934,6 +1269,7 @@
                         <i data-lucide="chevron-right" class="w-4 h-4 <?= $isReports ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
                     </a>
 
+                    <?php if (\App\Core\Auth::isAdmin()): ?>
                     <div class="pt-4 px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 font-heading">
                         ADMINISTRATION
                     </div>
@@ -970,6 +1306,7 @@
                         </div>
                         <i data-lucide="chevron-right" class="w-4 h-4 <?= $isAudit ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
                     </a>
+                    <?php endif; ?>
                 </div>
 
                 <!-- Bottom Icons -->
@@ -1280,8 +1617,8 @@
                 }
 
                 const path = actionUrl.pathname.toLowerCase();
-                // Exclude file export / download / print / logout / auth switch
-                if (form.hasAttribute('data-no-spa') || path.includes('/export') || path.includes('/print') || path.includes('/logout') || path.includes('/auth/switch') || path.endsWith('.pdf') || path.endsWith('.xlsx') || path.endsWith('.csv')) {
+                // Exclude file export / download / print / logout
+                if (form.hasAttribute('data-no-spa') || path.includes('/export') || path.includes('/print') || path.includes('/logout') || path.endsWith('.pdf') || path.endsWith('.xlsx') || path.endsWith('.csv')) {
                     form.submit();
                     return;
                 }
@@ -1486,7 +1823,7 @@
             if (actionUrl.origin !== window.location.origin) return;
 
             const path = actionUrl.pathname.toLowerCase();
-            if (path.includes('/export') || path.includes('/print') || path.includes('/logout') || path.includes('/auth/switch') || path.endsWith('.pdf') || path.endsWith('.xlsx') || path.endsWith('.csv')) {
+            if (path.includes('/export') || path.includes('/print') || path.includes('/logout') || path.endsWith('.pdf') || path.endsWith('.xlsx') || path.endsWith('.csv')) {
                 return; // Let normal browser download / export proceed
             }
 

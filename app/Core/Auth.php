@@ -19,10 +19,9 @@ class Auth
         }
 
         $userId = Session::get('user_id');
-        $sql = "SELECT u.*, r.name as role_name, r.display_name as role_label, d.name as department_name, d.code as department_code 
+        $sql = "SELECT u.*, r.name as role_name, r.display_name as role_label 
                 FROM users u 
                 LEFT JOIN roles r ON u.role_id = r.id 
-                LEFT JOIN departments d ON u.department_id = d.id 
                 WHERE u.id = ? LIMIT 1";
         return Database::fetch($sql, [$userId]);
     }
@@ -88,15 +87,5 @@ class Auth
         Session::remove('user_id');
         Session::remove('user_role');
         Session::remove('user_name');
-    }
-
-    public static function switchUser(int $userId): bool
-    {
-        $user = Database::fetch("SELECT u.*, r.name as role_name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = ?", [$userId]);
-        if ($user) {
-            self::login($user);
-            return true;
-        }
-        return false;
     }
 }

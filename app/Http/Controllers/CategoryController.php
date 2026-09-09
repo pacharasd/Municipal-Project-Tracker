@@ -17,6 +17,12 @@ class CategoryController
 {
     public function index(): void
     {
+        if (!Auth::isAdmin()) {
+            Session::flash('error', 'เฉพาะผู้ดูแลระบบ (Administrator) เท่านั้นที่สามารถเข้าถึงระบบจัดการประเภทโครงการได้');
+            header('Location: ' . Router::url('/dashboard'));
+            exit;
+        }
+
         $sql = "
             SELECT c.*,
                    COALESCE(p_stats.project_count, 0) as project_count,

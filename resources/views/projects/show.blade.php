@@ -232,7 +232,7 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
 
         <?php if (empty($project['sub_projects'])): ?>
             <div class="p-8 text-center text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-[#181a20] rounded-2xl border border-slate-200 dark:border-white/[0.08]">
-                ยังไม่มีโครงการย่อยภายใต้โครงการหลักนี้ กรุณากดปุ่ม "เพิ่มโครงการย่อย"
+                ยังไม่มีโครงการย่อยภายใต้โครงการหลักนี้<?= \App\Core\Auth::canManageProjects() ? ' กรุณากดปุ่ม "เพิ่มโครงการย่อย"' : '' ?>
             </div>
         <?php else: ?>
             <div class="overflow-x-auto">
@@ -369,6 +369,7 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
     </div>
 
     <!-- Modal: Create Sub-project -->
+    <?php if (\App\Core\Auth::canManageProjects()): ?>
     <template x-teleport="body">
         <div x-show="createSubModal" x-cloak @click.self="createSubModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
             <div class="bg-white dark:bg-[#161922] w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden max-h-[90vh] flex flex-col modal-box-smooth transform-gpu">
@@ -699,8 +700,10 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
             </div>
         </div>
     </template>
+    <?php endif; ?>
 
     <!-- Modal: Edit Project -->
+    <?php if (\App\Core\Auth::canManageProjects()): ?>
     <template x-teleport="body">
         <div x-show="editModal" x-cloak @click.self="editModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
             <div class="bg-white dark:bg-[#161922] w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden max-h-[90vh] flex flex-col modal-box-smooth transform-gpu">
@@ -905,6 +908,7 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
             </div>
         </div>
     </template>
+    <?php endif; ?>
 </div>
 
 <script>

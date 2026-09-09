@@ -160,6 +160,12 @@ class SubProjectController
 
     public function incrementProgress(string $id): void
     {
+        if (!Auth::canManageProjects()) {
+            Session::flash('error', 'คุณไม่มีสิทธิ์ปรับความคืบหน้าโครงการ');
+            header('Location: ' . Router::url("/sub-projects/{$id}"));
+            exit;
+        }
+
         $subId = (int)$id;
         $wantsJson = isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json');
 
@@ -182,6 +188,12 @@ class SubProjectController
 
     public function updateManualProgress(string $id): void
     {
+        if (!Auth::canManageProjects()) {
+            Session::flash('error', 'คุณไม่มีสิทธิ์ปรับความคืบหน้าโครงการ');
+            header('Location: ' . Router::url("/sub-projects/{$id}"));
+            exit;
+        }
+
         $subId = (int)$id;
         $manual = (float)($_POST['manual_progress'] ?? 0);
 
@@ -223,6 +235,12 @@ class SubProjectController
 
     public function reportProblem(string $id): void
     {
+        if (!Auth::canManageProjects()) {
+            Session::flash('error', 'คุณไม่มีสิทธิ์บันทึกปัญหาโครงการ');
+            header('Location: ' . Router::url("/sub-projects/{$id}"));
+            exit;
+        }
+
         $subId = (int)$id;
         $desc = trim($_POST['problem_description'] ?? '');
 
@@ -245,6 +263,12 @@ class SubProjectController
 
     public function resolveProblem(string $id): void
     {
+        if (!Auth::canManageProjects()) {
+            Session::flash('error', 'คุณไม่มีสิทธิ์บันทึกการแก้ไขปัญหาโครงการ');
+            header('Location: ' . Router::url("/sub-projects/{$id}"));
+            exit;
+        }
+
         $subId = (int)$id;
         $note = trim($_POST['resolution_note'] ?? '');
 

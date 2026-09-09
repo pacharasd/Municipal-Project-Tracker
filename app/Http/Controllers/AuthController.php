@@ -54,21 +54,6 @@ class AuthController
         exit;
     }
 
-    public function quickSwitch(): void
-    {
-        $userId = (int)($_POST['user_id'] ?? 0);
-        if ($userId > 0 && Auth::switchUser($userId)) {
-            $user = Auth::user();
-            AuditLogService::log('SWITCH_ROLE', 'Auth', $userId, null, ['switched_to' => $user['role_name']]);
-            Session::flash('success', "สลับเข้าใช้งานในบทบาท: {$user['role_label']} ({$user['name']}) เรียบร้อยแล้ว");
-        } else {
-            Session::flash('error', 'ไม่พบบัญชีผู้ใช้งานที่ต้องการสลับ');
-        }
-
-        $redirect = $_POST['redirect'] ?? Router::url('/dashboard');
-        header('Location: ' . $redirect);
-        exit;
-    }
 
     public function logout(): void
     {

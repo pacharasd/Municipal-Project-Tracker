@@ -483,13 +483,15 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
                         <th class="py-3 px-4 text-right min-w-[130px] whitespace-nowrap">จำนวนเงิน (บาท)</th>
                         <th class="py-3 px-4 min-w-[100px] whitespace-nowrap">ผู้บันทึก</th>
                         <th class="py-3 px-4 text-center min-w-[80px] whitespace-nowrap">หลักฐาน</th>
+                        <?php if (Auth::isAdmin()): ?>
                         <th class="py-3 px-4 text-center min-w-[70px] whitespace-nowrap">จัดการ</th>
+                        <?php endif; ?>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-white/[0.06] text-sm">
                     <template x-if="paginatedDisbursements.length === 0">
                         <tr>
-                            <td colspan="8" class="py-12 text-center text-slate-400 dark:text-slate-500">
+                            <td colspan="<?= Auth::isAdmin() ? 8 : 7 ?>" class="py-12 text-center text-slate-400 dark:text-slate-500">
                                 <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
                                 ไม่พบข้อมูลรายการเบิกจ่ายตามเงื่อนไขที่ค้นหา
                             </td>
@@ -523,6 +525,7 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
                                     <span class="text-slate-300 dark:text-slate-600 text-xs">-</span>
                                 </template>
                             </td>
+                            <?php if (Auth::isAdmin()): ?>
                             <td class="py-3.5 px-4 text-center whitespace-nowrap">
                                 <form :action="'<?= Router::url('/budgets/disbursements/') ?>' + d.id + '/delete'" method="POST"
                                       @submit="if(!confirm(`ยืนยันยกเลิกรายการเบิกจ่ายจำนวน ฿${formatCurrency(d.amount)} บาท? (ยอดเงินจะคืนกลับเข้างบโครงการ)`)) $event.preventDefault();">
@@ -532,6 +535,7 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
                                     </button>
                                 </form>
                             </td>
+                            <?php endif; ?>
                         </tr>
                     </template>
                 </tbody>

@@ -12,6 +12,7 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\AttachmentController;
+use App\Http\Controllers\ProfileController;
 
 // Root redirect
 Router::get('/', function() {
@@ -23,7 +24,10 @@ Router::get('/', function() {
 Router::get('/login', [AuthController::class, 'showLogin']);
 Router::post('/login', [AuthController::class, 'login']);
 Router::post('/logout', [AuthController::class, 'logout']);
-Router::post('/auth/switch', [AuthController::class, 'quickSwitch']);
+
+// User Profile Routes
+Router::post('/profile/update', [ProfileController::class, 'updateProfile']);
+Router::post('/profile/password', [ProfileController::class, 'updatePassword']);
 
 // Dashboard Routes
 Router::get('/dashboard', [DashboardController::class, 'index']);

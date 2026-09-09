@@ -54,14 +54,16 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                 </form>
             <?php endif; ?>
 
-            <?php if ($project['status'] === 'has_problem'): ?>
-                <button type="button" @click="resolveModal = true" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-800 bg-emerald-100 rounded-xl hover:bg-emerald-200 transition-colors">
-                    <i data-lucide="check-circle-2" class="w-4 h-4"></i> แก้ไขปัญหาแล้ว
-                </button>
-            <?php else: ?>
-                <button type="button" @click="problemModal = true" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-800 bg-rose-100 rounded-xl hover:bg-rose-200 transition-colors">
-                    <i data-lucide="alert-triangle" class="w-4 h-4"></i> แจ้งปัญหา
-                </button>
+            <?php if (\App\Core\Auth::canManageProjects()): ?>
+                <?php if ($project['status'] === 'has_problem'): ?>
+                    <button type="button" @click="resolveModal = true" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-800 bg-emerald-100 rounded-xl hover:bg-emerald-200 transition-colors">
+                        <i data-lucide="check-circle-2" class="w-4 h-4"></i> แก้ไขปัญหาแล้ว
+                    </button>
+                <?php else: ?>
+                    <button type="button" @click="problemModal = true" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-800 bg-rose-100 rounded-xl hover:bg-rose-200 transition-colors">
+                        <i data-lucide="alert-triangle" class="w-4 h-4"></i> แจ้งปัญหา
+                    </button>
+                <?php endif; ?>
             <?php endif; ?>
         </div>
     </div>
@@ -80,16 +82,16 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                 <p class="text-sm text-rose-800 mt-1 font-medium leading-relaxed">
                     <b>รายละเอียดปัญหา:</b> <?= nl2br(htmlspecialchars($project['problem_description'] ?? '')) ?>
                 </p>
-                <div class="mt-3 flex items-center gap-2">
-                    <button type="button" @click="resolveModal = true" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white text-rose-900 border border-rose-300 hover:bg-rose-100 transition-colors">
-                        <i data-lucide="check" class="w-3.5 h-3.5"></i> แก้ไขปัญหาเรียบร้อยแล้ว
-                    </button>
-                    <?php if (\App\Core\Auth::canManageProjects()): ?>
+                <?php if (\App\Core\Auth::canManageProjects()): ?>
+                    <div class="mt-3 flex items-center gap-2">
+                        <button type="button" @click="resolveModal = true" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white text-rose-900 border border-rose-300 hover:bg-rose-100 transition-colors">
+                            <i data-lucide="check" class="w-3.5 h-3.5"></i> แก้ไขปัญหาเรียบร้อยแล้ว
+                        </button>
                         <button type="button" @click="statusModal = true" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-rose-100 text-rose-900 hover:bg-rose-200 transition-colors">
                             <i data-lucide="sliders" class="w-3.5 h-3.5"></i> ปรับเปลี่ยนสถานะ
                         </button>
-                    <?php endif; ?>
-                </div>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     <?php endif; ?>
