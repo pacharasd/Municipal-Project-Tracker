@@ -178,202 +178,112 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
         </div>
     <?php endif; ?>
 
-    <!-- 2. 9 KPI Metric Cards (AGENTS.md Rule #9: Statuses, Budgets, and Performance) -->
-    <div class="space-y-3 sm:space-y-4 w-full max-w-full">
-        <!-- Row 2A: 5 Status Cards (AGENTS.md Rule #9 - 5 Statuses) -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 w-full max-w-full">
-            <!-- 1. โครงการทั้งหมด -->
-            <div class="group relative p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-blue-400/60 dark:hover:border-blue-500/40 transition-all overflow-hidden flex flex-col justify-between">
-                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-sky-400 to-indigo-500"></div>
-                <div class="flex items-center justify-between gap-1.5">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">โครงการทั้งหมด</span>
-                    <div class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                        <i data-lucide="folder-kanban" class="w-4 h-4"></i>
-                    </div>
-                </div>
-                <div class="my-2">
-                    <div class="text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400 font-heading tracking-tight leading-tight">
-                        <?= number_format($stats['sub_total']) ?>
-                    </div>
-                    <div class="text-[10.5px] text-slate-400 mt-0.5 truncate">โครงการย่อยในระบบ</div>
-                </div>
-                <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                    <span>โครงการหลัก</span>
-                    <span class="font-bold text-slate-800 dark:text-slate-200 font-mono"><?= number_format($stats['main_total']) ?></span>
+    <!-- 2. 5 Primary KPI Metric Cards (Single Clean Row / 2-Col Grid on Mobile) -->
+    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2.5 sm:gap-4 w-full max-w-full">
+        <!-- 1. โครงการทั้งหมด (Full width on mobile) -->
+        <div class="col-span-2 sm:col-span-1 group relative p-3 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-blue-400/60 dark:hover:border-blue-500/40 transition-all overflow-hidden flex flex-col justify-between">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-blue-500"></div>
+            <div class="flex items-center justify-between gap-1.5">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">โครงการทั้งหมด</span>
+                <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                    <i data-lucide="folder-kanban" class="w-4 h-4"></i>
                 </div>
             </div>
-
-            <!-- 2. กำลังดำเนินการ -->
-            <div class="group relative p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-amber-400/60 dark:hover:border-amber-500/40 transition-all overflow-hidden flex flex-col justify-between">
-                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400"></div>
-                <div class="flex items-center justify-between gap-1.5">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">กำลังดำเนินการ</span>
-                    <div class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                        <i data-lucide="clock" class="w-4 h-4"></i>
-                    </div>
+            <div class="my-1.5 sm:my-2">
+                <div class="text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400 font-heading tracking-tight leading-tight">
+                    <?= number_format($stats['sub_total']) ?>
                 </div>
-                <div class="my-2">
-                    <div class="text-2xl sm:text-3xl font-black text-amber-500 dark:text-amber-400 font-heading tracking-tight leading-tight">
-                        <?= number_format($stats['in_progress']) ?>
-                    </div>
-                    <div class="text-[10.5px] text-slate-400 mt-0.5 truncate">คิดเป็น <?= $inProgPct ?>%</div>
-                </div>
-                <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                    <span>สัดส่วน</span>
-                    <span class="font-semibold text-amber-600 dark:text-amber-400 font-mono"><?= $inProgPct ?>%</span>
-                </div>
+                <div class="text-[10px] sm:text-[10.5px] text-slate-400 mt-0.5 truncate">โครงการย่อยในระบบ</div>
             </div>
-
-            <!-- 3. ยังไม่เริ่ม -->
-            <div class="group relative p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-slate-400/60 dark:hover:border-slate-500/40 transition-all overflow-hidden flex flex-col justify-between">
-                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-slate-400 via-gray-400 to-zinc-500"></div>
-                <div class="flex items-center justify-between gap-1.5">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">ยังไม่เริ่ม</span>
-                    <div class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0">
-                        <i data-lucide="circle-dashed" class="w-4 h-4"></i>
-                    </div>
-                </div>
-                <div class="my-2">
-                    <div class="text-2xl sm:text-3xl font-black text-slate-700 dark:text-slate-300 font-heading tracking-tight leading-tight">
-                        <?= number_format($stats['not_started']) ?>
-                    </div>
-                    <div class="text-[10.5px] text-slate-400 mt-0.5 truncate">คิดเป็น <?= $notStartPct ?>%</div>
-                </div>
-                <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                    <span>สัดส่วน</span>
-                    <span class="font-semibold text-slate-600 dark:text-slate-400 font-mono"><?= $notStartPct ?>%</span>
-                </div>
-            </div>
-
-            <!-- 4. เสร็จสิ้น -->
-            <div class="group relative p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-emerald-400/60 dark:hover:border-emerald-500/40 transition-all overflow-hidden flex flex-col justify-between">
-                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 via-teal-400 to-green-500"></div>
-                <div class="flex items-center justify-between gap-1.5">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">เสร็จสิ้น</span>
-                    <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                    </div>
-                </div>
-                <div class="my-2">
-                    <div class="text-2xl sm:text-3xl font-black text-emerald-500 dark:text-emerald-400 font-heading tracking-tight leading-tight">
-                        <?= number_format($stats['completed']) ?>
-                    </div>
-                    <div class="text-[10.5px] text-slate-400 mt-0.5 truncate">คิดเป็น <?= $compPct ?>%</div>
-                </div>
-                <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                    <span>สำเร็จ</span>
-                    <span class="font-semibold text-emerald-600 dark:text-emerald-400 font-mono">100%</span>
-                </div>
-            </div>
-
-            <!-- 5. มีปัญหา -->
-            <div class="group relative p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-rose-400/60 dark:hover:border-rose-500/40 transition-all overflow-hidden flex flex-col justify-between">
-                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 via-red-500 to-orange-500"></div>
-                <div class="flex items-center justify-between gap-1.5">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">มีปัญหา</span>
-                    <div class="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
-                        <i data-lucide="alert-triangle" class="w-4 h-4"></i>
-                    </div>
-                </div>
-                <div class="my-2">
-                    <div class="text-2xl sm:text-3xl font-black text-rose-500 dark:text-rose-400 font-heading tracking-tight leading-tight">
-                        <?= number_format($stats['has_problem']) ?>
-                    </div>
-                    <div class="text-[10.5px] text-slate-400 mt-0.5 truncate">คิดเป็น <?= $probPct ?>%</div>
-                </div>
-                <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                    <span>เฝ้าระวัง</span>
-                    <span class="font-semibold text-rose-600 dark:text-rose-400 font-mono"><?= $probPct ?>%</span>
-                </div>
+            <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10px] sm:text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                <span>โครงการหลัก</span>
+                <span class="font-bold text-slate-800 dark:text-slate-200 font-mono"><?= number_format($stats['main_total']) ?></span>
             </div>
         </div>
 
-        <!-- Row 2B: 4 Budget & Performance Cards (AGENTS.md Rule #9 - Budget, Disbursed, Remaining, Average Success %) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full max-w-full">
-            <!-- 6. งบประมาณทั้งหมด -->
-            <div class="group relative p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-indigo-400/60 dark:hover:border-indigo-500/40 transition-all overflow-hidden flex flex-col justify-between">
-                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-blue-500 to-cyan-500"></div>
-                <div class="flex items-center justify-between gap-1.5">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">งบประมาณทั้งหมด</span>
-                    <div class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
-                        <i data-lucide="coins" class="w-4 h-4"></i>
-                    </div>
-                </div>
-                <div class="my-2">
-                    <div class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-heading tracking-tight leading-tight">
-                        <?= number_format((float)$stats['total_budget'], 2) ?>
-                    </div>
-                    <div class="text-[10.5px] text-slate-400 mt-0.5 font-sans">บาท</div>
-                </div>
-                <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                    <span>กรอบงบประมาณ</span>
-                    <span class="font-semibold text-indigo-600 dark:text-indigo-400 font-mono">100%</span>
+        <!-- 2. งบประมาณทั้งหมด -->
+        <div class="group relative p-3 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-indigo-400/60 dark:hover:border-indigo-500/40 transition-all overflow-hidden flex flex-col justify-between">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-indigo-500"></div>
+            <div class="flex items-center justify-between gap-1.5">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">งบประมาณทั้งหมด</span>
+                <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                    <i data-lucide="coins" class="w-4 h-4"></i>
                 </div>
             </div>
+            <div class="my-1.5 sm:my-2">
+                <div class="text-base sm:text-xl lg:text-2xl font-black text-slate-900 dark:text-white font-heading tracking-tight leading-tight truncate" title="<?= number_format((float)$stats['total_budget'], 2) ?>">
+                    <?= number_format((float)$stats['total_budget'], 2) ?>
+                </div>
+                <div class="text-[10px] sm:text-[10.5px] text-slate-400 mt-0.5 font-sans">บาท</div>
+            </div>
+            <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10px] sm:text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                <span>กรอบงบ</span>
+                <span class="font-semibold text-indigo-600 dark:text-indigo-400 font-mono">100%</span>
+            </div>
+        </div>
 
-            <!-- 7. งบประมาณที่เบิกจ่าย -->
-            <div class="group relative p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-emerald-400/60 dark:hover:border-emerald-500/40 transition-all overflow-hidden flex flex-col justify-between">
-                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-400 to-green-500"></div>
-                <div class="flex items-center justify-between gap-1.5">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">งบประมาณที่เบิกจ่าย</span>
-                    <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                        <i data-lucide="wallet" class="w-4 h-4"></i>
-                    </div>
-                </div>
-                <div class="my-2">
-                    <div class="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-heading tracking-tight leading-tight">
-                        <?= number_format((float)$stats['total_disbursed'], 2) ?>
-                    </div>
-                    <div class="text-[10.5px] text-slate-400 mt-0.5 font-sans">บาท</div>
-                </div>
-                <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                    <span>เบิกจ่ายแล้ว</span>
-                    <span class="font-bold text-emerald-600 dark:text-emerald-400 font-mono"><?= number_format((float)$stats['disbursement_pct'], 1) ?>%</span>
+        <!-- 3. งบประมาณที่เบิกจ่าย -->
+        <div class="group relative p-3 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-emerald-400/60 dark:hover:border-emerald-500/40 transition-all overflow-hidden flex flex-col justify-between">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-emerald-500"></div>
+            <div class="flex items-center justify-between gap-1.5">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">งบที่เบิกจ่าย</span>
+                <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                    <i data-lucide="wallet" class="w-4 h-4"></i>
                 </div>
             </div>
+            <div class="my-1.5 sm:my-2">
+                <div class="text-base sm:text-xl lg:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-heading tracking-tight leading-tight truncate" title="<?= number_format((float)$stats['total_disbursed'], 2) ?>">
+                    <?= number_format((float)$stats['total_disbursed'], 2) ?>
+                </div>
+                <div class="text-[10px] sm:text-[10.5px] text-slate-400 mt-0.5 font-sans">บาท</div>
+            </div>
+            <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10px] sm:text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                <span>เบิกจ่ายแล้ว</span>
+                <span class="font-bold text-emerald-600 dark:text-emerald-400 font-mono"><?= number_format((float)$stats['disbursement_pct'], 1) ?>%</span>
+            </div>
+        </div>
 
-            <!-- 8. งบประมาณคงเหลือ -->
-            <div class="group relative p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-sky-400/60 dark:hover:border-sky-500/40 transition-all overflow-hidden flex flex-col justify-between">
-                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-sky-500 via-cyan-400 to-blue-500"></div>
-                <div class="flex items-center justify-between gap-1.5">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">งบประมาณคงเหลือ</span>
-                    <div class="w-8 h-8 rounded-xl bg-sky-50 dark:bg-sky-500/15 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
-                        <i data-lucide="piggy-bank" class="w-4 h-4"></i>
-                    </div>
-                </div>
-                <div class="my-2">
-                    <div class="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 font-heading tracking-tight leading-tight">
-                        <?= number_format((float)$stats['total_remaining'], 2) ?>
-                    </div>
-                    <div class="text-[10.5px] text-slate-400 mt-0.5 font-sans">บาท</div>
-                </div>
-                <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                    <span>คงเหลือ</span>
-                    <span class="font-semibold text-sky-600 dark:text-sky-400 font-mono"><?= number_format(max(0, 100 - (float)$stats['disbursement_pct']), 1) ?>%</span>
+        <!-- 4. งบประมาณคงเหลือ -->
+        <div class="group relative p-3 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-sky-400/60 dark:hover:border-sky-500/40 transition-all overflow-hidden flex flex-col justify-between">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-sky-500"></div>
+            <div class="flex items-center justify-between gap-1.5">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">งบคงเหลือ</span>
+                <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-sky-50 dark:bg-sky-500/15 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
+                    <i data-lucide="piggy-bank" class="w-4 h-4"></i>
                 </div>
             </div>
+            <div class="my-1.5 sm:my-2">
+                <div class="text-base sm:text-xl lg:text-2xl font-black text-slate-800 dark:text-slate-100 font-heading tracking-tight leading-tight truncate" title="<?= number_format((float)$stats['total_remaining'], 2) ?>">
+                    <?= number_format((float)$stats['total_remaining'], 2) ?>
+                </div>
+                <div class="text-[10px] sm:text-[10.5px] text-slate-400 mt-0.5 font-sans">บาท</div>
+            </div>
+            <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10px] sm:text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                <span>คงเหลือ</span>
+                <span class="font-semibold text-sky-600 dark:text-sky-400 font-mono"><?= number_format(max(0, 100 - (float)$stats['disbursement_pct']), 1) ?>%</span>
+            </div>
+        </div>
 
-            <!-- 9. เปอร์เซ็นต์ความสำเร็จเฉลี่ย -->
-            <div class="group relative p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-purple-400/60 dark:hover:border-purple-500/40 transition-all overflow-hidden flex flex-col justify-between">
-                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-violet-400 to-pink-500"></div>
-                <div class="flex items-center justify-between gap-1.5">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">ความสำเร็จเฉลี่ย</span>
-                    <div class="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
-                        <i data-lucide="target" class="w-4 h-4"></i>
-                    </div>
+        <!-- 5. เปอร์เซ็นต์ความสำเร็จเฉลี่ย -->
+        <div class="group relative p-3 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-purple-400/60 dark:hover:border-purple-500/40 transition-all overflow-hidden flex flex-col justify-between">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-purple-500"></div>
+            <div class="flex items-center justify-between gap-1.5">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">ความสำเร็จเฉลี่ย</span>
+                <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-purple-50 dark:bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                    <i data-lucide="target" class="w-4 h-4"></i>
                 </div>
-                <div class="my-2">
-                    <div class="text-xl sm:text-2xl font-black text-purple-600 dark:text-purple-400 font-heading tracking-tight leading-tight">
-                        <?= number_format((float)($stats['avg_progress'] ?? 0), 1) ?>%
-                    </div>
-                    <div class="w-full bg-slate-100 dark:bg-white/10 h-1.5 rounded-full overflow-hidden mt-1.5">
-                        <div class="bg-gradient-to-r from-purple-500 to-indigo-500 h-full rounded-full" style="width: <?= min(100, max(0, (float)($stats['avg_progress'] ?? 0))) ?>%"></div>
-                    </div>
+            </div>
+            <div class="my-1.5 sm:my-2">
+                <div class="text-base sm:text-xl lg:text-2xl font-black text-purple-600 dark:text-purple-400 font-heading tracking-tight leading-tight">
+                    <?= number_format((float)($stats['avg_progress'] ?? 0), 1) ?>%
                 </div>
-                <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                    <span>ภาพรวม</span>
-                    <span class="font-semibold text-purple-600 dark:text-purple-400">เฉลี่ยทุกโครงการ</span>
+                <div class="w-full bg-slate-100 dark:bg-white/10 h-1.5 rounded-full overflow-hidden mt-1.5">
+                    <div class="bg-purple-500 h-full rounded-full" style="width: <?= min(100, max(0, (float)($stats['avg_progress'] ?? 0))) ?>%"></div>
                 </div>
+            </div>
+            <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10px] sm:text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                <span>ภาพรวม</span>
+                <span class="font-semibold text-purple-600 dark:text-purple-400">เฉลี่ยทุกโครงการ</span>
             </div>
         </div>
     </div>
@@ -404,7 +314,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                 <div class="grid grid-cols-1 sm:grid-cols-12 items-center gap-4 sm:gap-6 py-2">
                     <!-- Donut Canvas with Center Text (5 cols) -->
                     <div class="sm:col-span-5 flex justify-center">
-                        <div class="w-40 h-40 sm:w-44 sm:h-44 relative max-w-full aspect-square mx-auto">
+                        <div class="w-40 h-40 sm:w-48 sm:h-48 relative max-w-full aspect-square mx-auto flex items-center justify-center">
                             <canvas id="statusDonutChart"
                                     data-not-started="<?= (int)$stats['not_started'] ?>"
                                     data-in-progress="<?= (int)$stats['in_progress'] ?>"
@@ -412,73 +322,73 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                                     data-has-problem="<?= (int)$stats['has_problem'] ?>"
                                     data-cancelled="<?= (int)($stats['cancelled'] ?? 0) ?>"
                                     data-sub-total="<?= (int)$stats['sub_total'] ?>"></canvas>
-                            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
-                                <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-sans">รวม</span>
-                                <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-heading tracking-tight my-0.5"><?= $stats['sub_total'] ?></span>
-                                <span class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">โครงการ</span>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center select-none">
+                                <span class="text-[10px] sm:text-[11px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest font-sans">รวมทั้งหมด</span>
+                                <span class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white font-heading tracking-tight my-0.5 leading-none"><?= $stats['sub_total'] ?></span>
+                                <span class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium">โครงการย่อย</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- 5-Item Legend (7 cols) -->
                     <div class="sm:col-span-7 space-y-2 text-xs">
-                        <!-- 1. ยังไม่เริ่ม (Slate) -->
-                        <div class="p-2 rounded-xl bg-slate-50/90 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.04] flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="w-2.5 h-2.5 rounded-full bg-[#64748b] shrink-0"></span>
-                                <span class="font-medium text-slate-700 dark:text-slate-300">ยังไม่เริ่ม</span>
+                        <!-- 1. ยังไม่เริ่ม (Modern Tech Indigo) -->
+                        <div class="p-2.5 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-indigo-400/60 dark:hover:border-indigo-500/40 flex items-center justify-between transition-all group <?= (int)$stats['not_started'] === 0 ? 'opacity-60 hover:opacity-100' : '' ?>">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <span class="w-3 h-3 rounded-full bg-[#6366f1] shrink-0 shadow-[0_0_8px_rgba(99,102,241,0.5)]"></span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">ยังไม่เริ่ม</span>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <span class="font-bold text-slate-900 dark:text-white font-mono"><?= $stats['not_started'] ?></span>
-                                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-slate-500/10 text-slate-600 dark:text-slate-400"><?= $notStartPct ?>%</span>
-                            </div>
-                        </div>
-
-                        <!-- 2. กำลังดำเนินการ (Blue) -->
-                        <div class="p-2 rounded-xl bg-slate-50/90 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.04] flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="w-2.5 h-2.5 rounded-full bg-[#3b82f6] shrink-0"></span>
-                                <span class="font-medium text-slate-700 dark:text-slate-300">กำลังดำเนินการ</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <span class="font-bold text-slate-900 dark:text-white font-mono"><?= $stats['in_progress'] ?></span>
-                                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-blue-500/10 text-blue-600 dark:text-blue-400"><?= $inProgPct ?>%</span>
+                            <div class="flex items-center gap-2.5 shrink-0">
+                                <span class="font-extrabold text-sm text-slate-900 dark:text-white font-mono"><?= $stats['not_started'] ?></span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-500/30"><?= $notStartPct ?>%</span>
                             </div>
                         </div>
 
-                        <!-- 3. เสร็จสิ้น (Emerald) -->
-                        <div class="p-2 rounded-xl bg-slate-50/90 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.04] flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="w-2.5 h-2.5 rounded-full bg-[#10b981] shrink-0"></span>
-                                <span class="font-medium text-slate-700 dark:text-slate-300">เสร็จสิ้น</span>
+                        <!-- 2. กำลังดำเนินการ (Electric Sky Blue) -->
+                        <div class="p-2.5 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-sky-400/60 dark:hover:border-sky-500/40 flex items-center justify-between transition-all group <?= (int)$stats['in_progress'] === 0 ? 'opacity-60 hover:opacity-100' : '' ?>">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <span class="w-3 h-3 rounded-full bg-[#0ea5e9] shrink-0 shadow-[0_0_8px_rgba(14,165,233,0.5)]"></span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors truncate">กำลังดำเนินการ</span>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <span class="font-bold text-slate-900 dark:text-white font-mono"><?= $stats['completed'] ?></span>
-                                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"><?= $compPct ?>%</span>
-                            </div>
-                        </div>
-
-                        <!-- 4. มีปัญหา (Rose) -->
-                        <div class="p-2 rounded-xl bg-slate-50/90 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.04] flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="w-2.5 h-2.5 rounded-full bg-[#f43f5e] shrink-0"></span>
-                                <span class="font-medium text-slate-700 dark:text-slate-300">มีปัญหา/ล่าช้า</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <span class="font-bold text-slate-900 dark:text-white font-mono"><?= $stats['has_problem'] ?></span>
-                                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-rose-500/10 text-rose-600 dark:text-rose-400"><?= $probPct ?>%</span>
+                            <div class="flex items-center gap-2.5 shrink-0">
+                                <span class="font-extrabold text-sm text-slate-900 dark:text-white font-mono"><?= $stats['in_progress'] ?></span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono bg-sky-500/10 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-500/30"><?= $inProgPct ?>%</span>
                             </div>
                         </div>
 
-                        <!-- 5. ยกเลิก (Gray) -->
-                        <div class="p-2 rounded-xl bg-slate-50/90 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.04] flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="w-2.5 h-2.5 rounded-full bg-[#94a3b8] shrink-0"></span>
-                                <span class="font-medium text-slate-700 dark:text-slate-300">ยกเลิก</span>
+                        <!-- 3. เสร็จสิ้น (Luminous Jade Mint) -->
+                        <div class="p-2.5 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-emerald-400/60 dark:hover:border-emerald-500/40 flex items-center justify-between transition-all group <?= (int)$stats['completed'] === 0 ? 'opacity-60 hover:opacity-100' : '' ?>">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <span class="w-3 h-3 rounded-full bg-[#10b981] shrink-0 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate">เสร็จสิ้น</span>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <span class="font-bold text-slate-900 dark:text-white font-mono"><?= $stats['cancelled'] ?? 0 ?></span>
-                                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-slate-500/10 text-slate-500"><?= $cancPct ?>%</span>
+                            <div class="flex items-center gap-2.5 shrink-0">
+                                <span class="font-extrabold text-sm text-slate-900 dark:text-white font-mono"><?= $stats['completed'] ?></span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30"><?= $compPct ?>%</span>
+                            </div>
+                        </div>
+
+                        <!-- 4. มีปัญหา (Radiant Coral Crimson) -->
+                        <div class="p-2.5 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-rose-400/60 dark:hover:border-rose-500/40 flex items-center justify-between transition-all group <?= (int)$stats['has_problem'] === 0 ? 'opacity-60 hover:opacity-100' : '' ?>">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <span class="w-3 h-3 rounded-full bg-[#f43f5e] shrink-0 shadow-[0_0_8px_rgba(244,63,94,0.5)]"></span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors truncate">มีปัญหา/ล่าช้า</span>
+                            </div>
+                            <div class="flex items-center gap-2.5 shrink-0">
+                                <span class="font-extrabold text-sm text-slate-900 dark:text-white font-mono"><?= $stats['has_problem'] ?></span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono bg-rose-500/10 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/30"><?= $probPct ?>%</span>
+                            </div>
+                        </div>
+
+                        <!-- 5. ยกเลิก (Deep Graphite Slate) -->
+                        <div class="p-2.5 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-slate-400/60 dark:hover:border-slate-500/40 flex items-center justify-between transition-all group <?= (int)($stats['cancelled'] ?? 0) === 0 ? 'opacity-60 hover:opacity-100' : '' ?>">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <span class="w-3 h-3 rounded-full bg-[#64748b] shrink-0 shadow-[0_0_8px_rgba(100,116,139,0.3)]"></span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors truncate">ยกเลิก</span>
+                            </div>
+                            <div class="flex items-center gap-2.5 shrink-0">
+                                <span class="font-extrabold text-sm text-slate-900 dark:text-white font-mono"><?= $stats['cancelled'] ?? 0 ?></span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono bg-slate-500/10 dark:bg-slate-500/20 text-slate-700 dark:text-slate-300 border border-slate-500/30"><?= $cancPct ?>%</span>
                             </div>
                         </div>
                     </div>
@@ -544,7 +454,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
             </div>
         </div>
 
-        <!-- กราฟที่ 3: ความสำเร็จของโครงการ (Rule #10.3: Top / Bottom Projects Horizontal Bar Chart) -->
+        <!-- กราฟที่ 3: ความก้าวหน้าของโครงการหลัก (Rule #10.3: Top / Bottom Main Projects Horizontal Bar Chart) -->
         <div class="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between w-full max-w-full min-w-0 overflow-hidden"
              x-data="{ mode: 'top' }">
             <div>
@@ -555,8 +465,8 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                             <i data-lucide="award" class="w-4 h-4"></i>
                         </div>
                         <div>
-                            <h2 class="text-base font-bold text-slate-900 dark:text-white font-heading truncate">ความสำเร็จของโครงการ</h2>
-                            <p class="text-[11px] text-slate-400 truncate">Top / Bottom Projects (ความก้าวหน้า 0 - 100%)</p>
+                            <h2 class="text-base font-bold text-slate-900 dark:text-white font-heading truncate">ความก้าวหน้าของโครงการหลัก</h2>
+                            <p class="text-[11px] text-slate-400 truncate">Top / Bottom โครงการหลัก (ความก้าวหน้า 0 - 100%)</p>
                         </div>
                     </div>
                     <!-- Mode Selector Toggle -->
@@ -587,7 +497,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
 
             <!-- Footer Timestamp -->
             <div class="pt-3 mt-4 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
-                <span>Rule #10.3: ความสำเร็จโครงการ</span>
+                <span>Rule #10.3: ความก้าวหน้าของโครงการหลัก</span>
                 <span>ข้อมูล ณ วันที่ <?= $currentDateThai ?></span>
             </div>
         </div>
@@ -747,12 +657,16 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                     <?php if (!empty($latestProjects)): ?>
                         <?php foreach ($latestProjects as $lp): ?>
                             <?php
-                            $isComp = ($lp['status'] === 'completed');
                             $lpProg = (float)($lp['progress'] ?? 0);
                             $lpTier = \App\Services\ProgressService::getProgressTier($lpProg, $lp['status'] ?? null);
-                            $lpStatusBadge = $isComp
-                                ? ['label' => 'เสร็จแล้ว', 'class' => 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60']
-                                : ['label' => 'กำลังดำเนินการ', 'class' => 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60'];
+                            $lpStatus = (string)($lp['status'] ?? 'not_started');
+                            $lpStatusBadge = match($lpStatus) {
+                                'completed' => ['label' => 'เสร็จสิ้น', 'class' => 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60'],
+                                'in_progress' => ['label' => 'กำลังดำเนินการ', 'class' => 'bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60'],
+                                'has_problem' => ['label' => 'มีปัญหา', 'class' => 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60'],
+                                'cancelled' => ['label' => 'ยกเลิก', 'class' => 'bg-slate-100 dark:bg-slate-900/40 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800/60'],
+                                default => ['label' => 'ยังไม่เริ่ม', 'class' => 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60'],
+                            };
                             ?>
                             <tr class="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition">
                                 <td class="py-3.5 px-3 font-semibold text-slate-900 dark:text-white">
@@ -824,13 +738,19 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
         chartInitRetries = 0;
 
         const isDark = document.documentElement.classList.contains('dark');
-        const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : '#f1f5f9';
+        const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)';
         const tickColor = isDark ? '#94a3b8' : '#64748b';
         const labelColor = isDark ? '#cbd5e1' : '#334155';
         const tooltipBg = isDark ? '#181b24' : '#ffffff';
         const tooltipTitle = isDark ? '#ffffff' : '#0f172a';
         const tooltipBody = isDark ? '#e2e8f0' : '#334155';
         const tooltipBorder = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
+
+        // กำหนด Default Border และ Color ให้โปร่งใส ป้องกันเส้นขอบดำในโหมดมืด
+        if (typeof Chart !== 'undefined') {
+            Chart.defaults.color = tickColor;
+            Chart.defaults.borderColor = 'transparent';
+        }
 
         // ทำลายกราฟเดิมเพื่อป้องกันทับซ้อนเมื่อมีการรีเฟรช SPA หรือเปลี่ยนธีม
         ['statusDonutChart', 'budgetComparisonChart', 'projectSuccessChart', 'categoryBarChart'].forEach(id => {
@@ -871,11 +791,11 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                 const cancelled  = parseInt(statusCanvas.dataset.cancelled || '0', 10);
 
                 const rawStatuses = [
-                    { key: 'not_started', label: 'ยังไม่เริ่ม', count: notStarted, color: '#64748b', hover: '#475569' },
-                    { key: 'in_progress', label: 'กำลังดำเนินการ', count: inProgress, color: '#3b82f6', hover: '#2563eb' },
+                    { key: 'not_started', label: 'ยังไม่เริ่ม', count: notStarted, color: '#6366f1', hover: '#4f46e5' },
+                    { key: 'in_progress', label: 'กำลังดำเนินการ', count: inProgress, color: '#0ea5e9', hover: '#0284c7' },
                     { key: 'completed',  label: 'เสร็จสิ้น',      count: completed,  color: '#10b981', hover: '#059669' },
                     { key: 'has_problem',label: 'มีปัญหา/ล่าช้า', count: hasProblem, color: '#f43f5e', hover: '#e11d48' },
-                    { key: 'cancelled',  label: 'ยกเลิก',         count: cancelled,  color: '#94a3b8', hover: '#64748b' }
+                    { key: 'cancelled',  label: 'ยกเลิก',         count: cancelled,  color: '#64748b', hover: '#475569' }
                 ];
                 const totalCount = rawStatuses.reduce((acc, s) => acc + s.count, 0);
                 const activeStatuses = rawStatuses.filter(s => s.count > 0);
@@ -896,7 +816,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                         options: {
                             responsive: true,
                             maintainAspectRatio: true,
-                            cutout: '72%',
+                            cutout: '74%',
                             animation: isThemeChange ? false : { duration: 350, easing: 'easeOutQuad' },
                             plugins: {
                                 legend: { display: false },
@@ -925,14 +845,15 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                                 backgroundColor: activeStatuses.map(s => s.color),
                                 hoverBackgroundColor: activeStatuses.map(s => s.hover),
                                 borderWidth: 0,
-                                borderRadius: activeStatuses.length > 1 ? 4 : 0,
-                                spacing: activeStatuses.length > 1 ? 3 : 0
+                                borderRadius: activeStatuses.length > 1 ? 6 : 0,
+                                spacing: activeStatuses.length > 1 ? 4 : 0,
+                                hoverOffset: activeStatuses.length > 1 ? 6 : 0
                             }]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: true,
-                            cutout: '72%',
+                            cutout: '74%',
                             animation: isThemeChange ? false : { duration: 350, easing: 'easeOutQuad' },
                             plugins: {
                                 legend: { display: false },
@@ -1030,7 +951,11 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                                     font: { family: "'Prompt', 'Sarabun', sans-serif", size: 10.5 },
                                     callback: (val) => formatCurrency(val)
                                 },
-                                grid: { color: gridColor },
+                                grid: {
+                                    color: gridColor,
+                                    borderDash: [3, 3],
+                                    drawTicks: false
+                                },
                                 border: { display: false }
                             },
                             x: {
@@ -1051,7 +976,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
         }
 
         // -------------------------------------------------------------
-        // กราฟที่ 3: ความสำเร็จของโครงการ (Rule #10.3: Top / Bottom Projects Horizontal Bar - Data Driven)
+        // กราฟที่ 3: ความก้าวหน้าของโครงการหลัก (Rule #10.3: Top / Bottom Main Projects Horizontal Bar - Data Driven)
         // -------------------------------------------------------------
         try {
             const successCanvas = document.getElementById('projectSuccessChart');
@@ -1067,9 +992,9 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
 
                 const getBarColor = (prog) => {
                     if (prog >= 75) return '#10b981'; // Emerald
-                    if (prog >= 50) return '#3b82f6'; // Blue
+                    if (prog >= 50) return '#0ea5e9'; // Sky Blue
                     if (prog >= 25) return '#f59e0b'; // Amber
-                    return '#f43f5e'; // Rose
+                    return '#6366f1'; // Indigo
                 };
 
                 const currentMode = window._currentProjectSuccessMode || 'top';
@@ -1082,7 +1007,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                 projectSuccessChartInstance = new Chart(successCanvas, {
                     type: 'bar',
                     data: {
-                        labels: labels.length > 0 ? labels : ['ไม่มีโครงการ'],
+                        labels: labels.length > 0 ? labels : ['ไม่มีโครงการหลัก'],
                         datasets: [{
                             label: 'ความก้าวหน้า (%)',
                             data: progresses.length > 0 ? progresses : [0],
@@ -1135,7 +1060,11 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                                     font: { family: "'Prompt', 'Sarabun', sans-serif", size: 10.5 },
                                     callback: (val) => val + '%'
                                 },
-                                grid: { color: gridColor },
+                                grid: {
+                                    color: gridColor,
+                                    borderDash: [3, 3],
+                                    drawTicks: false
+                                },
                                 border: { display: false }
                             },
                             y: {
@@ -1247,7 +1176,11 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                                     font: { family: "'Prompt', 'Sarabun', sans-serif", size: 10.5 },
                                     callback: (val) => val + ' ค.'
                                 },
-                                grid: { color: gridColor },
+                                grid: {
+                                    color: gridColor,
+                                    borderDash: [3, 3],
+                                    drawTicks: false
+                                },
                                 border: { display: false }
                             },
                             x: {

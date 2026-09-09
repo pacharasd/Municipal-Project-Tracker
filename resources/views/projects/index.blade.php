@@ -66,9 +66,9 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
             <h1 class="text-2xl font-bold text-slate-900 tracking-tight">โครงการหลักและโครงการย่อย</h1>
             <p class="text-sm text-slate-500 mt-1">บริหารจัดการโครงการตามแผนพัฒนาเทศบาล ติดตามความก้าวหน้าและงบประมาณแบบลำดับชั้น</p>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 w-full sm:w-auto">
             <?php if (\App\Core\Auth::canManageProjects()): ?>
-                <button type="button" @click="createModal = true" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors shadow-sm shadow-emerald-600/30 cursor-pointer">
+                <button type="button" @click="createModal = true" class="w-full sm:w-auto justify-center inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors shadow-sm shadow-emerald-600/30 cursor-pointer">
                     <i data-lucide="plus-circle" class="w-4 h-4"></i> สร้างโครงการหลักใหม่
                 </button>
             <?php endif; ?>
@@ -76,13 +76,13 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
     </div>
 
     <!-- Filters Section -->
-    <form action="<?= \App\Core\Router::url('/projects') ?>" method="GET" @submit.prevent="currentPage = 1; scrollToTop(); syncUrl()" class="bg-white dark:bg-[#181a20] p-4 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm grid grid-cols-1 sm:grid-cols-12 gap-3">
+    <form action="<?= \App\Core\Router::url('/projects') ?>" method="GET" @submit.prevent="currentPage = 1; scrollToTop(); syncUrl()" class="bg-white dark:bg-[#181a20] p-3.5 sm:p-4 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-3">
         <!-- Search Keyword -->
         <div class="sm:col-span-6 lg:col-span-6 relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                 <i data-lucide="search" class="w-4 h-4"></i>
             </div>
-            <input type="text" name="search" x-model.debounce.250ms="search" @input.debounce.250ms="currentPage = 1; syncUrl()" value="<?= htmlspecialchars($filters['search']) ?>" placeholder="ค้นหาชื่อโครงการ หรือโครงการย่อย..." class="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+            <input type="text" name="search" x-model.debounce.250ms="search" @input.debounce.250ms="currentPage = 1; syncUrl()" value="<?= htmlspecialchars($filters['search']) ?>" placeholder="ค้นหาชื่อโครงการ หรือโครงการย่อย..." class="w-full pl-9 pr-4 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
         </div>
 
         <!-- Fiscal Year Filter (Custom Dropdown) -->
@@ -90,7 +90,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
             <input type="hidden" name="fiscal_year_id" :value="fiscalYearFilter">
             <button type="button" 
                     @click="openFy = !openFy" 
-                    class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer transition-all">
+                    class="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer transition-all">
                 <span x-text="currentFiscalYearLabel" class="truncate font-medium"></span>
                 <svg class="w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0" :class="{ 'rotate-180': openFy }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -106,7 +106,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                  class="absolute z-40 mt-1.5 w-full bg-white dark:bg-[#1f222e] rounded-xl shadow-xl border border-slate-200 dark:border-white/10 py-1 max-h-56 overflow-y-auto" 
                  style="display: none;">
                 <div @click="fiscalYearFilter = ''; currentPage = 1; syncUrl(); openFy = false" 
-                     class="px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 cursor-pointer flex items-center justify-between"
+                     class="px-3 py-2 text-xs sm:text-sm text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 cursor-pointer flex items-center justify-between"
                      :class="{ 'bg-emerald-50/70 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-semibold': !fiscalYearFilter }">
                     <span>-- ทุกปีงบประมาณ --</span>
                     <svg x-show="!fiscalYearFilter" class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,7 +115,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                 </div>
                 <template x-for="fy in fiscalYearOptions" :key="fy.id">
                     <div @click="fiscalYearFilter = fy.id; currentPage = 1; syncUrl(); openFy = false" 
-                         class="px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 cursor-pointer flex items-center justify-between transition-colors"
+                         class="px-3 py-2 text-xs sm:text-sm text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 cursor-pointer flex items-center justify-between transition-colors"
                          :class="{ 'bg-emerald-50/70 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-semibold': String(fiscalYearFilter) === String(fy.id) }">
                         <span x-text="'ปี ' + fy.year + (fy.is_active ? ' (ปัจจุบัน)' : '')"></span>
                         <svg x-show="String(fiscalYearFilter) === String(fy.id)" class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -128,10 +128,10 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
 
         <!-- Submit & Clear Buttons -->
         <div class="sm:col-span-2 lg:col-span-2 flex items-center gap-2">
-            <button type="submit" class="w-full py-2 px-4 text-sm font-medium text-white bg-slate-800 dark:bg-slate-700 rounded-xl hover:bg-slate-900 dark:hover:bg-slate-600 transition-colors cursor-pointer">
+            <button type="submit" class="flex-1 py-2 px-4 text-xs sm:text-sm font-medium text-white bg-slate-800 dark:bg-slate-700 rounded-xl hover:bg-slate-900 dark:hover:bg-slate-600 transition-colors cursor-pointer text-center">
                 ค้นหา
             </button>
-            <button type="button" @click="resetFilters()" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl cursor-pointer transition-colors" title="ล้างตัวกรอง">
+            <button type="button" @click="resetFilters()" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl cursor-pointer transition-colors shrink-0" title="ล้างตัวกรอง">
                 <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
             </button>
         </div>
@@ -165,14 +165,14 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
     <!-- Toolbar: Per Page Selector, Total Counts & Status Filter Pills -->
     <div id="projects-toolbar" class="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white dark:bg-[#181a20] p-3.5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm text-xs text-slate-600 dark:text-slate-400">
         <!-- Left: Per Page Selector & Summary Counts -->
-        <div class="flex flex-wrap items-center gap-3">
-            <div class="flex items-center gap-1.5">
+        <div class="flex items-center justify-between md:justify-start gap-2.5 sm:gap-3 w-full md:w-auto">
+            <div class="flex items-center gap-1.5 shrink-0">
                 <span class="font-medium text-slate-500 dark:text-slate-400">แสดง:</span>
                 <div class="relative" x-data="{ openPerPage: false }" @click.outside="openPerPage = false">
                     <button type="button" 
                             @click="openPerPage = !openPerPage" 
                             class="px-2.5 py-1 text-xs rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer shadow-xs">
-                        <span x-text="perPage === 'all' ? 'แสดงทั้งหมด' : perPage + ' โครงการ / หน้า'"></span>
+                        <span x-text="perPage === 'all' ? 'ทั้งหมด' : perPage + '/หน้า'"></span>
                         <svg class="w-3 h-3 text-slate-400 transition-transform duration-200" :class="{ 'rotate-180': openPerPage }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
@@ -208,32 +208,32 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
 
             <div class="hidden sm:block text-slate-300">|</div>
 
-            <div>
-                พบ <span class="font-bold text-slate-900" x-text="filteredProjects.length"></span> โครงการหลัก 
-                <span class="text-slate-400">(รวม <span class="font-bold text-emerald-600" x-text="totalFilteredSubCount"></span> โครงการย่อย)</span>
+            <div class="text-right sm:text-left text-xs truncate">
+                พบ <span class="font-bold text-slate-900 dark:text-white" x-text="filteredProjects.length"></span> โครงการ 
+                <span class="text-slate-400 hidden sm:inline">(รวม <span class="font-bold text-emerald-600" x-text="totalFilteredSubCount"></span> โครงการย่อย)</span>
             </div>
         </div>
 
-        <!-- Right: Status Filter Pills -->
-        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+        <!-- Right: Status Filter Pills (Scrollable on mobile) -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 -mx-1 px-1 w-full md:w-auto shrink-0 no-scrollbar">
             <button type="button" @click="setStatusFilter('all')" 
                     :class="statusFilter === 'all' ? 'bg-slate-800 dark:bg-slate-700 text-white font-semibold shadow-sm' : 'bg-slate-50 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08]'"
-                    class="px-2.5 py-1 rounded-xl text-xs transition cursor-pointer">
+                    class="px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition cursor-pointer shrink-0">
                 ทั้งหมด (<span x-text="allProjects.length"></span>)
             </button>
             <button type="button" @click="setStatusFilter('in_progress')" 
                     :class="statusFilter === 'in_progress' ? 'bg-blue-600 text-white font-semibold shadow-sm' : 'bg-blue-50/60 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100/60 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800/40'"
-                    class="px-2.5 py-1 rounded-xl text-xs transition cursor-pointer">
+                    class="px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition cursor-pointer shrink-0">
                 กำลังดำเนินการ
             </button>
             <button type="button" @click="setStatusFilter('completed')" 
                     :class="statusFilter === 'completed' ? 'bg-emerald-600 text-white font-semibold shadow-sm' : 'bg-emerald-50/60 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800/40'"
-                    class="px-2.5 py-1 rounded-xl text-xs transition cursor-pointer">
+                    class="px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition cursor-pointer shrink-0">
                 เสร็จสิ้น
             </button>
             <button type="button" @click="setStatusFilter('has_problem')" 
                     :class="statusFilter === 'has_problem' ? 'bg-rose-600 text-white font-semibold shadow-sm' : 'bg-rose-50/60 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100/60 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-800/40'"
-                    class="px-2.5 py-1 rounded-xl text-xs transition cursor-pointer">
+                    class="px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition cursor-pointer shrink-0">
                 มีปัญหา
             </button>
         </div>
@@ -263,19 +263,19 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                  style="content-visibility: auto; contain-intrinsic-size: 0 160px; <?= $isInitiallyVisible ? '' : 'display: none;' ?>"
                  x-data="{ expanded: true }">
                 <!-- Main Project Bar -->
-                <div class="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 dark:border-white/[0.06]">
-                    <div class="flex items-start gap-4">
-                        <button type="button" @click="expanded = !expanded" class="mt-1 p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer" title="ย่อ/ขยายโครงการย่อย">
+                <div class="p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 dark:border-white/[0.06]">
+                    <div class="flex items-start gap-3 sm:gap-4">
+                        <button type="button" @click="expanded = !expanded" class="mt-1 p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer shrink-0" title="ย่อ/ขยายโครงการย่อย">
                             <i data-lucide="chevron-down" class="w-5 h-5 transform transition-transform" :class="expanded ? 'rotate-0' : '-rotate-90'"></i>
                         </button>
-                        <div>
+                        <div class="min-w-0 flex-1">
                             <div class="flex flex-wrap items-center gap-2">
                                 <?php if (!empty($p['project_code'])): ?>
                                     <span class="px-2.5 py-0.5 text-xs font-mono font-bold rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-300/80 dark:border-emerald-500/30 shrink-0">
                                         <?= htmlspecialchars($p['project_code']) ?>
                                     </span>
                                 <?php endif; ?>
-                                <span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40"><?= htmlspecialchars(!empty($p['responsible_person']) ? $p['responsible_person'] : $p['department_name']) ?></span>
+                                <span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40 truncate max-w-[200px]"><?= htmlspecialchars(!empty($p['responsible_person']) ? $p['responsible_person'] : $p['department_name']) ?></span>
                                 <span class="px-2 py-0.5 text-xs text-slate-500 dark:text-slate-400">ปีงบ <?= $p['fiscal_year'] ?></span>
                                 <?php if (!empty($p['start_date']) || !empty($p['end_date'])): ?>
                                     <span class="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-950/30 rounded-full border border-emerald-200/60 dark:border-emerald-800/40">
@@ -284,7 +284,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                                     </span>
                                 <?php endif; ?>
                             </div>
-                            <h2 class="text-lg font-bold text-slate-900 dark:text-white mt-1">
+                            <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-1">
                                 <a href="<?= \App\Core\Router::url("/projects/{$p['id']}") ?>" class="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
                                     <?= htmlspecialchars($p['name']) ?>
                                 </a>
@@ -293,17 +293,17 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                         </div>
                     </div>
 
-                    <!-- Right KPIs for Main Project -->
-                    <div class="flex items-center gap-6 lg:justify-end">
-                        <div class="text-right">
-                            <div class="text-xs text-slate-400 dark:text-slate-400">งบประมาณรวม</div>
-                            <div class="text-sm font-bold text-slate-900 dark:text-white"><?= number_format($p['budget'], 2) ?> <span class="text-[10px] font-normal text-slate-500 dark:text-slate-400">บาท</span></div>
+                    <!-- Right KPIs for Main Project (Clean 2-Col Grid on Mobile) -->
+                    <div class="pt-3 border-t border-slate-100 dark:border-white/[0.06] lg:border-t-0 lg:pt-0 grid grid-cols-2 sm:flex sm:items-center gap-2.5 sm:gap-6 lg:justify-end w-full lg:w-auto">
+                        <div class="text-left sm:text-right p-2.5 sm:p-0 rounded-xl sm:rounded-none bg-slate-50/70 dark:bg-white/[0.02] sm:bg-transparent sm:dark:bg-transparent border border-slate-200/60 dark:border-white/[0.05] sm:border-0">
+                            <div class="text-[11px] sm:text-xs text-slate-400 dark:text-slate-400">งบประมาณรวม</div>
+                            <div class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate"><?= number_format($p['budget'], 2) ?> <span class="text-[10px] font-normal text-slate-500 dark:text-slate-400">บาท</span></div>
                         </div>
 
                         <!-- Progress indicator -->
                         <?php $pTier = \App\Services\ProgressService::getProgressTier((float)$p['progress'], $p['status'] ?? null); ?>
-                        <div class="w-36">
-                            <div class="flex items-center justify-between text-xs mb-1">
+                        <div class="p-2.5 sm:p-0 rounded-xl sm:rounded-none bg-slate-50/70 dark:bg-white/[0.02] sm:bg-transparent sm:dark:bg-transparent border border-slate-200/60 dark:border-white/[0.05] sm:border-0 flex flex-col justify-center sm:w-36">
+                            <div class="flex items-center justify-between text-[11px] sm:text-xs mb-1">
                                 <span class="text-slate-500 dark:text-slate-400">ความก้าวหน้า</span>
                                 <span class="font-bold <?= $pTier['textClass'] ?>"><?= number_format($p['progress'], 1) ?>%</span>
                             </div>
@@ -313,8 +313,11 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                         </div>
 
                         <!-- View detail button -->
-                        <a href="<?= \App\Core\Router::url("/projects/{$p['id']}") ?>" class="p-2 rounded-xl text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors" title="ดูรายละเอียดโครงการ">
-                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        <a href="<?= \App\Core\Router::url("/projects/{$p['id']}") ?>" 
+                           class="col-span-2 sm:col-span-1 py-2 sm:p-2 rounded-xl text-xs sm:text-sm font-semibold sm:font-normal flex items-center justify-center gap-1.5 text-emerald-700 sm:text-slate-400 bg-emerald-50 sm:bg-transparent dark:bg-emerald-950/30 sm:dark:bg-transparent hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-100/70 dark:hover:bg-emerald-950/50 transition-colors shrink-0" 
+                           title="ดูรายละเอียดโครงการ">
+                            <span class="sm:hidden">ดูรายละเอียดโครงการ</span>
+                            <i data-lucide="arrow-right" class="w-4 h-4 sm:w-5 sm:h-5"></i>
                         </a>
                     </div>
                 </div>
@@ -345,14 +348,16 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                                             <?php
                                             $statusClass = match($sub['status']) {
                                                 'completed' => 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/40',
-                                                'in_progress' => 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/40',
-                                                'has_problem' => 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/40 animate-pulse',
-                                                default => 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/40'
+                                                'in_progress' => 'bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800/40',
+                                                'has_problem' => 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/40',
+                                                'cancelled' => 'bg-slate-100 dark:bg-slate-900/40 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800/40',
+                                                default => 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800/40'
                                             };
                                             $statusLabel = match($sub['status']) {
                                                 'completed' => 'เสร็จสิ้น',
                                                 'in_progress' => 'กำลังดำเนินการ',
                                                 'has_problem' => 'มีปัญหา',
+                                                'cancelled' => 'ยกเลิก',
                                                 default => 'ยังไม่เริ่ม'
                                             };
                                             ?>
@@ -482,9 +487,9 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
     <!-- Modal: Create Main Project -->
     <?php if (\App\Core\Auth::canManageProjects()): ?>
     <template x-teleport="body">
-        <div x-show="createModal" x-cloak @click.self="createModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
-            <div class="bg-white dark:bg-[#181a20] w-full max-w-2xl rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 relative modal-box-smooth transform-gpu">
-                <div class="p-6 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
+        <div x-show="createModal" x-cloak @click.self="createModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 modal-backdrop-smooth overflow-y-auto">
+            <div class="bg-white dark:bg-[#181a20] w-full max-w-2xl rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 relative modal-box-smooth transform-gpu overflow-hidden max-h-[90vh] flex flex-col my-auto">
+                <div class="p-4 sm:p-6 border-b border-slate-100 dark:border-white/10 flex items-center justify-between flex-shrink-0 bg-white dark:bg-[#181a20]">
                     <div>
                         <h3 class="text-lg font-bold text-slate-900 dark:text-white">สร้างโครงการหลักใหม่</h3>
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">เพิ่มโครงการหลักประจำปีงบประมาณตามแผนพัฒนาเทศบาล</p>
@@ -526,8 +531,11 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                             return false;
                         }
                       "
-                      class="p-6 space-y-4">
+                      class="flex flex-col flex-1 min-h-0 overflow-hidden">
                     <input type="hidden" name="_token" value="<?= $csrfToken ?>">
+
+                    <!-- Scrollable Form Fields -->
+                    <div class="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1 min-h-0 custom-scrollbar">
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div class="sm:col-span-1">
@@ -841,7 +849,10 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                         </div>
                     </div>
 
-                    <div class="pt-4 border-t border-slate-100 dark:border-white/10 flex items-center justify-end gap-3">
+                    </div>
+
+                    <!-- Sticky Modal Footer -->
+                    <div class="p-4 sm:px-6 sm:py-3.5 border-t border-slate-100 dark:border-white/10 flex items-center justify-end gap-3 flex-shrink-0 bg-slate-50/70 dark:bg-white/[0.02]">
                         <button type="button" @click="createModal = false" class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-colors cursor-pointer">
                             ยกเลิก
                         </button>

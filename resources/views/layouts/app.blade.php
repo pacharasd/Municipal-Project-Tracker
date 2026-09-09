@@ -13,11 +13,15 @@
     <!-- Browser DevTools / Web-Vitals Instrumentation Guard -->
     <script>
         (function() {
+            function shouldSuppress(msg) {
+                const s = String(msg || '');
+                return s.includes("reading 'startTime'") || s.includes('reportAllChanges') || s.includes('startTime');
+            }
+
+            // Suppress unhandled exceptions
             const originalOnError = window.onerror;
             window.onerror = function(message, source, lineno, colno, error) {
-                const msg = String(message || '');
-                // Suppress known Chrome DevTools internal Soft-Navigation / Web-Vitals bug (reportAllChanges / startTime)
-                if (msg.includes("reading 'startTime'") || msg.includes('reportAllChanges')) {
+                if (shouldSuppress(message) || (error && shouldSuppress(error.message || error.stack))) {
                     return true;
                 }
                 if (typeof originalOnError === 'function') {
@@ -26,13 +30,34 @@
                 return false;
             };
 
+            // Suppress unhandled promise rejections
             window.addEventListener('unhandledrejection', function(event) {
                 const reason = event && event.reason;
-                const msg = String((reason && reason.message) || reason || '');
-                if (msg.includes("reading 'startTime'") || msg.includes('reportAllChanges')) {
+                const msg = (reason && (reason.message || reason.stack)) || reason;
+                if (shouldSuppress(msg)) {
                     event.preventDefault();
                 }
             });
+
+            // Suppress error event in capture phase
+            window.addEventListener('error', function(event) {
+                const msg = (event && (event.message || (event.error && (event.error.message || event.error.stack)))) || '';
+                if (shouldSuppress(msg)) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                    return true;
+                }
+            }, true);
+
+            // Filter console.error for DevTools internal instrumentation artifacts
+            const originalConsoleError = console.error;
+            console.error = function(...args) {
+                const text = args.map(a => (a && (a.message || a.stack)) ? (a.message + ' ' + (a.stack || '')) : String(a)).join(' ');
+                if (shouldSuppress(text)) {
+                    return;
+                }
+                originalConsoleError.apply(console, args);
+            };
         })();
     </script>
     

@@ -135,10 +135,10 @@ $avgProgress = count($projects) > 0 ? round(array_sum(array_column($projects, 'p
     getStatusBadge(status) {
         switch (status) {
             case 'completed': return { label: 'เสร็จสิ้น', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
-            case 'in_progress': return { label: 'กำลังดำเนินการ', class: 'bg-blue-50 text-blue-700 border-blue-200' };
+            case 'in_progress': return { label: 'กำลังดำเนินการ', class: 'bg-sky-50 text-sky-700 border-sky-200' };
             case 'has_problem': return { label: 'มีปัญหา', class: 'bg-rose-50 text-rose-700 border-rose-200' };
-            case 'cancelled': return { label: 'ยกเลิก', class: 'bg-slate-50 text-slate-700 border-slate-200' };
-            default: return { label: 'ยังไม่เริ่ม', class: 'bg-amber-50 text-amber-700 border-amber-200' };
+            case 'cancelled': return { label: 'ยกเลิก', class: 'bg-slate-100 text-slate-700 border-slate-200' };
+            default: return { label: 'ยังไม่เริ่ม', class: 'bg-indigo-50 text-indigo-700 border-indigo-200' };
         }
     }
 }">
@@ -163,26 +163,26 @@ $avgProgress = count($projects) > 0 ? round(array_sum(array_column($projects, 'p
             </div>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="grid grid-cols-3 gap-2 w-full sm:w-auto">
             <!-- Export Excel (Filtered) -->
             <a href="<?= Router::url('/reports/export-excel?' . http_build_query($_GET)) ?>" target="_blank"
-               class="inline-flex items-center gap-2 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-sm transition-all">
-                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
-                <span>ส่งออก Excel</span>
+               class="inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-sm transition-all text-center">
+                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0"></i>
+                <span class="truncate">Excel</span>
             </a>
 
             <!-- Export PDF (Filtered) -->
             <a href="<?= Router::url('/reports/export-pdf?' . http_build_query($_GET)) ?>" target="_blank"
-               class="inline-flex items-center gap-2 px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl shadow-sm transition-all">
-                <i data-lucide="file-text" class="w-4 h-4"></i>
-                <span>ส่งออก PDF</span>
+               class="inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl shadow-sm transition-all text-center">
+                <i data-lucide="file-text" class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0"></i>
+                <span class="truncate">PDF</span>
             </a>
 
             <!-- Print Page (Standard Browser Print) -->
             <button onclick="window.print()" 
-                    class="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl shadow-sm transition-all cursor-pointer">
-                <i data-lucide="printer" class="w-4 h-4"></i>
-                <span>พิมพ์รายงาน</span>
+                    class="inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3.5 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl shadow-sm transition-all cursor-pointer text-center">
+                <i data-lucide="printer" class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0"></i>
+                <span class="truncate">พิมพ์</span>
             </button>
         </div>
     </div>

@@ -312,6 +312,20 @@ class ProgressService
             ];
         }
 
+        if ($status === 'cancelled') {
+            return [
+                'key'        => 'cancelled',
+                'label'      => 'ยกเลิก',
+                'colorHex'   => '#64748b',
+                'gradient'   => 'from-slate-400 to-slate-500',
+                'bgSolid'    => 'bg-slate-500',
+                'textClass'  => 'text-slate-600 dark:text-slate-400',
+                'bgDot'      => 'bg-[#64748b]',
+                'shadow'     => 'shadow-slate-500/50',
+                'badgeClass' => 'bg-slate-100 dark:bg-slate-900/40 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800/60',
+            ];
+        }
+
         if ($progress > 75.0) {
             return [
                 'key'        => 'over_75',
@@ -330,13 +344,13 @@ class ProgressService
             return [
                 'key'        => '50_to_75',
                 'label'      => '50% - 75%',
-                'colorHex'   => '#3b82f6',
-                'gradient'   => 'from-blue-400 to-indigo-500',
-                'bgSolid'    => 'bg-blue-500',
-                'textClass'  => 'text-blue-600 dark:text-blue-400',
-                'bgDot'      => 'bg-[#3b82f6]',
-                'shadow'     => 'shadow-blue-500/50',
-                'badgeClass' => 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60',
+                'colorHex'   => '#0ea5e9',
+                'gradient'   => 'from-sky-400 to-blue-500',
+                'bgSolid'    => 'bg-sky-500',
+                'textClass'  => 'text-sky-600 dark:text-sky-400',
+                'bgDot'      => 'bg-[#0ea5e9]',
+                'shadow'     => 'shadow-sky-500/50',
+                'badgeClass' => 'bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60',
             ];
         }
 
@@ -344,13 +358,13 @@ class ProgressService
             return [
                 'key'        => '25_to_50',
                 'label'      => '25% - 50%',
-                'colorHex'   => '#f59e0b',
-                'gradient'   => 'from-amber-400 to-yellow-500',
-                'bgSolid'    => 'bg-amber-500',
-                'textClass'  => 'text-amber-600 dark:text-amber-400',
-                'bgDot'      => 'bg-[#f59e0b]',
-                'shadow'     => 'shadow-amber-500/50',
-                'badgeClass' => 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60',
+                'colorHex'   => '#38bdf8',
+                'gradient'   => 'from-sky-300 to-cyan-500',
+                'bgSolid'    => 'bg-sky-400',
+                'textClass'  => 'text-sky-600 dark:text-sky-400',
+                'bgDot'      => 'bg-[#38bdf8]',
+                'shadow'     => 'shadow-sky-400/50',
+                'badgeClass' => 'bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60',
             ];
         }
 
@@ -358,13 +372,13 @@ class ProgressService
             return [
                 'key'        => 'under_25',
                 'label'      => 'น้อยกว่า 25%',
-                'colorHex'   => '#f97316',
-                'gradient'   => 'from-orange-400 to-amber-500',
-                'bgSolid'    => 'bg-orange-500',
-                'textClass'  => 'text-orange-600 dark:text-orange-400',
-                'bgDot'      => 'bg-[#f97316]',
-                'shadow'     => 'shadow-orange-500/50',
-                'badgeClass' => 'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-300 border border-orange-200 dark:border-orange-800/60',
+                'colorHex'   => '#60a5fa',
+                'gradient'   => 'from-blue-300 to-sky-500',
+                'bgSolid'    => 'bg-blue-400',
+                'textClass'  => 'text-blue-600 dark:text-blue-400',
+                'bgDot'      => 'bg-[#60a5fa]',
+                'shadow'     => 'shadow-blue-400/50',
+                'badgeClass' => 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60',
             ];
         }
 
@@ -372,13 +386,13 @@ class ProgressService
         return [
             'key'        => 'not_started',
             'label'      => 'ยังไม่เริ่ม',
-            'colorHex'   => '#f43f5e',
-            'gradient'   => 'from-rose-500 to-red-500',
-            'bgSolid'    => 'bg-rose-500',
-            'textClass'  => 'text-rose-600 dark:text-rose-400',
-            'bgDot'      => 'bg-[#f43f5e]',
-            'shadow'     => 'shadow-rose-500/50',
-            'badgeClass' => 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60',
+            'colorHex'   => '#6366f1',
+            'gradient'   => 'from-indigo-500 to-indigo-600',
+            'bgSolid'    => 'bg-indigo-500',
+            'textClass'  => 'text-indigo-600 dark:text-indigo-400',
+            'bgDot'      => 'bg-[#6366f1]',
+            'shadow'     => 'shadow-indigo-500/50',
+            'badgeClass' => 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60',
         ];
     }
 }

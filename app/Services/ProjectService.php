@@ -385,27 +385,26 @@ class ProjectService
         }
         unset($cat);
 
-        // 4. Top and Bottom sub-projects
-        $topSql = "SELECT s.id, s.name, s.progress, s.status, s.budget 
-                   FROM projects s 
-                   INNER JOIN projects p ON s.parent_id = p.id 
-                   WHERE p.parent_id IS NULL";
+        // 4. Top and Bottom main projects (ความก้าวหน้าของโครงการหลัก)
+        $topSql = "SELECT m.id, m.name, m.progress, m.status, m.budget 
+                   FROM projects m 
+                   WHERE m.parent_id IS NULL";
         $topParams = [];
         if ($fiscalYearId !== null) {
-            $topSql .= " AND (s.fiscal_year_id = ? OR p.fiscal_year_id = ?)";
-            $topParams = [$fiscalYearId, $fiscalYearId];
+            $topSql .= " AND m.fiscal_year_id = ?";
+            $topParams = [$fiscalYearId];
         }
-        $topProjects = Database::query($topSql . " ORDER BY s.progress DESC, s.id ASC LIMIT 5", $topParams);
-        $bottomProjects = Database::query($topSql . " ORDER BY s.progress ASC, s.id ASC LIMIT 5", $topParams);
+        $topProjects = Database::query($topSql . " ORDER BY m.progress DESC, m.id ASC LIMIT 5", $topParams);
+        $bottomProjects = Database::query($topSql . " ORDER BY m.progress ASC, m.id ASC LIMIT 5", $topParams);
 
         foreach ($topProjects as &$tp) {
-            $tp['short_name'] = mb_substr($tp['name'], 0, 26, 'UTF-8') . (mb_strlen($tp['name'], 'UTF-8') > 26 ? '...' : '');
+            $tp['short_name'] = mb_substr($tp['name'], 0, 32, 'UTF-8') . (mb_strlen($tp['name'], 'UTF-8') > 32 ? '...' : '');
             $tp['progress'] = (float)$tp['progress'];
         }
         unset($tp);
 
         foreach ($bottomProjects as &$bp) {
-            $bp['short_name'] = mb_substr($bp['name'], 0, 26, 'UTF-8') . (mb_strlen($bp['name'], 'UTF-8') > 26 ? '...' : '');
+            $bp['short_name'] = mb_substr($bp['name'], 0, 32, 'UTF-8') . (mb_strlen($bp['name'], 'UTF-8') > 32 ? '...' : '');
             $bp['progress'] = (float)$bp['progress'];
         }
         unset($bp);

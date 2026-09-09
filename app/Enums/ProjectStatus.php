@@ -24,22 +24,22 @@ enum ProjectStatus: string
     public function badgeClasses(): string
     {
         return match($this) {
-            self::NOT_STARTED => 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/40 whitespace-nowrap',
-            self::IN_PROGRESS => 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800/40 whitespace-nowrap',
-            self::COMPLETED => 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800/40 whitespace-nowrap',
-            self::HAS_PROBLEM => 'bg-rose-50 text-rose-700 border-rose-200 animate-pulse dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-800/40 whitespace-nowrap',
-            self::CANCELLED => 'bg-gray-100 text-gray-500 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 whitespace-nowrap',
+            self::NOT_STARTED => 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800/40 whitespace-nowrap',
+            self::IN_PROGRESS => 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800/40 whitespace-nowrap',
+            self::COMPLETED => 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40 whitespace-nowrap',
+            self::HAS_PROBLEM => 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/40 whitespace-nowrap',
+            self::CANCELLED => 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-900/40 dark:text-slate-300 dark:border-slate-800/40 whitespace-nowrap',
         };
     }
 
     public function colorHex(): string
     {
         return match($this) {
-            self::NOT_STARTED => '#f59e0b',
-            self::IN_PROGRESS => '#3b82f6',
+            self::NOT_STARTED => '#6366f1',
+            self::IN_PROGRESS => '#0ea5e9',
             self::COMPLETED => '#10b981',
-            self::HAS_PROBLEM => '#ef4444',
-            self::CANCELLED => '#6b7280',
+            self::HAS_PROBLEM => '#f43f5e',
+            self::CANCELLED => '#64748b',
         };
     }
 

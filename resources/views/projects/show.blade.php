@@ -61,7 +61,7 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
             <span class="px-3 py-1 text-xs font-semibold rounded-full bg-purple-50 dark:bg-purple-500/15 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/30"><?= htmlspecialchars($project['category_name'] ?? 'ทั่วไป') ?></span>
         </div>
 
-        <h1 class="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900 dark:text-white tracking-tight mt-3">
+        <h1 class="text-base sm:text-xl md:text-2xl font-bold font-heading text-slate-900 dark:text-white leading-relaxed sm:leading-snug tracking-normal mt-3">
             <?= htmlspecialchars($project['name']) ?>
         </h1>
 
@@ -273,14 +273,16 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                                     <?php
                                     $sClass = match($sub['status']) {
                                         'completed' => 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-200/80 dark:border-emerald-500/30',
-                                        'in_progress' => 'bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-200/80 dark:border-blue-500/30',
-                                        'has_problem' => 'bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-200/80 dark:border-rose-500/30 animate-pulse',
-                                        default => 'bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-200/80 dark:border-amber-500/30'
+                                        'in_progress' => 'bg-sky-50 dark:bg-sky-500/15 text-sky-700 dark:text-sky-400 border-sky-200/80 dark:border-sky-500/30',
+                                        'has_problem' => 'bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-200/80 dark:border-rose-500/30',
+                                        'cancelled' => 'bg-slate-100 dark:bg-slate-500/15 text-slate-700 dark:text-slate-400 border-slate-200/80 dark:border-slate-500/30',
+                                        default => 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 border-indigo-200/80 dark:border-indigo-500/30'
                                     };
                                     $sLabel = match($sub['status']) {
                                         'completed' => 'เสร็จสิ้น',
                                         'in_progress' => 'กำลังดำเนินการ',
                                         'has_problem' => 'มีปัญหา',
+                                        'cancelled' => 'ยกเลิก',
                                         default => 'ยังไม่เริ่ม'
                                     };
                                     ?>
@@ -784,44 +786,48 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                                     <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 dark:border-white/10">
                                         <div class="flex items-center gap-1">
                                             <button type="button" @click="prevYear()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีก่อนหน้า">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
                                             </button>
-                                            <button type="button" @click="prevMonth()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนก่อนหน้า">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                                            <button type="button" @click="prevMonth()" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนก่อนหน้า">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                                             </button>
                                         </div>
-                                        <span class="text-xs font-bold text-slate-800 dark:text-slate-200" x-text="monthYearLabel"></span>
+                                        <div class="text-xs font-bold text-slate-800 dark:text-white" x-text="monthLabel"></div>
                                         <div class="flex items-center gap-1">
-                                            <button type="button" @click="nextMonth()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนถัดไป">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                            <button type="button" @click="nextMonth()" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนถัดไป">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                                             </button>
                                             <button type="button" @click="nextYear()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีถัดไป">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
                                             </button>
                                         </div>
                                     </div>
-                                    <div class="grid grid-cols-7 gap-1 text-center mb-1">
-                                        <template x-for="day in ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส']">
-                                            <span class="text-[10px] font-semibold text-slate-400 dark:text-slate-500 py-0.5" x-text="day"></span>
+                                    <div class="grid grid-cols-7 gap-1 mb-1 text-center">
+                                        <template x-for="day in shortDays">
+                                            <div class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 py-1" x-text="day"></div>
                                         </template>
                                     </div>
-                                    <div class="grid grid-cols-7 gap-1">
-                                        <template x-for="(cell, index) in calendarCells" :key="index">
+                                    <div class="grid grid-cols-7 gap-1 text-center">
+                                        <template x-for="(item, index) in days" :key="item.dateStr || (item.day + '-' + index)">
                                             <div>
                                                 <button type="button" 
-                                                        x-show="cell"
-                                                        @click="selectDate(cell)"
-                                                        class="w-full aspect-square flex items-center justify-center text-xs rounded-lg transition-all cursor-pointer font-medium"
-                                                        :class="isSelected(cell) ? 'bg-emerald-600 text-white font-bold shadow-sm' : isToday(cell) ? 'bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-300 dark:border-emerald-500/40' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10'">
-                                                    <span x-text="cell"></span>
+                                                        x-show="item.isCurrent"
+                                                        @click.stop="selectDate(item)"
+                                                        class="w-8 h-8 mx-auto text-xs flex items-center justify-center rounded-xl transition-all cursor-pointer"
+                                                        :class="{
+                                                            'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-600/30': value === item.date,
+                                                            'border border-emerald-500 text-emerald-600 dark:text-emerald-400 font-semibold hover:bg-emerald-50 dark:hover:bg-emerald-500/10': item.isToday && value !== item.date,
+                                                            'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10': value !== item.date && !item.isToday
+                                                        }"
+                                                        x-text="item.day">
                                                 </button>
-                                                <div x-show="!cell" class="w-full aspect-square"></div>
+                                                <div x-show="!item.isCurrent" class="w-8 h-8 mx-auto text-xs flex items-center justify-center text-slate-300 dark:text-slate-600 pointer-events-none" x-text="item.day"></div>
                                             </div>
                                         </template>
                                     </div>
-                                    <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-[11px]">
-                                        <button type="button" @click="setToday()" class="text-emerald-600 dark:text-emerald-400 hover:underline font-semibold cursor-pointer">วันนี้</button>
-                                        <button type="button" @click="clear()" class="text-slate-400 hover:text-rose-500 transition-colors cursor-pointer">ล้างค่า</button>
+                                    <div class="mt-3 pt-2 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs">
+                                        <button type="button" @click="clear()" class="text-slate-400 hover:text-rose-500 transition cursor-pointer font-medium">ล้างค่า</button>
+                                        <button type="button" @click="selectToday()" class="text-emerald-600 dark:text-emerald-400 hover:underline transition cursor-pointer font-semibold">วันนี้</button>
                                     </div>
                                 </div>
                             </div>
@@ -852,44 +858,48 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                                     <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 dark:border-white/10">
                                         <div class="flex items-center gap-1">
                                             <button type="button" @click="prevYear()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีก่อนหน้า">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
                                             </button>
-                                            <button type="button" @click="prevMonth()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนก่อนหน้า">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                                            <button type="button" @click="prevMonth()" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนก่อนหน้า">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                                             </button>
                                         </div>
-                                        <span class="text-xs font-bold text-slate-800 dark:text-slate-200" x-text="monthYearLabel"></span>
+                                        <div class="text-xs font-bold text-slate-800 dark:text-white" x-text="monthLabel"></div>
                                         <div class="flex items-center gap-1">
-                                            <button type="button" @click="nextMonth()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนถัดไป">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                            <button type="button" @click="nextMonth()" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="เดือนถัดไป">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                                             </button>
                                             <button type="button" @click="nextYear()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer" title="ปีถัดไป">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
                                             </button>
                                         </div>
                                     </div>
-                                    <div class="grid grid-cols-7 gap-1 text-center mb-1">
-                                        <template x-for="day in ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส']">
-                                            <span class="text-[10px] font-semibold text-slate-400 dark:text-slate-500 py-0.5" x-text="day"></span>
+                                    <div class="grid grid-cols-7 gap-1 mb-1 text-center">
+                                        <template x-for="day in shortDays">
+                                            <div class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 py-1" x-text="day"></div>
                                         </template>
                                     </div>
-                                    <div class="grid grid-cols-7 gap-1">
-                                        <template x-for="(cell, index) in calendarCells" :key="index">
+                                    <div class="grid grid-cols-7 gap-1 text-center">
+                                        <template x-for="(item, index) in days" :key="item.dateStr || (item.day + '-' + index)">
                                             <div>
                                                 <button type="button" 
-                                                        x-show="cell"
-                                                        @click="selectDate(cell)"
-                                                        class="w-full aspect-square flex items-center justify-center text-xs rounded-lg transition-all cursor-pointer font-medium"
-                                                        :class="isSelected(cell) ? 'bg-emerald-600 text-white font-bold shadow-sm' : isToday(cell) ? 'bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-300 dark:border-emerald-500/40' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10'">
-                                                    <span x-text="cell"></span>
+                                                        x-show="item.isCurrent"
+                                                        @click.stop="selectDate(item)"
+                                                        class="w-8 h-8 mx-auto text-xs flex items-center justify-center rounded-xl transition-all cursor-pointer"
+                                                        :class="{
+                                                            'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-600/30': value === item.date,
+                                                            'border border-emerald-500 text-emerald-600 dark:text-emerald-400 font-semibold hover:bg-emerald-50 dark:hover:bg-emerald-500/10': item.isToday && value !== item.date,
+                                                            'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10': value !== item.date && !item.isToday
+                                                        }"
+                                                        x-text="item.day">
                                                 </button>
-                                                <div x-show="!cell" class="w-full aspect-square"></div>
+                                                <div x-show="!item.isCurrent" class="w-8 h-8 mx-auto text-xs flex items-center justify-center text-slate-300 dark:text-slate-600 pointer-events-none" x-text="item.day"></div>
                                             </div>
                                         </template>
                                     </div>
-                                    <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-[11px]">
-                                        <button type="button" @click="setToday()" class="text-emerald-600 dark:text-emerald-400 hover:underline font-semibold cursor-pointer">วันนี้</button>
-                                        <button type="button" @click="clear()" class="text-slate-400 hover:text-rose-500 transition-colors cursor-pointer">ล้างค่า</button>
+                                    <div class="mt-3 pt-2 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs">
+                                        <button type="button" @click="clear()" class="text-slate-400 hover:text-rose-500 transition cursor-pointer font-medium">ล้างค่า</button>
+                                        <button type="button" @click="selectToday()" class="text-emerald-600 dark:text-emerald-400 hover:underline transition cursor-pointer font-semibold">วันนี้</button>
                                     </div>
                                 </div>
                             </div>
