@@ -163,16 +163,40 @@
 
             return {
                 name: config.name || '',
+                id: config.id || config.name || '',
                 value: config.value || '',
                 placeholder: config.placeholder || 'วว/ดด/ปปปป',
                 align: config.align || 'left',
+                placement: config.placement || 'bottom',
                 open: false,
                 viewYear: viewDate.getFullYear(),
                 viewMonth: viewDate.getMonth(),
                 days: [],
 
                 init() {
+                    this.syncFromValue();
                     this.refreshDays();
+
+                    // Listen for specific event targeting this datepicker field
+                    if (this.name) {
+                        window.addEventListener('set-thai-date-' + this.name, (e) => {
+                            this.setValue(e.detail);
+                        });
+                    }
+                    if (this.id && this.id !== this.name) {
+                        window.addEventListener('set-thai-date-' + this.id, (e) => {
+                            this.setValue(e.detail);
+                        });
+                    }
+
+                    // Two-way watch if parent model is passed
+                    if (config.model && typeof this.$watch === 'function') {
+                        this.$watch(config.model, (newVal) => {
+                            if (newVal !== this.value) {
+                                this.setValue(newVal);
+                            }
+                        });
+                    }
                 },
 
                 monthNames: [
@@ -193,12 +217,27 @@
                     const y = parseInt(parts[0], 10);
                     const m = parseInt(parts[1], 10);
                     const d = parseInt(parts[2], 10);
+                    if (isNaN(y) || isNaN(m) || isNaN(d)) return this.placeholder;
                     const thaiYear = y + 543;
                     return `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${thaiYear}`;
                 },
 
                 get monthLabel() {
                     return this.monthNames[this.viewMonth] + ' ' + (this.viewYear + 543);
+                },
+
+                syncFromValue() {
+                    if (this.value) {
+                        const parts = String(this.value).split('-');
+                        if (parts.length === 3) {
+                            const y = parseInt(parts[0], 10);
+                            const m = parseInt(parts[1], 10);
+                            if (!isNaN(y) && !isNaN(m)) {
+                                this.viewYear = y;
+                                this.viewMonth = m - 1;
+                            }
+                        }
+                    }
                 },
 
                 refreshDays() {
@@ -262,13 +301,7 @@
                 toggle() {
                     this.open = !this.open;
                     if (this.open) {
-                        if (this.value) {
-                            const parts = String(this.value).split('-');
-                            if (parts.length === 3) {
-                                this.viewYear = parseInt(parts[0], 10);
-                                this.viewMonth = parseInt(parts[1], 10) - 1;
-                            }
-                        }
+                        this.syncFromValue();
                         this.refreshDays();
                     }
                 },
@@ -303,10 +336,35 @@
                     this.refreshDays();
                 },
 
+                setValue(val) {
+                    this.value = val ? String(val).trim() : '';
+                    this.syncFromValue();
+                    this.refreshDays();
+                    this.dispatchChange();
+                },
+
+                dispatchChange() {
+                    this.$nextTick(() => {
+                        if (this.$el) {
+                            const hiddenInput = this.$el.querySelector('input[type="hidden"]');
+                            if (hiddenInput) {
+                                hiddenInput.value = this.value;
+                                hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+                                hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+                            this.$el.dispatchEvent(new CustomEvent('date-selected', {
+                                bubbles: true,
+                                detail: { name: this.name, value: this.value }
+                            }));
+                        }
+                    });
+                },
+
                 selectDate(item) {
                     if (!item.isCurrent || !item.date) return;
                     this.value = item.date;
                     this.open = false;
+                    this.dispatchChange();
                 },
 
                 selectToday() {
@@ -318,11 +376,13 @@
                     this.viewMonth = today.getMonth();
                     this.refreshDays();
                     this.open = false;
+                    this.dispatchChange();
                 },
 
                 clear() {
                     this.value = '';
                     this.open = false;
+                    this.dispatchChange();
                 }
             };
         }

@@ -672,11 +672,14 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
                                class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-[#12141a] border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white font-mono">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                            วันที่เบิกจ่าย <span class="text-rose-500">*</span>
-                        </label>
-                        <input type="date" name="disbursement_date" value="<?= date('Y-m-d') ?>" required
-                               class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-[#12141a] border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white">
+                        <?php \App\Core\View::component('thai-datepicker', [
+                            'name' => 'disbursement_date',
+                            'label' => 'วันที่เบิกจ่าย',
+                            'value' => date('Y-m-d'),
+                            'required' => true,
+                            'placement' => 'top',
+                            'align' => 'right',
+                        ]); ?>
                     </div>
                 </div>
 
