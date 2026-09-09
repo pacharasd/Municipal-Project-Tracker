@@ -282,17 +282,33 @@ class Database
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             ");
 
-            // Auto-drop project_code column if present
+            // Ensure project_code column exists for main projects
             $codeColCheck = $pdo->query("SHOW COLUMNS FROM `projects` LIKE 'project_code'")->fetch();
-            if ($codeColCheck) {
-                $idxCheck = $pdo->query("SHOW INDEX FROM `projects` WHERE Key_name = 'project_code'")->fetch();
-                if ($idxCheck) {
-                    try {
-                        $pdo->exec("ALTER TABLE `projects` DROP INDEX `project_code`");
-                    } catch (\Throwable $e) {}
-                }
-                $pdo->exec("ALTER TABLE `projects` DROP COLUMN `project_code`");
+            if (!$codeColCheck) {
+                $pdo->exec("ALTER TABLE `projects` ADD COLUMN `project_code` VARCHAR(50) NULL AFTER `parent_id`");
+                try {
+                    $pdo->exec("ALTER TABLE `projects` ADD INDEX `idx_projects_code` (`project_code`)");
+                } catch (\Throwable $e) {}
             }
+
+            // Ensure existing main projects have a valid project_code if missing
+            $pdo->exec("
+                UPDATE `projects` 
+                SET `project_code` = CONCAT('PRJ-2569-', LPAD(id, 3, '0')) 
+                WHERE `parent_id` IS NULL AND (`project_code` IS NULL OR `project_code` = '')
+            ");
+
+            // Ensure sub-projects strictly have NULL project_code
+            $pdo->exec("
+                UPDATE `projects` 
+                SET `project_code` = NULL 
+                WHERE `parent_id` IS NOT NULL
+            ");
+
+            // Ensure department_id in projects is nullable with default 1
+            try {
+                $pdo->exec("ALTER TABLE `projects` MODIFY COLUMN `department_id` BIGINT UNSIGNED NULL DEFAULT 1");
+            } catch (\Throwable $e) {}
         } catch (\Throwable $e) {
             error_log("Auto schema migration notice: " . $e->getMessage());
         }

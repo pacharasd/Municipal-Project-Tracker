@@ -119,6 +119,7 @@ class ReportController
 
         // Header row
         fputcsv($output, [
+            'รหัสโครงการ',
             'ชื่อโครงการ',
             'ระดับโครงการ',
             'ปีงบประมาณ',
@@ -136,6 +137,7 @@ class ReportController
 
         foreach ($rows as $r) {
             fputcsv($output, [
+                $r['project_code'] ?? '',
                 $r['name'],
                 $r['project_level'],
                 $r['fiscal_year'],

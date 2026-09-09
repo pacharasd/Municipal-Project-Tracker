@@ -29,12 +29,14 @@ foreach ($projects as $p) {
     $projectsSummary[] = [
         'id' => (int)$p['id'],
         'name' => (string)$p['name'],
+        'project_code' => (string)($p['project_code'] ?? ''),
         'fiscal_year_id' => (string)$p['fiscal_year_id'],
         'department_id' => (string)$p['department_id'],
         'budget' => (float)$p['budget'],
         'sub_count' => count($p['sub_projects']),
         'status' => $calcStatus,
         'search_text' => mb_strtolower(
+            ($p['project_code'] ?? '') . ' ' . 
             ($p['name'] ?? '') . ' ' . 
             ($p['responsible_person'] ?? '') . ' ' . 
             ($p['department_name'] ?? '') . ' ' . 
@@ -309,6 +311,11 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                         </button>
                         <div>
                             <div class="flex flex-wrap items-center gap-2">
+                                <?php if (!empty($p['project_code'])): ?>
+                                    <span class="px-2.5 py-0.5 text-xs font-mono font-bold rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-300/80 dark:border-emerald-500/30 shrink-0">
+                                        <?= htmlspecialchars($p['project_code']) ?>
+                                    </span>
+                                <?php endif; ?>
                                 <span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40"><?= htmlspecialchars(!empty($p['responsible_person']) ? $p['responsible_person'] : $p['department_name']) ?></span>
                                 <span class="px-2 py-0.5 text-xs text-slate-500 dark:text-slate-400">ปีงบ <?= $p['fiscal_year'] ?></span>
                                 <?php if (!empty($p['start_date']) || !empty($p['end_date'])): ?>
@@ -535,27 +542,27 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                         const start = $el.querySelector('input[name=start_date]')?.value;
                         const end = $el.querySelector('input[name=end_date]')?.value;
                         if (!cat) {
-                            alert('กรุณาเลือกประเภทโครงการ');
+                            if (window.showToast) window.showToast('กรุณาเลือกประเภทโครงการ', 'error'); else alert('กรุณาเลือกประเภทโครงการ');
                             $event.preventDefault();
                             return false;
                         }
                         if (!resp || !resp.trim()) {
-                            alert('กรุณาระบุชื่อผู้รับผิดชอบโครงการ');
+                            if (window.showToast) window.showToast('กรุณาระบุชื่อผู้รับผิดชอบโครงการ', 'error'); else alert('กรุณาระบุชื่อผู้รับผิดชอบโครงการ');
                             $event.preventDefault();
                             return false;
                         }
                         if (!start) {
-                            alert('กรุณาเลือกวันที่เริ่มต้นโครงการ');
+                            if (window.showToast) window.showToast('กรุณาเลือกวันที่เริ่มต้นโครงการ', 'error'); else alert('กรุณาเลือกวันที่เริ่มต้นโครงการ');
                             $event.preventDefault();
                             return false;
                         }
                         if (!end) {
-                            alert('กรุณาเลือกวันที่สิ้นสุดโครงการ');
+                            if (window.showToast) window.showToast('กรุณาเลือกวันที่สิ้นสุดโครงการ', 'error'); else alert('กรุณาเลือกวันที่สิ้นสุดโครงการ');
                             $event.preventDefault();
                             return false;
                         }
                         if (start > end) {
-                            alert('วันที่สิ้นสุดโครงการต้องไม่น้อยกว่าวันที่เริ่มต้น');
+                            if (window.showToast) window.showToast('วันที่สิ้นสุดโครงการต้องไม่น้อยกว่าวันที่เริ่มต้น', 'error'); else alert('วันที่สิ้นสุดโครงการต้องไม่น้อยกว่าวันที่เริ่มต้น');
                             $event.preventDefault();
                             return false;
                         }
@@ -563,9 +570,20 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                       class="p-6 space-y-4">
                     <input type="hidden" name="_token" value="<?= $csrfToken ?>">
 
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ชื่อโครงการหลัก <span class="text-rose-500">*</span></label>
-                        <input type="text" name="name" required placeholder="ระบุชื่อโครงการหลัก..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="sm:col-span-1">
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                รหัสโครงการหลัก
+                            </label>
+                            <input type="text" name="project_code" placeholder="เช่น PRJ-2569-001" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white font-mono focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+                            <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-1">เว้นว่างไว้เพื่อสร้างอัตโนมัติ</p>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                ชื่อโครงการหลัก <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="text" name="name" required placeholder="ระบุชื่อโครงการหลัก..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -629,10 +647,18 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ประเภทโครงการ <span class="text-rose-500">*</span></label>
+                            <?php 
+                                $defaultCatId = '';
+                                $defaultCatName = '-- เลือกประเภทโครงการ --';
+                                if (!empty($categories)) {
+                                    $defaultCatId = (string)$categories[0]['id'];
+                                    $defaultCatName = $categories[0]['name'];
+                                }
+                            ?>
                             <div class="relative" x-data="{
                                 open: false,
-                                val: '',
-                                label: '-- เลือกประเภทโครงการ --',
+                                val: '<?= $defaultCatId ?>',
+                                label: '<?= htmlspecialchars(addslashes($defaultCatName)) ?>',
                                 select(id, name) {
                                     this.val = id;
                                     this.label = name;
@@ -673,8 +699,13 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">คำอธิบายและวัตถุประสงค์</label>
-                        <textarea name="description" rows="2" placeholder="รายละเอียดของโครงการ..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"></textarea>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">คำอธิบายโครงการ</label>
+                        <textarea name="description" rows="2" placeholder="ระบุรายละเอียดหรือคำอธิบายของโครงการ..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">วัตถุประสงค์โครงการ</label>
+                        <textarea name="objective" rows="2" placeholder="ระบุวัตถุประสงค์ของโครงการ..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"></textarea>
                     </div>
 
                     <div>
@@ -693,7 +724,21 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">วันที่เริ่มต้น <span class="text-rose-500">*</span></label>
-                            <div class="relative" x-data="thaiDatePicker({ name: 'start_date', value: '', align: 'left', placeholder: 'วว/ดด/ปปปป' })" @click.outside="open = false">
+                            <?php
+                                $defaultStartDate = date('Y-m-d');
+                                $defaultEndDate = date('Y-12-31');
+                                if (!empty($defaultFyId)) {
+                                    foreach ($fiscalYears as $fy) {
+                                        if ($fy['id'] == $defaultFyId) {
+                                            $ceYear = (int)$fy['year'] - 543;
+                                            $defaultStartDate = date('Y-m-d');
+                                            $defaultEndDate = "{$ceYear}-09-30";
+                                            break;
+                                        }
+                                    }
+                                }
+                            ?>
+                            <div class="relative" x-data="thaiDatePicker({ name: 'start_date', value: '<?= $defaultStartDate ?>', align: 'left', placeholder: 'วว/ดด/ปปปป' })" @click.outside="open = false">
                                 <input type="hidden" name="start_date" :name="name" :value="value">
                                 <button type="button" 
                                         @click="toggle()" 
@@ -765,7 +810,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">วันที่สิ้นสุด <span class="text-rose-500">*</span></label>
-                            <div class="relative" x-data="thaiDatePicker({ name: 'end_date', value: '', align: 'right', placeholder: 'วว/ดด/ปปปป' })" @click.outside="open = false">
+                            <div class="relative" x-data="thaiDatePicker({ name: 'end_date', value: '<?= $defaultEndDate ?>', align: 'right', placeholder: 'วว/ดด/ปปปป' })" @click.outside="open = false">
                                 <input type="hidden" name="end_date" :name="name" :value="value">
                                 <button type="button" 
                                         @click="toggle()" 

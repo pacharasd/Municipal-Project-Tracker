@@ -13,12 +13,32 @@ class DashboardController
         $fiscalYears = \App\Services\FiscalYearService::getFilterableYears();
         $activeYear = \App\Services\FiscalYearService::getActiveYear();
 
-        // Determine selected fiscal year
+        // Determine selected fiscal year with Smart Fallback
         $rawYearParam = $_GET['fiscal_year_id'] ?? null;
         if ($rawYearParam === null) {
             // Default to active fiscal year if not provided in URL
-            $selectedYearId = $activeYear ? (int)$activeYear['id'] : 'all';
-            $filterYearId = $activeYear ? (int)$activeYear['id'] : null;
+            $defaultYearId = $activeYear ? (int)$activeYear['id'] : null;
+            if ($defaultYearId !== null) {
+                // Check if active fiscal year has projects
+                $hasProjectsInActive = (int)Database::fetchColumn(
+                    "SELECT COUNT(*) FROM projects WHERE fiscal_year_id = ? OR parent_id IN (SELECT id FROM projects WHERE fiscal_year_id = ?)",
+                    [$defaultYearId, $defaultYearId]
+                ) > 0;
+
+                if (!$hasProjectsInActive) {
+                    // Smart fallback: Check if there is another fiscal year that has projects
+                    $yearWithProjects = Database::fetch(
+                        "SELECT fy.id, fy.year FROM fiscal_years fy 
+                         INNER JOIN projects p ON p.fiscal_year_id = fy.id 
+                         ORDER BY fy.year DESC LIMIT 1"
+                    );
+                    if ($yearWithProjects) {
+                        $defaultYearId = (int)$yearWithProjects['id'];
+                    }
+                }
+            }
+            $selectedYearId = $defaultYearId !== null ? $defaultYearId : 'all';
+            $filterYearId = $defaultYearId;
         } elseif ($rawYearParam === 'all') {
             $selectedYearId = 'all';
             $filterYearId = null;
@@ -72,6 +92,17 @@ class DashboardController
         $latestSql .= " ORDER BY s.id DESC LIMIT 5";
         $latestProjects = Database::query($latestSql, $latestParams);
 
+        $suggestedYear = null;
+        if ($filterYearId !== null && ($stats['sub_total'] ?? 0) === 0) {
+            $suggestedYear = Database::fetch(
+                "SELECT fy.id, fy.year FROM fiscal_years fy 
+                 INNER JOIN projects p ON p.fiscal_year_id = fy.id 
+                 WHERE fy.id != ?
+                 ORDER BY fy.year DESC LIMIT 1",
+                [$filterYearId]
+            );
+        }
+
         View::render('dashboard.index', [
             'stats'          => $stats,
             'watchlist'      => $watchlist,
@@ -82,14 +113,18 @@ class DashboardController
             'departments'    => $departments,
             'subProjects'    => $subProjects,
             'latestProjects' => $latestProjects,
+            'suggestedYear'  => $suggestedYear,
         ]);
     }
 
     public function statsJson(): void
     {
         $rawYearParam = $_GET['fiscal_year_id'] ?? null;
+        $activeYear = \App\Services\FiscalYearService::getActiveYear();
         $filterYearId = null;
-        if ($rawYearParam !== null && $rawYearParam !== 'all') {
+        if ($rawYearParam === null && $activeYear) {
+            $filterYearId = (int)$activeYear['id'];
+        } elseif ($rawYearParam !== null && $rawYearParam !== 'all') {
             $filterYearId = (int)$rawYearParam;
         }
         $stats = ProjectService::getDashboardStats($filterYearId);

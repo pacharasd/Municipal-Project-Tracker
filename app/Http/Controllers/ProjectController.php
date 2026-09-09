@@ -89,37 +89,35 @@ class ProjectController
         }
 
         $responsiblePerson = trim($_POST['responsible_person'] ?? '');
-        $deptId = !empty($_POST['department_id']) ? (int)$_POST['department_id'] : null;
+        $deptId = !empty($_POST['department_id']) ? (int)$_POST['department_id'] : 1;
         $responsibleUserId = !empty($_POST['responsible_user_id']) ? (int)$_POST['responsible_user_id'] : null;
 
-        if (!$deptId && $responsiblePerson) {
-            $matchedDept = Database::fetch("SELECT id FROM departments WHERE name LIKE ? LIMIT 1", ["%{$responsiblePerson}%"]);
-            if ($matchedDept) {
-                $deptId = (int)$matchedDept['id'];
-            } else {
-                $matchedUser = Database::fetch("SELECT id, department_id FROM users WHERE name LIKE ? LIMIT 1", ["%{$responsiblePerson}%"]);
-                if ($matchedUser) {
-                    $responsibleUserId = (int)$matchedUser['id'];
-                    $deptId = !empty($matchedUser['department_id']) ? (int)$matchedUser['department_id'] : 1;
-                } else {
-                    $user = Auth::user();
-                    $deptId = !empty($user['department_id']) ? (int)$user['department_id'] : 1;
-                }
+        if (!$responsibleUserId && $responsiblePerson) {
+            $matchedUser = Database::fetch("SELECT id FROM users WHERE name LIKE ? LIMIT 1", ["%{$responsiblePerson}%"]);
+            if ($matchedUser) {
+                $responsibleUserId = (int)$matchedUser['id'];
             }
-        }
-        if (!$deptId) {
-            $deptId = 1;
         }
         if (!$responsibleUserId) {
             $responsibleUserId = Auth::id() ?: 1;
         }
 
         try {
+            $fiscalYearId = (int)$_POST['fiscal_year_id'];
+            $projectCode = trim($_POST['project_code'] ?? '');
+            if (empty($projectCode)) {
+                $projectCode = ProjectService::generateNextProjectCode($fiscalYearId);
+            } else {
+                $projectCode = mb_substr($projectCode, 0, 50, 'UTF-8');
+            }
+
             $insertData = [
                 'parent_id'           => null,
+                'project_code'        => $projectCode,
                 'name'                => trim($_POST['name']),
                 'description'         => trim($_POST['description'] ?? ''),
-                'fiscal_year_id'      => (int)$_POST['fiscal_year_id'],
+                'objective'           => trim($_POST['objective'] ?? ''),
+                'fiscal_year_id'      => $fiscalYearId,
                 'category_id'         => (int)$_POST['category_id'],
                 'department_id'       => $deptId,
                 'responsible_user_id' => $responsibleUserId,
@@ -183,6 +181,13 @@ class ProjectController
             exit;
         }
 
+        $responsiblePerson = trim($_POST['responsible_person'] ?? '');
+        if (empty($responsiblePerson)) {
+            Session::flash('error', 'กรุณาระบุผู้รับผิดชอบโครงการ');
+            header('Location: ' . Router::url("/projects/{$projectId}"));
+            exit;
+        }
+
         $newStartDate = trim($_POST['start_date']);
         $newEndDate = trim($_POST['end_date']);
 
@@ -210,21 +215,57 @@ class ProjectController
             exit;
         }
 
+        $responsibleUserId = !empty($_POST['responsible_user_id']) ? (int)$_POST['responsible_user_id'] : $project['responsible_user_id'];
+        if ($responsiblePerson !== '') {
+            $matchedUser = Database::fetch("SELECT id FROM users WHERE name LIKE ? LIMIT 1", ["%{$responsiblePerson}%"]);
+            if ($matchedUser) {
+                $responsibleUserId = (int)$matchedUser['id'];
+            }
+        }
+
         $updateData = [
             'name'                => trim($_POST['name']),
             'description'         => trim($_POST['description'] ?? ''),
-            'responsible_user_id' => !empty($_POST['responsible_user_id']) ? (int)$_POST['responsible_user_id'] : $project['responsible_user_id'],
+            'responsible_user_id' => $responsibleUserId,
             'start_date'          => $_POST['start_date'],
             'end_date'            => $_POST['end_date'],
             'notes'               => trim($_POST['notes'] ?? ''),
         ];
-        if (isset($_POST['responsible_person']) && ProjectService::hasResponsiblePersonColumn()) {
-            $updateData['responsible_person'] = trim($_POST['responsible_person']);
+        if (isset($_POST['status']) && in_array($_POST['status'], ['not_started', 'in_progress', 'completed', 'has_problem', 'cancelled'])) {
+            $updateData['status'] = $_POST['status'];
+        }
+        if (isset($_POST['budget']) && is_numeric($_POST['budget'])) {
+            $updateData['budget'] = (float)$_POST['budget'];
+        }
+        if (!empty($_POST['fiscal_year'])) {
+            $fyYear = (int)$_POST['fiscal_year'];
+            $fy = Database::fetch("SELECT id FROM fiscal_years WHERE year = ?", [$fyYear]);
+            if ($fy) {
+                $updateData['fiscal_year_id'] = $fy['id'];
+            }
+        }
+        if (isset($_POST['objective'])) {
+            $updateData['objective'] = trim($_POST['objective']);
+        }
+        if (isset($_POST['project_code'])) {
+            $pCode = trim($_POST['project_code']);
+            if (!empty($pCode)) {
+                $updateData['project_code'] = mb_substr($pCode, 0, 50, 'UTF-8');
+            }
+        }
+        if (ProjectService::hasResponsiblePersonColumn()) {
+            $updateData['responsible_person'] = $responsiblePerson;
         }
 
         Database::update('projects', $updateData, "id = ?", [$projectId]);
 
-        AuditLogService::log('UPDATE', 'Project', $projectId, ['name' => $project['name']], ['name' => $_POST['name']]);
+        AuditLogService::log('UPDATE', 'Project', $projectId, [
+            'name' => $project['name'],
+            'responsible_person' => $project['responsible_person'] ?? '',
+        ], [
+            'name' => $updateData['name'],
+            'responsible_person' => $responsiblePerson,
+        ]);
         Session::flash('success', 'อัปเดตข้อมูลโครงการเรียบร้อยแล้ว');
         header('Location: ' . Router::url("/projects/{$projectId}"));
         exit;

@@ -1226,7 +1226,10 @@
                     </div>
                     
                     <!-- แดชบอร์ดภาพรวม -->
-                    <?php $isDashboard = str_contains($_SERVER['REQUEST_URI'], '/dashboard'); ?>
+                    <?php 
+                        $currentReqUri = $_SERVER['REQUEST_URI'] ?? '/';
+                        $isDashboard = str_contains($currentReqUri, '/dashboard'); 
+                    ?>
                     <a href="<?= \App\Core\Router::url('/dashboard') ?>" 
                        class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isDashboard ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
                         <div class="flex items-center gap-3">
@@ -1237,7 +1240,7 @@
                     </a>
 
                     <!-- โครงการหลัก & ย่อย -->
-                    <?php $isProjects = (str_contains($_SERVER['REQUEST_URI'], '/projects') || str_contains($_SERVER['REQUEST_URI'], '/sub-projects')); ?>
+                    <?php $isProjects = (str_contains($currentReqUri, '/projects') || str_contains($currentReqUri, '/sub-projects')); ?>
                     <a href="<?= \App\Core\Router::url('/projects') ?>" 
                        class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isProjects ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
                         <div class="flex items-center gap-3">
@@ -1248,7 +1251,7 @@
                     </a>
 
                     <!-- งบประมาณ & เบิกจ่าย -->
-                    <?php $isBudgets = str_contains($_SERVER['REQUEST_URI'], '/budgets'); ?>
+                    <?php $isBudgets = str_contains($currentReqUri, '/budgets'); ?>
                     <a href="<?= \App\Core\Router::url('/budgets') ?>" 
                        class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isBudgets ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
                         <div class="flex items-center gap-3">
@@ -1259,7 +1262,7 @@
                     </a>
 
                     <!-- รายงาน & ส่งออกข้อมูล -->
-                    <?php $isReports = str_contains($_SERVER['REQUEST_URI'], '/reports'); ?>
+                    <?php $isReports = str_contains($currentReqUri, '/reports'); ?>
                     <a href="<?= \App\Core\Router::url('/reports') ?>" 
                        class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isReports ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
                         <div class="flex items-center gap-3">
@@ -1275,7 +1278,7 @@
                     </div>
 
                     <!-- ผู้ใช้งาน & สิทธิ์ -->
-                    <?php $isUsers = str_contains($_SERVER['REQUEST_URI'], '/users'); ?>
+                    <?php $isUsers = str_contains($currentReqUri, '/users'); ?>
                     <a href="<?= \App\Core\Router::url('/users') ?>" 
                        class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isUsers ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
                         <div class="flex items-center gap-3">
@@ -1286,7 +1289,7 @@
                     </a>
 
                     <!-- ประเภทโครงการ -->
-                    <?php $isCategories = str_contains($_SERVER['REQUEST_URI'], '/categories'); ?>
+                    <?php $isCategories = str_contains($currentReqUri, '/categories'); ?>
                     <a href="<?= \App\Core\Router::url('/categories') ?>" 
                        class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isCategories ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
                         <div class="flex items-center gap-3">
@@ -1297,7 +1300,7 @@
                     </a>
 
                     <!-- Audit Log -->
-                    <?php $isAudit = str_contains($_SERVER['REQUEST_URI'], '/audit-logs'); ?>
+                    <?php $isAudit = str_contains($currentReqUri, '/audit-logs'); ?>
                     <a href="<?= \App\Core\Router::url('/audit-logs') ?>" 
                        class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isAudit ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
                         <div class="flex items-center gap-3">
@@ -1550,12 +1553,16 @@
                     // 7. Re-evaluate <script> tags inside newMain
                     const scripts = Array.from(currentMain.querySelectorAll('script'));
                     for (const oldScript of scripts) {
-                        const newScript = document.createElement('script');
-                        for (const attr of oldScript.attributes) {
-                            newScript.setAttribute(attr.name, attr.value);
+                        try {
+                            const newScript = document.createElement('script');
+                            for (const attr of oldScript.attributes) {
+                                newScript.setAttribute(attr.name, attr.value);
+                            }
+                            newScript.text = oldScript.text;
+                            oldScript.parentNode.replaceChild(newScript, oldScript);
+                        } catch (scriptErr) {
+                            console.warn('MPT: Script re-evaluation warning:', scriptErr);
                         }
-                        newScript.text = oldScript.text;
-                        oldScript.parentNode.replaceChild(newScript, oldScript);
                     }
 
                     // 8. Re-initialize Alpine on currentMain
@@ -1571,7 +1578,7 @@
                     safeCreateIcons();
 
                     // 10. Re-initialize charts if on dashboard
-                    if (typeof window.initDashboardCharts === 'function' && (document.getElementById('statusDonutChart') || document.getElementById('budgetDonutChart') || document.getElementById('deptBarChart'))) {
+                    if (typeof window.initDashboardCharts === 'function' && (document.getElementById('statusDonutChart') || document.getElementById('budgetComparisonChart') || document.getElementById('projectSuccessChart') || document.getElementById('categoryBarChart'))) {
                         window.initDashboardCharts();
                     }
 
@@ -1730,12 +1737,16 @@
                     // 7. Re-evaluate <script> tags inside newMain
                     const scripts = Array.from(currentMain.querySelectorAll('script'));
                     for (const oldScript of scripts) {
-                        const newScript = document.createElement('script');
-                        for (const attr of oldScript.attributes) {
-                            newScript.setAttribute(attr.name, attr.value);
+                        try {
+                            const newScript = document.createElement('script');
+                            for (const attr of oldScript.attributes) {
+                                newScript.setAttribute(attr.name, attr.value);
+                            }
+                            newScript.text = oldScript.text;
+                            oldScript.parentNode.replaceChild(newScript, oldScript);
+                        } catch (scriptErr) {
+                            console.warn('MPT: Form submit script re-evaluation warning:', scriptErr);
                         }
-                        newScript.text = oldScript.text;
-                        oldScript.parentNode.replaceChild(newScript, oldScript);
                     }
 
                     // 8. Re-initialize Alpine on currentMain
@@ -1751,7 +1762,7 @@
                     safeCreateIcons();
 
                     // 10. Re-initialize charts if on dashboard
-                    if (typeof window.initDashboardCharts === 'function' && (document.getElementById('statusDonutChart') || document.getElementById('budgetDonutChart') || document.getElementById('deptBarChart'))) {
+                    if (typeof window.initDashboardCharts === 'function' && (document.getElementById('statusDonutChart') || document.getElementById('budgetComparisonChart') || document.getElementById('projectSuccessChart') || document.getElementById('categoryBarChart'))) {
                         window.initDashboardCharts();
                     }
 

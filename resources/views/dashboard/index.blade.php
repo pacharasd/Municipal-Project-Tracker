@@ -9,12 +9,19 @@ $thaiMonths = [
 ];
 $currentDateThai = date('j') . ' ' . $thaiMonths[(int)date('n')] . ' ' . (date('Y') + 543);
 
-// Calculations for Status Breakdown
+// Calculations for Status Breakdown (AGENTS.md Rule #10.1: 5 Statuses)
 $totalSub = max(1, (int)$stats['sub_total']);
 $inProgPct = round(((int)$stats['in_progress'] / $totalSub) * 100, 1);
 $notStartPct = round(((int)$stats['not_started'] / $totalSub) * 100, 1);
 $compPct = round(((int)$stats['completed'] / $totalSub) * 100, 1);
 $probPct = round(((int)$stats['has_problem'] / $totalSub) * 100, 1);
+$cancPct = round(((int)($stats['cancelled'] ?? 0) / $totalSub) * 100, 1);
+
+// AGENTS.md Rule #10.3 & 10.4 Data
+$topProjects = $stats['top_projects'] ?? [];
+$bottomProjects = $stats['bottom_projects'] ?? [];
+$categoryData = $stats['category_data'] ?? [];
+
 
 // Calculations for Progress Tiers
 $tierOver75 = 0;
@@ -151,195 +158,326 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
         </div>
     </div>
 
-    <!-- 2. 4 Top KPI Metric Cards (Ultra-Premium Polish with Exact Color Palette) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 w-full max-w-full">
-        
-        <!-- การ์ด 1: โครงการทั้งหมด (Royal Blue Accent) -->
-        <div class="group relative p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-lg hover:border-blue-400/60 dark:hover:border-blue-500/40 transition-all duration-300 overflow-hidden flex flex-col justify-between w-full max-w-full min-w-0">
-            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-sky-400 to-indigo-500 opacity-80 group-hover:opacity-100 transition-opacity"></div>
-            <div class="flex items-center justify-between gap-2">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">
-                    โครงการทั้งหมด
-                </span>
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-500/20 shadow-sm shadow-blue-500/10 group-hover:scale-110 transition-transform shrink-0">
-                    <i data-lucide="folder-kanban" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+    <?php if (!empty($suggestedYear)): ?>
+        <!-- Alert Banner: แนะนำให้สลับไปยังปีงบประมาณที่มีข้อมูลโครงการ -->
+        <div class="p-3.5 sm:p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs sm:text-sm">
+            <div class="flex items-center gap-2.5 text-amber-900 dark:text-amber-200 min-w-0">
+                <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                    <i data-lucide="info" class="w-4 h-4"></i>
+                </div>
+                <div class="truncate">
+                    <span class="font-bold">ปีงบประมาณ <?= htmlspecialchars($currentSelectedLabel) ?> ยังไม่มีข้อมูลโครงการ</span>
+                    <span class="text-amber-800/80 dark:text-amber-300/80 text-xs block sm:inline sm:ml-1">พบข้อมูลโครงการที่กำลังติดตามอยู่ในปีงบประมาณ <?= htmlspecialchars((string)$suggestedYear['year']) ?></span>
                 </div>
             </div>
-            <div class="my-2.5 sm:my-3">
-                <div class="text-2xl sm:text-3xl lg:text-4xl font-black text-blue-600 dark:text-blue-400 font-heading tracking-tight leading-tight">
-                    <?= number_format($stats['sub_total']) ?>
+            <a href="<?= \App\Core\Router::url('/dashboard') ?>?fiscal_year_id=<?= $suggestedYear['id'] ?>" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm transition shrink-0 cursor-pointer">
+                <span>สลับไปดูปี <?= htmlspecialchars((string)$suggestedYear['year']) ?></span>
+                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+            </a>
+        </div>
+    <?php endif; ?>
+
+    <!-- 2. 9 KPI Metric Cards (AGENTS.md Rule #9: Statuses, Budgets, and Performance) -->
+    <div class="space-y-3 sm:space-y-4 w-full max-w-full">
+        <!-- Row 2A: 5 Status Cards (AGENTS.md Rule #9 - 5 Statuses) -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 w-full max-w-full">
+            <!-- 1. โครงการทั้งหมด -->
+            <div class="group relative p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-blue-400/60 dark:hover:border-blue-500/40 transition-all overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-sky-400 to-indigo-500"></div>
+                <div class="flex items-center justify-between gap-1.5">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">โครงการทั้งหมด</span>
+                    <div class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                        <i data-lucide="folder-kanban" class="w-4 h-4"></i>
+                    </div>
                 </div>
-                <div class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5 truncate">
-                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0"></span>
-                    <span class="truncate">โครงการย่อยในระบบทั้งหมด</span>
+                <div class="my-2">
+                    <div class="text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400 font-heading tracking-tight leading-tight">
+                        <?= number_format($stats['sub_total']) ?>
+                    </div>
+                    <div class="text-[10.5px] text-slate-400 mt-0.5 truncate">โครงการย่อยในระบบ</div>
+                </div>
+                <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                    <span>โครงการหลัก</span>
+                    <span class="font-bold text-slate-800 dark:text-slate-200 font-mono"><?= number_format($stats['main_total']) ?></span>
                 </div>
             </div>
-            <div class="pt-2.5 sm:pt-3 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between gap-1 text-[11px] text-slate-500 dark:text-slate-400">
-                <span class="truncate">โครงการหลัก: <strong class="text-slate-800 dark:text-slate-200"><?= number_format($stats['main_total']) ?></strong></span>
-                <span class="font-semibold text-blue-600 dark:text-blue-400 shrink-0 text-[10.5px] sm:text-[11px] whitespace-nowrap">100% ในแผน</span>
+
+            <!-- 2. กำลังดำเนินการ -->
+            <div class="group relative p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-amber-400/60 dark:hover:border-amber-500/40 transition-all overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400"></div>
+                <div class="flex items-center justify-between gap-1.5">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">กำลังดำเนินการ</span>
+                    <div class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                        <i data-lucide="clock" class="w-4 h-4"></i>
+                    </div>
+                </div>
+                <div class="my-2">
+                    <div class="text-2xl sm:text-3xl font-black text-amber-500 dark:text-amber-400 font-heading tracking-tight leading-tight">
+                        <?= number_format($stats['in_progress']) ?>
+                    </div>
+                    <div class="text-[10.5px] text-slate-400 mt-0.5 truncate">คิดเป็น <?= $inProgPct ?>%</div>
+                </div>
+                <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                    <span>สัดส่วน</span>
+                    <span class="font-semibold text-amber-600 dark:text-amber-400 font-mono"><?= $inProgPct ?>%</span>
+                </div>
+            </div>
+
+            <!-- 3. ยังไม่เริ่ม -->
+            <div class="group relative p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-slate-400/60 dark:hover:border-slate-500/40 transition-all overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-slate-400 via-gray-400 to-zinc-500"></div>
+                <div class="flex items-center justify-between gap-1.5">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">ยังไม่เริ่ม</span>
+                    <div class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0">
+                        <i data-lucide="circle-dashed" class="w-4 h-4"></i>
+                    </div>
+                </div>
+                <div class="my-2">
+                    <div class="text-2xl sm:text-3xl font-black text-slate-700 dark:text-slate-300 font-heading tracking-tight leading-tight">
+                        <?= number_format($stats['not_started']) ?>
+                    </div>
+                    <div class="text-[10.5px] text-slate-400 mt-0.5 truncate">คิดเป็น <?= $notStartPct ?>%</div>
+                </div>
+                <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                    <span>สัดส่วน</span>
+                    <span class="font-semibold text-slate-600 dark:text-slate-400 font-mono"><?= $notStartPct ?>%</span>
+                </div>
+            </div>
+
+            <!-- 4. เสร็จสิ้น -->
+            <div class="group relative p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-emerald-400/60 dark:hover:border-emerald-500/40 transition-all overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 via-teal-400 to-green-500"></div>
+                <div class="flex items-center justify-between gap-1.5">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">เสร็จสิ้น</span>
+                    <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                    </div>
+                </div>
+                <div class="my-2">
+                    <div class="text-2xl sm:text-3xl font-black text-emerald-500 dark:text-emerald-400 font-heading tracking-tight leading-tight">
+                        <?= number_format($stats['completed']) ?>
+                    </div>
+                    <div class="text-[10.5px] text-slate-400 mt-0.5 truncate">คิดเป็น <?= $compPct ?>%</div>
+                </div>
+                <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                    <span>สำเร็จ</span>
+                    <span class="font-semibold text-emerald-600 dark:text-emerald-400 font-mono">100%</span>
+                </div>
+            </div>
+
+            <!-- 5. มีปัญหา -->
+            <div class="group relative p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-rose-400/60 dark:hover:border-rose-500/40 transition-all overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 via-red-500 to-orange-500"></div>
+                <div class="flex items-center justify-between gap-1.5">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">มีปัญหา</span>
+                    <div class="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+                        <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                    </div>
+                </div>
+                <div class="my-2">
+                    <div class="text-2xl sm:text-3xl font-black text-rose-500 dark:text-rose-400 font-heading tracking-tight leading-tight">
+                        <?= number_format($stats['has_problem']) ?>
+                    </div>
+                    <div class="text-[10.5px] text-slate-400 mt-0.5 truncate">คิดเป็น <?= $probPct ?>%</div>
+                </div>
+                <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                    <span>เฝ้าระวัง</span>
+                    <span class="font-semibold text-rose-600 dark:text-rose-400 font-mono"><?= $probPct ?>%</span>
+                </div>
             </div>
         </div>
 
-        <!-- การ์ด 2: กำลังดำเนินการ (Golden Amber Accent) -->
-        <div class="group relative p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-lg hover:border-amber-400/60 dark:hover:border-amber-500/40 transition-all duration-300 overflow-hidden flex flex-col justify-between w-full max-w-full min-w-0">
-            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 opacity-80 group-hover:opacity-100 transition-opacity"></div>
-            <div class="flex items-center justify-between gap-2">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">
-                    กำลังดำเนินการ
-                </span>
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-200/60 dark:border-amber-500/20 shadow-sm shadow-amber-500/10 group-hover:scale-110 transition-transform shrink-0">
-                    <i data-lucide="clock" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+        <!-- Row 2B: 4 Budget & Performance Cards (AGENTS.md Rule #9 - Budget, Disbursed, Remaining, Average Success %) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full max-w-full">
+            <!-- 6. งบประมาณทั้งหมด -->
+            <div class="group relative p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-indigo-400/60 dark:hover:border-indigo-500/40 transition-all overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-blue-500 to-cyan-500"></div>
+                <div class="flex items-center justify-between gap-1.5">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">งบประมาณทั้งหมด</span>
+                    <div class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                        <i data-lucide="coins" class="w-4 h-4"></i>
+                    </div>
+                </div>
+                <div class="my-2">
+                    <div class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-heading tracking-tight leading-tight">
+                        <?= number_format((float)$stats['total_budget'], 2) ?>
+                    </div>
+                    <div class="text-[10.5px] text-slate-400 mt-0.5 font-sans">บาท</div>
+                </div>
+                <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                    <span>กรอบงบประมาณ</span>
+                    <span class="font-semibold text-indigo-600 dark:text-indigo-400 font-mono">100%</span>
                 </div>
             </div>
-            <div class="my-2.5 sm:my-3">
-                <div class="text-2xl sm:text-3xl lg:text-4xl font-black text-amber-500 dark:text-amber-400 font-heading tracking-tight leading-tight">
-                    <?= number_format($stats['in_progress']) ?>
+
+            <!-- 7. งบประมาณที่เบิกจ่าย -->
+            <div class="group relative p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-emerald-400/60 dark:hover:border-emerald-500/40 transition-all overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-400 to-green-500"></div>
+                <div class="flex items-center justify-between gap-1.5">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">งบประมาณที่เบิกจ่าย</span>
+                    <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                        <i data-lucide="wallet" class="w-4 h-4"></i>
+                    </div>
                 </div>
-                <div class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5 truncate">
-                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
-                    <span class="truncate">คิดเป็น <strong class="text-slate-800 dark:text-slate-200"><?= $inProgPct ?>%</strong> ของทั้งหมด</span>
+                <div class="my-2">
+                    <div class="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-heading tracking-tight leading-tight">
+                        <?= number_format((float)$stats['total_disbursed'], 2) ?>
+                    </div>
+                    <div class="text-[10.5px] text-slate-400 mt-0.5 font-sans">บาท</div>
+                </div>
+                <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                    <span>เบิกจ่ายแล้ว</span>
+                    <span class="font-bold text-emerald-600 dark:text-emerald-400 font-mono"><?= number_format((float)$stats['disbursement_pct'], 1) ?>%</span>
                 </div>
             </div>
-            <div class="pt-2.5 sm:pt-3 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between gap-1 text-[11px] text-slate-500 dark:text-slate-400">
-                <span class="truncate">การขับเคลื่อน</span>
-                <span class="font-semibold text-amber-600 dark:text-amber-400 shrink-0 text-[10.5px] sm:text-[11px] whitespace-nowrap">กำลังดำเนินงาน</span>
+
+            <!-- 8. งบประมาณคงเหลือ -->
+            <div class="group relative p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-sky-400/60 dark:hover:border-sky-500/40 transition-all overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-sky-500 via-cyan-400 to-blue-500"></div>
+                <div class="flex items-center justify-between gap-1.5">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">งบประมาณคงเหลือ</span>
+                    <div class="w-8 h-8 rounded-xl bg-sky-50 dark:bg-sky-500/15 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
+                        <i data-lucide="piggy-bank" class="w-4 h-4"></i>
+                    </div>
+                </div>
+                <div class="my-2">
+                    <div class="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 font-heading tracking-tight leading-tight">
+                        <?= number_format((float)$stats['total_remaining'], 2) ?>
+                    </div>
+                    <div class="text-[10.5px] text-slate-400 mt-0.5 font-sans">บาท</div>
+                </div>
+                <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                    <span>คงเหลือ</span>
+                    <span class="font-semibold text-sky-600 dark:text-sky-400 font-mono"><?= number_format(max(0, 100 - (float)$stats['disbursement_pct']), 1) ?>%</span>
+                </div>
+            </div>
+
+            <!-- 9. เปอร์เซ็นต์ความสำเร็จเฉลี่ย -->
+            <div class="group relative p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-purple-400/60 dark:hover:border-purple-500/40 transition-all overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-violet-400 to-pink-500"></div>
+                <div class="flex items-center justify-between gap-1.5">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">ความสำเร็จเฉลี่ย</span>
+                    <div class="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                        <i data-lucide="target" class="w-4 h-4"></i>
+                    </div>
+                </div>
+                <div class="my-2">
+                    <div class="text-xl sm:text-2xl font-black text-purple-600 dark:text-purple-400 font-heading tracking-tight leading-tight">
+                        <?= number_format((float)($stats['avg_progress'] ?? 0), 1) ?>%
+                    </div>
+                    <div class="w-full bg-slate-100 dark:bg-white/10 h-1.5 rounded-full overflow-hidden mt-1.5">
+                        <div class="bg-gradient-to-r from-purple-500 to-indigo-500 h-full rounded-full" style="width: <?= min(100, max(0, (float)($stats['avg_progress'] ?? 0))) ?>%"></div>
+                    </div>
+                </div>
+                <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                    <span>ภาพรวม</span>
+                    <span class="font-semibold text-purple-600 dark:text-purple-400">เฉลี่ยทุกโครงการ</span>
+                </div>
             </div>
         </div>
-
-        <!-- การ์ด 3: เสร็จแล้ว (Emerald Green Accent) -->
-        <div class="group relative p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-lg hover:border-emerald-400/60 dark:hover:border-emerald-500/40 transition-all duration-300 overflow-hidden flex flex-col justify-between w-full max-w-full min-w-0">
-            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 via-teal-400 to-green-500 opacity-80 group-hover:opacity-100 transition-opacity"></div>
-            <div class="flex items-center justify-between gap-2">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">
-                    เสร็จแล้ว
-                </span>
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-200/60 dark:border-emerald-500/20 shadow-sm shadow-emerald-500/10 group-hover:scale-110 transition-transform shrink-0">
-                    <i data-lucide="check-circle-2" class="w-5 h-5 sm:w-6 sm:h-6"></i>
-                </div>
-            </div>
-            <div class="my-2.5 sm:my-3">
-                <div class="text-2xl sm:text-3xl lg:text-4xl font-black text-emerald-500 dark:text-emerald-400 font-heading tracking-tight leading-tight">
-                    <?= number_format($stats['completed']) ?>
-                </div>
-                <div class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5 truncate">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-                    <span class="truncate">คิดเป็น <strong class="text-slate-800 dark:text-slate-200"><?= $compPct ?>%</strong> ของทั้งหมด</span>
-                </div>
-            </div>
-            <div class="pt-2.5 sm:pt-3 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between gap-1 text-[11px] text-slate-500 dark:text-slate-400">
-                <span class="truncate">ผลสัมฤทธิ์</span>
-                <span class="font-semibold text-emerald-600 dark:text-emerald-400 shrink-0 text-[10.5px] sm:text-[11px] whitespace-nowrap">สำเร็จ 100%</span>
-            </div>
-        </div>
-
-        <!-- การ์ด 4: มีปัญหา/ล่าช้า (Rose Red Accent) -->
-        <div class="group relative p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-lg hover:border-rose-400/60 dark:hover:border-rose-500/40 transition-all duration-300 overflow-hidden flex flex-col justify-between w-full max-w-full min-w-0">
-            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 via-red-500 to-orange-500 opacity-80 group-hover:opacity-100 transition-opacity"></div>
-            <div class="flex items-center justify-between gap-2">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">
-                    มีปัญหา/ล่าช้า
-                </span>
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-rose-50 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center border border-rose-200/60 dark:border-rose-500/20 shadow-sm shadow-rose-500/10 group-hover:scale-110 transition-transform shrink-0">
-                    <i data-lucide="alert-triangle" class="w-5 h-5 sm:w-6 sm:h-6"></i>
-                </div>
-            </div>
-            <div class="my-2.5 sm:my-3">
-                <div class="text-2xl sm:text-3xl lg:text-4xl font-black text-rose-500 dark:text-red-400 font-heading tracking-tight leading-tight">
-                    <?= number_format($stats['has_problem']) ?>
-                </div>
-                <div class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5 truncate">
-                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
-                    <span class="truncate">คิดเป็น <strong class="text-slate-800 dark:text-slate-200"><?= $probPct ?>%</strong> ของทั้งหมด</span>
-                </div>
-            </div>
-            <div class="pt-2.5 sm:pt-3 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between gap-1 text-[11px] text-slate-500 dark:text-slate-400">
-                <span class="truncate">เฝ้าระวัง</span>
-                <span class="font-semibold text-rose-600 dark:text-rose-400 shrink-0 text-[10.5px] sm:text-[11px] whitespace-nowrap">เร่งรัดติดตาม</span>
-            </div>
-        </div>
-
     </div>
 
-    <!-- 3. Row 2: 2 กราฟหลัก (สถานะโครงการ & งบประมาณ) -->
+    <!-- 3. 4 Core Dashboard Charts (AGENTS.md Rule #10: 2x2 Responsive Grid) -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 w-full max-w-full">
 
-        <!-- กราฟที่ 1: สถานะโครงการ (Status Doughnut Ring with Rounded Pills & Spacing) -->
+        <!-- กราฟที่ 1: จำนวนโครงการตามสถานะ (Rule #10.1: 5 Statuses) -->
         <div class="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between w-full max-w-full min-w-0 overflow-hidden">
             <div>
                 <!-- Title Header -->
                 <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-white/[0.06]">
-                    <div class="flex items-center gap-2">
-                        <div class="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <div class="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                             <i data-lucide="pie-chart" class="w-4 h-4"></i>
                         </div>
-                        <h2 class="text-base font-bold text-slate-900 dark:text-white font-heading">สถานะโครงการ</h2>
+                        <div>
+                            <h2 class="text-base font-bold text-slate-900 dark:text-white font-heading truncate">จำนวนโครงการตามสถานะ</h2>
+                            <p class="text-[11px] text-slate-400 truncate">5 สถานะตามเกณฑ์มาตรฐานเทศบาล</p>
+                        </div>
                     </div>
-                    <span class="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">
+                    <span class="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 shrink-0">
                         สัดส่วน 100%
                     </span>
                 </div>
 
-                <!-- Donut Chart & Legend -->
-                <div class="grid grid-cols-1 sm:grid-cols-12 items-center gap-6 py-2">
-                    <!-- Donut with Glassmorphic Center Badge (6 cols) -->
-                    <div class="sm:col-span-6 flex justify-center">
-                        <div class="w-40 h-40 sm:w-48 sm:h-48 relative max-w-full aspect-square mx-auto">
-                            <canvas id="statusDonutChart"></canvas>
+                <!-- Donut Chart & 5-Item Legend -->
+                <div class="grid grid-cols-1 sm:grid-cols-12 items-center gap-4 sm:gap-6 py-2">
+                    <!-- Donut Canvas with Center Text (5 cols) -->
+                    <div class="sm:col-span-5 flex justify-center">
+                        <div class="w-40 h-40 sm:w-44 sm:h-44 relative max-w-full aspect-square mx-auto">
+                            <canvas id="statusDonutChart"
+                                    data-not-started="<?= (int)$stats['not_started'] ?>"
+                                    data-in-progress="<?= (int)$stats['in_progress'] ?>"
+                                    data-completed="<?= (int)$stats['completed'] ?>"
+                                    data-has-problem="<?= (int)$stats['has_problem'] ?>"
+                                    data-cancelled="<?= (int)($stats['cancelled'] ?? 0) ?>"
+                                    data-sub-total="<?= (int)$stats['sub_total'] ?>"></canvas>
                             <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
-                                <span class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-sans">รวม</span>
-                                <span class="text-3xl font-black text-slate-900 dark:text-white font-heading tracking-tight my-0.5"><?= $stats['sub_total'] ?></span>
-                                <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">โครงการ</span>
+                                <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-sans">รวม</span>
+                                <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-heading tracking-tight my-0.5"><?= $stats['sub_total'] ?></span>
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">โครงการ</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Right Legend with Interactive Styled Cards (6 cols) -->
-                    <div class="sm:col-span-6 space-y-2.5 text-xs">
-                        <!-- กำลังดำเนินการ (Blue) -->
-                        <div class="p-2.5 rounded-xl bg-slate-50/90 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.04] hover:border-blue-500/30 transition flex items-center justify-between">
-                            <div class="flex items-center gap-2.5">
-                                <span class="w-3 h-3 rounded-full bg-[#3b82f6] shadow-sm shadow-blue-500/40"></span>
-                                <span class="font-medium text-slate-700 dark:text-slate-300">กำลังดำเนินการ</span>
-                            </div>
+                    <!-- 5-Item Legend (7 cols) -->
+                    <div class="sm:col-span-7 space-y-2 text-xs">
+                        <!-- 1. ยังไม่เริ่ม (Slate) -->
+                        <div class="p-2 rounded-xl bg-slate-50/90 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.04] flex items-center justify-between">
                             <div class="flex items-center gap-2">
-                                <span class="font-bold text-slate-900 dark:text-white font-mono"><?= $stats['in_progress'] ?></span>
-                                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold font-mono bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"><?= $inProgPct ?>%</span>
-                            </div>
-                        </div>
-
-                        <!-- ยังไม่เริ่ม (Yellow/Amber) -->
-                        <div class="p-2.5 rounded-xl bg-slate-50/90 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.04] hover:border-amber-500/30 transition flex items-center justify-between">
-                            <div class="flex items-center gap-2.5">
-                                <span class="w-3 h-3 rounded-full bg-[#f59e0b] shadow-sm shadow-amber-500/40"></span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-[#64748b] shrink-0"></span>
                                 <span class="font-medium text-slate-700 dark:text-slate-300">ยังไม่เริ่ม</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <span class="font-bold text-slate-900 dark:text-white font-mono"><?= $stats['not_started'] ?></span>
-                                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold font-mono bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"><?= $notStartPct ?>%</span>
+                                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-slate-500/10 text-slate-600 dark:text-slate-400"><?= $notStartPct ?>%</span>
                             </div>
                         </div>
 
-                        <!-- เสร็จแล้ว (Green) -->
-                        <div class="p-2.5 rounded-xl bg-slate-50/90 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.04] hover:border-emerald-500/30 transition flex items-center justify-between">
-                            <div class="flex items-center gap-2.5">
-                                <span class="w-3 h-3 rounded-full bg-[#10b981] shadow-sm shadow-emerald-500/40"></span>
-                                <span class="font-medium text-slate-700 dark:text-slate-300">เสร็จแล้ว</span>
+                        <!-- 2. กำลังดำเนินการ (Blue) -->
+                        <div class="p-2 rounded-xl bg-slate-50/90 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.04] flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-[#3b82f6] shrink-0"></span>
+                                <span class="font-medium text-slate-700 dark:text-slate-300">กำลังดำเนินการ</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-slate-900 dark:text-white font-mono"><?= $stats['in_progress'] ?></span>
+                                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-blue-500/10 text-blue-600 dark:text-blue-400"><?= $inProgPct ?>%</span>
+                            </div>
+                        </div>
+
+                        <!-- 3. เสร็จสิ้น (Emerald) -->
+                        <div class="p-2 rounded-xl bg-slate-50/90 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.04] flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-[#10b981] shrink-0"></span>
+                                <span class="font-medium text-slate-700 dark:text-slate-300">เสร็จสิ้น</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <span class="font-bold text-slate-900 dark:text-white font-mono"><?= $stats['completed'] ?></span>
-                                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold font-mono bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"><?= $compPct ?>%</span>
+                                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"><?= $compPct ?>%</span>
                             </div>
                         </div>
 
-                        <!-- มีปัญหา/ล่าช้า (Red) -->
-                        <div class="p-2.5 rounded-xl bg-slate-50/90 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.04] hover:border-rose-500/30 transition flex items-center justify-between">
-                            <div class="flex items-center gap-2.5">
-                                <span class="w-3 h-3 rounded-full bg-[#f43f5e] shadow-sm shadow-rose-500/40"></span>
+                        <!-- 4. มีปัญหา (Rose) -->
+                        <div class="p-2 rounded-xl bg-slate-50/90 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.04] flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-[#f43f5e] shrink-0"></span>
                                 <span class="font-medium text-slate-700 dark:text-slate-300">มีปัญหา/ล่าช้า</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <span class="font-bold text-slate-900 dark:text-white font-mono"><?= $stats['has_problem'] ?></span>
-                                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold font-mono bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"><?= $probPct ?>%</span>
+                                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-rose-500/10 text-rose-600 dark:text-rose-400"><?= $probPct ?>%</span>
+                            </div>
+                        </div>
+
+                        <!-- 5. ยกเลิก (Gray) -->
+                        <div class="p-2 rounded-xl bg-slate-50/90 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.04] flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-[#94a3b8] shrink-0"></span>
+                                <span class="font-medium text-slate-700 dark:text-slate-300">ยกเลิก</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-slate-900 dark:text-white font-mono"><?= $stats['cancelled'] ?? 0 ?></span>
+                                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-slate-500/10 text-slate-500"><?= $cancPct ?>%</span>
                             </div>
                         </div>
                     </div>
@@ -348,223 +486,141 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
 
             <!-- Footer Timestamp -->
             <div class="pt-3 mt-4 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
-                <span>ระบบติดตามโครงการเทศบาล</span>
+                <span>Rule #10.1: สถานะ 5 กลุ่ม</span>
                 <span>ข้อมูล ณ วันที่ <?= $currentDateThai ?></span>
             </div>
         </div>
 
-        <!-- กราฟที่ 2: งบประมาณ (Budget Donut Gauge) -->
+        <!-- กราฟที่ 2: งบประมาณ (Rule #10.2: Budget Comparison Chart) -->
         <div class="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between w-full max-w-full min-w-0 overflow-hidden">
             <div>
                 <!-- Title Header -->
-                <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-white/[0.06]">
-                    <div class="flex items-center gap-2">
-                        <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                <div class="flex items-center justify-between pb-3 mb-2 border-b border-slate-100 dark:border-white/[0.06]">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                             <i data-lucide="wallet" class="w-4 h-4"></i>
                         </div>
-                        <h2 class="text-base font-bold text-slate-900 dark:text-white font-heading">งบประมาณ</h2>
+                        <div>
+                            <h2 class="text-base font-bold text-slate-900 dark:text-white font-heading truncate">งบประมาณและการเบิกจ่าย</h2>
+                            <p class="text-[11px] text-slate-400 truncate">งบประมาณทั้งหมด เทียบกับ ยอดเบิกจ่ายและคงเหลือ</p>
+                        </div>
                     </div>
-                    <span class="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/20">
-                        เบิกจ่ายสะสม <?= number_format($stats['disbursement_pct'], 1) ?>%
+                    <span class="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 shrink-0">
+                        เบิกจ่ายสะสม <?= number_format((float)$stats['disbursement_pct'], 1) ?>%
                     </span>
                 </div>
 
-                <!-- Stats and Gauge Donut side by side -->
-                <div class="grid grid-cols-1 sm:grid-cols-12 items-center gap-6 py-2">
-                    <!-- Left Stats in 3 Elevated Cards (6 cols) -->
-                    <div class="sm:col-span-6 space-y-2.5">
-                        <!-- งบประมาณทั้งหมด -->
-                        <div class="p-3 rounded-xl bg-slate-50/90 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.04]">
-                            <div class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">งบประมาณทั้งหมด</div>
-                            <div class="text-xl font-black text-slate-900 dark:text-white font-heading tracking-tight mt-0.5">
-                                <?= number_format($stats['total_budget']) ?>
-                            </div>
-                            <div class="text-[10px] text-slate-400 font-sans">บาท</div>
-                        </div>
+                <!-- Budget Bar Chart Canvas -->
+                <div class="h-56 sm:h-64 relative w-full max-w-full pt-1">
+                    <canvas id="budgetComparisonChart" 
+                            data-total-budget="<?= (float)($stats['total_budget'] ?? 0) ?>"
+                            data-total-disbursed="<?= (float)($stats['total_disbursed'] ?? 0) ?>"
+                            data-total-remaining="<?= max(0, (float)($stats['total_remaining'] ?? 0)) ?>"
+                            class="w-full h-full block"></canvas>
+                </div>
 
-                        <!-- เบิกจ่ายแล้ว (Vivid Blue Accent) -->
-                        <div class="p-3 rounded-xl bg-blue-50/60 dark:bg-blue-500/10 border border-blue-200/50 dark:border-blue-500/20">
-                            <div class="text-[11px] text-blue-600 dark:text-blue-400 font-semibold">เบิกจ่ายแล้ว</div>
-                            <div class="text-xl font-black text-blue-600 dark:text-blue-400 font-heading tracking-tight mt-0.5">
-                                <?= number_format($stats['total_disbursed']) ?>
-                            </div>
-                            <div class="text-[10px] text-blue-500/80 font-sans">บาท</div>
-                        </div>
+                <!-- Bottom Quick Stats Strip -->
+                <div class="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-100 dark:border-white/[0.06] text-center">
+                    <div class="p-1.5 rounded-xl bg-slate-50 dark:bg-white/[0.03]">
+                        <span class="text-[10px] text-slate-400 block">งบรวม</span>
+                        <span class="text-xs font-bold text-slate-800 dark:text-slate-200 font-mono"><?= number_format((float)$stats['total_budget']) ?></span>
+                    </div>
+                    <div class="p-1.5 rounded-xl bg-emerald-50/70 dark:bg-emerald-500/10">
+                        <span class="text-[10px] text-emerald-600 dark:text-emerald-400 block">เบิกจ่าย</span>
+                        <span class="text-xs font-bold text-emerald-700 dark:text-emerald-300 font-mono"><?= number_format((float)$stats['total_disbursed']) ?></span>
+                    </div>
+                    <div class="p-1.5 rounded-xl bg-sky-50/70 dark:bg-sky-500/10">
+                        <span class="text-[10px] text-sky-600 dark:text-sky-400 block">คงเหลือ</span>
+                        <span class="text-xs font-bold text-sky-700 dark:text-sky-300 font-mono"><?= number_format((float)$stats['total_remaining']) ?></span>
+                    </div>
+                </div>
+            </div>
 
-                        <!-- คงเหลือ -->
-                        <div class="p-3 rounded-xl bg-slate-50/90 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.04]">
-                            <div class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">คงเหลือ</div>
-                            <div class="text-xl font-black text-slate-700 dark:text-slate-300 font-heading tracking-tight mt-0.5">
-                                <?= number_format($stats['total_remaining']) ?>
-                            </div>
-                            <div class="text-[10px] text-slate-400 font-sans">บาท</div>
+            <!-- Footer Timestamp -->
+            <div class="pt-3 mt-3 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+                <span>Rule #10.2: เปรียบเทียบงบประมาณ</span>
+                <span>ข้อมูล ณ วันที่ <?= $currentDateThai ?></span>
+            </div>
+        </div>
+
+        <!-- กราฟที่ 3: ความสำเร็จของโครงการ (Rule #10.3: Top / Bottom Projects Horizontal Bar Chart) -->
+        <div class="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between w-full max-w-full min-w-0 overflow-hidden"
+             x-data="{ mode: 'top' }">
+            <div>
+                <!-- Title Header & Toggle Buttons -->
+                <div class="flex items-center justify-between pb-3 mb-2 border-b border-slate-100 dark:border-white/[0.06]">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <div class="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                            <i data-lucide="award" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-base font-bold text-slate-900 dark:text-white font-heading truncate">ความสำเร็จของโครงการ</h2>
+                            <p class="text-[11px] text-slate-400 truncate">Top / Bottom Projects (ความก้าวหน้า 0 - 100%)</p>
                         </div>
                     </div>
-
-                    <!-- Right Donut Gauge (6 cols) -->
-                    <div class="sm:col-span-6 flex justify-center">
-                        <div class="w-40 h-40 sm:w-48 sm:h-48 relative max-w-full aspect-square mx-auto">
-                            <canvas id="budgetDonutChart"></canvas>
-                            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
-                                <span class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-sans">เบิกจ่ายแล้ว</span>
-                                <span class="text-3xl font-black text-slate-900 dark:text-white font-heading tracking-tight my-0.5"><?= number_format($stats['disbursement_pct'], 1) ?>%</span>
-                                <span class="text-[10px] text-blue-600 dark:text-blue-400 font-semibold font-mono mt-0.5">จากงบรวม</span>
-                            </div>
-                        </div>
+                    <!-- Mode Selector Toggle -->
+                    <div class="flex items-center bg-slate-100 dark:bg-white/10 p-0.5 rounded-xl text-[11px] font-semibold">
+                        <button type="button" 
+                                @click="mode = 'top'; if (window.toggleProjectSuccessMode) window.toggleProjectSuccessMode('top');"
+                                :class="mode === 'top' ? 'bg-white dark:bg-[#161922] text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'"
+                                class="px-2.5 py-1 rounded-lg transition cursor-pointer">
+                            Top 5
+                        </button>
+                        <button type="button" 
+                                @click="mode = 'bottom'; if (window.toggleProjectSuccessMode) window.toggleProjectSuccessMode('bottom');"
+                                :class="mode === 'bottom' ? 'bg-white dark:bg-[#161922] text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'"
+                                class="px-2.5 py-1 rounded-lg transition cursor-pointer">
+                            Bottom 5
+                        </button>
                     </div>
+                </div>
+
+                <!-- Project Success Horizontal Bar Chart Canvas -->
+                <div class="h-64 sm:h-[270px] relative w-full max-w-full pt-1">
+                    <canvas id="projectSuccessChart" 
+                            data-top='<?= htmlspecialchars(json_encode($stats['top_projects'] ?? [], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>'
+                            data-bottom='<?= htmlspecialchars(json_encode($stats['bottom_projects'] ?? [], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>'
+                            class="w-full h-full block"></canvas>
                 </div>
             </div>
 
             <!-- Footer Timestamp -->
             <div class="pt-3 mt-4 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
-                <span>งบประมาณปี <?= date('Y') + 543 ?></span>
+                <span>Rule #10.3: ความสำเร็จโครงการ</span>
                 <span>ข้อมูล ณ วันที่ <?= $currentDateThai ?></span>
             </div>
         </div>
 
-    </div>
-
-    <!-- 4. Row 3: โครงการตามหน่วยงาน (ซ้าย) & ความก้าวหน้าโครงการ (ขวา) -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 w-full max-w-full">
-
-        <!-- กราฟที่ 3: แนวโน้มการเบิกจ่ายงบประมาณ (Disbursement Trend Line Chart) -->
+        <!-- กราฟที่ 4: โครงการตามประเภท/หมวดหมู่ (Rule #10.4: Projects by Category Chart) -->
         <div class="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between w-full max-w-full min-w-0 overflow-hidden">
             <div>
                 <!-- Title Header -->
-                <div class="flex items-center justify-between gap-2 pb-3 mb-2 border-b border-slate-100 dark:border-white/[0.06]">
-                    <div class="min-w-0 flex-1">
-                        <div class="flex items-center gap-2">
-                            <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                                <i data-lucide="trending-up" class="w-4 h-4"></i>
-                            </div>
-                            <h2 class="text-base font-bold text-slate-900 dark:text-white font-heading truncate">แนวโน้มการเบิกจ่ายงบประมาณ</h2>
+                <div class="flex items-center justify-between pb-3 mb-2 border-b border-slate-100 dark:border-white/[0.06]">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <div class="w-7 h-7 rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+                            <i data-lucide="layers" class="w-4 h-4"></i>
                         </div>
-                        <div class="text-[11px] text-slate-400 mt-0.5 truncate">ไทม์ไลน์การเบิกจ่ายรายเดือนรอบปีงบประมาณ (ต.ค. - ก.ย.)</div>
+                        <div>
+                            <h2 class="text-base font-bold text-slate-900 dark:text-white font-heading truncate">โครงการตามประเภท</h2>
+                            <p class="text-[11px] text-slate-400 truncate">หมวดหมู่ที่ 1 - 8 ตามมาตรฐานกองทุน กปท.</p>
+                        </div>
                     </div>
-                    <!-- Right Legend Pills -->
-                    <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-semibold whitespace-nowrap border border-emerald-200/60 dark:border-emerald-500/20 shadow-xs">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                            ยอดเบิกสะสม
-                        </span>
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 text-xs font-semibold whitespace-nowrap border border-blue-200/60 dark:border-blue-500/20 shadow-xs">
-                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                            ประจำเดือน
-                        </span>
-                    </div>
+                    <span class="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-violet-50 dark:bg-violet-500/15 text-violet-700 dark:text-violet-300 border border-violet-500/20 shrink-0">
+                        8 หมวดหมู่
+                    </span>
                 </div>
 
-                <!-- Smooth Gradient Area Line Chart Canvas -->
-                <div class="h-64 sm:h-[270px] relative w-full max-w-full overflow-hidden pt-1">
-                    <canvas id="disbursementTrendChart" class="w-full h-full block"></canvas>
+                <!-- Category Distribution Bar Chart Canvas -->
+                <div class="h-64 sm:h-[270px] relative w-full max-w-full pt-1">
+                    <canvas id="categoryBarChart" 
+                            data-categories='<?= htmlspecialchars(json_encode($stats['category_data'] ?? [], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>'
+                            class="w-full h-full block"></canvas>
                 </div>
             </div>
 
             <!-- Footer Timestamp -->
             <div class="pt-3 mt-4 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
-                <span>เบิกจ่ายสะสม: <?= number_format($stats['total_disbursed']) ?> บาท (<?= number_format($stats['disbursement_pct'], 1) ?>%)</span>
-                <span>ข้อมูล ณ วันที่ <?= $currentDateThai ?></span>
-            </div>
-        </div>
-
-        <!-- กราฟที่ 4: ความก้าวหน้าโครงการ (Elevated Progress Tiers) -->
-        <div class="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between w-full max-w-full min-w-0 overflow-hidden">
-            <div>
-                <!-- Title Header -->
-                <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-white/[0.06]">
-                    <div class="flex items-center gap-2">
-                        <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                            <i data-lucide="trending-up" class="w-4 h-4"></i>
-                        </div>
-                        <h2 class="text-base font-bold text-slate-900 dark:text-white font-heading">ความก้าวหน้าโครงการ</h2>
-                    </div>
-                    <span class="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">
-                        เกณฑ์ความคืบหน้า
-                    </span>
-                </div>
-
-                <!-- 5 Tier Progress Bars (Sleek Gradient Tracks) -->
-                <div class="space-y-3.5 sm:space-y-4 pt-1">
-                    <!-- Tier 1: มากกว่า 75% (Green Gradient) -->
-                    <div class="flex items-center gap-2 sm:gap-3 text-xs">
-                        <div class="w-20 sm:w-28 shrink-0 flex items-center gap-1.5 sm:gap-2 text-slate-700 dark:text-slate-300 font-semibold">
-                            <span class="w-2.5 h-2.5 rounded-full bg-[#10b981] shadow-sm shadow-emerald-500/50 shrink-0"></span>
-                            <span class="truncate">มากกว่า 75%</span>
-                        </div>
-                        <div class="flex-1 min-w-[50px] bg-slate-100 dark:bg-white/[0.06] h-3 rounded-full overflow-hidden p-0.5">
-                            <div class="bg-gradient-to-r from-emerald-400 to-teal-500 h-2 rounded-full transition-all duration-700 shadow-sm" style="width: <?= $tierOver75 > 0 ? min(100, max(5, $tierOver75Pct)) : 0 ?>%"></div>
-                        </div>
-                        <div class="flex items-center justify-end gap-1.5 sm:gap-2 text-right shrink-0">
-                            <span class="text-[11px] sm:text-xs font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap"><?= $tierOver75 ?> <span class="hidden sm:inline">โครงการ</span><span class="sm:hidden">ค.</span></span>
-                            <span class="w-10 sm:w-12 text-right font-black text-slate-900 dark:text-white font-mono text-xs sm:text-sm"><?= $tierOver75Pct ?>%</span>
-                        </div>
-                    </div>
-
-                    <!-- Tier 2: 50% - 75% (Blue Gradient) -->
-                    <div class="flex items-center gap-2 sm:gap-3 text-xs">
-                        <div class="w-20 sm:w-28 shrink-0 flex items-center gap-1.5 sm:gap-2 text-slate-700 dark:text-slate-300 font-semibold">
-                            <span class="w-2.5 h-2.5 rounded-full bg-[#3b82f6] shadow-sm shadow-blue-500/50 shrink-0"></span>
-                            <span class="truncate">50% - 75%</span>
-                        </div>
-                        <div class="flex-1 min-w-[50px] bg-slate-100 dark:bg-white/[0.06] h-3 rounded-full overflow-hidden p-0.5">
-                            <div class="bg-gradient-to-r from-blue-400 to-indigo-500 h-2 rounded-full transition-all duration-700 shadow-sm" style="width: <?= $tier50to75 > 0 ? min(100, max(5, $tier50to75Pct)) : 0 ?>%"></div>
-                        </div>
-                        <div class="flex items-center justify-end gap-1.5 sm:gap-2 text-right shrink-0">
-                            <span class="text-[11px] sm:text-xs font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap"><?= $tier50to75 ?> <span class="hidden sm:inline">โครงการ</span><span class="sm:hidden">ค.</span></span>
-                            <span class="w-10 sm:w-12 text-right font-black text-slate-900 dark:text-white font-mono text-xs sm:text-sm"><?= $tier50to75Pct ?>%</span>
-                        </div>
-                    </div>
-
-                    <!-- Tier 3: 25% - 50% (Yellow/Amber Gradient) -->
-                    <div class="flex items-center gap-2 sm:gap-3 text-xs">
-                        <div class="w-20 sm:w-28 shrink-0 flex items-center gap-1.5 sm:gap-2 text-slate-700 dark:text-slate-300 font-semibold">
-                            <span class="w-2.5 h-2.5 rounded-full bg-[#f59e0b] shadow-sm shadow-amber-500/50 shrink-0"></span>
-                            <span class="truncate">25% - 50%</span>
-                        </div>
-                        <div class="flex-1 min-w-[50px] bg-slate-100 dark:bg-white/[0.06] h-3 rounded-full overflow-hidden p-0.5">
-                            <div class="bg-gradient-to-r from-amber-400 to-yellow-500 h-2 rounded-full transition-all duration-700 shadow-sm" style="width: <?= $tier25to50 > 0 ? min(100, max(5, $tier25to50Pct)) : 0 ?>%"></div>
-                        </div>
-                        <div class="flex items-center justify-end gap-1.5 sm:gap-2 text-right shrink-0">
-                            <span class="text-[11px] sm:text-xs font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap"><?= $tier25to50 ?> <span class="hidden sm:inline">โครงการ</span><span class="sm:hidden">ค.</span></span>
-                            <span class="w-10 sm:w-12 text-right font-black text-slate-900 dark:text-white font-mono text-xs sm:text-sm"><?= $tier25to50Pct ?>%</span>
-                        </div>
-                    </div>
-
-                    <!-- Tier 4: น้อยกว่า 25% (Orange Gradient) -->
-                    <div class="flex items-center gap-2 sm:gap-3 text-xs">
-                        <div class="w-20 sm:w-28 shrink-0 flex items-center gap-1.5 sm:gap-2 text-slate-700 dark:text-slate-300 font-semibold">
-                            <span class="w-2.5 h-2.5 rounded-full bg-[#f97316] shadow-sm shadow-orange-500/50 shrink-0"></span>
-                            <span class="truncate">น้อยกว่า 25%</span>
-                        </div>
-                        <div class="flex-1 min-w-[50px] bg-slate-100 dark:bg-white/[0.06] h-3 rounded-full overflow-hidden p-0.5">
-                            <div class="bg-gradient-to-r from-orange-400 to-amber-500 h-2 rounded-full transition-all duration-700 shadow-sm" style="width: <?= $tierUnder25 > 0 ? min(100, max(5, $tierUnder25Pct)) : 0 ?>%"></div>
-                        </div>
-                        <div class="flex items-center justify-end gap-1.5 sm:gap-2 text-right shrink-0">
-                            <span class="text-[11px] sm:text-xs font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap"><?= $tierUnder25 ?> <span class="hidden sm:inline">โครงการ</span><span class="sm:hidden">ค.</span></span>
-                            <span class="w-10 sm:w-12 text-right font-black text-slate-900 dark:text-white font-mono text-xs sm:text-sm"><?= $tierUnder25Pct ?>%</span>
-                        </div>
-                    </div>
-
-                    <!-- Tier 5: ยังไม่เริ่ม (Red Gradient) -->
-                    <div class="flex items-center gap-2 sm:gap-3 text-xs">
-                        <div class="w-20 sm:w-28 shrink-0 flex items-center gap-1.5 sm:gap-2 text-slate-700 dark:text-slate-300 font-semibold">
-                            <span class="w-2.5 h-2.5 rounded-full bg-[#f43f5e] shadow-sm shadow-rose-500/50 shrink-0"></span>
-                            <span class="truncate">ยังไม่เริ่ม</span>
-                        </div>
-                        <div class="flex-1 min-w-[50px] bg-slate-100 dark:bg-white/[0.06] h-3 rounded-full overflow-hidden p-0.5">
-                            <div class="bg-gradient-to-r from-rose-500 to-red-500 h-2 rounded-full transition-all duration-700 shadow-sm" style="width: <?= $tierNotStarted > 0 ? min(100, max(5, $tierNotStartedPct)) : 0 ?>%"></div>
-                        </div>
-                        <div class="flex items-center justify-end gap-1.5 sm:gap-2 text-right shrink-0">
-                            <span class="text-[11px] sm:text-xs font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap"><?= $tierNotStarted ?> <span class="hidden sm:inline">โครงการ</span><span class="sm:hidden">ค.</span></span>
-                            <span class="w-10 sm:w-12 text-right font-black text-slate-900 dark:text-white font-mono text-xs sm:text-sm"><?= $tierNotStartedPct ?>%</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Footer Timestamp -->
-            <div class="pt-3 mt-4 border-t border-slate-100 dark:border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] text-slate-400 dark:text-slate-500">
-                <span>เกณฑ์ชี้วัดตามมาตรฐาน</span>
+                <span>Rule #10.4: จัดกลุ่มตามหมวดหมู่</span>
                 <span>ข้อมูล ณ วันที่ <?= $currentDateThai ?></span>
             </div>
         </div>
@@ -745,132 +801,205 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
 
 </div>
 
-<!-- สคริปต์ Chart.js กำหนดสีกราฟให้สวยงามระดับพรีเมียม (Gradient & Pill Arcs) -->
+<!-- สคริปต์ Chart.js ตามมาตรฐาน AGENTS.md Rule #10: 4 Core Charts (Data-Driven + IIFE Scoped) -->
 <script>
-let chartInitRetries = 0;
-function renderDashboardCharts(isThemeChange = false) {
-    if (typeof Chart === 'undefined') {
-        if (chartInitRetries < 30) {
-            chartInitRetries++;
-            setTimeout(() => renderDashboardCharts(isThemeChange), 100);
-        } else {
-            console.error('MPT: Chart.js library is not available');
+(function() {
+    'use strict';
+
+    let chartInitRetries = 0;
+    let projectSuccessChartInstance = null;
+    let dashboardChartsTimer = null;
+
+    function renderDashboardCharts(isThemeChange = false) {
+        if (typeof Chart === 'undefined') {
+            if (chartInitRetries < 30) {
+                chartInitRetries++;
+                setTimeout(() => renderDashboardCharts(isThemeChange), 100);
+            } else {
+                console.error('MPT: Chart.js library is not available');
+            }
+            return;
         }
-        return;
-    }
-    chartInitRetries = 0;
+        chartInitRetries = 0;
 
-    const isDark = document.documentElement.classList.contains('dark');
-    const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : '#f1f5f9';
-    const tickColor = isDark ? '#94a3b8' : '#64748b';
-    const labelColor = isDark ? '#e2e8f0' : '#1e293b';
-    const tooltipBg = isDark ? '#161922' : '#ffffff';
-    const tooltipTitle = isDark ? '#ffffff' : '#0f172a';
-    const tooltipBody = isDark ? '#e2e8f0' : '#334155';
-    const tooltipBorder = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
+        const isDark = document.documentElement.classList.contains('dark');
+        const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : '#f1f5f9';
+        const tickColor = isDark ? '#94a3b8' : '#64748b';
+        const labelColor = isDark ? '#cbd5e1' : '#334155';
+        const tooltipBg = isDark ? '#181b24' : '#ffffff';
+        const tooltipTitle = isDark ? '#ffffff' : '#0f172a';
+        const tooltipBody = isDark ? '#e2e8f0' : '#334155';
+        const tooltipBorder = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
 
-    // ทำลายกราฟเดิมเพื่อป้องกันทับซ้อนเมื่อมีการรีเฟรช SPA หรือเปลี่ยนธีม
-    ['statusDonutChart', 'budgetDonutChart', 'deptBarChart', 'yearlyBudgetChart'].forEach(id => {
+        // ทำลายกราฟเดิมเพื่อป้องกันทับซ้อนเมื่อมีการรีเฟรช SPA หรือเปลี่ยนธีม
+        ['statusDonutChart', 'budgetComparisonChart', 'projectSuccessChart', 'categoryBarChart'].forEach(id => {
+            try {
+                const canvasEl = document.getElementById(id);
+                if (canvasEl) {
+                    const existing = Chart.getChart(canvasEl) || Chart.getChart(id);
+                    if (existing) existing.destroy();
+                }
+            } catch (e) {
+                console.warn('Destroy chart error:', e);
+            }
+        });
+
+        const emptyChartColor = isDark ? 'rgba(255, 255, 255, 0.1)' : '#e2e8f0';
+
+        // Helper Currency Formatter
+        const formatCurrency = (val) => {
+            if (val >= 1000000) {
+                return (val / 1000000).toLocaleString('th-TH', { maximumFractionDigits: 1 }) + 'M';
+            }
+            if (val >= 1000) {
+                return (val / 1000).toLocaleString('th-TH', { maximumFractionDigits: 0 }) + 'k';
+            }
+            return Number(val).toLocaleString('th-TH');
+        };
+
+        // -------------------------------------------------------------
+        // กราฟที่ 1: สถานะโครงการ (Rule #10.1: 5 Statuses Donut Chart - Data Driven)
+        // -------------------------------------------------------------
         try {
-            const canvasEl = document.getElementById(id);
-            if (canvasEl) {
-                const existing = Chart.getChart(canvasEl) || Chart.getChart(id);
-                if (existing) existing.destroy();
-            }
-        } catch (e) {
-            console.warn('Destroy chart error:', e);
-        }
-    });
+            const statusCanvas = document.getElementById('statusDonutChart');
+            if (statusCanvas) {
+                const notStarted = parseInt(statusCanvas.dataset.notStarted || '0', 10);
+                const inProgress = parseInt(statusCanvas.dataset.inProgress || '0', 10);
+                const completed  = parseInt(statusCanvas.dataset.completed || '0', 10);
+                const hasProblem = parseInt(statusCanvas.dataset.hasProblem || '0', 10);
+                const cancelled  = parseInt(statusCanvas.dataset.cancelled || '0', 10);
 
-    const emptyChartColor = isDark ? 'rgba(255, 255, 255, 0.1)' : '#e2e8f0';
+                const rawStatuses = [
+                    { key: 'not_started', label: 'ยังไม่เริ่ม', count: notStarted, color: '#64748b', hover: '#475569' },
+                    { key: 'in_progress', label: 'กำลังดำเนินการ', count: inProgress, color: '#3b82f6', hover: '#2563eb' },
+                    { key: 'completed',  label: 'เสร็จสิ้น',      count: completed,  color: '#10b981', hover: '#059669' },
+                    { key: 'has_problem',label: 'มีปัญหา/ล่าช้า', count: hasProblem, color: '#f43f5e', hover: '#e11d48' },
+                    { key: 'cancelled',  label: 'ยกเลิก',         count: cancelled,  color: '#94a3b8', hover: '#64748b' }
+                ];
+                const totalCount = rawStatuses.reduce((acc, s) => acc + s.count, 0);
+                const activeStatuses = rawStatuses.filter(s => s.count > 0);
 
-    // -------------------------------------------------------------
-    // กราฟที่ 1: สถานะโครงการ (Status Doughnut Ring with Rounded Pills & Spacing)
-    // -------------------------------------------------------------
-    try {
-        const statusCanvas = document.getElementById('statusDonutChart');
-        if (statusCanvas) {
-            const statusTotal = <?= (int)$stats['in_progress'] + (int)$stats['not_started'] + (int)$stats['completed'] + (int)$stats['has_problem'] ?>;
-
-            if (statusTotal === 0) {
-                // หากไม่มีข้อมูลโครงการ แสดงวงแหวนสีเทาแทน
-                new Chart(statusCanvas, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['ไม่มีข้อมูลโครงการ'],
-                        datasets: [{
-                            data: [1],
-                            backgroundColor: [emptyChartColor],
-                            hoverBackgroundColor: [emptyChartColor],
-                            borderWidth: 0,
-                            borderRadius: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        cutout: '72%',
-                        animation: isThemeChange ? false : {
-                            duration: 350,
-                            easing: 'easeOutQuad'
+                if (totalCount === 0) {
+                    new Chart(statusCanvas, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['ไม่มีข้อมูลโครงการ'],
+                            datasets: [{
+                                data: [1],
+                                backgroundColor: [emptyChartColor],
+                                hoverBackgroundColor: [emptyChartColor],
+                                borderWidth: 0,
+                                borderRadius: 0
+                            }]
                         },
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                backgroundColor: tooltipBg,
-                                titleColor: tooltipTitle,
-                                bodyColor: tooltipBody,
-                                borderColor: tooltipBorder,
-                                borderWidth: 1,
-                                padding: 10,
-                                cornerRadius: 10,
-                                boxPadding: 4,
-                                callbacks: {
-                                    label: function() {
-                                        return ' ไม่มีข้อมูลโครงการในปีงบประมาณนี้';
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            cutout: '72%',
+                            animation: isThemeChange ? false : { duration: 350, easing: 'easeOutQuad' },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: tooltipBg,
+                                    titleColor: tooltipTitle,
+                                    bodyColor: tooltipBody,
+                                    borderColor: tooltipBorder,
+                                    borderWidth: 1,
+                                    padding: 10,
+                                    cornerRadius: 10,
+                                    callbacks: {
+                                        label: function() { return ' ไม่มีข้อมูลโครงการในปีงบประมาณนี้'; }
                                     }
                                 }
                             }
                         }
-                    }
-                });
-            } else {
-                new Chart(statusCanvas, {
-                    type: 'doughnut',
+                    });
+                } else {
+                    new Chart(statusCanvas, {
+                        type: 'doughnut',
+                        data: {
+                            labels: activeStatuses.map(s => s.label),
+                            datasets: [{
+                                data: activeStatuses.map(s => s.count),
+                                backgroundColor: activeStatuses.map(s => s.color),
+                                hoverBackgroundColor: activeStatuses.map(s => s.hover),
+                                borderWidth: 0,
+                                borderRadius: activeStatuses.length > 1 ? 4 : 0,
+                                spacing: activeStatuses.length > 1 ? 3 : 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            cutout: '72%',
+                            animation: isThemeChange ? false : { duration: 350, easing: 'easeOutQuad' },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: tooltipBg,
+                                    titleColor: tooltipTitle,
+                                    bodyColor: tooltipBody,
+                                    borderColor: tooltipBorder,
+                                    borderWidth: 1,
+                                    padding: 10,
+                                    cornerRadius: 10,
+                                    boxPadding: 4,
+                                    callbacks: {
+                                        label: function(context) {
+                                            const val = context.raw;
+                                            const denom = totalCount > 0 ? totalCount : 1;
+                                            const pct = ((val / denom) * 100).toFixed(1);
+                                            return ` ${context.label}: ${val} โครงการ (${pct}%)`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        } catch (err) {
+            console.error('Error creating Status Donut Chart:', err);
+        }
+
+        // -------------------------------------------------------------
+        // กราฟที่ 2: เปรียบเทียบงบประมาณ (Rule #10.2: Budget Comparison Bar Chart - Data Driven)
+        // -------------------------------------------------------------
+        try {
+            const budgetCanvas = document.getElementById('budgetComparisonChart');
+            if (budgetCanvas) {
+                const totalBudget = parseFloat(budgetCanvas.dataset.totalBudget || '0');
+                const totalDisbursed = parseFloat(budgetCanvas.dataset.totalDisbursed || '0');
+                const totalRemaining = Math.max(0, parseFloat(budgetCanvas.dataset.totalRemaining || '0'));
+
+                const bCtx = budgetCanvas.getContext('2d');
+                const totalGrad = bCtx.createLinearGradient(0, 0, 0, 200);
+                totalGrad.addColorStop(0, '#6366f1');
+                totalGrad.addColorStop(1, '#4f46e5');
+
+                const disbGrad = bCtx.createLinearGradient(0, 0, 0, 200);
+                disbGrad.addColorStop(0, '#34d399');
+                disbGrad.addColorStop(1, '#059669');
+
+                const remGrad = bCtx.createLinearGradient(0, 0, 0, 200);
+                remGrad.addColorStop(0, '#38bdf8');
+                remGrad.addColorStop(1, '#0284c7');
+
+                new Chart(bCtx, {
+                    type: 'bar',
                     data: {
-                        labels: ['กำลังดำเนินการ', 'ยังไม่เริ่ม', 'เสร็จแล้ว', 'มีปัญหา/ล่าช้า'],
+                        labels: ['งบประมาณทั้งหมด', 'ยอดเบิกจ่าย', 'งบประมาณคงเหลือ'],
                         datasets: [{
-                            data: [
-                                <?= (int)$stats['in_progress'] ?>,
-                                <?= (int)$stats['not_started'] ?>,
-                                <?= (int)$stats['completed'] ?>,
-                                <?= (int)$stats['has_problem'] ?>
-                            ],
-                            backgroundColor: [
-                                '#3b82f6', // กำลังดำเนินการ (Vivid Royal Blue)
-                                '#f59e0b', // ยังไม่เริ่ม (Golden Amber)
-                                '#10b981', // เสร็จแล้ว (Fresh Emerald)
-                                '#f43f5e'  // มีปัญหา/ล่าช้า (Rose Red)
-                            ],
-                            hoverBackgroundColor: [
-                                '#2563eb',
-                                '#d97706',
-                                '#059669',
-                                '#e11d48'
-                            ],
-                            borderWidth: 0,
-                            borderRadius: 6,
-                            spacing: 3
+                            data: [totalBudget, totalDisbursed, totalRemaining],
+                            backgroundColor: [totalGrad, disbGrad, remGrad],
+                            borderRadius: 8,
+                            barPercentage: 0.55
                         }]
                     },
                     options: {
                         responsive: true,
-                        maintainAspectRatio: true,
-                        cutout: '72%',
-                        animation: isThemeChange ? false : {
-                            duration: 350,
-                            easing: 'easeOutQuad'
-                        },
+                        maintainAspectRatio: false,
+                        animation: isThemeChange ? false : { duration: 400, easing: 'easeOutQuad' },
                         plugins: {
                             legend: { display: false },
                             tooltip: {
@@ -879,111 +1008,93 @@ function renderDashboardCharts(isThemeChange = false) {
                                 bodyColor: tooltipBody,
                                 borderColor: tooltipBorder,
                                 borderWidth: 1,
-                                padding: 10,
+                                padding: 12,
                                 cornerRadius: 10,
-                                boxPadding: 4,
                                 callbacks: {
                                     label: function(context) {
-                                        const total = <?= max(1, (int)$stats['sub_total']) ?>;
-                                        const val = context.raw;
-                                        const pct = ((val / total) * 100).toFixed(1);
-                                        return ` ${context.label}: ${val} โครงการ (${pct}%)`;
+                                        const val = Number(context.raw).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                        const total = totalBudget > 0 ? totalBudget : 1.0;
+                                        const pct = ((Number(context.raw) / total) * 100).toFixed(1);
+                                        return ` ${context.label}: ${val} บาท (${pct}%)`;
                                     }
                                 }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grace: '10%',
+                                ticks: {
+                                    color: tickColor,
+                                    font: { family: "'Prompt', 'Sarabun', sans-serif", size: 10.5 },
+                                    callback: (val) => formatCurrency(val)
+                                },
+                                grid: { color: gridColor },
+                                border: { display: false }
+                            },
+                            x: {
+                                ticks: {
+                                    color: labelColor,
+                                    font: { family: "'Prompt', 'Sarabun', sans-serif", size: 11, weight: '600' },
+                                    padding: 6
+                                },
+                                grid: { display: false },
+                                border: { display: false }
                             }
                         }
                     }
                 });
             }
+        } catch (err) {
+            console.error('Error creating Budget Comparison Chart:', err);
         }
-    } catch (err) {
-        console.error('Error creating Status Donut Chart:', err);
-    }
 
-    // -------------------------------------------------------------
-    // กราฟที่ 2: งบประมาณ (Budget Donut Gauge with Rounded Arc)
-    // -------------------------------------------------------------
-    try {
-        const budgetCanvas = document.getElementById('budgetDonutChart');
-        if (budgetCanvas) {
-            const totalBudget = <?= (float)($stats['total_budget'] ?? 0) ?>;
-            const totalDisbursed = <?= (float)($stats['total_disbursed'] ?? 0) ?>;
-            const totalRemaining = <?= max(0, (float)($stats['total_remaining'] ?? 0)) ?>;
+        // -------------------------------------------------------------
+        // กราฟที่ 3: ความสำเร็จของโครงการ (Rule #10.3: Top / Bottom Projects Horizontal Bar - Data Driven)
+        // -------------------------------------------------------------
+        try {
+            const successCanvas = document.getElementById('projectSuccessChart');
+            if (successCanvas) {
+                let topProjectsData = [];
+                let bottomProjectsData = [];
+                try {
+                    topProjectsData = JSON.parse(successCanvas.dataset.top || '[]');
+                    bottomProjectsData = JSON.parse(successCanvas.dataset.bottom || '[]');
+                } catch (e) {
+                    console.warn('MPT: Error parsing project success data:', e);
+                }
 
-            if (totalBudget <= 0 && totalDisbursed <= 0) {
-                // หากไม่มีข้อมูลงบประมาณ แสดงวงแหวนสีเทาแทน
-                new Chart(budgetCanvas, {
-                    type: 'doughnut',
+                const getBarColor = (prog) => {
+                    if (prog >= 75) return '#10b981'; // Emerald
+                    if (prog >= 50) return '#3b82f6'; // Blue
+                    if (prog >= 25) return '#f59e0b'; // Amber
+                    return '#f43f5e'; // Rose
+                };
+
+                const currentMode = window._currentProjectSuccessMode || 'top';
+                const activeList = currentMode === 'top' ? topProjectsData : bottomProjectsData;
+
+                const labels = activeList.map(p => p.short_name);
+                const progresses = activeList.map(p => parseFloat(p.progress || 0));
+                const colors = progresses.map(p => getBarColor(p));
+
+                projectSuccessChartInstance = new Chart(successCanvas, {
+                    type: 'bar',
                     data: {
-                        labels: ['ยังไม่มีข้อมูลงบประมาณ'],
+                        labels: labels.length > 0 ? labels : ['ไม่มีโครงการ'],
                         datasets: [{
-                            data: [1],
-                            backgroundColor: [emptyChartColor],
-                            hoverBackgroundColor: [emptyChartColor],
-                            borderWidth: 0,
-                            borderRadius: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        cutout: '72%',
-                        animation: isThemeChange ? false : {
-                            duration: 350,
-                            easing: 'easeOutQuad'
-                        },
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                backgroundColor: tooltipBg,
-                                titleColor: tooltipTitle,
-                                bodyColor: tooltipBody,
-                                borderColor: tooltipBorder,
-                                borderWidth: 1,
-                                padding: 10,
-                                cornerRadius: 10,
-                                boxPadding: 4,
-                                callbacks: {
-                                    label: function() {
-                                        return ' ยังไม่มีข้อมูลงบประมาณในปีนี้';
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-            } else {
-                const remainingColor = isDark ? 'rgba(255, 255, 255, 0.08)' : '#e2e8f0';
-                new Chart(budgetCanvas, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['เบิกจ่ายแล้ว', 'คงเหลือ'],
-                        datasets: [{
-                            data: [
-                                totalDisbursed,
-                                totalRemaining
-                            ],
-                            backgroundColor: [
-                                '#3b82f6', // เบิกจ่ายแล้ว
-                                remainingColor // คงเหลือ
-                            ],
-                            hoverBackgroundColor: [
-                                '#2563eb',
-                                isDark ? 'rgba(255, 255, 255, 0.14)' : '#cbd5e1'
-                            ],
-                            borderWidth: 0,
+                            label: 'ความก้าวหน้า (%)',
+                            data: progresses.length > 0 ? progresses : [0],
+                            backgroundColor: colors.length > 0 ? colors : [emptyChartColor],
                             borderRadius: 6,
-                            spacing: 3
+                            barPercentage: 0.6
                         }]
                     },
                     options: {
+                        indexAxis: 'y',
                         responsive: true,
-                        maintainAspectRatio: true,
-                        cutout: '72%',
-                        animation: isThemeChange ? false : {
-                            duration: 350,
-                            easing: 'easeOutQuad'
-                        },
+                        maintainAspectRatio: false,
+                        animation: isThemeChange ? false : { duration: 400, easing: 'easeOutQuad' },
                         plugins: {
                             legend: { display: false },
                             tooltip: {
@@ -992,216 +1103,198 @@ function renderDashboardCharts(isThemeChange = false) {
                                 bodyColor: tooltipBody,
                                 borderColor: tooltipBorder,
                                 borderWidth: 1,
-                                padding: 10,
+                                padding: 12,
                                 cornerRadius: 10,
-                                boxPadding: 4,
                                 callbacks: {
-                                    label: function(context) {
-                                        const val = Number(context.raw).toLocaleString('th-TH');
-                                        return ` ${context.label}: ${val} บาท`;
+                                    title: (items) => {
+                                        const idx = items[0]?.dataIndex;
+                                        const p = activeList[idx];
+                                        return p ? p.name : '';
+                                    },
+                                    label: (context) => {
+                                        const val = context.parsed.x || 0;
+                                        return ` ความก้าวหน้า: ${val}%`;
+                                    },
+                                    afterLabel: (context) => {
+                                        const idx = context.dataIndex;
+                                        const p = activeList[idx];
+                                        if (!p) return '';
+                                        const bg = Number(p.budget || 0).toLocaleString('th-TH');
+                                        return `งบประมาณ: ${bg} บาท | สถานะ: ${p.status || '-'}`;
                                     }
                                 }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                min: 0,
+                                max: 100,
+                                ticks: {
+                                    color: tickColor,
+                                    font: { family: "'Prompt', 'Sarabun', sans-serif", size: 10.5 },
+                                    callback: (val) => val + '%'
+                                },
+                                grid: { color: gridColor },
+                                border: { display: false }
+                            },
+                            y: {
+                                ticks: {
+                                    color: labelColor,
+                                    font: { family: "'Prompt', 'Sarabun', sans-serif", size: 10.5, weight: '500' },
+                                    padding: 6
+                                },
+                                grid: { display: false },
+                                border: { display: false }
+                            }
+                        }
+                    }
+                });
+
+                // Expose Toggle Mode Handler
+                window.toggleProjectSuccessMode = function(newMode) {
+                    window._currentProjectSuccessMode = newMode;
+                    if (!projectSuccessChartInstance) return;
+
+                    const list = newMode === 'top' ? topProjectsData : bottomProjectsData;
+                    projectSuccessChartInstance.data.labels = list.map(p => p.short_name);
+                    const newProgs = list.map(p => parseFloat(p.progress || 0));
+                    projectSuccessChartInstance.data.datasets[0].data = newProgs;
+                    projectSuccessChartInstance.data.datasets[0].backgroundColor = newProgs.map(p => getBarColor(p));
+                    projectSuccessChartInstance.update();
+                };
+            }
+        } catch (err) {
+            console.error('Error creating Project Success Chart:', err);
+        }
+
+        // -------------------------------------------------------------
+        // กราฟที่ 4: โครงการตามประเภท/หมวดหมู่ (Rule #10.4: Projects by Category Bar Chart - Data Driven)
+        // -------------------------------------------------------------
+        try {
+            const catCanvas = document.getElementById('categoryBarChart');
+            if (catCanvas) {
+                let catData = [];
+                try {
+                    catData = JSON.parse(catCanvas.dataset.categories || '[]');
+                } catch (e) {
+                    console.warn('MPT: Error parsing category data:', e);
+                }
+
+                const labels = catData.map(c => c.short_name);
+                const subCounts = catData.map(c => parseInt(c.sub_project_count || 0));
+
+                const catCtx = catCanvas.getContext('2d');
+                const catGrad = catCtx.createLinearGradient(0, 0, 0, 220);
+                catGrad.addColorStop(0, isDark ? 'rgba(139, 92, 246, 0.85)' : '#8b5cf6');
+                catGrad.addColorStop(1, isDark ? 'rgba(124, 58, 237, 0.4)' : '#6d28d9');
+
+                new Chart(catCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'จำนวนโครงการย่อย',
+                            data: subCounts,
+                            backgroundColor: catGrad,
+                            borderColor: isDark ? '#a78bfa' : '#7c3aed',
+                            borderWidth: 1,
+                            borderRadius: 6,
+                            barPercentage: 0.55
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: isThemeChange ? false : { duration: 400, easing: 'easeOutQuad' },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: tooltipBg,
+                                titleColor: tooltipTitle,
+                                bodyColor: tooltipBody,
+                                borderColor: tooltipBorder,
+                                borderWidth: 1,
+                                padding: 12,
+                                cornerRadius: 10,
+                                callbacks: {
+                                    title: (items) => {
+                                        const idx = items[0]?.dataIndex;
+                                        const c = catData[idx];
+                                        return c ? `${c.short_name}: ${c.name}` : '';
+                                    },
+                                    label: (context) => {
+                                        const idx = context.dataIndex;
+                                        const c = catData[idx];
+                                        return ` โครงการย่อย: ${context.raw} โครงการ (โครงการหลัก: ${c.project_count})`;
+                                    },
+                                    afterLabel: (context) => {
+                                        const idx = context.dataIndex;
+                                        const c = catData[idx];
+                                        if (!c) return '';
+                                        const bg = Number(c.total_budget || 0).toLocaleString('th-TH');
+                                        return `งบประมาณรวม: ${bg} บาท`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0,
+                                    color: tickColor,
+                                    font: { family: "'Prompt', 'Sarabun', sans-serif", size: 10.5 },
+                                    callback: (val) => val + ' ค.'
+                                },
+                                grid: { color: gridColor },
+                                border: { display: false }
+                            },
+                            x: {
+                                ticks: {
+                                    color: labelColor,
+                                    font: { family: "'Prompt', 'Sarabun', sans-serif", size: 10, weight: '500' },
+                                    padding: 6
+                                },
+                                grid: { display: false },
+                                border: { display: false }
                             }
                         }
                     }
                 });
             }
+        } catch (err) {
+            console.error('Error creating Category Bar Chart:', err);
         }
-    } catch (err) {
-        console.error('Error creating Budget Donut Chart:', err);
     }
 
-    // -------------------------------------------------------------
-    // กราฟที่ 3: แนวโน้มการเบิกจ่ายงบประมาณ (Disbursement Trend Line Chart)
-    // -------------------------------------------------------------
-    try {
-        const trendCanvas = document.getElementById('disbursementTrendChart');
-        const timelineData = <?= json_encode($stats['disbursement_timeline'] ?? [], JSON_UNESCAPED_UNICODE) ?>;
-        if (trendCanvas && timelineData && timelineData.length > 0) {
-            const trendCtx = trendCanvas.getContext('2d');
-            const isMobile = window.innerWidth < 640;
-
-            const labels = timelineData.map(d => d.name);
-            const cumulativeData = timelineData.map(d => parseFloat(d.cumulative || 0));
-            const monthlyData = timelineData.map(d => parseFloat(d.monthly || 0));
-
-            // Area Gradient for Cumulative Line (Emerald)
-            const cumAreaGrad = trendCtx.createLinearGradient(0, 0, 0, 220);
-            cumAreaGrad.addColorStop(0, isDark ? 'rgba(16, 185, 129, 0.35)' : 'rgba(16, 185, 129, 0.22)');
-            cumAreaGrad.addColorStop(1, isDark ? 'rgba(16, 185, 129, 0.0)' : 'rgba(16, 185, 129, 0.0)');
-
-            // Gradient for Monthly Bar (Blue)
-            const monthlyBarGrad = trendCtx.createLinearGradient(0, 0, 0, 220);
-            monthlyBarGrad.addColorStop(0, 'rgba(59, 130, 246, 0.7)');
-            monthlyBarGrad.addColorStop(1, 'rgba(37, 99, 235, 0.2)');
-
-            // Format Currency Helper
-            const formatCurrency = (val) => {
-                if (val >= 1000000) {
-                    return (val / 1000000).toLocaleString('th-TH', { maximumFractionDigits: 1 }) + 'M';
-                }
-                if (val >= 1000) {
-                    return (val / 1000).toLocaleString('th-TH', { maximumFractionDigits: 0 }) + 'k';
-                }
-                return val.toLocaleString('th-TH');
-            };
-
-            new Chart(trendCtx, {
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            type: 'line',
-                            label: 'ยอดเบิกสะสม',
-                            data: cumulativeData,
-                            borderColor: isDark ? '#34d399' : '#059669',
-                            backgroundColor: cumAreaGrad,
-                            borderWidth: 2.5,
-                            tension: 0.35,
-                            fill: true,
-                            pointBackgroundColor: isDark ? '#34d399' : '#10b981',
-                            pointBorderColor: isDark ? '#161922' : '#ffffff',
-                            pointBorderWidth: 2,
-                            pointRadius: isMobile ? 3 : 4,
-                            pointHoverRadius: 6,
-                            order: 1
-                        },
-                        {
-                            type: 'bar',
-                            label: 'ประจำเดือน',
-                            data: monthlyData,
-                            backgroundColor: monthlyBarGrad,
-                            borderColor: isDark ? '#60a5fa' : '#3b82f6',
-                            borderWidth: 1,
-                            borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
-                            barPercentage: 0.45,
-                            order: 2
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    layout: {
-                        padding: {
-                            top: 14,
-                            bottom: 2,
-                            left: 2,
-                            right: 6
-                        }
-                    },
-                    animation: isThemeChange ? false : {
-                        duration: 400,
-                        easing: 'easeOutQuad'
-                    },
-                    interaction: {
-                        mode: 'index',
-                        intersect: false
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: tooltipBg,
-                            titleColor: tooltipTitle,
-                            bodyColor: tooltipBody,
-                            borderColor: tooltipBorder,
-                            borderWidth: 1,
-                            padding: 12,
-                            cornerRadius: 10,
-                            boxPadding: 4,
-                            callbacks: {
-                                title: (items) => {
-                                    const idx = items[0]?.dataIndex;
-                                    const d = timelineData[idx];
-                                    return d ? `เดือน${d.full_name}` : '';
-                                },
-                                label: (context) => {
-                                    const val = context.parsed.y || 0;
-                                    const label = context.dataset.label || '';
-                                    return ` ${label}: ${val.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`;
-                                },
-                                afterBody: (items) => {
-                                    const idx = items[0]?.dataIndex;
-                                    const d = timelineData[idx];
-                                    if (!d) return [];
-                                    return [
-                                        `คิดเป็น: ${d.cum_pct}% ของงบประมาณรวม`
-                                    ];
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grace: '15%',
-                            ticks: {
-                                color: tickColor,
-                                font: { family: "'Prompt', 'Sarabun', sans-serif", size: isMobile ? 9.5 : 10.5 },
-                                callback: (val) => formatCurrency(val)
-                            },
-                            grid: {
-                                color: gridColor
-                            },
-                            border: {
-                                display: false
-                            }
-                        },
-                        x: {
-                            ticks: {
-                                color: labelColor,
-                                maxRotation: 0,
-                                minRotation: 0,
-                                font: {
-                                    family: "'Prompt', 'Sarabun', sans-serif",
-                                    size: isMobile ? 9.5 : 10.5,
-                                    weight: '500'
-                                },
-                                padding: 6
-                            },
-                            grid: { display: false },
-                            border: {
-                                display: false
-                            }
-                        }
-                    }
-                }
-            });
-        }
-    } catch (err) {
-        console.error('Error creating Disbursement Trend Chart:', err);
+    function scheduleDashboardChartsInit(isThemeChange = false) {
+        clearTimeout(dashboardChartsTimer);
+        dashboardChartsTimer = setTimeout(() => {
+            renderDashboardCharts(isThemeChange);
+        }, 30);
     }
-}
 
-let dashboardChartsTimer = null;
-function scheduleDashboardChartsInit(isThemeChange = false) {
-    clearTimeout(dashboardChartsTimer);
-    dashboardChartsTimer = setTimeout(() => {
-        renderDashboardCharts(isThemeChange);
-    }, 30);
-}
+    // Expose global functions safely
+    window.initDashboardCharts = scheduleDashboardChartsInit;
+    window.renderDashboardCharts = renderDashboardCharts;
 
-window.initDashboardCharts = scheduleDashboardChartsInit;
-window.renderDashboardCharts = renderDashboardCharts;
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => scheduleDashboardChartsInit(false));
+    } else {
+        scheduleDashboardChartsInit(false);
+    }
+    window.addEventListener('load', () => scheduleDashboardChartsInit(false));
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => scheduleDashboardChartsInit(false));
-} else {
-    scheduleDashboardChartsInit(false);
-}
-window.addEventListener('load', () => scheduleDashboardChartsInit(false));
-
-// React dynamically when theme toggles (Dark <-> Light <-> System)
-if (!window._dashboardThemeListenerAttached) {
-    window._dashboardThemeListenerAttached = true;
-    window.addEventListener('theme-changed', function() {
-        if (document.getElementById('statusDonutChart') || document.getElementById('budgetDonutChart') || document.getElementById('disbursementTrendChart')) {
-            scheduleDashboardChartsInit(true);
-        }
-    });
-}
+    // React dynamically when theme toggles (Dark <-> Light <-> System)
+    if (!window._dashboardThemeListenerAttached) {
+        window._dashboardThemeListenerAttached = true;
+        window.addEventListener('theme-changed', function() {
+            if (document.getElementById('statusDonutChart') || document.getElementById('budgetComparisonChart') || document.getElementById('projectSuccessChart') || document.getElementById('categoryBarChart')) {
+                scheduleDashboardChartsInit(true);
+            }
+        });
+    }
+})();
 </script>
 
 <?php

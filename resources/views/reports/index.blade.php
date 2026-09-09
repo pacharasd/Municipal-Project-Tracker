@@ -328,7 +328,12 @@ $avgProgress = count($projects) > 0 ? round(array_sum(array_column($projects, 'p
                             <td class="py-3 px-3 text-center text-slate-400 font-mono whitespace-nowrap"
                                 x-text="(perPage === 'all' ? idx + 1 : (currentPage - 1) * perPage + idx + 1)"></td>
                             <td class="py-3 px-3">
-                                <div class="font-medium text-slate-900 dark:text-white" x-text="p.name"></div>
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <template x-if="p.project_code">
+                                        <span class="px-1.5 py-0.5 text-[10px] font-mono font-bold rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300/80 dark:border-emerald-500/30" x-text="p.project_code"></span>
+                                    </template>
+                                    <span class="font-medium text-slate-900 dark:text-white" x-text="p.name"></span>
+                                </div>
                                 <div class="text-[11px] text-slate-500">
                                     <template x-if="!p.parent_id">
                                         <span class="text-blue-600 dark:text-blue-400 font-semibold">[โครงการหลัก]</span>

@@ -24,6 +24,41 @@ class ProjectService
         return self::$hasRespCol;
     }
 
+    public static function generateNextProjectCode(int $fiscalYearId): string
+    {
+        $yearRow = Database::fetch("SELECT year FROM fiscal_years WHERE id = ?", [$fiscalYearId]);
+        $year = !empty($yearRow['year']) ? (int)$yearRow['year'] : (date('Y') + 543);
+
+        $latestCode = Database::fetchColumn(
+            "SELECT project_code FROM projects 
+             WHERE parent_id IS NULL AND fiscal_year_id = ? AND project_code LIKE ? 
+             ORDER BY id DESC LIMIT 1",
+            [$fiscalYearId, "PRJ-{$year}-%"]
+        );
+
+        $nextNum = 1;
+        if ($latestCode && preg_match('/-(\d+)$/', $latestCode, $m)) {
+            $nextNum = (int)$m[1] + 1;
+        } else {
+            $totalInYear = (int)Database::fetchColumn(
+                "SELECT COUNT(*) FROM projects WHERE parent_id IS NULL AND fiscal_year_id = ?",
+                [$fiscalYearId]
+            );
+            $nextNum = max(1, $totalInYear + 1);
+        }
+
+        do {
+            $code = sprintf("PRJ-%d-%03d", $year, $nextNum);
+            $exists = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects WHERE project_code = ?", [$code]);
+            if (!$exists) {
+                return $code;
+            }
+            $nextNum++;
+        } while ($nextNum < 10000);
+
+        return sprintf("PRJ-%d-%04d", $year, $nextNum);
+    }
+
     public static function getMainProjects(array $filters = []): array
     {
         $respExpr = self::hasResponsiblePersonColumn()
@@ -65,11 +100,13 @@ class ProjectService
         }
         if (!empty($filters['search'])) {
             if (self::hasResponsiblePersonColumn()) {
-                $sql .= " AND (p.name LIKE ? OR p.responsible_person LIKE ?)";
+                $sql .= " AND (p.name LIKE ? OR p.project_code LIKE ? OR p.responsible_person LIKE ?)";
+                $params[] = "%{$filters['search']}%";
                 $params[] = "%{$filters['search']}%";
                 $params[] = "%{$filters['search']}%";
             } else {
-                $sql .= " AND p.name LIKE ?";
+                $sql .= " AND (p.name LIKE ? OR p.project_code LIKE ?)";
+                $params[] = "%{$filters['search']}%";
                 $params[] = "%{$filters['search']}%";
             }
         }
@@ -349,7 +386,7 @@ class ProjectService
         unset($cat);
 
         // 4. Top and Bottom sub-projects
-        $topSql = "SELECT s.name, s.progress, s.status, s.budget 
+        $topSql = "SELECT s.id, s.name, s.progress, s.status, s.budget 
                    FROM projects s 
                    INNER JOIN projects p ON s.parent_id = p.id 
                    WHERE p.parent_id IS NULL";
@@ -358,8 +395,20 @@ class ProjectService
             $topSql .= " AND (s.fiscal_year_id = ? OR p.fiscal_year_id = ?)";
             $topParams = [$fiscalYearId, $fiscalYearId];
         }
-        $topProjects = Database::query($topSql . " ORDER BY s.progress DESC LIMIT 4", $topParams);
-        $bottomProjects = Database::query($topSql . " ORDER BY s.progress ASC LIMIT 4", $topParams);
+        $topProjects = Database::query($topSql . " ORDER BY s.progress DESC, s.id ASC LIMIT 5", $topParams);
+        $bottomProjects = Database::query($topSql . " ORDER BY s.progress ASC, s.id ASC LIMIT 5", $topParams);
+
+        foreach ($topProjects as &$tp) {
+            $tp['short_name'] = mb_substr($tp['name'], 0, 26, 'UTF-8') . (mb_strlen($tp['name'], 'UTF-8') > 26 ? '...' : '');
+            $tp['progress'] = (float)$tp['progress'];
+        }
+        unset($tp);
+
+        foreach ($bottomProjects as &$bp) {
+            $bp['short_name'] = mb_substr($bp['name'], 0, 26, 'UTF-8') . (mb_strlen($bp['name'], 'UTF-8') > 26 ? '...' : '');
+            $bp['progress'] = (float)$bp['progress'];
+        }
+        unset($bp);
 
         // 5. Main Projects Progress Data for Dashboard Chart
         $mainProjectsSql = "SELECT p.id, p.name, p.progress, p.budget, p.disbursed_amount, p.status,
