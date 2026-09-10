@@ -59,6 +59,8 @@ $memberSinceText = "สมาชิกตั้งแต่ {$d} {$m} {$y}";
 <template x-teleport="body">
     <div x-show="profileModalOpen" 
          x-cloak 
+         data-teleport-modal="true"
+         style="display: none;"
          @click.self="profileModalOpen = false" 
          class="fixed inset-0 z-[999] flex items-center justify-center p-3 sm:p-6 modal-backdrop-smooth overflow-y-auto"
          x-transition:enter="transition ease-out duration-200"

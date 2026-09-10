@@ -637,19 +637,28 @@
         #main-content {
             max-width: 100% !important;
             overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch !important;
+            touch-action: pan-x pan-y;
         }
         #main-content table,
         #main-content table * {
             max-width: none !important;
         }
+        canvas, .chartjs-render-monitor {
+            touch-action: pan-y !important;
+        }
     </style>
 </head>
 <body class="h-full antialiased text-slate-800 dark:text-slate-100 bg-[#f8fafc] dark:bg-[#0f1014] flex flex-col transition-colors duration-150 w-full max-w-full overflow-x-hidden" 
       :class="{ 'overflow-hidden': sidebarOpen }" 
+      @close-sidebar.window="sidebarOpen = false"
       x-data="{ 
           sidebarOpen: false, 
           desktopSidebarOpen: (localStorage.getItem('mpt_desktop_sidebar') !== 'false'),
           resizeTimer: null,
+          closeSidebar() {
+              this.sidebarOpen = false;
+          },
           toggleSidebar() {
               if (window.innerWidth >= 1024) {
                   this.desktopSidebarOpen = !this.desktopSidebarOpen;
@@ -1099,6 +1108,7 @@
                         $isDashboard = str_contains($currentReqUri, '/dashboard'); 
                     ?>
                     <a href="<?= \App\Core\Router::url('/dashboard') ?>" 
+                       @click="sidebarOpen = false"
                        class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isDashboard ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
                         <div class="flex items-center gap-3">
                             <i data-lucide="layout-dashboard" class="w-5 h-5 <?= $isDashboard ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
@@ -1110,6 +1120,7 @@
                     <!-- โครงการหลัก & ย่อย -->
                     <?php $isProjects = (str_contains($currentReqUri, '/projects') || str_contains($currentReqUri, '/sub-projects')); ?>
                     <a href="<?= \App\Core\Router::url('/projects') ?>" 
+                       @click="sidebarOpen = false"
                        class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isProjects ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
                         <div class="flex items-center gap-3">
                             <i data-lucide="folder-kanban" class="w-5 h-5 <?= $isProjects ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
@@ -1121,6 +1132,7 @@
                     <!-- งบประมาณ & เบิกจ่าย -->
                     <?php $isBudgets = str_contains($currentReqUri, '/budgets'); ?>
                     <a href="<?= \App\Core\Router::url('/budgets') ?>" 
+                       @click="sidebarOpen = false"
                        class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isBudgets ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
                         <div class="flex items-center gap-3">
                             <i data-lucide="wallet" class="w-5 h-5 <?= $isBudgets ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
@@ -1132,6 +1144,7 @@
                     <!-- รายงาน & ส่งออกข้อมูล -->
                     <?php $isReports = str_contains($currentReqUri, '/reports'); ?>
                     <a href="<?= \App\Core\Router::url('/reports') ?>" 
+                       @click="sidebarOpen = false"
                        class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isReports ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
                         <div class="flex items-center gap-3">
                             <i data-lucide="file-spreadsheet" class="w-5 h-5 <?= $isReports ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
@@ -1148,6 +1161,7 @@
                     <!-- ผู้ใช้งาน & สิทธิ์ -->
                     <?php $isUsers = str_contains($currentReqUri, '/users'); ?>
                     <a href="<?= \App\Core\Router::url('/users') ?>" 
+                       @click="sidebarOpen = false"
                        class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isUsers ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
                         <div class="flex items-center gap-3">
                             <i data-lucide="users" class="w-5 h-5 <?= $isUsers ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
@@ -1159,6 +1173,7 @@
                     <!-- ประเภทโครงการ -->
                     <?php $isCategories = str_contains($currentReqUri, '/categories'); ?>
                     <a href="<?= \App\Core\Router::url('/categories') ?>" 
+                       @click="sidebarOpen = false"
                        class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isCategories ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
                         <div class="flex items-center gap-3">
                             <i data-lucide="tags" class="w-5 h-5 <?= $isCategories ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
@@ -1170,6 +1185,7 @@
                     <!-- Audit Log -->
                     <?php $isAudit = str_contains($currentReqUri, '/audit-logs'); ?>
                     <a href="<?= \App\Core\Router::url('/audit-logs') ?>" 
+                       @click="sidebarOpen = false"
                        class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isAudit ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
                         <div class="flex items-center gap-3">
                             <i data-lucide="history" class="w-5 h-5 <?= $isAudit ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
@@ -1199,7 +1215,9 @@
         <div x-show="sidebarOpen" 
              @click="sidebarOpen = false" 
              x-cloak 
-             class="fixed inset-0 z-40 modal-backdrop-smooth lg:hidden w-screen h-screen"></div>
+             style="display: none;"
+             class="fixed inset-0 z-40 modal-backdrop-smooth lg:hidden w-screen h-screen"
+             :class="{ 'pointer-events-none': !sidebarOpen }"></div>
 
         <!-- Main Content Area -->
         <main id="main-content" class="flex-1 min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden p-3.5 sm:p-6 lg:p-8 bg-[#f8fafc] dark:bg-[#0f1014]">
@@ -1412,7 +1430,18 @@
                     }
 
                     // 5. Clean up any teleported modal overlays attached to body that might linger
-                    document.querySelectorAll('body > [data-teleport-target], body > [x-teleport-target], body > [data-teleport-overlay]').forEach(el => el.remove());
+                    document.querySelectorAll('body > [data-teleport-modal], body > .modal-backdrop-smooth, body > [data-teleport-target], body > [x-teleport-target], body > [data-teleport-overlay]').forEach(el => {
+                        try {
+                            if (window.Alpine && typeof Alpine.destroyTree === 'function') {
+                                Alpine.destroyTree(el);
+                            }
+                        } catch (e) {}
+                        el.remove();
+                    });
+
+                    // Unlock any stuck overflow-hidden on body/html
+                    document.body.classList.remove('overflow-hidden');
+                    document.documentElement.classList.remove('overflow-hidden');
 
                     // 6. Replace Main Content & Scroll to Top
                     currentMain.innerHTML = newMain.innerHTML;
@@ -1450,12 +1479,20 @@
                         window.initDashboardCharts();
                     }
 
-                    // 11. Auto-close mobile sidebar if opened
+                    // 11. Auto-close mobile sidebar if opened and unlock body
+                    window.dispatchEvent(new CustomEvent('close-sidebar'));
                     const bodyEl = document.querySelector('body');
-                    if (bodyEl && window.Alpine) {
-                        const alpineData = bodyEl._x_dataStack ? bodyEl._x_dataStack[0] : null;
-                        if (alpineData && alpineData.sidebarOpen) {
-                            alpineData.sidebarOpen = false;
+                    if (bodyEl) {
+                        bodyEl.classList.remove('overflow-hidden');
+                        if (window.Alpine) {
+                            try {
+                                if (typeof Alpine.$data === 'function') {
+                                    const data = Alpine.$data(bodyEl);
+                                    if (data && data.sidebarOpen) data.sidebarOpen = false;
+                                } else if (bodyEl._x_dataStack) {
+                                    bodyEl._x_dataStack.forEach(d => { if (d && d.sidebarOpen) d.sidebarOpen = false; });
+                                }
+                            } catch (e) {}
                         }
                     }
 
@@ -1596,11 +1633,23 @@
                         }
                     }
 
-                    // 5. Clean up any teleported modal overlays attached to body
-                    document.querySelectorAll('body > [data-teleport-target], body > [x-teleport-target], body > [data-teleport-overlay]').forEach(el => el.remove());
+                    // 5. Clean up any teleported modal overlays attached to body that might linger
+                    document.querySelectorAll('body > [data-teleport-modal], body > .modal-backdrop-smooth, body > [data-teleport-target], body > [x-teleport-target], body > [data-teleport-overlay]').forEach(el => {
+                        try {
+                            if (window.Alpine && typeof Alpine.destroyTree === 'function') {
+                                Alpine.destroyTree(el);
+                            }
+                        } catch (e) {}
+                        el.remove();
+                    });
 
-                    // 6. Replace Main Content
+                    // Unlock any stuck overflow-hidden on body/html
+                    document.body.classList.remove('overflow-hidden');
+                    document.documentElement.classList.remove('overflow-hidden');
+
+                    // 6. Replace Main Content & Scroll to Top
                     currentMain.innerHTML = newMain.innerHTML;
+                    currentMain.scrollTop = 0;
 
                     // 7. Re-evaluate <script> tags inside newMain
                     const scripts = Array.from(currentMain.querySelectorAll('script'));

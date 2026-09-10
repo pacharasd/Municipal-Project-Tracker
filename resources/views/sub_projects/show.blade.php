@@ -804,7 +804,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
     <!-- Modal: Report Problem -->
     <template x-teleport="body">
-        <div x-show="problemModal" x-cloak @click.self="problemModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
+        <div x-show="problemModal" x-cloak data-teleport-modal="true" style="display: none;" @click.self="problemModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-smooth">
             <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden modal-box-smooth transform-gpu">
                 <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-rose-50/50">
                     <div class="flex items-center gap-3">
@@ -842,7 +842,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
     <!-- Modal: Resolve Problem -->
     <template x-teleport="body">
-        <div x-show="resolveModal" x-cloak @click.self="resolveModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
+        <div x-show="resolveModal" x-cloak data-teleport-modal="true" style="display: none;" @click.self="resolveModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-smooth">
             <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden modal-box-smooth transform-gpu">
                 <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-emerald-50/50">
                     <div class="flex items-center gap-3">
@@ -880,7 +880,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
     <!-- Modal: Add Activity -->
     <template x-teleport="body">
-        <div x-show="activityModal" x-cloak @click.self="activityModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
+        <div x-show="activityModal" x-cloak data-teleport-modal="true" style="display: none;" @click.self="activityModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-smooth">
             <div class="bg-white dark:bg-[#181a20] w-full max-w-xl rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 relative modal-box-smooth transform-gpu">
                 <div class="p-6 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
                     <h3 class="text-base font-bold text-slate-900 dark:text-white">เพิ่มกิจกรรมใหม่</h3>
@@ -955,7 +955,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
     <!-- Modal: Disburse Budget -->
     <template x-teleport="body">
-        <div x-show="disburseModal" x-cloak @click.self="disburseModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
+        <div x-show="disburseModal" x-cloak data-teleport-modal="true" style="display: none;" @click.self="disburseModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-smooth">
             <div class="bg-white dark:bg-[#181a20] w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 relative modal-box-smooth transform-gpu">
                 <div class="p-6 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
                     <div>
@@ -1024,7 +1024,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
     <!-- Modal: Manual Progress Override -->
     <template x-teleport="body">
-        <div x-show="manualModal" x-cloak @click.self="manualModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
+        <div x-show="manualModal" x-cloak data-teleport-modal="true" style="display: none;" @click.self="manualModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-smooth">
             <div class="bg-white dark:bg-[#181a20] w-full max-w-sm rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 overflow-hidden modal-box-smooth transform-gpu">
                 <div class="p-5 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
                     <h3 class="text-sm font-bold text-slate-900 dark:text-white">กำหนดเปอร์เซ็นต์ความคืบหน้าเอง</h3>
@@ -1049,7 +1049,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
     <!-- Modal: Update Status and Progress Directly -->
     <template x-teleport="body">
-        <div x-show="statusModal" x-cloak @click.self="statusModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth"
+        <div x-show="statusModal" x-cloak data-teleport-modal="true" style="display: none;" @click.self="statusModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-smooth"
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"
@@ -1301,7 +1301,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
     <!-- Modal: Edit Sub-Project -->
     <template x-teleport="body">
-    <div x-show="editSubModal" x-cloak style="display: none;" @click.self="editSubModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
+    <div x-show="editSubModal" x-cloak data-teleport-modal="true" style="display: none;" @click.self="editSubModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-smooth">
         <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-2xl w-full overflow-hidden max-h-[90vh] flex flex-col modal-box-smooth transform-gpu">
             <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
@@ -1504,7 +1504,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
     <!-- Modal: Edit Activity -->
     <template x-teleport="body">
-    <div x-show="editActModal" x-cloak style="display: none;" @click.self="editActModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
+    <div x-show="editActModal" x-cloak data-teleport-modal="true" style="display: none;" @click.self="editActModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-smooth">
         <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-lg w-full overflow-hidden modal-box-smooth transform-gpu">
             <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
@@ -1624,7 +1624,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
     <!-- Modal: Upload Attachment or Photo -->
     <template x-teleport="body">
-    <div x-show="uploadModal" x-cloak style="display: none;" @click.self="uploadModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
+    <div x-show="uploadModal" x-cloak data-teleport-modal="true" style="display: none;" @click.self="uploadModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-smooth">
         <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-md w-full overflow-hidden modal-box-smooth transform-gpu">
             <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">

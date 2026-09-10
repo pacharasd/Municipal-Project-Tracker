@@ -314,8 +314,9 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                 <div class="grid grid-cols-1 sm:grid-cols-12 items-center gap-4 sm:gap-6 py-2">
                     <!-- Donut Canvas with Center Text (5 cols) -->
                     <div class="sm:col-span-5 flex justify-center">
-                        <div class="w-40 h-40 sm:w-48 sm:h-48 relative max-w-full aspect-square mx-auto flex items-center justify-center">
+                        <div class="w-40 h-40 sm:w-48 sm:h-48 relative max-w-full aspect-square mx-auto flex items-center justify-center touch-pan-y" style="touch-action: pan-y;">
                             <canvas id="statusDonutChart"
+                                    style="touch-action: pan-y;"
                                     data-not-started="<?= (int)$stats['not_started'] ?>"
                                     data-in-progress="<?= (int)$stats['in_progress'] ?>"
                                     data-completed="<?= (int)$stats['completed'] ?>"
@@ -422,12 +423,13 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                 </div>
 
                 <!-- Budget Bar Chart Canvas -->
-                <div class="h-56 sm:h-64 relative w-full max-w-full pt-1">
+                <div class="h-56 sm:h-64 relative w-full max-w-full pt-1 touch-pan-y" style="touch-action: pan-y;">
                     <canvas id="budgetComparisonChart" 
                             data-total-budget="<?= (float)($stats['total_budget'] ?? 0) ?>"
                             data-total-disbursed="<?= (float)($stats['total_disbursed'] ?? 0) ?>"
                             data-total-remaining="<?= max(0, (float)($stats['total_remaining'] ?? 0)) ?>"
-                            class="w-full h-full block"></canvas>
+                            class="w-full h-full block"
+                            style="touch-action: pan-y;"></canvas>
                 </div>
 
                 <!-- Bottom Quick Stats Strip -->
@@ -487,11 +489,12 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                 </div>
 
                 <!-- Project Success Horizontal Bar Chart Canvas -->
-                <div class="h-64 sm:h-[270px] relative w-full max-w-full pt-1">
+                <div class="h-64 sm:h-[270px] relative w-full max-w-full pt-1 touch-pan-y" style="touch-action: pan-y;">
                     <canvas id="projectSuccessChart" 
                             data-top='<?= htmlspecialchars(json_encode($stats['top_projects'] ?? [], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>'
                             data-bottom='<?= htmlspecialchars(json_encode($stats['bottom_projects'] ?? [], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>'
-                            class="w-full h-full block"></canvas>
+                            class="w-full h-full block"
+                            style="touch-action: pan-y;"></canvas>
                 </div>
             </div>
 
@@ -522,10 +525,11 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                 </div>
 
                 <!-- Category Distribution Bar Chart Canvas -->
-                <div class="h-64 sm:h-[270px] relative w-full max-w-full pt-1">
+                <div class="h-64 sm:h-[270px] relative w-full max-w-full pt-1 touch-pan-y" style="touch-action: pan-y;">
                     <canvas id="categoryBarChart" 
                             data-categories='<?= htmlspecialchars(json_encode($stats['category_data'] ?? [], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>'
-                            class="w-full h-full block"></canvas>
+                            class="w-full h-full block"
+                            style="touch-action: pan-y;"></canvas>
                 </div>
             </div>
 

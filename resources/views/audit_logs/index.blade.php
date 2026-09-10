@@ -337,8 +337,10 @@ $title = 'ประวัติการใช้งานและการต�
     <template x-teleport="body">
     <div x-show="selectedLog" 
          x-cloak 
+         data-teleport-modal="true"
+         style="display: none;"
          @click.self="selectedLog = null"
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-smooth"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"

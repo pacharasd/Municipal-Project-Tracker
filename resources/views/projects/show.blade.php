@@ -414,7 +414,7 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
     <!-- Modal: Create Sub-project -->
     <?php if (\App\Core\Auth::canManageProjects()): ?>
     <template x-teleport="body">
-        <div x-show="createSubModal" x-cloak @click.self="createSubModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
+        <div x-show="createSubModal" x-cloak data-teleport-modal="true" style="display: none;" @click.self="createSubModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-smooth">
             <div class="bg-white dark:bg-[#161922] w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden max-h-[90vh] flex flex-col modal-box-smooth transform-gpu">
                 <div class="p-6 border-b border-slate-100 dark:border-white/[0.08] flex items-center justify-between flex-shrink-0">
                     <div>
@@ -622,7 +622,7 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
     <!-- Modal: Edit Project -->
     <?php if (\App\Core\Auth::canManageProjects()): ?>
     <template x-teleport="body">
-        <div x-show="editModal" x-cloak @click.self="editModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth">
+        <div x-show="editModal" x-cloak data-teleport-modal="true" style="display: none;" @click.self="editModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-smooth">
             <div class="bg-white dark:bg-[#161922] w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden max-h-[90vh] flex flex-col modal-box-smooth transform-gpu">
                 <div class="p-6 border-b border-slate-100 dark:border-white/[0.08] flex items-center justify-between flex-shrink-0">
                     <div>

@@ -492,7 +492,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
     <!-- Modal: Create Main Project -->
     <?php if (\App\Core\Auth::canManageProjects()): ?>
     <template x-teleport="body">
-        <div x-show="createModal" x-cloak @click.self="createModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 modal-backdrop-smooth overflow-y-auto">
+        <div x-show="createModal" x-cloak data-teleport-modal="true" style="display: none;" @click.self="createModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 modal-backdrop-smooth overflow-y-auto">
             <div class="bg-white dark:bg-[#181a20] w-full max-w-2xl rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 relative modal-box-smooth transform-gpu overflow-hidden max-h-[90vh] flex flex-col my-auto">
                 <div class="p-4 sm:p-6 border-b border-slate-100 dark:border-white/10 flex items-center justify-between flex-shrink-0 bg-white dark:bg-[#181a20]">
                     <div>

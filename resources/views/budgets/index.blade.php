@@ -346,7 +346,7 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
             <span class="font-mono text-[10px]" x-text="`${filteredBudgets.length} โครงการ`"></span>
         </div>
 
-        <div class="overflow-x-auto touch-pan-x">
+        <div class="overflow-x-auto overscroll-x-contain">
             <table class="w-full text-left border-collapse min-w-[780px]">
                 <thead>
                     <tr class="border-b border-slate-200/80 dark:border-white/[0.08] bg-slate-50/70 dark:bg-white/[0.02] text-slate-600 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
@@ -583,7 +583,7 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
             <span class="font-mono text-[10px]" x-text="`${filteredDisbursements.length} รายการ`"></span>
         </div>
 
-        <div class="overflow-x-auto touch-pan-x">
+        <div class="overflow-x-auto overscroll-x-contain">
             <table class="w-full text-left border-collapse min-w-[880px]">
                 <thead>
                     <tr class="border-b border-slate-200/80 dark:border-white/[0.08] bg-slate-50/70 dark:bg-white/[0.02] text-slate-600 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
@@ -742,8 +742,10 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
     <template x-teleport="body">
     <div x-show="disburseModalOpen" 
          x-cloak 
+         data-teleport-modal="true"
+         style="display: none;"
          @click.self="disburseModalOpen = false" 
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-smooth"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"

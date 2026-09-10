@@ -345,8 +345,10 @@ $currentUserId = Auth::id();
     <template x-teleport="body">
     <div x-show="createModal" 
          x-cloak 
+         data-teleport-modal="true"
+         style="display: none;"
          @click.self="createModal = false" 
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-smooth"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
@@ -516,8 +518,10 @@ $currentUserId = Auth::id();
     <template x-teleport="body">
     <div x-show="editModal" 
          x-cloak 
+         data-teleport-modal="true"
+         style="display: none;"
          @click.self="editModal = false" 
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop-smooth"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-smooth"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
