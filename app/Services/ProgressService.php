@@ -209,22 +209,18 @@ class ProgressService
 
         $totalActivities = (int)Database::fetchColumn("SELECT COUNT(*) FROM activities WHERE project_id = ?", [$subProjectId]);
         $completedActivities = (int)Database::fetchColumn("SELECT COUNT(*) FROM activities WHERE project_id = ? AND status = 'completed'", [$subProjectId]);
+        $inProgressActivities = (int)Database::fetchColumn("SELECT COUNT(*) FROM activities WHERE project_id = ? AND status = 'in_progress'", [$subProjectId]);
         $planned = max((int)($project['planned_activity_count'] ?? 1), $totalActivities, 1);
 
-        // คำนวณเปอร์เซ็นต์ความสำเร็จจากกิจกรรมที่เสร็จสิ้น
-        $sumProgress = (float)Database::fetchColumn("SELECT COALESCE(SUM(progress), 0) FROM activities WHERE project_id = ?", [$subProjectId]);
-        if ($sumProgress > 0 && $totalActivities > 0) {
-            $progress = min(100.0, round($sumProgress / $planned, 2));
-        } else {
-            $progress = min(100.0, round(($completedActivities / $planned) * 100, 2));
-        }
+        // คำนวณเปอร์เซ็นต์ความสำเร็จจากกิจกรรมที่เสร็จสิ้นจริง (AGENTS.md: มีทั้งหมด N ดำเนินการเสร็จแล้ว X -> ความสำเร็จ = X/N * 100)
+        $progress = min(100.0, round(($completedActivities / $planned) * 100, 2));
 
         $status = $project['status'];
         // อัปเดตสถานะเป็น completed หรือ in_progress/not_started อัตโนมัติหากโครงการไม่ได้อยู่ในสถานะมีปัญหาหรือยกเลิก
         if ($status !== 'has_problem' && $status !== 'cancelled') {
-            if ($progress >= 100.0 && $completedActivities >= $planned && $planned > 0) {
+            if ($completedActivities >= $planned && $planned > 0) {
                 $status = 'completed';
-            } elseif ($progress > 0.0 || $completedActivities > 0) {
+            } elseif ($completedActivities > 0 || $inProgressActivities > 0) {
                 $status = 'in_progress';
             } else {
                 $status = 'not_started';

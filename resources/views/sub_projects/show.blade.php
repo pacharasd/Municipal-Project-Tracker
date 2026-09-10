@@ -422,7 +422,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                                     </form>
                                 <?php elseif (\App\Core\Auth::canManageProjects() && $act['status'] === 'completed'): ?>
                                     <form action="<?= \App\Core\Router::url("/activities/{$act['id']}/status") ?>" method="POST"
-                                          onsubmit="return confirm('ต้องการยกเลิกสถานะเสร็จสิ้น และเปลี่ยนกลับเป็นกำลังดำเนินการ (ความคืบหน้า 50%) ใช่หรือไม่?');">
+                                          onsubmit="return confirm('ต้องการยกเลิกสถานะเสร็จสิ้น และเปลี่ยนกลับเป็นกำลังดำเนินการ ใช่หรือไม่?');">
                                         <input type="hidden" name="_token" value="<?= $csrfToken ?>">
                                         <input type="hidden" name="status" value="in_progress">
                                         <button type="submit" class="p-1.5 text-amber-500 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-lg transition-colors cursor-pointer" title="เปลี่ยนกลับเป็นกำลังดำเนินการ (ยกเลิกเสร็จสิ้น)">
@@ -1644,13 +1644,9 @@ function subProjectShowPage() {
                 this.selectedAct.progress = 100;
             } else if (s === 'not_started' || s === 'cancelled') {
                 this.selectedAct.progress = 0;
-            } else if (s === 'in_progress') {
-                if (p >= 100 || p <= 0) {
-                    this.selectedAct.progress = 50;
-                }
-            } else if (s === 'has_problem') {
+            } else if (s === 'in_progress' || s === 'has_problem') {
                 if (p >= 100) {
-                    this.selectedAct.progress = 50;
+                    this.selectedAct.progress = 0;
                 }
             }
         },

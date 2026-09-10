@@ -54,12 +54,8 @@ class ActivityController
                 $progress = 100.00;
             } elseif ($status === 'not_started' || $status === 'cancelled') {
                 $progress = 0.00;
-            } elseif ($status === 'in_progress') {
-                $progress = ($rawProgress > 0.00 && $rawProgress < 100.00) ? round($rawProgress, 2) : 50.00;
-            } elseif ($status === 'has_problem') {
-                $progress = ($rawProgress >= 100.00) ? 50.00 : max(0.00, round($rawProgress, 2));
             } else {
-                $progress = min(100.00, max(0.00, round($rawProgress, 2)));
+                $progress = ($rawProgress > 0.00 && $rawProgress < 100.00) ? round($rawProgress, 2) : 0.00;
             }
 
             $actId = Database::insert('activities', [
@@ -108,10 +104,6 @@ class ActivityController
         $newStatus = $_POST['status'] ?? 'completed';
         if ($newStatus === 'completed') {
             $progress = 100.00;
-        } elseif ($newStatus === 'in_progress') {
-            $progress = 50.00;
-        } elseif ($newStatus === 'has_problem') {
-            $progress = 50.00;
         } else {
             $progress = 0.00;
         }
@@ -164,14 +156,14 @@ class ActivityController
         } elseif ($status === 'not_started' || $status === 'cancelled') {
             $progress = 0.00;
         } elseif ($status === 'in_progress') {
-            if ($rawProgress >= 100.00 || $rawProgress <= 0.00) {
-                $progress = 50.00;
+            if ($rawProgress >= 100.00) {
+                $progress = 0.00;
             } else {
-                $progress = round($rawProgress, 2);
+                $progress = max(0.00, round($rawProgress, 2));
             }
         } elseif ($status === 'has_problem') {
             if ($rawProgress >= 100.00) {
-                $progress = 50.00;
+                $progress = 0.00;
             } else {
                 $progress = max(0.00, round($rawProgress, 2));
             }
