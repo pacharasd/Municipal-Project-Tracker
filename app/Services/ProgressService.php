@@ -220,14 +220,14 @@ class ProgressService
         }
 
         $status = $project['status'];
-        // อัปเดตสถานะเป็น completed หรือ in_progress อัตโนมัติหากโครงการไม่ได้อยู่ในสถานะมีปัญหาหรือยกเลิก
+        // อัปเดตสถานะเป็น completed หรือ in_progress/not_started อัตโนมัติหากโครงการไม่ได้อยู่ในสถานะมีปัญหาหรือยกเลิก
         if ($status !== 'has_problem' && $status !== 'cancelled') {
             if ($progress >= 100.0 && $completedActivities >= $planned && $planned > 0) {
                 $status = 'completed';
             } elseif ($progress > 0.0 || $completedActivities > 0) {
-                if ($status === 'not_started') {
-                    $status = 'in_progress';
-                }
+                $status = 'in_progress';
+            } else {
+                $status = 'not_started';
             }
         }
 

@@ -416,8 +416,17 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                                     <form action="<?= \App\Core\Router::url("/activities/{$act['id']}/status") ?>" method="POST">
                                         <input type="hidden" name="_token" value="<?= $csrfToken ?>">
                                         <input type="hidden" name="status" value="completed">
-                                        <button type="submit" class="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="บันทึกว่าเสร็จสิ้นแล้ว">
+                                        <button type="submit" class="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer" title="บันทึกว่าเสร็จสิ้นแล้ว">
                                             <i data-lucide="check-circle" class="w-4 h-4"></i>
+                                        </button>
+                                    </form>
+                                <?php elseif (\App\Core\Auth::canManageProjects() && $act['status'] === 'completed'): ?>
+                                    <form action="<?= \App\Core\Router::url("/activities/{$act['id']}/status") ?>" method="POST"
+                                          onsubmit="return confirm('ต้องการยกเลิกสถานะเสร็จสิ้น และเปลี่ยนกลับเป็นกำลังดำเนินการ (ความคืบหน้า 50%) ใช่หรือไม่?');">
+                                        <input type="hidden" name="_token" value="<?= $csrfToken ?>">
+                                        <input type="hidden" name="status" value="in_progress">
+                                        <button type="submit" class="p-1.5 text-amber-500 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-lg transition-colors cursor-pointer" title="เปลี่ยนกลับเป็นกำลังดำเนินการ (ยกเลิกเสร็จสิ้น)">
+                                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
                                         </button>
                                     </form>
                                 <?php endif; ?>
@@ -1494,7 +1503,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                             สถานะกิจกรรม
                         </label>
-                        <select name="status" x-model="selectedAct.status"
+                        <select name="status" x-model="selectedAct.status" @change="onActStatusChange()"
                                 class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white">
                             <option value="not_started">ยังไม่เริ่ม</option>
                             <option value="in_progress">กำลังดำเนินการ</option>
@@ -1507,7 +1516,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                             ความคืบหน้ากิจกรรม (%)
                         </label>
-                        <input type="number" min="0" max="100" step="1" name="progress" x-model="selectedAct.progress"
+                        <input type="number" min="0" max="100" step="1" name="progress" x-model="selectedAct.progress" @input="onActProgressInput()"
                                class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white font-mono">
                     </div>
                 </div>
@@ -1617,11 +1626,50 @@ function subProjectShowPage() {
         selectedAct: { id: '', name: '', description: '', activity_date: '', location: '', budget: '', target_participant_count: 0, actual_participant_count: 0, participant_count: 0, status: '', progress: '', notes: '' },
         openEditAct(act) {
             this.selectedAct = Object.assign({}, act);
+            if (this.selectedAct.progress !== undefined && this.selectedAct.progress !== null) {
+                this.selectedAct.progress = parseFloat(this.selectedAct.progress);
+            }
             this.editActModal = true;
             this.$nextTick(() => { 
                 window.safeCreateIcons && window.safeCreateIcons(); 
                 window.dispatchEvent(new CustomEvent('set-thai-date-edit_activity_date', { detail: act.activity_date || '' }));
             });
+        },
+        onActStatusChange() {
+            const s = this.selectedAct.status;
+            let p = parseFloat(this.selectedAct.progress);
+            if (isNaN(p)) p = 0;
+
+            if (s === 'completed') {
+                this.selectedAct.progress = 100;
+            } else if (s === 'not_started' || s === 'cancelled') {
+                this.selectedAct.progress = 0;
+            } else if (s === 'in_progress') {
+                if (p >= 100 || p <= 0) {
+                    this.selectedAct.progress = 50;
+                }
+            } else if (s === 'has_problem') {
+                if (p >= 100) {
+                    this.selectedAct.progress = 50;
+                }
+            }
+        },
+        onActProgressInput() {
+            let p = parseFloat(this.selectedAct.progress);
+            if (isNaN(p)) return;
+
+            if (p >= 100) {
+                this.selectedAct.progress = 100;
+                this.selectedAct.status = 'completed';
+            } else if (p <= 0) {
+                if (this.selectedAct.status === 'completed') {
+                    this.selectedAct.status = 'not_started';
+                }
+            } else {
+                if (this.selectedAct.status === 'completed' || this.selectedAct.status === 'not_started') {
+                    this.selectedAct.status = 'in_progress';
+                }
+            }
         },
         selectedStatus: '<?= $project['status'] ?>',
         statusNote: <?= json_encode((string)($project['problem_description'] ?? ''), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>,

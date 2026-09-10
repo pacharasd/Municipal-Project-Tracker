@@ -48,6 +48,20 @@ class ActivityController
                 $actualParticipants = (int)$_POST['participant_count'];
             }
 
+            $status = $_POST['status'] ?? 'not_started';
+            $rawProgress = isset($_POST['progress']) ? (float)$_POST['progress'] : 0.00;
+            if ($status === 'completed') {
+                $progress = 100.00;
+            } elseif ($status === 'not_started' || $status === 'cancelled') {
+                $progress = 0.00;
+            } elseif ($status === 'in_progress') {
+                $progress = ($rawProgress > 0.00 && $rawProgress < 100.00) ? round($rawProgress, 2) : 50.00;
+            } elseif ($status === 'has_problem') {
+                $progress = ($rawProgress >= 100.00) ? 50.00 : max(0.00, round($rawProgress, 2));
+            } else {
+                $progress = min(100.00, max(0.00, round($rawProgress, 2)));
+            }
+
             $actId = Database::insert('activities', [
                 'project_id'               => $projectId,
                 'name'                     => trim($_POST['name']),
@@ -59,8 +73,8 @@ class ActivityController
                 'actual_participant_count' => $actualParticipants,
                 'participant_count'        => $actualParticipants,
                 'budget'                   => (float)$_POST['budget'],
-                'status'                   => $_POST['status'] ?? 'not_started',
-                'progress'                 => ($_POST['status'] ?? '') === 'completed' ? 100.00 : 0.00,
+                'status'                   => $status,
+                'progress'                 => $progress,
                 'notes'                    => trim($_POST['notes'] ?? ''),
             ]);
 
@@ -92,7 +106,15 @@ class ActivityController
         }
 
         $newStatus = $_POST['status'] ?? 'completed';
-        $progress = $newStatus === 'completed' ? 100.00 : ($newStatus === 'in_progress' ? 50.00 : 0.00);
+        if ($newStatus === 'completed') {
+            $progress = 100.00;
+        } elseif ($newStatus === 'in_progress') {
+            $progress = 50.00;
+        } elseif ($newStatus === 'has_problem') {
+            $progress = 50.00;
+        } else {
+            $progress = 0.00;
+        }
 
         Database::update('activities', [
             'status'   => $newStatus,
@@ -135,7 +157,27 @@ class ActivityController
         }
 
         $status = $_POST['status'] ?? $act['status'];
-        $progress = isset($_POST['progress']) ? (float)$_POST['progress'] : ($status === 'completed' ? 100.00 : $act['progress']);
+        $rawProgress = isset($_POST['progress']) ? (float)$_POST['progress'] : (float)($act['progress'] ?? 0);
+
+        if ($status === 'completed') {
+            $progress = 100.00;
+        } elseif ($status === 'not_started' || $status === 'cancelled') {
+            $progress = 0.00;
+        } elseif ($status === 'in_progress') {
+            if ($rawProgress >= 100.00 || $rawProgress <= 0.00) {
+                $progress = 50.00;
+            } else {
+                $progress = round($rawProgress, 2);
+            }
+        } elseif ($status === 'has_problem') {
+            if ($rawProgress >= 100.00) {
+                $progress = 50.00;
+            } else {
+                $progress = max(0.00, round($rawProgress, 2));
+            }
+        } else {
+            $progress = min(100.00, max(0.00, round($rawProgress, 2)));
+        }
 
         $targetParticipants = isset($_POST['target_participant_count']) 
             ? (int)$_POST['target_participant_count'] 
