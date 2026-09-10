@@ -860,11 +860,13 @@
                          profileModalOpen: false, 
                          profileTab: 'general' 
                      }"
+                     @close-profile-modal.window="profileModalOpen = false; userMenuOpen = false"
+                     @open-profile-modal.window="userMenuOpen = false; profileTab = ($event.detail && $event.detail.tab) ? $event.detail.tab : 'general'; profileModalOpen = true"
                      x-init="$watch('profileModalOpen', v => { if(v) setTimeout(() => { if (typeof safeCreateIcons === 'function') safeCreateIcons(); }, 50); }); $watch('profileTab', () => setTimeout(() => { if (typeof safeCreateIcons === 'function') safeCreateIcons(); }, 50));">
                     
                     <!-- Profile Button Trigger -->
                     <button type="button" 
-                            @click="userMenuOpen = !userMenuOpen" 
+                            @click.stop="userMenuOpen = !userMenuOpen" 
                             id="user-profile-menu-btn"
                             class="flex items-center gap-2 p-1 sm:py-1 sm:pl-1.5 sm:pr-2.5 rounded-2xl bg-slate-100 dark:bg-[#181a20] hover:bg-slate-200/80 dark:hover:bg-white/5 border border-slate-200 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/20 transition-all duration-150 cursor-pointer shadow-xs group"
                             :class="{ 'ring-2 ring-purple-500/25 border-purple-500/50 bg-purple-50/60 dark:bg-purple-500/10': userMenuOpen }"
@@ -903,7 +905,7 @@
                          x-transition:leave="transition ease-in duration-100"
                          x-transition:leave-start="transform opacity-100 scale-100 translate-y-0"
                          x-transition:leave-end="transform opacity-0 scale-95 -translate-y-1"
-                         class="absolute right-0 mt-2 w-80 bg-white dark:bg-[#181a20] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-2 z-50 text-left backdrop-blur-xl">
+                         class="absolute right-0 mt-2 w-72 sm:w-80 max-w-[calc(100vw-1.5rem)] bg-white dark:bg-[#181a20] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-2 z-50 text-left backdrop-blur-xl">
                         
                         <!-- Header User Info Card (Clean Solid Surface) -->
                         <div class="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.06] mb-2">
@@ -1436,8 +1438,8 @@
                         }
                     }
 
-                    // 5. Clean up any teleported modal overlays attached to body that might linger
-                    document.querySelectorAll('body > [data-teleport-modal], body > .modal-backdrop-smooth, body > [data-teleport-target], body > [x-teleport-target], body > [data-teleport-overlay]').forEach(el => {
+                    // 5. Clean up any teleported modal overlays attached to body that might linger (except persistent global modals)
+                    document.querySelectorAll('body > [data-teleport-modal]:not([data-persistent-modal]), body > .modal-backdrop-smooth:not([data-persistent-modal]), body > [data-teleport-target]:not([data-persistent-modal]), body > [x-teleport-target]:not([data-persistent-modal]), body > [data-teleport-overlay]:not([data-persistent-modal])').forEach(el => {
                         try {
                             if (window.Alpine && typeof Alpine.destroyTree === 'function') {
                                 Alpine.destroyTree(el);
@@ -1445,6 +1447,11 @@
                         } catch (e) {}
                         el.remove();
                     });
+
+                    // Gracefully close any persistent global modals (e.g. user profile) on page navigation
+                    try {
+                        window.dispatchEvent(new CustomEvent('close-profile-modal'));
+                    } catch (e) {}
 
                     // Unlock any stuck overflow-hidden on body/html
                     document.body.classList.remove('overflow-hidden');
@@ -1640,8 +1647,8 @@
                         }
                     }
 
-                    // 5. Clean up any teleported modal overlays attached to body that might linger
-                    document.querySelectorAll('body > [data-teleport-modal], body > .modal-backdrop-smooth, body > [data-teleport-target], body > [x-teleport-target], body > [data-teleport-overlay]').forEach(el => {
+                    // 5. Clean up any teleported modal overlays attached to body that might linger (except persistent global modals)
+                    document.querySelectorAll('body > [data-teleport-modal]:not([data-persistent-modal]), body > .modal-backdrop-smooth:not([data-persistent-modal]), body > [data-teleport-target]:not([data-persistent-modal]), body > [x-teleport-target]:not([data-persistent-modal]), body > [data-teleport-overlay]:not([data-persistent-modal])').forEach(el => {
                         try {
                             if (window.Alpine && typeof Alpine.destroyTree === 'function') {
                                 Alpine.destroyTree(el);
@@ -1649,6 +1656,11 @@
                         } catch (e) {}
                         el.remove();
                     });
+
+                    // Gracefully close any persistent global modals (e.g. user profile) on form submission
+                    try {
+                        window.dispatchEvent(new CustomEvent('close-profile-modal'));
+                    } catch (e) {}
 
                     // Unlock any stuck overflow-hidden on body/html
                     document.body.classList.remove('overflow-hidden');
