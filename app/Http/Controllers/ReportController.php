@@ -53,6 +53,10 @@ class ReportController
         $fiscalYears = \App\Services\FiscalYearService::getFilterableYears();
         $departments = Database::query("SELECT * FROM departments ORDER BY id ASC");
 
+        $page = max(1, (int)($_GET['page'] ?? 1));
+        $perPageRaw = $_GET['per_page'] ?? '15';
+        $perPage = ($perPageRaw === 'all') ? 'all' : max(1, (int)$perPageRaw);
+
         View::render('reports.index', [
             'projects'     => $projects,
             'fiscalYears'  => $fiscalYears,
@@ -60,6 +64,8 @@ class ReportController
             'fiscalYearId' => $fiscalYearId,
             'departmentId' => $departmentId,
             'status'       => $status,
+            'page'         => $page,
+            'perPage'      => $perPage,
         ]);
     }
 

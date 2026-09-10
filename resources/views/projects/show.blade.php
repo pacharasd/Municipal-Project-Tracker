@@ -320,15 +320,48 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                         <span class="font-bold text-slate-900 dark:text-white font-mono" x-text="subEndIndex"></span> จาก 
                         <span class="font-bold text-emerald-600 dark:text-emerald-400 font-mono" x-text="filteredSubProjects.length"></span> โครงการย่อย
                     </span>
-                    <div class="flex items-center gap-1.5 ml-2 border-l border-slate-200 dark:border-white/10 pl-3">
-                        <span class="text-slate-400 text-[11px]">แสดงต่อหน้า:</span>
-                        <select :value="subPerPage" @change="setSubPerPage($event.target.value)" 
-                                class="px-2 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#1f222e] text-slate-700 dark:text-slate-200 text-xs font-medium focus:ring-1 focus:ring-emerald-500 focus:outline-none cursor-pointer">
-                            <option value="5">5</option>
-                            <option value="10">10</option>
-                            <option value="20">20</option>
-                            <option value="all">ทั้งหมด</option>
-                        </select>
+                    <div class="relative shrink-0 ml-2 border-l border-slate-200 dark:border-white/10 pl-3" x-data="{ openSubPerPage: false }" @click.outside="openSubPerPage = false">
+                        <button type="button" 
+                                @click="openSubPerPage = !openSubPerPage" 
+                                class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-white/[0.04] hover:bg-slate-100 dark:hover:bg-white/[0.08] px-2.5 py-1 rounded-xl border border-slate-200 dark:border-white/10 hover:border-emerald-500/40 transition-all cursor-pointer shadow-2xs">
+                            <span class="text-slate-400 dark:text-slate-500 font-normal text-[11px]">แสดงต่อหน้า:</span>
+                            <span class="font-bold text-slate-900 dark:text-white font-mono" x-text="subPerPage === 'all' ? 'ทั้งหมด' : subPerPage"></span>
+                            <svg class="w-3.5 h-3.5 text-slate-400 transition-transform duration-150 shrink-0" :class="{ 'rotate-180': openSubPerPage }" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        <!-- Themed Dropdown Flyout (Pops Up) -->
+                        <div x-show="openSubPerPage" 
+                             x-cloak
+                             x-transition:enter="transition ease-out duration-100"
+                             x-transition:enter-start="opacity-0 scale-95"
+                             x-transition:enter-end="opacity-100 scale-100"
+                             x-transition:leave="transition ease-in duration-75"
+                             x-transition:leave-start="opacity-100 scale-100"
+                             x-transition:leave-end="opacity-0 scale-95"
+                             class="absolute left-3 bottom-full mb-1.5 w-32 bg-white dark:bg-[#181a20] rounded-2xl shadow-xl dark:shadow-2xl border border-slate-200 dark:border-white/10 p-1.5 z-50 text-xs text-left">
+                            
+                            <div class="px-2.5 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-heading border-b border-slate-100 dark:border-white/[0.06] mb-1">
+                                จำนวนต่อหน้า
+                            </div>
+
+                            <div class="space-y-0.5">
+                                <template x-for="opt in [5, 10, 20, 'all']" :key="opt">
+                                    <button type="button" 
+                                            @click="setSubPerPage(opt); openSubPerPage = false" 
+                                            class="w-full text-left px-2.5 py-1.5 rounded-xl text-xs flex items-center justify-between transition cursor-pointer"
+                                            :class="subPerPage == opt 
+                                                ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/20' 
+                                                : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'">
+                                        <span x-text="opt === 'all' ? 'ทั้งหมด' : opt + ' รายการ'"></span>
+                                        <svg x-show="subPerPage == opt" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -336,33 +369,41 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                 <template x-if="subTotalPages > 1 && subPerPage !== 'all'">
                     <div class="flex items-center gap-1">
                         <button type="button" @click="setSubPage(1)" :disabled="subPage === 1"
-                                class="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="หน้าแรก">
-                            <i data-lucide="chevrons-left" class="w-4 h-4"></i>
+                                class="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#181a20] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="หน้าแรก">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                            </svg>
                         </button>
                         <button type="button" @click="prevSubPage()" :disabled="subPage === 1"
-                                class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer flex items-center gap-1">
-                            <i data-lucide="chevron-left" class="w-4 h-4"></i>
-                            <span class="hidden sm:inline">ก่อนหน้า</span>
+                                class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#181a20] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                            </svg>
+                            <span class="hidden sm:inline font-sans">ก่อนหน้า</span>
                         </button>
                         <div class="flex items-center gap-1 px-1">
                             <template x-for="(p, idx) in subVisiblePages" :key="idx">
                                 <button type="button" 
                                         @click="setSubPage(p)"
                                         :disabled="p === '...'"
-                                        :class="p === subPage ? 'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-500/20 border border-emerald-600' : (p === '...' ? 'text-slate-400 cursor-default' : 'bg-white dark:bg-[#1f222e] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5')"
+                                        :class="p === subPage ? 'bg-emerald-600 text-white font-bold shadow-sm shadow-emerald-600/30 border border-emerald-600' : (p === '...' ? 'text-slate-400 cursor-default' : 'bg-white dark:bg-[#181a20] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5')"
                                         class="min-w-[32px] h-8 px-2 rounded-lg text-xs font-mono font-semibold transition cursor-pointer flex items-center justify-center"
                                         x-text="p">
                                 </button>
                             </template>
                         </div>
                         <button type="button" @click="nextSubPage()" :disabled="subPage === subTotalPages"
-                                class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer flex items-center gap-1">
-                            <span class="hidden sm:inline">ถัดไป</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                                class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#181a20] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer flex items-center gap-1">
+                            <span class="hidden sm:inline font-sans">ถัดไป</span>
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                            </svg>
                         </button>
                         <button type="button" @click="setSubPage(subTotalPages)" :disabled="subPage === subTotalPages"
-                                class="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="หน้าสุดท้าย">
-                            <i data-lucide="chevrons-right" class="w-4 h-4"></i>
+                                class="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#181a20] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="หน้าสุดท้าย">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                            </svg>
                         </button>
                     </div>
                 </template>
@@ -630,6 +671,72 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                                 <option value="has_problem" <?= $project['status'] === 'has_problem' ? 'selected' : '' ?>>มีปัญหา</option>
                                 <option value="cancelled" <?= $project['status'] === 'cancelled' ? 'selected' : '' ?>>ยกเลิก</option>
                             </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            ประเภทโครงการ <span class="text-rose-500">*</span>
+                        </label>
+                        <?php 
+                            $currentCatId = (string)($project['category_id'] ?? '');
+                            $currentCatName = '-- เลือกประเภทโครงการ --';
+                            if (!empty($categories)) {
+                                foreach ($categories as $cat) {
+                                    if ((string)$cat['id'] === $currentCatId) {
+                                        $currentCatName = $cat['name'];
+                                        break;
+                                    }
+                                }
+                                if ($currentCatName === '-- เลือกประเภทโครงการ --' && !empty($categories)) {
+                                    $currentCatId = (string)$categories[0]['id'];
+                                    $currentCatName = $categories[0]['name'];
+                                }
+                            }
+                        ?>
+                        <div class="relative" x-data="{
+                            open: false,
+                            val: '<?= $currentCatId ?>',
+                            label: '<?= htmlspecialchars(addslashes($currentCatName)) ?>',
+                            select(id, name) {
+                                this.val = id;
+                                this.label = name;
+                                this.open = false;
+                            }
+                        }" @click.outside="open = false">
+                            <input type="hidden" name="category_id" :value="val" required>
+                            <button type="button" 
+                                    @click="open = !open" 
+                                    class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white flex items-center justify-between focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-colors cursor-pointer text-left">
+                                <span x-text="label" :class="{ 'text-slate-400 dark:text-slate-500 font-normal': !val, 'text-slate-900 dark:text-white font-medium': val }" class="truncate pr-2"></span>
+                                <svg class="w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div x-show="open" 
+                                 x-transition:enter="transition ease-out duration-100"
+                                 x-transition:enter-start="transform opacity-0 scale-95"
+                                 x-transition:enter-end="transform opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-75"
+                                 x-transition:leave-start="transform opacity-100 scale-100"
+                                 x-transition:leave-end="transform opacity-0 scale-95"
+                                 class="absolute z-50 mt-1.5 w-full bg-white dark:bg-[#1f222e] rounded-xl shadow-xl border border-slate-200 dark:border-white/10 py-1 max-h-60 overflow-y-auto" 
+                                 style="display: none;">
+                                <?php if (!empty($categories)): ?>
+                                    <?php foreach ($categories as $cat): ?>
+                                        <div @click="select('<?= $cat['id'] ?>', '<?= htmlspecialchars(addslashes($cat['name'])) ?>')" 
+                                             class="px-3 py-2.5 text-xs sm:text-sm text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer flex items-center justify-between transition-colors border-b border-slate-100 dark:border-white/5 last:border-0"
+                                             :class="{ 'bg-emerald-50/70 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-semibold': val == '<?= $cat['id'] ?>' }">
+                                            <span class="leading-relaxed"><?= htmlspecialchars($cat['name']) ?></span>
+                                            <svg x-show="val == '<?= $cat['id'] ?>'" class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <div class="px-3 py-2 text-xs text-slate-400">ไม่พบประเภทโครงการ</div>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
 

@@ -23,13 +23,31 @@ class ProfileController
         $currentUser = Auth::user();
         $userId = (int)($currentUser['id'] ?? 0);
         $redirect = $_POST['redirect'] ?? Router::url('/dashboard');
+        if (!str_starts_with($redirect, '/') || str_starts_with($redirect, '//')) {
+            $redirect = Router::url('/dashboard');
+        }
 
-        $name = trim($_POST['name'] ?? '');
-        $phone = trim($_POST['phone'] ?? '');
-        $position = trim($_POST['position'] ?? '');
+        $name = trim(strip_tags($_POST['name'] ?? ''));
+        $phone = trim(strip_tags($_POST['phone'] ?? ''));
+        $position = trim(strip_tags($_POST['position'] ?? ''));
 
-        if (empty($name)) {
-            Session::flash('error', 'กรุณาระบุชื่อ-นามสกุล');
+        if (mb_strlen($name) < 2 || mb_strlen($name) > 150) {
+            Session::flash('error', 'ชื่อ-นามสกุลต้องมีความยาวระหว่าง 2 ถึง 150 ตัวอักษร');
+            header('Location: ' . $redirect);
+            exit;
+        }
+
+        if (!empty($phone)) {
+            $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
+            if (strlen($cleanPhone) < 9 || strlen($cleanPhone) > 10) {
+                Session::flash('error', 'เบอร์โทรศัพท์ต้องประกอบด้วยตัวเลข 9-10 หลัก');
+                header('Location: ' . $redirect);
+                exit;
+            }
+        }
+
+        if (mb_strlen($position) > 100) {
+            Session::flash('error', 'ตำแหน่งงานต้องมีความยาวไม่เกิน 100 ตัวอักษร');
             header('Location: ' . $redirect);
             exit;
         }
@@ -75,6 +93,9 @@ class ProfileController
 
         $userId = (int)Auth::id();
         $redirect = $_POST['redirect'] ?? Router::url('/dashboard');
+        if (!str_starts_with($redirect, '/') || str_starts_with($redirect, '//')) {
+            $redirect = Router::url('/dashboard');
+        }
 
         $currentPassword = $_POST['current_password'] ?? '';
         $newPassword = $_POST['new_password'] ?? '';

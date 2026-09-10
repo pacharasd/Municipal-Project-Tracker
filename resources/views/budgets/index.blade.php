@@ -148,6 +148,16 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
         const mon = String(d.getMonth() + 1).padStart(2, '0');
         const year = d.getFullYear() + 543;
         return `${day}/${mon}/${year}`;
+    },
+
+    setBudgetPerPage(val) {
+        this.budgetPerPage = (val === 'all') ? 'all' : parseInt(val);
+        this.budgetPage = 1;
+    },
+
+    setDisbPerPage(val) {
+        this.disbPerPage = (val === 'all') ? 'all' : parseInt(val);
+        this.disbPage = 1;
     }
 }">
 
@@ -276,17 +286,52 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
                 <div class="relative flex-1 md:w-64">
                     <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                     <input type="text" x-model="budgetSearch" @input="budgetPage = 1" placeholder="ค้นหาชื่อโครงการหลัก, กอง..." 
-                           class="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white transition">
+                           class="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none dark:text-white transition">
                 </div>
-                <div class="shrink-0 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap bg-slate-50 dark:bg-white/[0.04] px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-white/10">
-                    <span>แสดง:</span>
-                    <select x-model="budgetPerPage" @change="budgetPage = 1" class="bg-transparent text-slate-800 dark:text-slate-200 font-semibold text-xs focus:outline-none cursor-pointer">
-                        <option value="5" class="dark:bg-[#181a20]">5</option>
-                        <option value="10" class="dark:bg-[#181a20]">10</option>
-                        <option value="25" class="dark:bg-[#181a20]">25</option>
-                        <option value="50" class="dark:bg-[#181a20]">50</option>
-                        <option value="all" class="dark:bg-[#181a20]">ทั้งหมด</option>
-                    </select>
+
+                <!-- Custom Themed Per-Page Dropdown -->
+                <div class="relative shrink-0" x-data="{ openPerPage: false }" @click.outside="openPerPage = false">
+                    <button type="button" 
+                            @click="openPerPage = !openPerPage" 
+                            class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-white/[0.04] hover:bg-slate-100 dark:hover:bg-white/[0.08] px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 hover:border-emerald-500/40 transition-all cursor-pointer shadow-2xs">
+                        <span class="text-slate-400 dark:text-slate-500 font-normal">แสดง:</span>
+                        <span class="font-bold text-slate-900 dark:text-white font-mono" x-text="budgetPerPage === 'all' ? 'ทั้งหมด' : budgetPerPage"></span>
+                        <svg class="w-3.5 h-3.5 text-slate-400 transition-transform duration-150 shrink-0" :class="{ 'rotate-180': openPerPage }" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    <!-- Themed Dropdown Flyout -->
+                    <div x-show="openPerPage" 
+                         x-cloak
+                         x-transition:enter="transition ease-out duration-100"
+                         x-transition:enter-start="opacity-0 scale-95"
+                         x-transition:enter-end="opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-75"
+                         x-transition:leave-start="opacity-100 scale-100"
+                         x-transition:leave-end="opacity-0 scale-95"
+                         class="absolute right-0 mt-1.5 w-32 bg-white dark:bg-[#181a20] rounded-2xl shadow-xl dark:shadow-2xl border border-slate-200 dark:border-white/10 p-1.5 z-50 text-xs text-left">
+                        
+                        <div class="px-2.5 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-heading border-b border-slate-100 dark:border-white/[0.06] mb-1">
+                            จำนวนต่อหน้า
+                        </div>
+
+                        <div class="space-y-0.5">
+                            <template x-for="opt in [5, 10, 25, 50, 'all']" :key="opt">
+                                <button type="button" 
+                                        @click="setBudgetPerPage(opt); openPerPage = false" 
+                                        class="w-full text-left px-2.5 py-1.5 rounded-xl text-xs flex items-center justify-between transition cursor-pointer"
+                                        :class="budgetPerPage == opt 
+                                            ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/20' 
+                                            : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'">
+                                    <span x-text="opt === 'all' ? 'ทั้งหมด' : opt + ' รายการ'"></span>
+                                    <svg x-show="budgetPerPage == opt" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -374,53 +419,84 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
         </div>
 
         <!-- Budget Pagination Bar -->
-        <div class="p-4 bg-slate-50/60 dark:bg-white/[0.01] border-t border-slate-200/80 dark:border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+        <div class="p-4 bg-slate-50/70 dark:bg-[#12141a]/60 border-t border-slate-100 dark:border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
             <div>
                 <template x-if="filteredBudgets.length > 0">
                     <span>
-                        แสดง <strong class="text-slate-800 dark:text-slate-200 font-mono" x-text="budgetStartIndex"></strong> ถึง <strong class="text-slate-800 dark:text-slate-200 font-mono" x-text="budgetEndIndex"></strong> จากทั้งหมด <strong class="text-slate-800 dark:text-slate-200 font-mono" x-text="filteredBudgets.length"></strong> โครงการหลัก
+                        แสดง <span class="font-bold text-slate-900 dark:text-white font-mono" x-text="budgetStartIndex"></span> ถึง <span class="font-bold text-slate-900 dark:text-white font-mono" x-text="budgetEndIndex"></span> จากทั้งหมด <span class="font-bold text-emerald-600 dark:text-emerald-400 font-mono" x-text="filteredBudgets.length"></span> โครงการหลัก
                     </span>
                 </template>
                 <template x-if="filteredBudgets.length === 0">
-                    <span>ไม่มีข้อมูลสำหรับแสดงผล</span>
+                    <span class="text-slate-400">ไม่มีข้อมูลสำหรับแสดงผล</span>
                 </template>
             </div>
 
             <!-- Page Navigation Buttons -->
             <template x-if="totalBudgetPages > 1 && budgetPerPage !== 'all'">
                 <div class="flex items-center gap-1">
-                    <button type="button" @click="budgetPage = 1" :disabled="budgetPage === 1"
-                            class="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="หน้าแรก">
-                        <i data-lucide="chevrons-left" class="w-3.5 h-3.5"></i>
+                    <!-- First Page -->
+                    <button type="button" 
+                            @click="budgetPage = 1" 
+                            :disabled="budgetPage === 1"
+                            class="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#181a20] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" 
+                            title="หน้าแรก">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                        </svg>
                     </button>
-                    <button type="button" @click="if(budgetPage > 1) budgetPage--" :disabled="budgetPage === 1"
-                            class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed font-medium transition cursor-pointer flex items-center gap-1">
-                        <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
-                        <span class="hidden sm:inline">ก่อนหน้า</span>
+
+                    <!-- Previous Page -->
+                    <button type="button" 
+                            @click="if(budgetPage > 1) budgetPage--" 
+                            :disabled="budgetPage === 1"
+                            class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#181a20] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed font-medium transition cursor-pointer flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        <span class="hidden sm:inline font-sans">ก่อนหน้า</span>
                     </button>
+
+                    <!-- Numbered Pages -->
                     <div class="flex items-center gap-1">
                         <template x-for="(p, i) in budgetVisiblePages" :key="i">
                             <div>
                                 <template x-if="p === '...'">
-                                    <span class="px-2 py-1 text-slate-400 select-none">...</span>
+                                    <span class="px-1.5 py-1 text-slate-400 font-semibold select-none">...</span>
                                 </template>
                                 <template x-if="p !== '...'">
-                                    <button type="button" @click="budgetPage = p"
-                                            :class="budgetPage === p ? 'bg-emerald-600 text-white font-bold shadow-sm shadow-emerald-600/30 border-emerald-600' : 'bg-white dark:bg-[#12141a] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 border-slate-200 dark:border-white/10'"
-                                            class="w-8 h-8 rounded-lg border text-xs flex items-center justify-center font-medium transition cursor-pointer"
-                                            x-text="p"></button>
+                                    <button type="button" 
+                                            @click="budgetPage = p"
+                                            :class="budgetPage === p 
+                                                ? 'bg-emerald-600 text-white font-bold shadow-sm shadow-emerald-600/30 border border-emerald-600' 
+                                                : 'bg-white dark:bg-[#181a20] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10'"
+                                            class="w-8 h-8 rounded-lg text-xs font-mono flex items-center justify-center font-medium transition cursor-pointer"
+                                            x-text="p">
+                                    </button>
                                 </template>
                             </div>
                         </template>
                     </div>
-                    <button type="button" @click="if(budgetPage < totalBudgetPages) budgetPage++" :disabled="budgetPage === totalBudgetPages"
-                            class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed font-medium transition cursor-pointer flex items-center gap-1">
-                        <span class="hidden sm:inline">ถัดไป</span>
-                        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+
+                    <!-- Next Page -->
+                    <button type="button" 
+                            @click="if(budgetPage < totalBudgetPages) budgetPage++" 
+                            :disabled="budgetPage === totalBudgetPages"
+                            class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#181a20] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed font-medium transition cursor-pointer flex items-center gap-1">
+                        <span class="hidden sm:inline font-sans">ถัดไป</span>
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                        </svg>
                     </button>
-                    <button type="button" @click="budgetPage = totalBudgetPages" :disabled="budgetPage === totalBudgetPages"
-                            class="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="หน้าสุดท้าย">
-                        <i data-lucide="chevrons-right" class="w-3.5 h-3.5"></i>
+
+                    <!-- Last Page -->
+                    <button type="button" 
+                            @click="budgetPage = totalBudgetPages" 
+                            :disabled="budgetPage === totalBudgetPages"
+                            class="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#181a20] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" 
+                            title="หน้าสุดท้าย">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                        </svg>
                     </button>
                 </div>
             </template>
@@ -450,14 +526,49 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
                     <input type="text" x-model="disbSearch" @input="disbPage = 1" placeholder="ค้นหารายการ, ผู้รับเงิน, โครงการ..." 
                            class="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white transition">
                 </div>
-                <div class="shrink-0 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap bg-slate-50 dark:bg-white/[0.04] px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-white/10">
-                    <span>แสดง:</span>
-                    <select x-model="disbPerPage" @change="disbPage = 1" class="bg-transparent text-slate-800 dark:text-slate-200 font-semibold text-xs focus:outline-none cursor-pointer">
-                        <option value="5" class="dark:bg-[#181a20]">5</option>
-                        <option value="10" class="dark:bg-[#181a20]">10</option>
-                        <option value="20" class="dark:bg-[#181a20]">20</option>
-                        <option value="all" class="dark:bg-[#181a20]">ทั้งหมด</option>
-                    </select>
+                <!-- Custom Themed Per-Page Dropdown -->
+                <div class="relative shrink-0" x-data="{ openDisbPerPage: false }" @click.outside="openDisbPerPage = false">
+                    <button type="button" 
+                            @click="openDisbPerPage = !openDisbPerPage" 
+                            class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-white/[0.04] hover:bg-slate-100 dark:hover:bg-white/[0.08] px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 hover:border-emerald-500/40 transition-all cursor-pointer shadow-2xs">
+                        <span class="text-slate-400 dark:text-slate-500 font-normal">แสดง:</span>
+                        <span class="font-bold text-slate-900 dark:text-white font-mono" x-text="disbPerPage === 'all' ? 'ทั้งหมด' : disbPerPage"></span>
+                        <svg class="w-3.5 h-3.5 text-slate-400 transition-transform duration-150 shrink-0" :class="{ 'rotate-180': openDisbPerPage }" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    <!-- Themed Dropdown Flyout -->
+                    <div x-show="openDisbPerPage" 
+                         x-cloak
+                         x-transition:enter="transition ease-out duration-100"
+                         x-transition:enter-start="opacity-0 scale-95"
+                         x-transition:enter-end="opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-75"
+                         x-transition:leave-start="opacity-100 scale-100"
+                         x-transition:leave-end="opacity-0 scale-95"
+                         class="absolute right-0 mt-1.5 w-32 bg-white dark:bg-[#181a20] rounded-2xl shadow-xl dark:shadow-2xl border border-slate-200 dark:border-white/10 p-1.5 z-50 text-xs text-left">
+                        
+                        <div class="px-2.5 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-heading border-b border-slate-100 dark:border-white/[0.06] mb-1">
+                            จำนวนต่อหน้า
+                        </div>
+
+                        <div class="space-y-0.5">
+                            <template x-for="opt in [5, 10, 20, 50, 'all']" :key="opt">
+                                <button type="button" 
+                                        @click="setDisbPerPage(opt); openDisbPerPage = false" 
+                                        class="w-full text-left px-2.5 py-1.5 rounded-xl text-xs flex items-center justify-between transition cursor-pointer"
+                                        :class="disbPerPage == opt 
+                                            ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/20' 
+                                            : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'">
+                                    <span x-text="opt === 'all' ? 'ทั้งหมด' : opt + ' รายการ'"></span>
+                                    <svg x-show="disbPerPage == opt" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -558,38 +669,69 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
             <!-- Page Navigation Buttons -->
             <template x-if="totalDisbPages > 1 && disbPerPage !== 'all'">
                 <div class="flex items-center gap-1">
-                    <button type="button" @click="disbPage = 1" :disabled="disbPage === 1"
-                            class="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="หน้าแรก">
-                        <i data-lucide="chevrons-left" class="w-3.5 h-3.5"></i>
+                    <!-- First Page -->
+                    <button type="button" 
+                            @click="disbPage = 1" 
+                            :disabled="disbPage === 1"
+                            class="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#181a20] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" 
+                            title="หน้าแรก">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                        </svg>
                     </button>
-                    <button type="button" @click="if(disbPage > 1) disbPage--" :disabled="disbPage === 1"
-                            class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed font-medium transition cursor-pointer flex items-center gap-1">
-                        <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
-                        <span class="hidden sm:inline">ก่อนหน้า</span>
+
+                    <!-- Prev Page -->
+                    <button type="button" 
+                            @click="if(disbPage > 1) disbPage--" 
+                            :disabled="disbPage === 1"
+                            class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#181a20] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed font-medium transition cursor-pointer flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        <span class="hidden sm:inline font-sans">ก่อนหน้า</span>
                     </button>
+
+                    <!-- Page Numbers -->
                     <div class="flex items-center gap-1">
                         <template x-for="(p, i) in disbVisiblePages" :key="i">
                             <div>
                                 <template x-if="p === '...'">
-                                    <span class="px-2 py-1 text-slate-400 select-none">...</span>
+                                    <span class="px-1.5 py-1 text-slate-400 font-semibold select-none">...</span>
                                 </template>
                                 <template x-if="p !== '...'">
-                                    <button type="button" @click="disbPage = p"
-                                            :class="disbPage === p ? 'bg-emerald-600 text-white font-bold shadow-sm shadow-emerald-600/30 border-emerald-600' : 'bg-white dark:bg-[#12141a] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 border-slate-200 dark:border-white/10'"
-                                            class="w-8 h-8 rounded-lg border text-xs flex items-center justify-center font-medium transition cursor-pointer"
-                                            x-text="p"></button>
+                                    <button type="button" 
+                                            @click="disbPage = p"
+                                            :class="disbPage === p 
+                                                ? 'bg-emerald-600 text-white font-bold shadow-sm shadow-emerald-600/30 border border-emerald-600' 
+                                                : 'bg-white dark:bg-[#181a20] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10'"
+                                            class="w-8 h-8 rounded-lg text-xs font-mono flex items-center justify-center font-medium transition cursor-pointer"
+                                            x-text="p">
+                                    </button>
                                 </template>
                             </div>
                         </template>
                     </div>
-                    <button type="button" @click="if(disbPage < totalDisbPages) disbPage++" :disabled="disbPage === totalDisbPages"
-                            class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed font-medium transition cursor-pointer flex items-center gap-1">
-                        <span class="hidden sm:inline">ถัดไป</span>
-                        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+
+                    <!-- Next Page -->
+                    <button type="button" 
+                            @click="if(disbPage < totalDisbPages) disbPage++" 
+                            :disabled="disbPage === totalDisbPages"
+                            class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#181a20] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed font-medium transition cursor-pointer flex items-center gap-1">
+                        <span class="hidden sm:inline font-sans">ถัดไป</span>
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                        </svg>
                     </button>
-                    <button type="button" @click="disbPage = totalDisbPages" :disabled="disbPage === totalDisbPages"
-                            class="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="หน้าสุดท้าย">
-                        <i data-lucide="chevrons-right" class="w-3.5 h-3.5"></i>
+
+                    <!-- Last Page -->
+                    <button type="button" 
+                            @click="disbPage = totalDisbPages" 
+                            :disabled="disbPage === totalDisbPages"
+                            class="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#181a20] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" 
+                            title="หน้าสุดท้าย">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                        </svg>
                     </button>
                 </div>
             </template>

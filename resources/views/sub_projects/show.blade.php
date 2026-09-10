@@ -102,6 +102,9 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
             <div class="flex flex-wrap items-center gap-2">
                 <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200"><?= htmlspecialchars($project['department_name'] ?? 'ไม่ระบุหน่วยงาน') ?></span>
                 <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">ปีงบประมาณ <?= htmlspecialchars((string)($project['fiscal_year'] ?? '-')) ?></span>
+                <?php if (!empty($project['category_name'])): ?>
+                    <span class="px-3 py-1 text-xs font-semibold rounded-full bg-purple-50 dark:bg-purple-500/15 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/30" title="<?= htmlspecialchars($project['category_name']) ?>"><?= htmlspecialchars($project['category_name']) ?></span>
+                <?php endif; ?>
             </div>
 
             <?php
@@ -507,14 +510,41 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                 <div x-show="filteredActivities.length > 0" class="pt-3 border-t border-slate-100 dark:border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
                     <div class="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
                         <span>แสดง <strong class="text-slate-800 dark:text-white" x-text="actStartIndex"></strong>-<strong class="text-slate-800 dark:text-white" x-text="actEndIndex"></strong> จาก <strong class="text-emerald-600 dark:text-emerald-400" x-text="filteredActivities.length"></strong></span>
-                        <div class="flex items-center gap-1 border-l border-slate-200 dark:border-white/10 pl-2">
-                            <span class="text-slate-400">ต่อหน้า:</span>
-                            <select :value="actPerPage" @change="setActPerPage($event.target.value)" 
-                                    class="px-1.5 py-0.5 rounded border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#12141a] text-slate-700 dark:text-slate-200 text-[11px] font-medium focus:outline-none cursor-pointer">
-                                <option value="5">5</option>
-                                <option value="10">10</option>
-                                <option value="all">ทั้งหมด</option>
-                            </select>
+                        <div class="relative shrink-0 border-l border-slate-200 dark:border-white/10 pl-2" x-data="{ openActPerPage: false }" @click.outside="openActPerPage = false">
+                            <button type="button" 
+                                    @click="openActPerPage = !openActPerPage" 
+                                    class="flex items-center gap-1 text-[11px] font-semibold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-white/[0.04] hover:bg-slate-100 dark:hover:bg-white/[0.08] px-2 py-0.5 rounded-lg border border-slate-200 dark:border-white/10 hover:border-emerald-500/40 transition-all cursor-pointer">
+                                <span class="text-slate-400 font-normal">ต่อหน้า:</span>
+                                <span class="font-bold text-slate-900 dark:text-white font-mono" x-text="actPerPage === 'all' ? 'ทั้งหมด' : actPerPage"></span>
+                                <svg class="w-3 h-3 text-slate-400 transition-transform duration-150 shrink-0" :class="{ 'rotate-180': openActPerPage }" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            <!-- Themed Dropdown Flyout (Pops Up) -->
+                            <div x-show="openActPerPage" 
+                                 x-cloak
+                                 x-transition:enter="transition ease-out duration-100"
+                                 x-transition:enter-start="opacity-0 scale-95"
+                                 x-transition:enter-end="opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-75"
+                                 x-transition:leave-start="opacity-100 scale-100"
+                                 x-transition:leave-end="opacity-0 scale-95"
+                                 class="absolute left-2 bottom-full mb-1 w-28 bg-white dark:bg-[#181a20] rounded-xl shadow-xl border border-slate-200 dark:border-white/10 p-1 z-50 text-xs text-left">
+                                <template x-for="opt in [5, 10, 'all']" :key="opt">
+                                    <button type="button" 
+                                            @click="setActPerPage(opt); openActPerPage = false" 
+                                            class="w-full text-left px-2 py-1 rounded-lg text-xs flex items-center justify-between transition cursor-pointer"
+                                            :class="actPerPage == opt 
+                                                ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold' 
+                                                : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'">
+                                        <span x-text="opt === 'all' ? 'ทั้งหมด' : opt + ' รายการ'"></span>
+                                        <svg x-show="actPerPage == opt" class="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </button>
+                                </template>
+                            </div>
                         </div>
                     </div>
 
@@ -641,14 +671,41 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                 <div x-show="filteredDisbursements.length > 0" class="pt-3 border-t border-slate-100 dark:border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
                     <div class="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
                         <span>แสดง <strong class="text-slate-800 dark:text-white" x-text="disbStartIndex"></strong>-<strong class="text-slate-800 dark:text-white" x-text="disbEndIndex"></strong> จาก <strong class="text-emerald-600 dark:text-emerald-400" x-text="filteredDisbursements.length"></strong></span>
-                        <div class="flex items-center gap-1 border-l border-slate-200 dark:border-white/10 pl-2">
-                            <span class="text-slate-400">ต่อหน้า:</span>
-                            <select :value="disbPerPage" @change="setDisbPerPage($event.target.value)" 
-                                    class="px-1.5 py-0.5 rounded border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#12141a] text-slate-700 dark:text-slate-200 text-[11px] font-medium focus:outline-none cursor-pointer">
-                                <option value="5">5</option>
-                                <option value="10">10</option>
-                                <option value="all">ทั้งหมด</option>
-                            </select>
+                        <div class="relative shrink-0 border-l border-slate-200 dark:border-white/10 pl-2" x-data="{ openDisbPerPage: false }" @click.outside="openDisbPerPage = false">
+                            <button type="button" 
+                                    @click="openDisbPerPage = !openDisbPerPage" 
+                                    class="flex items-center gap-1 text-[11px] font-semibold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-white/[0.04] hover:bg-slate-100 dark:hover:bg-white/[0.08] px-2 py-0.5 rounded-lg border border-slate-200 dark:border-white/10 hover:border-emerald-500/40 transition-all cursor-pointer">
+                                <span class="text-slate-400 font-normal">ต่อหน้า:</span>
+                                <span class="font-bold text-slate-900 dark:text-white font-mono" x-text="disbPerPage === 'all' ? 'ทั้งหมด' : disbPerPage"></span>
+                                <svg class="w-3 h-3 text-slate-400 transition-transform duration-150 shrink-0" :class="{ 'rotate-180': openDisbPerPage }" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            <!-- Themed Dropdown Flyout (Pops Up) -->
+                            <div x-show="openDisbPerPage" 
+                                 x-cloak
+                                 x-transition:enter="transition ease-out duration-100"
+                                 x-transition:enter-start="opacity-0 scale-95"
+                                 x-transition:enter-end="opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-75"
+                                 x-transition:leave-start="opacity-100 scale-100"
+                                 x-transition:leave-end="opacity-0 scale-95"
+                                 class="absolute left-2 bottom-full mb-1 w-28 bg-white dark:bg-[#181a20] rounded-xl shadow-xl border border-slate-200 dark:border-white/10 p-1 z-50 text-xs text-left">
+                                <template x-for="opt in [5, 10, 'all']" :key="opt">
+                                    <button type="button" 
+                                            @click="setDisbPerPage(opt); openDisbPerPage = false" 
+                                            class="w-full text-left px-2 py-1 rounded-lg text-xs flex items-center justify-between transition cursor-pointer"
+                                            :class="disbPerPage == opt 
+                                                ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold' 
+                                                : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'">
+                                        <span x-text="opt === 'all' ? 'ทั้งหมด' : opt + ' รายการ'"></span>
+                                        <svg x-show="disbPerPage == opt" class="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </button>
+                                </template>
+                            </div>
                         </div>
                     </div>
 

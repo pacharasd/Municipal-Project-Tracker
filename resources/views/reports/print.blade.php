@@ -4,6 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>รายงานสรุปผลการดำเนินงานและงบประมาณโครงการ - เทศบาล</title>
+    
+    <!-- Browser DevTools / Web-Vitals Suppression Guard -->
+    <script>
+        (function() {
+            function isDevToolsError(err) {
+                if (!err) return false;
+                const str = String((err && (err.message || err.stack)) || err || '').toLowerCase();
+                return str.includes('starttime') || str.includes('reportallchanges');
+            }
+            window.addEventListener('error', function(event) {
+                if (isDevToolsError(event.message) || isDevToolsError(event.error)) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                    return true;
+                }
+            }, true);
+            const origOnError = window.onerror;
+            window.onerror = function(message, source, lineno, colno, error) {
+                if (isDevToolsError(message) || isDevToolsError(error)) return true;
+                if (typeof origOnError === 'function') return origOnError.apply(this, arguments);
+                return false;
+            };
+        })();
+    </script>
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

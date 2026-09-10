@@ -318,15 +318,46 @@ $categoriesJson = json_encode($categoriesSummary, JSON_HEX_TAG | JSON_HEX_APOS |
                     <span class="font-bold text-slate-900 dark:text-white font-mono" x-text="gridEndIndex"></span> จาก 
                     <span class="font-bold text-emerald-600 dark:text-emerald-400 font-mono" x-text="filteredCategories.length"></span> หมวดหมู่
                 </span>
-                <div class="flex items-center gap-1.5 ml-2 border-l border-slate-200 dark:border-white/10 pl-3">
-                    <span class="text-slate-400 text-[11px]">แสดงต่อหน้า:</span>
-                    <select :value="gridPerPage" @change="setGridPerPage($event.target.value)" 
-                            class="px-2 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#12141a] text-slate-700 dark:text-slate-200 text-xs font-medium focus:ring-1 focus:ring-emerald-500 focus:outline-none cursor-pointer">
-                        <option value="6">6</option>
-                        <option value="9">9</option>
-                        <option value="12">12</option>
-                        <option value="all">ทั้งหมด</option>
-                    </select>
+                <div class="relative shrink-0 ml-2 border-l border-slate-200 dark:border-white/10 pl-3" x-data="{ openGridPerPage: false }" @click.outside="openGridPerPage = false">
+                    <button type="button" 
+                            @click="openGridPerPage = !openGridPerPage" 
+                            class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-white/[0.04] hover:bg-slate-100 dark:hover:bg-white/[0.08] px-2.5 py-1 rounded-xl border border-slate-200 dark:border-white/10 hover:border-emerald-500/40 transition-all cursor-pointer shadow-2xs">
+                        <span class="text-slate-400 dark:text-slate-500 font-normal text-[11px]">แสดงต่อหน้า:</span>
+                        <span class="font-bold text-slate-900 dark:text-white font-mono" x-text="gridPerPage === 'all' ? 'ทั้งหมด' : gridPerPage"></span>
+                        <svg class="w-3.5 h-3.5 text-slate-400 transition-transform duration-150 shrink-0" :class="{ 'rotate-180': openGridPerPage }" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    <!-- Themed Dropdown Flyout (Pops Up) -->
+                    <div x-show="openGridPerPage" 
+                         x-cloak
+                         x-transition:enter="transition ease-out duration-100"
+                         x-transition:enter-start="opacity-0 scale-95"
+                         x-transition:enter-end="opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-75"
+                         x-transition:leave-start="opacity-100 scale-100"
+                         x-transition:leave-end="opacity-0 scale-95"
+                         class="absolute left-3 bottom-full mb-1.5 w-32 bg-white dark:bg-[#181a20] rounded-2xl shadow-xl dark:shadow-2xl border border-slate-200 dark:border-white/10 p-1.5 z-50 text-xs text-left">
+                        <div class="px-2.5 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-heading border-b border-slate-100 dark:border-white/[0.06] mb-1">
+                            จำนวนต่อหน้า
+                        </div>
+                        <div class="space-y-0.5">
+                            <template x-for="opt in [6, 9, 12, 'all']" :key="opt">
+                                <button type="button" 
+                                        @click="setGridPerPage(opt); openGridPerPage = false" 
+                                        class="w-full text-left px-2.5 py-1.5 rounded-xl text-xs flex items-center justify-between transition cursor-pointer"
+                                        :class="gridPerPage == opt 
+                                            ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/20' 
+                                            : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'">
+                                    <span x-text="opt === 'all' ? 'ทั้งหมด' : opt + ' รายการ'"></span>
+                                    <svg x-show="gridPerPage == opt" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -500,15 +531,46 @@ $categoriesJson = json_encode($categoriesSummary, JSON_HEX_TAG | JSON_HEX_APOS |
                     <span class="font-bold text-slate-900 dark:text-white font-mono" x-text="tableEndIndex"></span> จาก 
                     <span class="font-bold text-emerald-600 dark:text-emerald-400 font-mono" x-text="filteredCategories.length"></span> หมวดหมู่
                 </span>
-                <div class="flex items-center gap-1.5 ml-2 border-l border-slate-200 dark:border-white/10 pl-3">
-                    <span class="text-slate-400 text-[11px]">แสดงต่อหน้า:</span>
-                    <select :value="tablePerPage" @change="setTablePerPage($event.target.value)" 
-                            class="px-2 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#12141a] text-slate-700 dark:text-slate-200 text-xs font-medium focus:ring-1 focus:ring-emerald-500 focus:outline-none cursor-pointer">
-                        <option value="10">10</option>
-                        <option value="20">20</option>
-                        <option value="50">50</option>
-                        <option value="all">ทั้งหมด</option>
-                    </select>
+                <div class="relative shrink-0 ml-2 border-l border-slate-200 dark:border-white/10 pl-3" x-data="{ openTablePerPage: false }" @click.outside="openTablePerPage = false">
+                    <button type="button" 
+                            @click="openTablePerPage = !openTablePerPage" 
+                            class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-white/[0.04] hover:bg-slate-100 dark:hover:bg-white/[0.08] px-2.5 py-1 rounded-xl border border-slate-200 dark:border-white/10 hover:border-emerald-500/40 transition-all cursor-pointer shadow-2xs">
+                        <span class="text-slate-400 dark:text-slate-500 font-normal text-[11px]">แสดงต่อหน้า:</span>
+                        <span class="font-bold text-slate-900 dark:text-white font-mono" x-text="tablePerPage === 'all' ? 'ทั้งหมด' : tablePerPage"></span>
+                        <svg class="w-3.5 h-3.5 text-slate-400 transition-transform duration-150 shrink-0" :class="{ 'rotate-180': openTablePerPage }" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    <!-- Themed Dropdown Flyout (Pops Up) -->
+                    <div x-show="openTablePerPage" 
+                         x-cloak
+                         x-transition:enter="transition ease-out duration-100"
+                         x-transition:enter-start="opacity-0 scale-95"
+                         x-transition:enter-end="opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-75"
+                         x-transition:leave-start="opacity-100 scale-100"
+                         x-transition:leave-end="opacity-0 scale-95"
+                         class="absolute left-3 bottom-full mb-1.5 w-32 bg-white dark:bg-[#181a20] rounded-2xl shadow-xl dark:shadow-2xl border border-slate-200 dark:border-white/10 p-1.5 z-50 text-xs text-left">
+                        <div class="px-2.5 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-heading border-b border-slate-100 dark:border-white/[0.06] mb-1">
+                            จำนวนต่อหน้า
+                        </div>
+                        <div class="space-y-0.5">
+                            <template x-for="opt in [10, 20, 50, 'all']" :key="opt">
+                                <button type="button" 
+                                        @click="setTablePerPage(opt); openTablePerPage = false" 
+                                        class="w-full text-left px-2.5 py-1.5 rounded-xl text-xs flex items-center justify-between transition cursor-pointer"
+                                        :class="tablePerPage == opt 
+                                            ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/20' 
+                                            : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'">
+                                    <span x-text="opt === 'all' ? 'ทั้งหมด' : opt + ' รายการ'"></span>
+                                    <svg x-show="tablePerPage == opt" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
                 </div>
             </div>
 

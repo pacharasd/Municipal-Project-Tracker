@@ -48,11 +48,13 @@ class ProjectController
         }
 
         $departments = Database::query("SELECT * FROM departments ORDER BY id ASC");
+        $categories = Database::query("SELECT * FROM project_categories ORDER BY id ASC");
         $users = Database::query("SELECT id, name, position FROM users ORDER BY name ASC");
 
         View::render('projects.show', [
             'project'     => $project,
             'departments' => $departments,
+            'categories'  => $categories,
             'users'       => $users,
         ]);
     }
@@ -169,11 +171,16 @@ class ProjectController
             exit;
         }
 
-        $v = Validator::make($_POST, [
+        $validationRules = [
             'name'       => 'required|min:3|max:255',
             'start_date' => 'required|date',
             'end_date'   => 'required|date',
-        ]);
+        ];
+        if (isset($_POST['category_id'])) {
+            $validationRules['category_id'] = 'required|numeric';
+        }
+
+        $v = Validator::make($_POST, $validationRules);
 
         if ($v->fails()) {
             Session::flash('error', $v->firstError());
@@ -231,6 +238,28 @@ class ProjectController
             'end_date'            => $_POST['end_date'],
             'notes'               => trim($_POST['notes'] ?? ''),
         ];
+
+        $newCategoryId = null;
+        $oldCategoryRow = null;
+        $newCategoryRow = null;
+
+        if (!empty($_POST['category_id'])) {
+            $catIdInput = (int)$_POST['category_id'];
+            $catCheck = Database::fetch("SELECT id, name FROM project_categories WHERE id = ?", [$catIdInput]);
+            if ($catCheck) {
+                $newCategoryId = (int)$catCheck['id'];
+                $updateData['category_id'] = $newCategoryId;
+                if ($newCategoryId !== (int)($project['category_id'] ?? 0)) {
+                    $oldCategoryRow = Database::fetch("SELECT name FROM project_categories WHERE id = ?", [(int)($project['category_id'] ?? 0)]);
+                    $newCategoryRow = $catCheck;
+                }
+            } else {
+                Session::flash('error', 'ประเภทโครงการที่ระบุไม่ถูกต้อง');
+                header('Location: ' . Router::url("/projects/{$projectId}"));
+                exit;
+            }
+        }
+
         if (isset($_POST['status']) && in_array($_POST['status'], ['not_started', 'in_progress', 'completed', 'has_problem', 'cancelled'])) {
             $updateData['status'] = $_POST['status'];
         }
@@ -257,15 +286,29 @@ class ProjectController
             $updateData['responsible_person'] = $responsiblePerson;
         }
 
-        Database::update('projects', $updateData, "id = ?", [$projectId]);
+        Database::transaction(function () use ($projectId, $updateData, $newCategoryId) {
+            Database::update('projects', $updateData, "id = ?", [$projectId]);
 
-        AuditLogService::log('UPDATE', 'Project', $projectId, [
-            'name' => $project['name'],
+            // Sync category_id to all child sub-projects if category was updated
+            if ($newCategoryId !== null) {
+                Database::update('projects', ['category_id' => $newCategoryId], "parent_id = ?", [$projectId]);
+            }
+        });
+
+        $oldAudit = [
+            'name'               => $project['name'],
             'responsible_person' => $project['responsible_person'] ?? '',
-        ], [
-            'name' => $updateData['name'],
+        ];
+        $newAudit = [
+            'name'               => $updateData['name'],
             'responsible_person' => $responsiblePerson,
-        ]);
+        ];
+        if ($newCategoryRow !== null) {
+            $oldAudit['category'] = $oldCategoryRow['name'] ?? "ID: {$project['category_id']}";
+            $newAudit['category'] = $newCategoryRow['name'];
+        }
+
+        AuditLogService::log('UPDATE', 'Project', $projectId, $oldAudit, $newAudit);
         Session::flash('success', 'อัปเดตข้อมูลโครงการเรียบร้อยแล้ว');
         header('Location: ' . Router::url("/projects/{$projectId}"));
         exit;

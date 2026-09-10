@@ -277,6 +277,11 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                                 <?php endif; ?>
                                 <span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40 truncate max-w-[200px]"><?= htmlspecialchars(!empty($p['responsible_person']) ? $p['responsible_person'] : $p['department_name']) ?></span>
                                 <span class="px-2 py-0.5 text-xs text-slate-500 dark:text-slate-400">ปีงบ <?= $p['fiscal_year'] ?></span>
+                                <?php if (!empty($p['category_name'])): ?>
+                                    <span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/40 truncate max-w-[260px]" title="<?= htmlspecialchars($p['category_name']) ?>">
+                                        <?= htmlspecialchars($p['category_name']) ?>
+                                    </span>
+                                <?php endif; ?>
                                 <?php if (!empty($p['start_date']) || !empty($p['end_date'])): ?>
                                     <span class="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-950/30 rounded-full border border-emerald-200/60 dark:border-emerald-800/40">
                                         <i data-lucide="calendar" class="w-3 h-3 text-emerald-600 dark:text-emerald-400"></i>

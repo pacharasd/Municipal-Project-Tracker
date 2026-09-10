@@ -19,11 +19,69 @@ class Auth
         }
 
         $userId = Session::get('user_id');
-        $sql = "SELECT u.*, r.name as role_name, r.display_name as role_label 
+        $sql = "SELECT u.*, r.name as role_name, r.display_name as role_label,
+                       d.name as department_name, d.code as department_code 
                 FROM users u 
                 LEFT JOIN roles r ON u.role_id = r.id 
+                LEFT JOIN departments d ON u.department_id = d.id 
                 WHERE u.id = ? LIMIT 1";
         return Database::fetch($sql, [$userId]);
+    }
+
+    public static function userStats(?int $userId = null): array
+    {
+        $userId = $userId ?: self::id();
+        if (!$userId) {
+            return [
+                'project_count'     => 0,
+                'in_progress_count' => 0,
+                'completed_count'   => 0,
+                'total_budget'      => 0.0,
+                'assigned_projects' => [],
+                'recent_activities' => [],
+            ];
+        }
+
+        // Summary counts
+        $counts = Database::fetch(
+            "SELECT 
+                COUNT(*) as total_projects,
+                COALESCE(SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END), 0) as in_progress_projects,
+                COALESCE(SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END), 0) as completed_projects,
+                COALESCE(SUM(budget), 0) as total_budget
+             FROM projects 
+             WHERE responsible_user_id = ?",
+            [$userId]
+        ) ?: [];
+
+        // Top 5 assigned projects
+        $assignedProjects = Database::query(
+            "SELECT id, parent_id, project_code, name, status, progress, budget, start_date, end_date 
+             FROM projects 
+             WHERE responsible_user_id = ? 
+             ORDER BY updated_at DESC, id DESC 
+             LIMIT 5",
+            [$userId]
+        ) ?: [];
+
+        // Latest 5 audit logs
+        $recentLogs = Database::query(
+            "SELECT action, module, record_id, created_at 
+             FROM audit_logs 
+             WHERE user_id = ? 
+             ORDER BY created_at DESC 
+             LIMIT 5",
+            [$userId]
+        ) ?: [];
+
+        return [
+            'project_count'     => (int)($counts['total_projects'] ?? 0),
+            'in_progress_count' => (int)($counts['in_progress_projects'] ?? 0),
+            'completed_count'   => (int)($counts['completed_projects'] ?? 0),
+            'total_budget'      => (float)($counts['total_budget'] ?? 0.0),
+            'assigned_projects' => $assignedProjects,
+            'recent_activities' => $recentLogs,
+        ];
     }
 
     public static function id(): ?int

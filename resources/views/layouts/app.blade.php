@@ -10,53 +10,47 @@
     <link rel="icon" type="image/webp" href="<?= \App\Core\Router::url('/images/mobile-logo.webp') ?>">
     <meta name="color-scheme" id="meta-color-scheme" content="light">
 
-    <!-- Browser DevTools / Web-Vitals Instrumentation Guard -->
+    <!-- Browser DevTools / Web-Vitals Suppression Guard -->
     <script>
         (function() {
-            function shouldSuppress(msg) {
-                const s = String(msg || '');
-                return s.includes("reading 'startTime'") || s.includes('reportAllChanges') || s.includes('startTime');
+            function isDevToolsError(err) {
+                if (!err) return false;
+                const str = String((err && (err.message || err.stack)) || err || '').toLowerCase();
+                return str.includes('starttime') || str.includes('reportallchanges');
             }
 
-            // Suppress unhandled exceptions
-            const originalOnError = window.onerror;
-            window.onerror = function(message, source, lineno, colno, error) {
-                if (shouldSuppress(message) || (error && shouldSuppress(error.message || error.stack))) {
-                    return true;
-                }
-                if (typeof originalOnError === 'function') {
-                    return originalOnError.apply(this, arguments);
-                }
-                return false;
-            };
-
-            // Suppress unhandled promise rejections
-            window.addEventListener('unhandledrejection', function(event) {
-                const reason = event && event.reason;
-                const msg = (reason && (reason.message || reason.stack)) || reason;
-                if (shouldSuppress(msg)) {
-                    event.preventDefault();
-                }
-            });
-
-            // Suppress error event in capture phase
             window.addEventListener('error', function(event) {
-                const msg = (event && (event.message || (event.error && (event.error.message || event.error.stack)))) || '';
-                if (shouldSuppress(msg)) {
+                if (isDevToolsError(event.message) || isDevToolsError(event.error)) {
                     event.preventDefault();
                     event.stopImmediatePropagation();
                     return true;
                 }
             }, true);
 
-            // Filter console.error for DevTools internal instrumentation artifacts
-            const originalConsoleError = console.error;
+            window.addEventListener('unhandledrejection', function(event) {
+                if (isDevToolsError(event.reason)) {
+                    event.preventDefault();
+                }
+            });
+
+            const origOnError = window.onerror;
+            window.onerror = function(message, source, lineno, colno, error) {
+                if (isDevToolsError(message) || isDevToolsError(error)) {
+                    return true;
+                }
+                if (typeof origOnError === 'function') {
+                    return origOnError.apply(this, arguments);
+                }
+                return false;
+            };
+
+            const origConsoleError = console.error;
             console.error = function(...args) {
                 const text = args.map(a => (a && (a.message || a.stack)) ? (a.message + ' ' + (a.stack || '')) : String(a)).join(' ');
-                if (shouldSuppress(text)) {
+                if (isDevToolsError(text)) {
                     return;
                 }
-                originalConsoleError.apply(console, args);
+                origConsoleError.apply(console, args);
             };
         })();
     </script>
@@ -830,14 +824,15 @@
                 $currentUser = $currentUser ?? \App\Core\Auth::user() ?? [];
                 $userRole = $currentUser['role_name'] ?? 'admin';
                 $roleMeta = [
-                    'admin'     => ['label' => 'ผู้ดูแลระบบ', 'badge' => 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60', 'icon' => 'shield-check'],
-                    'executive' => ['label' => 'ผู้บริหาร (ดูอย่างเดียว)', 'badge' => 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60', 'icon' => 'eye'],
-                    'officer'   => ['label' => 'เจ้าหน้าที่', 'badge' => 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60', 'icon' => 'user-check'],
+                    'admin'     => ['label' => 'ผู้ดูแลระบบ', 'badge' => 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60', 'avatar_bg' => 'bg-purple-600 text-white', 'icon' => 'shield-check'],
+                    'executive' => ['label' => 'ผู้บริหาร (ดูอย่างเดียว)', 'badge' => 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60', 'avatar_bg' => 'bg-amber-600 text-white', 'icon' => 'eye'],
+                    'officer'   => ['label' => 'เจ้าหน้าที่', 'badge' => 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60', 'avatar_bg' => 'bg-blue-600 text-white', 'icon' => 'user-check'],
                 ];
                 $currentRoleInfo = $roleMeta[$userRole] ?? [
-                    'label' => $currentUser['role_label'] ?? 'ผู้ใช้งาน',
-                    'badge' => 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10',
-                    'icon'  => 'user'
+                    'label'     => $currentUser['role_label'] ?? 'ผู้ใช้งาน',
+                    'badge'     => 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10',
+                    'avatar_bg' => 'bg-slate-700 text-white',
+                    'icon'      => 'user'
                 ];
                 $userName = trim($currentUser['name'] ?? 'ผู้ใช้งาน');
                 $avatarInitials = mb_substr($userName, 0, 2, 'UTF-8');
@@ -848,21 +843,21 @@
                      x-data="{ 
                          userMenuOpen: false, 
                          profileModalOpen: false, 
-                         passwordModalOpen: false 
+                         profileTab: 'general' 
                      }"
-                     x-init="$watch('profileModalOpen', v => { if(v) setTimeout(() => { if (typeof safeCreateIcons === 'function') safeCreateIcons(); }, 50); }); $watch('passwordModalOpen', v => { if(v) setTimeout(() => { if (typeof safeCreateIcons === 'function') safeCreateIcons(); }, 50); })">
+                     x-init="$watch('profileModalOpen', v => { if(v) setTimeout(() => { if (typeof safeCreateIcons === 'function') safeCreateIcons(); }, 50); }); $watch('profileTab', () => setTimeout(() => { if (typeof safeCreateIcons === 'function') safeCreateIcons(); }, 50));">
                     
                     <!-- Profile Button Trigger -->
                     <button type="button" 
                             @click="userMenuOpen = !userMenuOpen" 
                             id="user-profile-menu-btn"
-                            class="flex items-center gap-2 p-1 sm:py-1 sm:pl-1.5 sm:pr-2.5 rounded-2xl bg-slate-100 dark:bg-[#181a20] hover:bg-slate-200/80 dark:hover:bg-white/5 border border-slate-200 dark:border-white/[0.08] hover:border-emerald-500/40 dark:hover:border-emerald-500/40 transition-all duration-150 cursor-pointer shadow-xs group"
-                            :class="{ 'ring-2 ring-emerald-500/25 border-emerald-500/50 bg-emerald-50/60 dark:bg-emerald-500/10': userMenuOpen }"
+                            class="flex items-center gap-2 p-1 sm:py-1 sm:pl-1.5 sm:pr-2.5 rounded-2xl bg-slate-100 dark:bg-[#181a20] hover:bg-slate-200/80 dark:hover:bg-white/5 border border-slate-200 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/20 transition-all duration-150 cursor-pointer shadow-xs group"
+                            :class="{ 'ring-2 ring-purple-500/25 border-purple-500/50 bg-purple-50/60 dark:bg-purple-500/10': userMenuOpen }"
                             title="ข้อมูลผู้ใช้งานและเมนูบัญชี">
                         
-                        <!-- Refined Soft Avatar with Online Indicator -->
+                        <!-- Refined Solid Avatar with Online Indicator -->
                         <div class="relative shrink-0">
-                            <div class="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-heading font-semibold text-xs flex items-center justify-center shadow-sm">
+                            <div class="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl <?= $currentRoleInfo['avatar_bg'] ?> font-heading font-semibold text-xs flex items-center justify-center shadow-sm">
                                 <?= htmlspecialchars($avatarInitials) ?>
                             </div>
                             <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#181a20]"></span>
@@ -870,7 +865,7 @@
 
                         <!-- User Name & Role (Hidden on mobile <640px) -->
                         <div class="hidden sm:block text-left pr-0.5 max-w-[140px]">
-                            <div class="text-xs font-bold font-heading text-slate-800 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate">
+                            <div class="text-xs font-bold font-heading text-slate-800 dark:text-slate-100 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors truncate">
                                 <?= htmlspecialchars($userName) ?>
                             </div>
                             <div class="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate flex items-center gap-1">
@@ -895,10 +890,10 @@
                          x-transition:leave-end="transform opacity-0 scale-95 -translate-y-1"
                          class="absolute right-0 mt-2 w-80 bg-white dark:bg-[#181a20] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-2 z-50 text-left backdrop-blur-xl">
                         
-                        <!-- Header User Info Card -->
-                        <div class="p-3 rounded-xl bg-gradient-to-br from-slate-50 to-emerald-50/40 dark:from-white/[0.03] dark:to-emerald-500/[0.06] border border-slate-100 dark:border-white/[0.06] mb-2">
+                        <!-- Header User Info Card (Clean Solid Surface) -->
+                        <div class="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.06] mb-2">
                             <div class="flex items-center gap-3">
-                                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-heading font-bold text-sm flex items-center justify-center shadow-md shrink-0">
+                                <div class="w-11 h-11 rounded-xl <?= $currentRoleInfo['avatar_bg'] ?> font-heading font-bold text-sm flex items-center justify-center shadow-md shrink-0">
                                     <?= htmlspecialchars($avatarInitials) ?>
                                 </div>
                                 <div class="min-w-0 flex-1">
@@ -922,7 +917,7 @@
                         <div class="space-y-0.5 text-xs">
                             <!-- 1. Open Profile Modal -->
                             <button type="button" 
-                                    @click="userMenuOpen = false; profileModalOpen = true"
+                                    @click.stop="userMenuOpen = false; profileTab = 'general'; profileModalOpen = true"
                                     class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2.5 text-slate-700 dark:text-slate-200 transition cursor-pointer font-medium">
                                 <div class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                                     <i data-lucide="user" class="w-4 h-4"></i>
@@ -936,7 +931,7 @@
 
                             <!-- 2. Open Password Modal -->
                             <button type="button" 
-                                    @click="userMenuOpen = false; passwordModalOpen = true"
+                                    @click.stop="userMenuOpen = false; profileTab = 'security'; profileModalOpen = true"
                                     class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2.5 text-slate-700 dark:text-slate-200 transition cursor-pointer font-medium">
                                 <div class="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
                                     <i data-lucide="key-round" class="w-4 h-4"></i>
@@ -980,249 +975,11 @@
                         </div>
                     </div>
 
-                    <!-- Modal: ข้อมูลส่วนตัว (My Profile Modal) -->
-                    <template x-teleport="body">
-                        <div x-show="profileModalOpen" 
-                             x-cloak 
-                             @click.self="profileModalOpen = false" 
-                             class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 modal-backdrop-smooth overflow-y-auto"
-                             x-transition:enter="transition ease-out duration-200"
-                             x-transition:enter-start="opacity-0"
-                             x-transition:enter-end="opacity-100"
-                             x-transition:leave="transition ease-in duration-150"
-                             x-transition:leave-start="opacity-100"
-                             x-transition:leave-end="opacity-0">
-                            
-                            <div class="bg-white dark:bg-[#181a20] rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 max-w-lg w-full overflow-hidden max-h-[90vh] flex flex-col modal-box-smooth transform-gpu text-left my-auto"
-                                 @click.outside="profileModalOpen = false"
-                                 x-transition:enter="transition ease-out duration-200"
-                                 x-transition:enter-start="opacity-0 scale-95"
-                                 x-transition:enter-end="opacity-100 scale-100">
-                                
-                                <!-- Modal Header -->
-                                <div class="px-6 py-4 border-b border-slate-100 dark:border-white/[0.08] flex items-center justify-between bg-slate-50/70 dark:bg-white/[0.02] shrink-0">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20">
-                                            <i data-lucide="user" class="w-5 h-5"></i>
-                                        </div>
-                                        <div>
-                                            <h3 class="font-heading font-bold text-slate-900 dark:text-white text-base">ข้อมูลส่วนตัวผู้ใช้งาน</h3>
-                                            <p class="text-xs text-slate-500 dark:text-slate-400">ตรวจสอบรายละเอียดบัญชีและข้อมูลสังกัด</p>
-                                        </div>
-                                    </div>
-                                    <button type="button" 
-                                            @click="profileModalOpen = false" 
-                                            class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition cursor-pointer"
-                                            title="ปิดหน้าต่าง">
-                                        <i data-lucide="x" class="w-5 h-5"></i>
-                                    </button>
-                                </div>
-
-                                <!-- Modal Body: Profile Form -->
-                                <form action="<?= \App\Core\Router::url('/profile/update') ?>" method="POST" class="p-6 space-y-4 overflow-y-auto flex-1">
-                                    <input type="hidden" name="_token" value="<?= $csrfToken ?>">
-                                    <input type="hidden" name="redirect" value="<?= htmlspecialchars($_SERVER['REQUEST_URI'] ?? '') ?>">
-
-                                    <!-- User Card Overview -->
-                                    <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/[0.08] flex items-center gap-3.5">
-                                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-heading font-bold text-base flex items-center justify-center shadow-md shrink-0">
-                                            <?= htmlspecialchars($avatarInitials) ?>
-                                        </div>
-                                        <div class="min-w-0 flex-1">
-                                            <div class="text-sm font-bold font-heading text-slate-900 dark:text-white truncate">
-                                                <?= htmlspecialchars($currentUser['name'] ?? '') ?>
-                                            </div>
-                                            <div class="text-xs text-slate-500 dark:text-slate-400 truncate">
-                                                <?= htmlspecialchars($currentUser['email'] ?? '') ?>
-                                            </div>
-                                            <div class="mt-1 flex items-center gap-1.5">
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold <?= $currentRoleInfo['badge'] ?>">
-                                                    <i data-lucide="<?= $currentRoleInfo['icon'] ?>" class="w-3 h-3"></i>
-                                                    <?= htmlspecialchars($currentRoleInfo['label']) ?>
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <!-- Name Field -->
-                                        <div>
-                                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                                                ชื่อ-นามสกุล <span class="text-rose-500">*</span>
-                                            </label>
-                                            <input type="text" 
-                                                   name="name" 
-                                                   value="<?= htmlspecialchars($currentUser['name'] ?? '') ?>" 
-                                                   required
-                                                   class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white dark:bg-[#121316] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none text-slate-900 dark:text-white transition">
-                                        </div>
-
-                                        <!-- Email Field (Read Only for Security) -->
-                                        <div>
-                                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                                                อีเมล (ใช้สำหรับเข้าสู่ระบบ)
-                                            </label>
-                                            <input type="email" 
-                                                   value="<?= htmlspecialchars($currentUser['email'] ?? '') ?>" 
-                                                   disabled
-                                                   class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-100/80 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.06] rounded-xl text-slate-500 dark:text-slate-400 cursor-not-allowed">
-                                        </div>
-
-                                        <!-- Position Field -->
-                                        <div>
-                                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                                                ตำแหน่งงาน
-                                            </label>
-                                            <input type="text" 
-                                                   name="position" 
-                                                   value="<?= htmlspecialchars($currentUser['position'] ?? '') ?>" 
-                                                   placeholder="เช่น นักวิเคราะห์นโยบายและแผน"
-                                                   class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white dark:bg-[#121316] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none text-slate-900 dark:text-white transition">
-                                        </div>
-
-                                        <!-- Phone Field -->
-                                        <div>
-                                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                                                เบอร์โทรศัพท์ติดต่อ
-                                            </label>
-                                            <input type="text" 
-                                                   name="phone" 
-                                                   value="<?= htmlspecialchars($currentUser['phone'] ?? '') ?>" 
-                                                   placeholder="เช่น 081-234-5678"
-                                                   class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white dark:bg-[#121316] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none text-slate-900 dark:text-white transition">
-                                        </div>
-                                    </div>
-
-                                    <!-- Modal Footer -->
-                                    <div class="pt-4 border-t border-slate-100 dark:border-white/[0.08] flex items-center justify-between shrink-0">
-                                        <button type="button" 
-                                                @click="profileModalOpen = false; passwordModalOpen = true"
-                                                class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer">
-                                            <i data-lucide="key-round" class="w-3.5 h-3.5"></i>
-                                            <span>ต้องการเปลี่ยนรหัสผ่าน?</span>
-                                        </button>
-                                        <div class="flex items-center gap-2">
-                                            <button type="button" 
-                                                    @click="profileModalOpen = false"
-                                                    class="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl cursor-pointer transition">
-                                                ยกเลิก
-                                            </button>
-                                            <button type="submit" 
-                                                    class="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 rounded-xl transition shadow-md shadow-emerald-500/20 cursor-pointer flex items-center gap-1.5">
-                                                <i data-lucide="check" class="w-3.5 h-3.5"></i>
-                                                <span>บันทึกข้อมูล</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </template>
-
-                    <!-- Modal: เปลี่ยนรหัสผ่าน (Change Password Modal) -->
-                    <template x-teleport="body">
-                        <div x-show="passwordModalOpen" 
-                             x-cloak 
-                             @click.self="passwordModalOpen = false" 
-                             class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 modal-backdrop-smooth overflow-y-auto"
-                             x-transition:enter="transition ease-out duration-200"
-                             x-transition:enter-start="opacity-0"
-                             x-transition:enter-end="opacity-100"
-                             x-transition:leave="transition ease-in duration-150"
-                             x-transition:leave-start="opacity-100"
-                             x-transition:leave-end="opacity-0">
-                            
-                            <div class="bg-white dark:bg-[#181a20] rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 max-w-md w-full overflow-hidden max-h-[90vh] flex flex-col modal-box-smooth transform-gpu text-left my-auto"
-                                 @click.outside="passwordModalOpen = false"
-                                 x-transition:enter="transition ease-out duration-200"
-                                 x-transition:enter-start="opacity-0 scale-95"
-                                 x-transition:enter-end="opacity-100 scale-100">
-                                
-                                <!-- Modal Header -->
-                                <div class="px-6 py-4 border-b border-slate-100 dark:border-white/[0.08] flex items-center justify-between bg-slate-50/70 dark:bg-white/[0.02] shrink-0">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
-                                            <i data-lucide="key-round" class="w-5 h-5"></i>
-                                        </div>
-                                        <div>
-                                            <h3 class="font-heading font-bold text-slate-900 dark:text-white text-base">เปลี่ยนรหัสผ่านบัญชี</h3>
-                                            <p class="text-xs text-slate-500 dark:text-slate-400">รักษาความปลอดภัยของบัญชีผู้ใช้งาน</p>
-                                        </div>
-                                    </div>
-                                    <button type="button" 
-                                            @click="passwordModalOpen = false" 
-                                            class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition cursor-pointer"
-                                            title="ปิดหน้าต่าง">
-                                        <i data-lucide="x" class="w-5 h-5"></i>
-                                    </button>
-                                </div>
-
-                                <!-- Modal Body: Password Form -->
-                                <form action="<?= \App\Core\Router::url('/profile/password') ?>" method="POST" class="p-6 space-y-4 overflow-y-auto flex-1">
-                                    <input type="hidden" name="_token" value="<?= $csrfToken ?>">
-                                    <input type="hidden" name="redirect" value="<?= htmlspecialchars($_SERVER['REQUEST_URI'] ?? '') ?>">
-
-                                    <!-- Current Password -->
-                                    <div>
-                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                                            รหัสผ่านปัจจุบัน <span class="text-rose-500">*</span>
-                                        </label>
-                                        <input type="password" 
-                                               name="current_password" 
-                                               required
-                                               placeholder="••••••••"
-                                               class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white dark:bg-[#121316] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none text-slate-900 dark:text-white transition">
-                                    </div>
-
-                                    <!-- New Password -->
-                                    <div>
-                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                                            รหัสผ่านใหม่ <span class="text-rose-500">*</span>
-                                        </label>
-                                        <input type="password" 
-                                               name="new_password" 
-                                               required
-                                               minlength="8"
-                                               placeholder="อย่างน้อย 8 ตัวอักษร"
-                                               class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white dark:bg-[#121316] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none text-slate-900 dark:text-white transition">
-                                    </div>
-
-                                    <!-- Confirm Password -->
-                                    <div>
-                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                                            ยืนยันรหัสผ่านใหม่ <span class="text-rose-500">*</span>
-                                        </label>
-                                        <input type="password" 
-                                               name="new_password_confirmation" 
-                                               required
-                                               minlength="8"
-                                               placeholder="กรอกรหัสผ่านใหม่อีกครั้ง"
-                                               class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white dark:bg-[#121316] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none text-slate-900 dark:text-white transition">
-                                    </div>
-
-                                    <!-- Security Notice -->
-                                    <div class="p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200/60 dark:border-amber-500/20 text-[11px] text-amber-800 dark:text-amber-300 flex items-start gap-2">
-                                        <i data-lucide="info" class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"></i>
-                                        <div>รหัสผ่านต้องมีความยาวไม่น้อยกว่า 8 ตัวอักษร และจะถูกเข้ารหัสความปลอดภัยด้วยเทคโนโลยี Bcrypt</div>
-                                    </div>
-
-                                    <!-- Modal Footer -->
-                                    <div class="pt-4 border-t border-slate-100 dark:border-white/[0.08] flex items-center justify-end gap-2 shrink-0">
-                                        <button type="button" 
-                                                @click="passwordModalOpen = false"
-                                                class="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl cursor-pointer transition">
-                                            ยกเลิก
-                                        </button>
-                                        <button type="submit" 
-                                                class="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 rounded-xl transition shadow-md shadow-emerald-500/20 cursor-pointer flex items-center gap-1.5">
-                                            <i data-lucide="check" class="w-3.5 h-3.5"></i>
-                                            <span>เปลี่ยนรหัสผ่าน</span>
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </template>
+                    <!-- Modern Interactive User Profile Pop-up Modal Component -->
+                    <?php \App\Core\View::component('user-profile-modal', [
+                        'currentUser' => $currentUser,
+                        'csrfToken'   => $csrfToken,
+                    ]); ?>
                 </div>
             </div>
         </div>

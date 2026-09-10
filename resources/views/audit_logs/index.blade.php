@@ -155,15 +155,46 @@ $title = 'ประวัติการใช้งานและการต�
         
         <!-- Per Page Selector & Total Counter -->
         <div class="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 w-full sm:w-auto justify-between sm:justify-end">
-            <div class="flex items-center gap-1.5">
-                <span>แสดงหน้าละ:</span>
-                <select x-model="perPage" @change="currentPage = 1" class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer">
-                    <option value="10">10 รายการ</option>
-                    <option value="15">15 รายการ</option>
-                    <option value="25">25 รายการ</option>
-                    <option value="50">50 รายการ</option>
-                    <option value="all">ทั้งหมด</option>
-                </select>
+            <div class="relative shrink-0" x-data="{ openPerPage: false }" @click.outside="openPerPage = false">
+                <button type="button" 
+                        @click="openPerPage = !openPerPage" 
+                        class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-amber-500/40 transition-all cursor-pointer shadow-2xs">
+                    <span class="text-slate-400 dark:text-slate-500 font-normal">แสดงหน้าละ:</span>
+                    <span class="font-bold text-slate-900 dark:text-white font-mono" x-text="perPage === 'all' ? 'ทั้งหมด' : perPage"></span>
+                    <svg class="w-3.5 h-3.5 text-slate-400 transition-transform duration-150 shrink-0" :class="{ 'rotate-180': openPerPage }" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+
+                <!-- Themed Dropdown Flyout -->
+                <div x-show="openPerPage" 
+                     x-cloak
+                     x-transition:enter="transition ease-out duration-100"
+                     x-transition:enter-start="opacity-0 scale-95"
+                     x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-75"
+                     x-transition:leave-start="opacity-100 scale-100"
+                     x-transition:leave-end="opacity-0 scale-95"
+                     class="absolute right-0 mt-1.5 w-32 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-1.5 z-50 text-xs text-left">
+                    <div class="px-2.5 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-heading border-b border-slate-100 dark:border-slate-800 mb-1">
+                        จำนวนต่อหน้า
+                    </div>
+                    <div class="space-y-0.5">
+                        <template x-for="opt in [10, 15, 25, 50, 'all']" :key="opt">
+                            <button type="button" 
+                                    @click="perPage = opt; currentPage = 1; openPerPage = false" 
+                                    class="w-full text-left px-2.5 py-1.5 rounded-xl text-xs flex items-center justify-between transition cursor-pointer"
+                                    :class="perPage == opt 
+                                        ? 'bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 font-bold border border-amber-500/20' 
+                                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'">
+                                <span x-text="opt === 'all' ? 'ทั้งหมด' : opt + ' รายการ'"></span>
+                                <svg x-show="perPage == opt" class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </button>
+                        </template>
+                    </div>
+                </div>
             </div>
             <div class="font-medium text-slate-600 dark:text-slate-300">
                 รวม <span class="font-bold text-slate-900 dark:text-white" x-text="filteredLogs.length"></span> รายการ
