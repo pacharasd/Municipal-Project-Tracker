@@ -647,6 +647,12 @@
         canvas, .chartjs-render-monitor {
             touch-action: pan-y !important;
         }
+        /* Mobile Sidebar Anti-FOUC (Prevents initial flash/slide on mobile) */
+        @media (max-width: 1023.98px) {
+            #main-sidebar:not(.sidebar-open) {
+                transform: translateX(-100%) !important;
+            }
+        }
     </style>
 </head>
 <body class="h-full antialiased text-slate-800 dark:text-slate-100 bg-[#f8fafc] dark:bg-[#0f1014] flex flex-col transition-colors duration-150 w-full max-w-full overflow-x-hidden" 
@@ -1048,13 +1054,14 @@
     <!-- Main Container Layout -->
     <div class="flex-1 flex overflow-hidden w-full max-w-full min-w-0">
         <!-- Sidebar Navigation (Elevated z-50 above backdrop) -->
-        <aside :class="{
-                   'translate-x-0': sidebarOpen,
+        <aside id="main-sidebar"
+               :class="{
+                   'translate-x-0 sidebar-open': sidebarOpen,
                    '-translate-x-full': !sidebarOpen,
                    'lg:ml-0': desktopSidebarOpen,
                    'lg:-ml-64 lg:pointer-events-none': !desktopSidebarOpen
                }" 
-               class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-[#0b0c0f] border-r border-slate-200 dark:border-white/[0.08] pt-0 transform lg:translate-x-0 lg:static transition-[margin-left,transform] duration-200 ease-out flex flex-col justify-between shadow-lg dark:shadow-2xl lg:shadow-none overflow-hidden shrink-0 will-change-[margin-left,transform]">
+               class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-[#0b0c0f] border-r border-slate-200 dark:border-white/[0.08] pt-0 transform -translate-x-full lg:translate-x-0 lg:ml-0 lg:static transition-[margin-left,transform] duration-200 ease-out flex flex-col justify-between shadow-lg dark:shadow-2xl lg:shadow-none overflow-hidden shrink-0 will-change-[margin-left,transform]">
             <div class="w-64 h-full flex flex-col justify-between overflow-hidden">
                 
                 <!-- Mobile Sidebar Brand Header with Municipal Logo (Replaces empty top space) -->
