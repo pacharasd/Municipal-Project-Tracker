@@ -200,56 +200,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                 </div>
             </div>
 
-            <!-- Quick One-Click Progress & Status Presets -->
-            <?php if (\App\Core\Auth::canManageProjects()): ?>
-                <div class="mt-4 pt-3 border-t border-slate-200/60 dark:border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                    <span class="text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium shrink-0">
-                        <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i> ปรับด่วน:
-                    </span>
-                    <div class="grid grid-cols-5 gap-1.5 w-full sm:w-auto sm:flex sm:items-center">
-                        <form action="<?= \App\Core\Router::url("/sub-projects/{$project['id']}/status") ?>" method="POST" class="w-full sm:w-auto">
-                            <input type="hidden" name="_csrf_token" value="<?= $csrfToken ?>">
-                            <input type="hidden" name="status" value="not_started">
-                            <input type="hidden" name="progress" value="0">
-                            <button type="submit" class="w-full text-center px-1.5 sm:px-2.5 py-1.5 rounded-lg bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-500/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-medium transition-colors shadow-xs cursor-pointer text-[11px] sm:text-xs">
-                                <span>0%</span><span class="hidden md:inline"> (ยังไม่เริ่ม)</span>
-                            </button>
-                        </form>
-                        <form action="<?= \App\Core\Router::url("/sub-projects/{$project['id']}/status") ?>" method="POST" class="w-full sm:w-auto">
-                            <input type="hidden" name="_csrf_token" value="<?= $csrfToken ?>">
-                            <input type="hidden" name="status" value="in_progress">
-                            <input type="hidden" name="progress" value="25">
-                            <button type="submit" class="w-full text-center px-1.5 sm:px-2.5 py-1.5 rounded-lg bg-sky-50/80 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-500/30 hover:bg-sky-100 dark:hover:bg-sky-900/40 text-sky-700 dark:text-sky-300 font-medium transition-colors shadow-xs cursor-pointer text-[11px] sm:text-xs">
-                                25%
-                            </button>
-                        </form>
-                        <form action="<?= \App\Core\Router::url("/sub-projects/{$project['id']}/status") ?>" method="POST" class="w-full sm:w-auto">
-                            <input type="hidden" name="_csrf_token" value="<?= $csrfToken ?>">
-                            <input type="hidden" name="status" value="in_progress">
-                            <input type="hidden" name="progress" value="50">
-                            <button type="submit" class="w-full text-center px-1.5 sm:px-2.5 py-1.5 rounded-lg bg-sky-50/80 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-500/30 hover:bg-sky-100 dark:hover:bg-sky-900/40 text-sky-700 dark:text-sky-300 font-medium transition-colors shadow-xs cursor-pointer text-[11px] sm:text-xs">
-                                50%
-                            </button>
-                        </form>
-                        <form action="<?= \App\Core\Router::url("/sub-projects/{$project['id']}/status") ?>" method="POST" class="w-full sm:w-auto">
-                            <input type="hidden" name="_csrf_token" value="<?= $csrfToken ?>">
-                            <input type="hidden" name="status" value="in_progress">
-                            <input type="hidden" name="progress" value="75">
-                            <button type="submit" class="w-full text-center px-1.5 sm:px-2.5 py-1.5 rounded-lg bg-sky-50/80 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-500/30 hover:bg-sky-100 dark:hover:bg-sky-900/40 text-sky-700 dark:text-sky-300 font-medium transition-colors shadow-xs cursor-pointer text-[11px] sm:text-xs">
-                                75%
-                            </button>
-                        </form>
-                        <form action="<?= \App\Core\Router::url("/sub-projects/{$project['id']}/status") ?>" method="POST" class="w-full sm:w-auto">
-                            <input type="hidden" name="_csrf_token" value="<?= $csrfToken ?>">
-                            <input type="hidden" name="status" value="completed">
-                            <input type="hidden" name="progress" value="100">
-                            <button type="submit" class="w-full text-center px-1.5 sm:px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-500/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-bold transition-colors shadow-xs cursor-pointer text-[11px] sm:text-xs">
-                                <span>100%</span><span class="hidden md:inline"> (เสร็จสิ้น)</span>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            <?php endif; ?>
+
         </div>
 
         <?php
