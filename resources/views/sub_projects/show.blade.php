@@ -168,25 +168,27 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                     <div class="mt-1.5 flex flex-wrap items-baseline gap-2.5">
                         <span class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white"><?= number_format($project['progress'], 1) ?>%</span>
                         <span class="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">ความสำเร็จโครงการ</span>
-                        <?php if ($project['planned_activity_count'] >= 1): ?>
-                            <span class="text-[11px] px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 font-medium">
-                                กิจกรรม: <?= count($project['activities'] ?? []) ?> / <?= $project['planned_activity_count'] ?> ครั้ง
-                            </span>
-                        <?php endif; ?>
+                        <?php 
+                            $completedActs = count(array_filter($project['activities'] ?? [], fn($a) => ($a['status'] ?? '') === 'completed'));
+                            $plannedActs = max(1, (int)($project['planned_activity_count'] ?? count($project['activities'] ?? [])));
+                        ?>
+                        <span class="text-[11px] px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 font-medium">
+                            กิจกรรม: <?= $completedActs ?> / <?= $plannedActs ?> ครั้ง
+                        </span>
                     </div>
                     <div class="text-xs text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap items-center gap-2">
                         <span>สถานะปัจจุบัน: <b class="text-slate-800 dark:text-slate-200 font-semibold"><?= $stLabel ?></b></span>
                         <span>•</span>
-                        <span>โหมด: <span class="font-medium text-indigo-700 dark:text-indigo-400">สัมพันธ์ตามสถานะและความคืบหน้าโครงการ</span></span>
+                        <span>โหมด: <span class="font-medium text-emerald-700 dark:text-emerald-400">คำนวณอัตโนมัติตามความสำเร็จของกิจกรรม</span></span>
                     </div>
                 </div>
 
-                <!-- Action Buttons: Status & Progress -->
+                <!-- Action Buttons: Status -->
                 <div class="flex flex-wrap items-center gap-2">
                     <?php if (\App\Core\Auth::canManageProjects()): ?>
                         <button type="button" @click="statusModal = true"
                                 class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm shadow-indigo-600/20 transition-all cursor-pointer">
-                             <i data-lucide="sliders" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i> ปรับสถานะ & ความคืบหน้า
+                             <i data-lucide="tag" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i> ปรับสถานะโครงการ
                         </button>
                     <?php endif; ?>
                 </div>
@@ -1016,8 +1018,8 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                             <i data-lucide="sliders" class="w-5 h-5"></i>
                         </span>
                         <div>
-                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">ปรับสถานะและความคืบหน้าโครงการ</h3>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">แอดมินและผู้ดูแลโครงการปรับสถานะและเปอร์เซ็นต์ได้โดยตรง</p>
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">ปรับสถานะโครงการ</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">แอดมินและผู้ดูแลโครงการปรับสถานะการดำเนินงานของโครงการย่อย</p>
                         </div>
                     </div>
                     <button type="button" @click.stop="statusModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
@@ -1055,7 +1057,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                                         </div>
                                         <div class="text-[11px] font-medium transition-colors"
                                              :class="selectedStatus === 'not_started' ? 'text-indigo-700 dark:text-indigo-300' : 'text-indigo-600 dark:text-indigo-400'">
-                                            ความคืบหน้า 0%
+                                            ยังไม่มีการจัดกิจกรรม
                                         </div>
                                     </div>
                                 </div>
@@ -1084,7 +1086,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                                         </div>
                                         <div class="text-[11px] font-medium transition-colors"
                                              :class="selectedStatus === 'in_progress' ? 'text-sky-700 dark:text-sky-300' : 'text-sky-600 dark:text-sky-400'">
-                                            ปรับความคืบหน้าได้อิสระ
+                                            ดำเนินกิจกรรมตามแผนงาน
                                         </div>
                                     </div>
                                 </div>
@@ -1113,7 +1115,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                                         </div>
                                         <div class="text-[11px] font-medium transition-colors"
                                              :class="selectedStatus === 'completed' ? 'text-emerald-700 dark:text-emerald-300' : 'text-emerald-600 dark:text-emerald-400'">
-                                            ความคืบหน้า 100%
+                                            ดำเนินกิจกรรมครบถ้วนตามแผน
                                         </div>
                                     </div>
                                 </div>
@@ -1184,48 +1186,6 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                         <input type="hidden" name="status" :value="selectedStatus">
                     </div>
 
-                    <!-- 2. Progress Percentage (%) Slider & Number -->
-                    <div class="pt-4 border-t border-slate-100 dark:border-white/10">
-                        <div class="flex items-center justify-between mb-2">
-                            <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">เปอร์เซ็นต์ความสำเร็จของโครงการ (%)</label>
-                            <span class="text-lg font-extrabold font-mono transition-colors" 
-                                  :class="currentProgress == 100 ? 'text-emerald-600 dark:text-emerald-400' : (currentProgress == 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-sky-600 dark:text-sky-400')" 
-                                  x-text="`${currentProgress}%`"></span>
-                        </div>
-
-                        <!-- Range Slider -->
-                        <input type="range" min="0" max="100" step="1" x-model="currentProgress" @input="setProgress(Number($event.target.value))"
-                               :class="currentProgress == 100 ? 'accent-emerald-500' : (currentProgress == 0 ? 'accent-indigo-500' : 'accent-sky-500')"
-                               class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer transition-all">
-
-                        <!-- Direct input and presets -->
-                        <div class="flex items-center justify-between mt-3 gap-2 flex-wrap sm:flex-nowrap">
-                            <div class="flex flex-wrap items-center gap-1.5 text-xs">
-                                <button type="button" @click="setProgress(0)" 
-                                        :class="currentProgress == 0 ? 'bg-indigo-500 text-white font-bold ring-2 ring-indigo-500/40 shadow-sm' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 hover:text-indigo-600 dark:hover:text-indigo-300'"
-                                        class="px-2.5 py-1 rounded-xl transition-all cursor-pointer">0%</button>
-                                <button type="button" @click="setProgress(25)" 
-                                        :class="currentProgress == 25 ? 'bg-sky-500 text-white font-bold ring-2 ring-sky-500/40 shadow-sm' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-sky-50 dark:hover:bg-sky-950/30 hover:text-sky-600 dark:hover:text-sky-300'"
-                                        class="px-2.5 py-1 rounded-xl transition-all cursor-pointer">25%</button>
-                                <button type="button" @click="setProgress(50)" 
-                                        :class="currentProgress == 50 ? 'bg-sky-500 text-white font-bold ring-2 ring-sky-500/40 shadow-sm' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-sky-50 dark:hover:bg-sky-950/30 hover:text-sky-600 dark:hover:text-sky-300'"
-                                        class="px-2.5 py-1 rounded-xl transition-all cursor-pointer">50%</button>
-                                <button type="button" @click="setProgress(75)" 
-                                        :class="currentProgress == 75 ? 'bg-sky-500 text-white font-bold ring-2 ring-sky-500/40 shadow-sm' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-sky-50 dark:hover:bg-sky-950/30 hover:text-sky-600 dark:hover:text-sky-300'"
-                                        class="px-2.5 py-1 rounded-xl transition-all cursor-pointer">75%</button>
-                                <button type="button" @click="setProgress(100)" 
-                                        :class="currentProgress == 100 ? 'bg-emerald-500 text-white font-bold ring-2 ring-emerald-500/40 shadow-sm' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:text-emerald-600 dark:hover:text-emerald-300'"
-                                        class="px-2.5 py-1 rounded-xl font-bold transition-all cursor-pointer">100%</button>
-                            </div>
-                            <div class="flex items-center gap-1.5 ml-auto">
-                                <input type="number" min="0" max="100" step="0.1" name="progress" x-model="currentProgress" @input="setProgress(Number($event.target.value))" required
-                                       :class="currentProgress == 100 ? 'focus:ring-emerald-500 border-emerald-300 dark:border-emerald-500/40' : (currentProgress == 0 ? 'focus:ring-indigo-500 border-indigo-300 dark:border-indigo-500/40' : 'focus:ring-sky-500 border-sky-300 dark:border-sky-500/40')"
-                                       class="w-20 px-2.5 py-1.5 text-sm font-bold text-center bg-white dark:bg-[#12141a] text-slate-900 dark:text-white border rounded-xl focus:ring-2 focus:outline-none transition-all">
-                                <span class="text-xs font-bold text-slate-500 dark:text-slate-400">%</span>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Problem note if has_problem -->
                     <div x-show="selectedStatus === 'has_problem'" class="pt-2">
                         <label class="block text-xs font-semibold text-rose-600 dark:text-rose-400 mb-1">
@@ -1242,7 +1202,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                         <button type="submit" 
                                 :class="selectedStatus === 'completed' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/25' : (selectedStatus === 'not_started' ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/25' : (selectedStatus === 'has_problem' ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/25' : (selectedStatus === 'cancelled' ? 'bg-slate-600 hover:bg-slate-700 shadow-slate-600/25' : 'bg-sky-600 hover:bg-sky-700 shadow-sky-600/25')))"
                                 class="px-5 py-2 text-xs font-bold text-white rounded-xl shadow-md hover:shadow-lg transition-all cursor-pointer">
-                            บันทึกสถานะและความคืบหน้า
+                            บันทึกสถานะโครงการ
                         </button>
                     </div>
                 </form>
@@ -1664,27 +1624,9 @@ function subProjectShowPage() {
             });
         },
         selectedStatus: '<?= $project['status'] ?>',
-        currentProgress: <?= (float)$project['progress'] ?>,
         statusNote: <?= json_encode((string)($project['problem_description'] ?? ''), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>,
         setStatus(s) {
             this.selectedStatus = s;
-            if (s === 'completed') {
-                this.currentProgress = 100;
-            } else if (s === 'not_started') {
-                this.currentProgress = 0;
-            } else if (s === 'in_progress' && (this.currentProgress == 0 || this.currentProgress == 100)) {
-                this.currentProgress = 50;
-            }
-        },
-        setProgress(p) {
-            this.currentProgress = p;
-            if (p >= 100) {
-                this.selectedStatus = 'completed';
-            } else if (p == 0) {
-                this.selectedStatus = 'not_started';
-            } else if (this.selectedStatus === 'not_started' || this.selectedStatus === 'completed') {
-                this.selectedStatus = 'in_progress';
-            }
         },
 
         // Activities pagination & search

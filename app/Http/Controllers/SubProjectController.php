@@ -211,20 +211,19 @@ class SubProjectController
     public function updateStatusAndProgress(string $id): void
     {
         if (!Auth::canManageProjects()) {
-            Session::flash('error', 'คุณไม่มีสิทธิ์ปรับสถานะหรือความคืบหน้าโครงการ');
+            Session::flash('error', 'คุณไม่มีสิทธิ์ปรับสถานะโครงการ');
             header('Location: ' . Router::url("/sub-projects/{$id}"));
             exit;
         }
 
         $subId = (int)$id;
         $status = trim($_POST['status'] ?? 'in_progress');
-        $progress = (isset($_POST['progress']) && $_POST['progress'] !== '') ? (float)$_POST['progress'] : null;
         $note = trim($_POST['problem_description'] ?? '');
 
         try {
-            $res = ProgressService::updateStatusAndProgress($subId, $status, $progress, $note);
+            $res = ProgressService::updateStatusAndProgress($subId, $status, null, $note);
             $statusLabel = \App\Enums\ProjectStatus::labelFor($res['status']);
-            Session::flash('success', "อัปเดตสถานะเป็น '{$statusLabel}' และความก้าวหน้าเป็น {$res['progress']}% เรียบร้อยแล้ว");
+            Session::flash('success', "อัปเดตสถานะโครงการเป็น '{$statusLabel}' เรียบร้อยแล้ว");
         } catch (Exception $e) {
             Session::flash('error', $e->getMessage());
         }
