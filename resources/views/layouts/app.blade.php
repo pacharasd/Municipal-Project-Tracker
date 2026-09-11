@@ -381,6 +381,31 @@
             };
         }
         window.thaiDatePicker = thaiDatePicker;
+
+        /**
+         * Global Thai Million Compact Currency Formatter for Alpine.js & Client Scripts
+         * e.g. 1000000 -> short: "1 ล้าน", full: "1,000,000.00 บาท"
+         *      40700000 -> short: "40.7 ล้าน", full: "40,700,000.00 บาท"
+         *      850000 -> short: "850,000.00", full: "บาท"
+         */
+        window.formatMillionCompact = function(amount, decimals = 2) {
+            const amt = Number(amount || 0);
+            const abs = Math.abs(amt);
+            if (abs >= 1000000) {
+                let m = (amt / 1000000).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: decimals });
+                return {
+                    short: m + ' ล้าน',
+                    full: amt.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' บาท',
+                    is_million: true
+                };
+            }
+            return {
+                short: amt.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+                full: 'บาท',
+                is_million: false
+            };
+        };
+
         document.addEventListener('alpine:init', function() {
             if (window.Alpine && typeof Alpine.data === 'function') {
                 Alpine.data('thaiDatePicker', thaiDatePicker);
@@ -655,7 +680,7 @@
         }
     </style>
 </head>
-<body class="h-full antialiased text-slate-800 dark:text-slate-100 bg-[#f8fafc] dark:bg-[#0f1014] flex flex-col transition-colors duration-150 w-full max-w-full overflow-x-hidden" 
+<body class="h-full antialiased font-sans text-slate-800 dark:text-slate-100 bg-[#f8fafc] dark:bg-[#0f1014] flex flex-col transition-colors duration-150 w-full max-w-full overflow-x-hidden" 
       :class="{ 'overflow-hidden': sidebarOpen }" 
       @close-sidebar.window="sidebarOpen = false"
       x-data="{ 

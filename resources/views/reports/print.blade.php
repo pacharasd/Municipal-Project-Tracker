@@ -79,15 +79,21 @@
             </div>
             <div class="p-3 border border-slate-200 rounded-lg">
                 <div class="text-[11px] text-slate-500">งบประมาณรวม</div>
-                <div class="text-lg font-bold text-blue-700"><?= number_format($totalBudget, 2) ?> บาท</div>
+                <div class="mt-0.5">
+                    <?= \App\Core\Helper::moneyDisplay($totalBudget, 'card', 'center', 'text-blue-700') ?>
+                </div>
             </div>
             <div class="p-3 border border-slate-200 rounded-lg">
                 <div class="text-[11px] text-slate-500">เบิกจ่ายแล้ว</div>
-                <div class="text-lg font-bold text-emerald-700"><?= number_format($totalDisbursed, 2) ?> บาท</div>
+                <div class="mt-0.5">
+                    <?= \App\Core\Helper::moneyDisplay($totalDisbursed, 'card', 'center', 'text-emerald-700') ?>
+                </div>
             </div>
             <div class="p-3 border border-slate-200 rounded-lg">
                 <div class="text-[11px] text-slate-500">งบประมาณคงเหลือ</div>
-                <div class="text-lg font-bold text-slate-700"><?= number_format($totalBudget - $totalDisbursed, 2) ?> บาท</div>
+                <div class="mt-0.5">
+                    <?= \App\Core\Helper::moneyDisplay($totalBudget - $totalDisbursed, 'card', 'center', 'text-slate-700') ?>
+                </div>
             </div>
         </div>
 
@@ -118,9 +124,9 @@
                             <?= htmlspecialchars($p['name']) ?>
                         </td>
                         <td class="p-2 border border-slate-200"><?= htmlspecialchars($p['department_name'] ?? '-') ?></td>
-                        <td class="p-2 border border-slate-200 text-right font-mono"><?= number_format($p['budget'], 2) ?></td>
-                        <td class="p-2 border border-slate-200 text-right font-mono"><?= number_format($p['disbursed_amount'], 2) ?></td>
-                        <td class="p-2 border border-slate-200 text-right font-mono"><?= number_format($p['budget'] - $p['disbursed_amount'], 2) ?></td>
+                        <td class="p-2 border border-slate-200 text-right font-mono"><?= \App\Core\Helper::moneyDisplay($p['budget'], 'table', 'right') ?></td>
+                        <td class="p-2 border border-slate-200 text-right font-mono"><?= \App\Core\Helper::moneyDisplay($p['disbursed_amount'], 'table', 'right') ?></td>
+                        <td class="p-2 border border-slate-200 text-right font-mono"><?= \App\Core\Helper::moneyDisplay($p['budget'] - $p['disbursed_amount'], 'table', 'right') ?></td>
                         <td class="p-2 border border-slate-200 text-center font-mono font-bold"><?= number_format($p['progress'], 1) ?>%</td>
                         <td class="p-2 border border-slate-200 text-center whitespace-nowrap">
                             <?= \App\Enums\ProjectStatus::labelFor($p['status']) ?>

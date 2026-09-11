@@ -147,7 +147,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
             <?php endif; ?>
         </div>
 
-        <h1 class="text-base sm:text-xl md:text-2xl font-semibold text-slate-900 dark:text-white leading-relaxed tracking-normal mt-3">
+        <h1 class="text-xl sm:text-2xl font-bold font-heading text-slate-900 dark:text-white leading-snug tracking-tight mt-3">
             <?= htmlspecialchars($project['name'] ?? '') ?>
         </h1>
 
@@ -387,7 +387,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                                     </span>
                                     <span class="flex items-center gap-1">
                                         <i data-lucide="banknote" class="w-3.5 h-3.5 text-slate-400"></i>
-                                        <?= number_format($act['budget'], 2) ?> บ.
+                                        <?= \App\Core\Helper::moneyDisplay($act['budget'], 'inline') ?>
                                     </span>
                                     <span class="flex items-center gap-1 text-slate-600 dark:text-slate-300 font-medium">
                                         <i data-lucide="users" class="w-3.5 h-3.5 text-indigo-500"></i>
@@ -546,9 +546,9 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                         <i data-lucide="wallet" class="w-5 h-5 text-purple-600 shrink-0"></i>
                         <span class="truncate">การเบิกจ่ายงบประมาณ</span>
                     </h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5 ml-7">
-                        (<?= number_format($project['disbursed_amount'], 2) ?> / <?= number_format($project['budget'], 2) ?> บาท)
-                    </p>
+                    <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 ml-7 flex items-center gap-1 flex-wrap">
+                        (<?= \App\Core\Helper::moneyDisplay($project['disbursed_amount'], 'inline') ?> / <?= \App\Core\Helper::moneyDisplay($project['budget'], 'inline') ?>)
+                    </div>
                 </div>
 
                 <div class="flex items-center gap-2 w-full sm:w-auto shrink-0">
@@ -579,7 +579,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
             <div class="p-4 rounded-xl bg-purple-50/60 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-800/30">
                 <div class="flex items-center justify-between text-xs font-semibold text-purple-900 dark:text-purple-300 mb-1.5">
                     <span>เบิกจ่ายไปแล้ว <strong class="font-bold text-purple-700 dark:text-purple-200"><?= $pctDisb ?>%</strong></span>
-                    <span>คงเหลือ <strong class="font-bold text-slate-800 dark:text-slate-200"><?= number_format($project['budget'] - $project['disbursed_amount'], 2) ?></strong> บาท</span>
+                    <span>คงเหลือ <?= \App\Core\Helper::moneyDisplay($project['budget'] - $project['disbursed_amount'], 'inline') ?></span>
                 </div>
                 <div class="w-full bg-purple-100 dark:bg-white/[0.08] rounded-full h-2 overflow-hidden">
                     <div class="bg-purple-600 dark:bg-purple-500 h-2 rounded-full transition-all" style="width: <?= min(100, $pctDisb) ?>%"></div>
@@ -603,7 +603,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                                 </div>
                             </div>
                             <div class="flex items-center gap-2 flex-shrink-0">
-                                <span class="text-sm font-bold text-purple-600 dark:text-purple-400"><?= number_format($disb['amount'], 2) ?> บ.</span>
+                                <?= \App\Core\Helper::moneyDisplay($disb['amount'], 'table', 'right', 'text-purple-600 dark:text-purple-400') ?>
                                 <?php if (!empty($disb['evidence_file'])): ?>
                                     <a href="<?= \App\Core\Router::url('/uploads/' . $disb['evidence_file']) ?>" target="_blank"
                                        class="p-1 text-slate-400 hover:text-blue-600 rounded transition" title="ดูหลักฐานการเบิกจ่าย">

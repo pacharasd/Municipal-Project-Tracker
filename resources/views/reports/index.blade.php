@@ -221,7 +221,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                     <span class="text-slate-300 dark:text-slate-600">•</span>
                     <span>โครงการและงบประมาณ</span>
                 </div>
-                <h1 class="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight font-heading leading-snug">
+                <h1 class="text-xl sm:text-2xl font-bold font-heading text-slate-900 dark:text-white tracking-tight leading-snug">
                     ระบบรายงานและการส่งออกข้อมูล
                 </h1>
                 <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
@@ -325,11 +325,15 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
         </div>
         <div class="bg-white dark:bg-[#181a20] rounded-2xl p-4 border border-slate-200/80 dark:border-white/[0.08] shadow-sm">
             <span class="text-xs font-medium text-slate-500 dark:text-slate-400">งบประมาณรวมตามเกณฑ์</span>
-            <div class="text-xl font-bold text-blue-600 dark:text-blue-400 mt-1">฿<?= number_format($totalBudget, 2) ?></div>
+            <div class="mt-1">
+                <?= \App\Core\Helper::moneyDisplay($totalBudget, 'card', 'left', 'text-blue-600 dark:text-blue-400') ?>
+            </div>
         </div>
         <div class="bg-white dark:bg-[#181a20] rounded-2xl p-4 border border-slate-200/80 dark:border-white/[0.08] shadow-sm">
             <span class="text-xs font-medium text-slate-500 dark:text-slate-400">ยอดเบิกจ่ายสะสม</span>
-            <div class="text-xl font-bold text-purple-600 dark:text-purple-400 mt-1">฿<?= number_format($totalDisbursed, 2) ?></div>
+            <div class="mt-1">
+                <?= \App\Core\Helper::moneyDisplay($totalDisbursed, 'card', 'left', 'text-purple-600 dark:text-purple-400') ?>
+            </div>
         </div>
         <div class="bg-white dark:bg-[#181a20] rounded-2xl p-4 border border-slate-200/80 dark:border-white/[0.08] shadow-sm">
             <span class="text-xs font-medium text-slate-500 dark:text-slate-400">ความคืบหน้าเฉลี่ย</span>
@@ -407,12 +411,24 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                             </td>
                             <td class="py-3 px-3 text-slate-600 dark:text-slate-300 whitespace-nowrap" x-text="p.department_name || 'ไม่ระบุ'"></td>
                             <td class="py-3 px-3 text-center text-slate-600 dark:text-slate-400 whitespace-nowrap" x-text="p.fiscal_year || '-'"></td>
-                            <td class="py-3 px-3 text-right font-mono font-semibold text-slate-900 dark:text-white whitespace-nowrap"
-                                x-text="formatNumber(p.budget)"></td>
-                            <td class="py-3 px-3 text-right font-mono text-purple-600 dark:text-purple-400 whitespace-nowrap"
-                                x-text="formatNumber(p.disbursed_amount)"></td>
-                            <td class="py-3 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400 whitespace-nowrap"
-                                x-text="formatNumber(Number(p.budget || 0) - Number(p.disbursed_amount || 0))"></td>
+                            <td class="py-3 px-3 text-right whitespace-nowrap">
+                                <div class="flex flex-col items-end leading-tight">
+                                    <span class="font-bold font-mono text-xs text-slate-900 dark:text-white" x-text="formatMillionCompact(p.budget).short"></span>
+                                    <span class="text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-0.5" x-text="formatMillionCompact(p.budget).full"></span>
+                                </div>
+                            </td>
+                            <td class="py-3 px-3 text-right whitespace-nowrap">
+                                <div class="flex flex-col items-end leading-tight">
+                                    <span class="font-bold font-mono text-xs text-purple-600 dark:text-purple-400" x-text="formatMillionCompact(p.disbursed_amount).short"></span>
+                                    <span class="text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-0.5" x-text="formatMillionCompact(p.disbursed_amount).full"></span>
+                                </div>
+                            </td>
+                            <td class="py-3 px-3 text-right whitespace-nowrap">
+                                <div class="flex flex-col items-end leading-tight">
+                                    <span class="font-bold font-mono text-xs text-emerald-600 dark:text-emerald-400" x-text="formatMillionCompact(Number(p.budget || 0) - Number(p.disbursed_amount || 0)).short"></span>
+                                    <span class="text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-0.5" x-text="formatMillionCompact(Number(p.budget || 0) - Number(p.disbursed_amount || 0)).full"></span>
+                                </div>
+                            </td>
                             <td class="py-3 px-3 text-center whitespace-nowrap">
                                 <div class="flex items-center justify-center gap-1 font-semibold text-slate-700 dark:text-slate-200">
                                     <span x-text="`${Number(p.progress || 0).toFixed(1)}%`"></span>

@@ -3,7 +3,7 @@ ob_start();
 $title = 'ประวัติการใช้งานและการตรวจสอบ (Audit Trail) - Municipal Project Tracker';
 ?>
 
-<div class="space-y-6" x-data="{
+<div class="space-y-6 max-w-7xl mx-auto pb-12" x-data="{
     allLogs: <?= htmlspecialchars(json_encode($logs, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8') ?>,
     selectedLog: null,
     searchQuery: '',
@@ -123,23 +123,32 @@ $title = 'ประวัติการใช้งานและการต�
     }
 }">
 
-    <!-- Page Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <!-- Breadcrumb & Header Title -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <div class="flex items-center gap-2">
-                <span class="p-2 bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded-xl">
-                    <i data-lucide="shield-alert" class="w-6 h-6"></i>
-                </span>
+            <nav class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-1.5 font-medium">
+                <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">หน้าหลัก</a>
+                <i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-60"></i>
+                <span class="text-slate-700 dark:text-slate-300 font-semibold">ประวัติการทำงาน</span>
+            </nav>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0">
+                    <i data-lucide="history" class="w-5 h-5"></i>
+                </div>
                 <div>
-                    <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">บันทึกประวัติการตรวจสอบระบบ (Audit Trail)</h1>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">บันทึกการกระทำทุกขั้นตอนแบบถาวร (Immutable Log) พร้อมข้อมูลก่อนและหลังแก้ไขเพื่อความโปร่งใส</p>
+                    <h1 class="text-xl sm:text-2xl font-bold font-heading text-slate-900 dark:text-white tracking-tight">
+                        ประวัติการทำงานและตรวจสอบระบบ
+                    </h1>
+                    <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                        บันทึกการกระทำทุกขั้นตอนแบบถาวร (Audit Trail) พร้อมข้อมูลก่อนและหลังแก้ไขเพื่อความโปร่งใส
+                    </p>
                 </div>
             </div>
         </div>
 
-        <div class="flex items-center gap-3">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-semibold border border-emerald-200 dark:border-emerald-800">
-                <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+        <div class="flex items-center gap-3 shrink-0">
+            <span class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 rounded-xl text-xs font-semibold border border-amber-200 dark:border-amber-800/60 shadow-2xs">
+                <i data-lucide="shield-check" class="w-4 h-4"></i>
                 <span>เฉพาะผู้ดูแลระบบ (Administrator)</span>
             </span>
         </div>

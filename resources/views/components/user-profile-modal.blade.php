@@ -454,10 +454,10 @@ $memberSinceText = "สมาชิกตั้งแต่ {$d} {$m} {$y}";
                                 <?= number_format($userStats['completed_count']) ?>
                             </div>
                         </div>
-                        <div class="p-3 rounded-2xl bg-purple-50/70 dark:bg-purple-950/20 border border-purple-200/60 dark:border-purple-800/30 text-center">
+                        <div class="p-3 rounded-2xl bg-purple-50/70 dark:bg-purple-950/20 border border-purple-200/60 dark:border-purple-800/30 text-center flex flex-col justify-between">
                             <div class="text-[11px] font-semibold text-purple-700 dark:text-purple-400">งบประมาณรวม</div>
-                            <div class="text-sm sm:text-base font-heading font-extrabold text-purple-900 dark:text-purple-200 mt-1 truncate" title="<?= number_format($userStats['total_budget'], 2) ?> บาท">
-                                <?= number_format($userStats['total_budget'] / 1000, 1) ?>k
+                            <div class="mt-1">
+                                <?= \App\Core\Helper::moneyDisplay($userStats['total_budget'], 'card', 'center', 'text-purple-900 dark:text-purple-200') ?>
                             </div>
                         </div>
                     </div>
@@ -517,7 +517,7 @@ $memberSinceText = "สมาชิกตั้งแต่ {$d} {$m} {$y}";
                                         <!-- Progress Bar & Budget -->
                                         <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mb-1">
                                             <span>ความคืบหน้า: <strong class="text-slate-700 dark:text-slate-300"><?= $progVal ?>%</strong></span>
-                                            <span>งบประมาณ: <strong class="text-slate-700 dark:text-slate-300"><?= number_format((float)$proj['budget']) ?> บาท</strong></span>
+                                            <span>งบประมาณ: <?= \App\Core\Helper::moneyDisplay((float)$proj['budget'], 'inline') ?></span>
                                         </div>
                                         <div class="w-full h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden mb-2">
                                             <div class="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-300" style="width: <?= $progVal ?>%"></div>

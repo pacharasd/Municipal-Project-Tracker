@@ -72,7 +72,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
     <!-- 1. Header Section (Title & Fiscal Year Selector) -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 w-full max-w-full">
         <div>
-            <h1 class="text-xl sm:text-3xl font-extrabold font-heading text-slate-900 dark:text-white tracking-tight">Dashboard</h1>
+            <h1 class="text-xl sm:text-2xl font-bold font-heading text-slate-900 dark:text-white tracking-tight">Dashboard</h1>
             <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">ภาพรวมโครงการของเทศบาล</p>
         </div>
 
@@ -202,6 +202,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
         </div>
 
         <!-- 2. งบประมาณทั้งหมด -->
+        <?php $cBudget = \App\Core\Helper::formatMillionCompact((float)($stats['total_budget'] ?? 0)); ?>
         <div class="group relative p-3 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-indigo-400/60 dark:hover:border-indigo-500/40 transition-all overflow-hidden flex flex-col justify-between">
             <div class="absolute top-0 left-0 right-0 h-1 bg-indigo-500"></div>
             <div class="flex items-center justify-between gap-1.5">
@@ -211,10 +212,12 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                 </div>
             </div>
             <div class="my-1.5 sm:my-2">
-                <div class="text-base sm:text-xl lg:text-2xl font-black text-slate-900 dark:text-white font-heading tracking-tight leading-tight truncate" title="<?= number_format((float)$stats['total_budget'], 2) ?>">
-                    <?= number_format((float)$stats['total_budget'], 2) ?>
+                <div class="text-base sm:text-xl lg:text-2xl font-black text-slate-900 dark:text-white font-heading tracking-tight leading-tight truncate" title="<?= number_format((float)$stats['total_budget'], 2) ?> บาท">
+                    <?= $cBudget['short'] ?>
                 </div>
-                <div class="text-[10px] sm:text-[10.5px] text-slate-400 mt-0.5 font-sans">บาท</div>
+                <div class="text-[10px] sm:text-[10.5px] text-slate-400 dark:text-slate-500 mt-0.5 font-mono truncate" title="จำนวนเงินเต็ม">
+                    <?= $cBudget['full'] ?>
+                </div>
             </div>
             <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10px] sm:text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
                 <span>กรอบงบ</span>
@@ -223,6 +226,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
         </div>
 
         <!-- 3. งบประมาณที่เบิกจ่าย -->
+        <?php $cDisbursed = \App\Core\Helper::formatMillionCompact((float)($stats['total_disbursed'] ?? 0)); ?>
         <div class="group relative p-3 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-emerald-400/60 dark:hover:border-emerald-500/40 transition-all overflow-hidden flex flex-col justify-between">
             <div class="absolute top-0 left-0 right-0 h-1 bg-emerald-500"></div>
             <div class="flex items-center justify-between gap-1.5">
@@ -232,10 +236,12 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                 </div>
             </div>
             <div class="my-1.5 sm:my-2">
-                <div class="text-base sm:text-xl lg:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-heading tracking-tight leading-tight truncate" title="<?= number_format((float)$stats['total_disbursed'], 2) ?>">
-                    <?= number_format((float)$stats['total_disbursed'], 2) ?>
+                <div class="text-base sm:text-xl lg:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-heading tracking-tight leading-tight truncate" title="<?= number_format((float)$stats['total_disbursed'], 2) ?> บาท">
+                    <?= $cDisbursed['short'] ?>
                 </div>
-                <div class="text-[10px] sm:text-[10.5px] text-slate-400 mt-0.5 font-sans">บาท</div>
+                <div class="text-[10px] sm:text-[10.5px] text-slate-400 dark:text-slate-500 mt-0.5 font-mono truncate" title="จำนวนเงินเต็ม">
+                    <?= $cDisbursed['full'] ?>
+                </div>
             </div>
             <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10px] sm:text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
                 <span>เบิกจ่ายแล้ว</span>
@@ -244,6 +250,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
         </div>
 
         <!-- 4. งบประมาณคงเหลือ -->
+        <?php $cRemaining = \App\Core\Helper::formatMillionCompact((float)($stats['total_remaining'] ?? 0)); ?>
         <div class="group relative p-3 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-sky-400/60 dark:hover:border-sky-500/40 transition-all overflow-hidden flex flex-col justify-between">
             <div class="absolute top-0 left-0 right-0 h-1 bg-sky-500"></div>
             <div class="flex items-center justify-between gap-1.5">
@@ -253,10 +260,12 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                 </div>
             </div>
             <div class="my-1.5 sm:my-2">
-                <div class="text-base sm:text-xl lg:text-2xl font-black text-slate-800 dark:text-slate-100 font-heading tracking-tight leading-tight truncate" title="<?= number_format((float)$stats['total_remaining'], 2) ?>">
-                    <?= number_format((float)$stats['total_remaining'], 2) ?>
+                <div class="text-base sm:text-xl lg:text-2xl font-black text-slate-800 dark:text-slate-100 font-heading tracking-tight leading-tight truncate" title="<?= number_format((float)$stats['total_remaining'], 2) ?> บาท">
+                    <?= $cRemaining['short'] ?>
                 </div>
-                <div class="text-[10px] sm:text-[10.5px] text-slate-400 mt-0.5 font-sans">บาท</div>
+                <div class="text-[10px] sm:text-[10.5px] text-slate-400 dark:text-slate-500 mt-0.5 font-mono truncate" title="จำนวนเงินเต็ม">
+                    <?= $cRemaining['full'] ?>
+                </div>
             </div>
             <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10px] sm:text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
                 <span>คงเหลือ</span>
@@ -435,16 +444,16 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                 <!-- Bottom Quick Stats Strip -->
                 <div class="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-100 dark:border-white/[0.06] text-center">
                     <div class="p-1.5 rounded-xl bg-slate-50 dark:bg-white/[0.03]">
-                        <span class="text-[10px] text-slate-400 block">งบรวม</span>
-                        <span class="text-xs font-bold text-slate-800 dark:text-slate-200 font-mono"><?= number_format((float)$stats['total_budget']) ?></span>
+                        <span class="text-[10px] text-slate-400 block mb-0.5">งบรวม</span>
+                        <?= \App\Core\Helper::moneyDisplay((float)$stats['total_budget'], 'table', 'center', 'text-slate-800 dark:text-slate-200') ?>
                     </div>
                     <div class="p-1.5 rounded-xl bg-emerald-50/70 dark:bg-emerald-500/10">
-                        <span class="text-[10px] text-emerald-600 dark:text-emerald-400 block">เบิกจ่าย</span>
-                        <span class="text-xs font-bold text-emerald-700 dark:text-emerald-300 font-mono"><?= number_format((float)$stats['total_disbursed']) ?></span>
+                        <span class="text-[10px] text-emerald-600 dark:text-emerald-400 block mb-0.5">เบิกจ่าย</span>
+                        <?= \App\Core\Helper::moneyDisplay((float)$stats['total_disbursed'], 'table', 'center', 'text-emerald-700 dark:text-emerald-300') ?>
                     </div>
                     <div class="p-1.5 rounded-xl bg-sky-50/70 dark:bg-sky-500/10">
-                        <span class="text-[10px] text-sky-600 dark:text-sky-400 block">คงเหลือ</span>
-                        <span class="text-xs font-bold text-sky-700 dark:text-sky-300 font-mono"><?= number_format((float)$stats['total_remaining']) ?></span>
+                        <span class="text-[10px] text-sky-600 dark:text-sky-400 block mb-0.5">คงเหลือ</span>
+                        <?= \App\Core\Helper::moneyDisplay((float)$stats['total_remaining'], 'table', 'center', 'text-sky-700 dark:text-sky-300') ?>
                     </div>
                 </div>
             </div>
@@ -679,7 +688,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                                     </a>
                                 </td>
                                 <td class="py-3.5 px-3 text-slate-500 dark:text-slate-400 font-medium"><?= htmlspecialchars($lp['department_name'] ?? 'สำนักช่าง') ?></td>
-                                <td class="py-3.5 px-3 text-right font-mono font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap"><?= number_format((float)$lp['budget']) ?> <span class="text-[10px] text-slate-400">บาท</span></td>
+                                <td class="py-3.5 px-3 text-right whitespace-nowrap"><?= \App\Core\Helper::moneyDisplay((float)$lp['budget'], 'table', 'right') ?></td>
                                 <td class="py-3.5 px-3 text-center whitespace-nowrap">
                                     <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-lg text-[11px] font-bold border whitespace-nowrap <?= $lpStatusBadge['class'] ?>">
                                         <?= $lpStatusBadge['label'] ?>

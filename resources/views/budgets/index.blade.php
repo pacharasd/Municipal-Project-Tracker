@@ -195,10 +195,8 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
                 </span>
             </div>
             <div class="mt-3">
-                <div class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight font-mono">
-                    ฿<?= number_format($totalBudget, 2) ?>
-                </div>
-                <div class="flex items-center gap-1.5 mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                <?= \App\Core\Helper::moneyDisplay($totalBudget, 'card', 'left', 'text-slate-900 dark:text-white') ?>
+                <div class="flex items-center gap-1.5 mt-2 text-xs text-slate-500 dark:text-slate-400">
                     <i data-lucide="layers" class="w-3.5 h-3.5 text-blue-500"></i>
                     <span>งบโครงการหลัก <?= count($mainBudgets) ?> โครงการ</span>
                 </div>
@@ -215,10 +213,8 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
                 </span>
             </div>
             <div class="mt-3">
-                <div class="text-2xl font-extrabold text-purple-600 dark:text-purple-400 tracking-tight font-mono">
-                    ฿<?= number_format($totalDisbursed, 2) ?>
-                </div>
-                <div class="flex items-center gap-1.5 mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                <?= \App\Core\Helper::moneyDisplay($totalDisbursed, 'card', 'left', 'text-purple-600 dark:text-purple-400') ?>
+                <div class="flex items-center gap-1.5 mt-2 text-xs text-slate-500 dark:text-slate-400">
                     <i data-lucide="activity" class="w-3.5 h-3.5 text-purple-500"></i>
                     <span>เบิกจ่ายแล้วคิดเป็น <?= $overallPercentage ?>%</span>
                 </div>
@@ -235,10 +231,8 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
                 </span>
             </div>
             <div class="mt-3">
-                <div class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 tracking-tight font-mono">
-                    ฿<?= number_format($totalRemaining, 2) ?>
-                </div>
-                <div class="flex items-center gap-1.5 mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                <?= \App\Core\Helper::moneyDisplay($totalRemaining, 'card', 'left', 'text-emerald-600 dark:text-emerald-400') ?>
+                <div class="flex items-center gap-1.5 mt-2 text-xs text-slate-500 dark:text-slate-400">
                     <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-500"></i>
                     <span>คงเหลือพร้อมจัดสรร</span>
                 </div>
@@ -381,12 +375,24 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
                                 <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 mt-1"
                                       x-text="`ปีงบฯ ${b.fiscal_year || '-'}`"></span>
                             </td>
-                            <td class="py-3.5 px-4 text-right font-mono font-semibold text-slate-900 dark:text-white whitespace-nowrap"
-                                x-text="`฿${formatCurrency(b.budget)}`"></td>
-                            <td class="py-3.5 px-4 text-right font-mono font-medium text-purple-600 dark:text-purple-400 whitespace-nowrap"
-                                x-text="`฿${formatCurrency(b.disbursed_amount)}`"></td>
-                            <td class="py-3.5 px-4 text-right font-mono font-medium text-emerald-600 dark:text-emerald-400 whitespace-nowrap"
-                                x-text="`฿${formatCurrency(b.remaining_amount)}`"></td>
+                            <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                                <div class="flex flex-col items-end leading-tight">
+                                    <span class="font-bold font-mono text-xs sm:text-sm text-slate-900 dark:text-white" x-text="formatMillionCompact(b.budget).short"></span>
+                                    <span class="text-[10px] sm:text-[10.5px] text-slate-400 dark:text-slate-500 font-mono mt-0.5" x-text="formatMillionCompact(b.budget).full"></span>
+                                </div>
+                            </td>
+                            <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                                <div class="flex flex-col items-end leading-tight">
+                                    <span class="font-bold font-mono text-xs sm:text-sm text-purple-600 dark:text-purple-400" x-text="formatMillionCompact(b.disbursed_amount).short"></span>
+                                    <span class="text-[10px] sm:text-[10.5px] text-slate-400 dark:text-slate-500 font-mono mt-0.5" x-text="formatMillionCompact(b.disbursed_amount).full"></span>
+                                </div>
+                            </td>
+                            <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                                <div class="flex flex-col items-end leading-tight">
+                                    <span class="font-bold font-mono text-xs sm:text-sm text-emerald-600 dark:text-emerald-400" x-text="formatMillionCompact(b.remaining_amount).short"></span>
+                                    <span class="text-[10px] sm:text-[10.5px] text-slate-400 dark:text-slate-500 font-mono mt-0.5" x-text="formatMillionCompact(b.remaining_amount).full"></span>
+                                </div>
+                            </td>
                             <td class="py-3.5 px-4">
                                 <div class="w-32 mx-auto">
                                     <div class="flex items-center justify-between text-xs mb-1">
@@ -621,8 +627,12 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
                             </td>
                             <td class="py-3.5 px-4 min-w-[180px] max-w-xs text-slate-700 dark:text-slate-300 leading-relaxed" x-text="d.description"></td>
                             <td class="py-3.5 px-4 whitespace-nowrap text-slate-600 dark:text-slate-400" x-text="d.recipient || '-'"></td>
-                            <td class="py-3.5 px-4 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap"
-                                x-text="`฿${formatCurrency(d.amount)}`"></td>
+                            <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                                <div class="flex flex-col items-end leading-tight">
+                                    <span class="font-bold font-mono text-xs sm:text-sm text-emerald-600 dark:text-emerald-400" x-text="formatMillionCompact(d.amount).short"></span>
+                                    <span class="text-[10px] sm:text-[10.5px] text-slate-400 dark:text-slate-500 font-mono mt-0.5" x-text="formatMillionCompact(d.amount).full"></span>
+                                </div>
+                            </td>
                             <td class="py-3.5 px-4 whitespace-nowrap text-slate-500 dark:text-slate-400 text-xs" x-text="d.creator_name || 'ระบบ'"></td>
                             <td class="py-3.5 px-4 text-center whitespace-nowrap">
                                 <template x-if="d.evidence_file">

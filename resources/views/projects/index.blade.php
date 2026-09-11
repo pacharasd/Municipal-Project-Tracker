@@ -56,15 +56,15 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
 
 <div class="space-y-6" x-data="mainProjectsPage()">
     <!-- Header with Action -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white dark:bg-[#181a20] p-5 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-sm">
         <div>
-            <div class="flex items-center gap-2 text-xs font-semibold text-emerald-600 mb-1">
+            <div class="flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 mb-1">
                 <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="hover:underline">หน้าหลัก</a>
                 <span>/</span>
                 <span>โครงการหลักและย่อย</span>
             </div>
-            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">โครงการหลักและโครงการย่อย</h1>
-            <p class="text-sm text-slate-500 mt-1">บริหารจัดการโครงการตามแผนพัฒนาเทศบาล ติดตามความก้าวหน้าและงบประมาณแบบลำดับชั้น</p>
+            <h1 class="text-xl sm:text-2xl font-bold font-heading text-slate-900 dark:text-white tracking-tight">โครงการหลักและโครงการย่อย</h1>
+            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">บริหารจัดการโครงการตามแผนพัฒนาเทศบาล ติดตามความก้าวหน้าและงบประมาณแบบลำดับชั้น</p>
         </div>
         <div class="flex items-center gap-2 w-full sm:w-auto">
             <?php if (\App\Core\Auth::canManageProjects()): ?>
@@ -301,8 +301,8 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                     <!-- Right KPIs for Main Project (Clean 2-Col Grid on Mobile) -->
                     <div class="pt-3 border-t border-slate-100 dark:border-white/[0.06] lg:border-t-0 lg:pt-0 grid grid-cols-2 sm:flex sm:items-center gap-2.5 sm:gap-6 lg:justify-end w-full lg:w-auto">
                         <div class="text-left sm:text-right p-2.5 sm:p-0 rounded-xl sm:rounded-none bg-slate-50/70 dark:bg-white/[0.02] sm:bg-transparent sm:dark:bg-transparent border border-slate-200/60 dark:border-white/[0.05] sm:border-0">
-                            <div class="text-[11px] sm:text-xs text-slate-400 dark:text-slate-400">งบประมาณรวม</div>
-                            <div class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate"><?= number_format($p['budget'], 2) ?> <span class="text-[10px] font-normal text-slate-500 dark:text-slate-400">บาท</span></div>
+                            <div class="text-[11px] sm:text-xs text-slate-400 dark:text-slate-400 mb-0.5">งบประมาณรวม</div>
+                            <?= \App\Core\Helper::moneyDisplay($p['budget'], 'table', 'right') ?>
                         </div>
 
                         <!-- Progress indicator -->
@@ -387,7 +387,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                                         </div>
 
                                         <div class="mt-3 pt-2.5 pb-0.5 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-                                            <span>งบ: <strong class="font-semibold text-slate-700 dark:text-slate-300"><?= number_format($sub['budget'], 0) ?></strong> บ.</span>
+                                            <span>งบ: <?= \App\Core\Helper::moneyDisplay($sub['budget'], 'inline') ?></span>
                                             <?php $cardSubResp = !empty($sub['responsible_person']) ? $sub['responsible_person'] : ($sub['responsible_name'] ?? 'ผู้รับผิดชอบ'); ?>
                                             <span class="truncate max-w-[150px] text-right" title="<?= htmlspecialchars($cardSubResp) ?>"><?= htmlspecialchars($cardSubResp) ?></span>
                                         </div>
