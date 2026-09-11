@@ -70,12 +70,14 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
         </p>
 
         <?php if (!empty($project['objective'])): ?>
-            <div class="mt-4 p-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-100/80 dark:border-indigo-500/20 text-slate-800 dark:text-slate-200 max-w-4xl">
-                <div class="text-xs font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-1.5 mb-1.5">
-                    <i data-lucide="target" class="w-4 h-4 text-indigo-600 dark:text-indigo-400"></i>
-                    วัตถุประสงค์โครงการ
+            <div class="mt-4 p-4 rounded-2xl bg-slate-50/80 dark:bg-[#12141a]/60 border border-slate-200/80 dark:border-white/[0.06] text-slate-800 dark:text-slate-200 w-full">
+                <div class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2 mb-1.5">
+                    <div class="w-7 h-7 rounded-xl bg-indigo-100 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                        <i data-lucide="target" class="w-4 h-4"></i>
+                    </div>
+                    <span class="text-xs font-bold text-slate-800 dark:text-slate-200 font-heading">วัตถุประสงค์โครงการ</span>
                 </div>
-                <div class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                <div class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed pl-9">
                     <?= nl2br(htmlspecialchars($project['objective'] ?? '')) ?>
                 </div>
             </div>
