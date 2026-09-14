@@ -15,6 +15,198 @@ foreach ($project['sub_projects'] as $sub) {
 $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
 ?>
 
+<script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
+window.projectShowPage = function projectShowPage() {
+    return {
+        createSubModal: false,
+        editModal: false,
+        evalModal: false,
+        evalScore: <?= $project['evaluation_score'] !== null ? json_encode((float)$project['evaluation_score']) : json_encode(round((float)$project['progress'], 2)) ?>,
+        evalNotes: <?= json_encode($project['evaluation_notes'] ?? '') ?>,
+
+        openEvalModal() {
+            const defaultScore = <?= $project['evaluation_score'] !== null ? json_encode((float)$project['evaluation_score']) : json_encode(round((float)$project['progress'], 2)) ?>;
+            if (this.evalScore === null || this.evalScore === '' || isNaN(parseFloat(this.evalScore))) {
+                this.evalScore = defaultScore;
+            }
+            this.evalModal = true;
+            this.$nextTick(() => {
+                const inp = document.getElementById('evaluation-score-input');
+                if (inp) {
+                    inp.focus();
+                    inp.select();
+                }
+                if (window.safeCreateIcons) window.safeCreateIcons(this.$el);
+            });
+        },
+
+        get sliderValue() {
+            const s = parseFloat(this.evalScore);
+            return isNaN(s) ? 0 : Math.max(0, Math.min(100, s));
+        },
+
+        onSliderChange(e) {
+            this.evalScore = parseFloat(e.target.value);
+        },
+
+        onScoreInput(e) {
+            const val = e.target.value;
+            if (val === '') {
+                this.evalScore = '';
+                return;
+            }
+            const num = parseFloat(val);
+            if (!isNaN(num)) {
+                if (num > 100) this.evalScore = 100;
+                else if (num < 0) this.evalScore = 0;
+                else this.evalScore = val;
+            }
+        },
+
+        get currentGrade() {
+            const s = parseFloat(this.evalScore);
+            if (isNaN(s) || this.evalScore === '' || this.evalScore === null) {
+                return { 
+                    grade: '-', 
+                    label: 'กรุณาระบุคะแนน (0 - 100)', 
+                    cardBg: 'bg-slate-50 dark:bg-white/[0.02]', 
+                    cardBorder: 'border-slate-200 dark:border-white/10', 
+                    dividerBorder: 'border-slate-200 dark:border-white/10',
+                    text: 'text-slate-600 dark:text-slate-400', 
+                    bar: 'bg-slate-400' 
+                };
+            }
+            if (s >= 90) return { 
+                grade: 'A+', 
+                label: 'ระดับ A+ (ดีเยี่ยมมาก)', 
+                cardBg: 'bg-emerald-500/[0.06] dark:bg-emerald-500/[0.12]', 
+                cardBorder: 'border-emerald-500/40 dark:border-emerald-500/40', 
+                dividerBorder: 'border-emerald-500/20 dark:border-emerald-500/25',
+                text: 'text-emerald-700 dark:text-emerald-400', 
+                bar: 'bg-emerald-600 dark:bg-emerald-500' 
+            };
+            if (s >= 80) return { 
+                grade: 'A', 
+                label: 'ระดับ A (ดีเยี่ยม)', 
+                cardBg: 'bg-sky-500/[0.06] dark:bg-sky-500/[0.12]', 
+                cardBorder: 'border-sky-500/40 dark:border-sky-500/40', 
+                dividerBorder: 'border-sky-500/20 dark:border-sky-500/25',
+                text: 'text-sky-700 dark:text-sky-400', 
+                bar: 'bg-sky-600 dark:bg-sky-500' 
+            };
+            if (s >= 70) return { 
+                grade: 'B', 
+                label: 'ระดับ B (ดี)', 
+                cardBg: 'bg-indigo-500/[0.06] dark:bg-indigo-500/[0.12]', 
+                cardBorder: 'border-indigo-500/40 dark:border-indigo-500/40', 
+                dividerBorder: 'border-indigo-500/20 dark:border-indigo-500/25',
+                text: 'text-indigo-700 dark:text-indigo-400', 
+                bar: 'bg-indigo-600 dark:bg-indigo-500' 
+            };
+            if (s >= 60) return { 
+                grade: 'C', 
+                label: 'ระดับ C (พอใช้)', 
+                cardBg: 'bg-amber-500/[0.06] dark:bg-amber-500/[0.12]', 
+                cardBorder: 'border-amber-500/40 dark:border-amber-500/40', 
+                dividerBorder: 'border-amber-500/20 dark:border-amber-500/25',
+                text: 'text-amber-700 dark:text-amber-400', 
+                bar: 'bg-amber-600 dark:bg-amber-500' 
+            };
+            return { 
+                grade: 'D', 
+                label: 'ระดับ D (ต้องปรับปรุง)', 
+                cardBg: 'bg-rose-500/[0.06] dark:bg-rose-500/[0.12]', 
+                cardBorder: 'border-rose-500/40 dark:border-rose-500/40', 
+                dividerBorder: 'border-rose-500/20 dark:border-rose-500/25',
+                text: 'text-rose-700 dark:text-rose-400', 
+                bar: 'bg-rose-600 dark:bg-rose-500' 
+            };
+        },
+
+        allSubProjects: Object.freeze(<?= $subProjectsJson ?>),
+        subSearch: '',
+        subPage: 1,
+        subPerPage: 5,
+
+        get filteredSubProjects() {
+            if (!this.subSearch.trim()) return this.allSubProjects;
+            const q = this.subSearch.toLowerCase().trim();
+            return this.allSubProjects.filter(s => s.search_text.includes(q));
+        },
+
+        get subTotalPages() {
+            if (this.subPerPage === 'all') return 1;
+            const per = parseInt(this.subPerPage) || 5;
+            return Math.ceil(this.filteredSubProjects.length / per) || 1;
+        },
+
+        get paginatedSubIds() {
+            if (this.subPerPage === 'all') {
+                return new Set(this.filteredSubProjects.map(s => s.id));
+            }
+            const per = parseInt(this.subPerPage) || 5;
+            const start = (this.subPage - 1) * per;
+            return new Set(this.filteredSubProjects.slice(start, start + per).map(s => s.id));
+        },
+
+        isSubVisible(id) {
+            return this.paginatedSubIds.has(id);
+        },
+
+        get subStartIndex() {
+            if (this.filteredSubProjects.length === 0) return 0;
+            if (this.subPerPage === 'all') return 1;
+            const per = parseInt(this.subPerPage) || 5;
+            return (this.subPage - 1) * per + 1;
+        },
+
+        get subEndIndex() {
+            if (this.filteredSubProjects.length === 0) return 0;
+            if (this.subPerPage === 'all') return this.filteredSubProjects.length;
+            const per = parseInt(this.subPerPage) || 5;
+            return Math.min(this.subPage * per, this.filteredSubProjects.length);
+        },
+
+        get subVisiblePages() {
+            const total = this.subTotalPages;
+            const current = this.subPage;
+            if (total <= 7) {
+                const pages = [];
+                for (let i = 1; i <= total; i++) pages.push(i);
+                return pages;
+            }
+            if (current <= 4) {
+                return [1, 2, 3, 4, 5, '...', total];
+            }
+            if (current >= total - 3) {
+                return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+            }
+            return [1, '...', current - 1, current, current + 1, '...', total];
+        },
+
+        setSubPage(p) {
+            if (p === '...' || p < 1 || p > this.subTotalPages || p === this.subPage) return;
+            this.subPage = p;
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
+        },
+
+        prevSubPage() {
+            if (this.subPage > 1) this.setSubPage(this.subPage - 1);
+        },
+
+        nextSubPage() {
+            if (this.subPage < this.subTotalPages) this.setSubPage(this.subPage + 1);
+        },
+
+        setSubPerPage(val) {
+            this.subPerPage = val === 'all' ? 'all' : parseInt(val);
+            this.subPage = 1;
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
+        }
+    };
+}
+</script>
+
 <div class="space-y-6 w-full max-w-full min-w-0" x-data="projectShowPage()">
     <!-- Breadcrumb & Back -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1156,197 +1348,7 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
     <?php endif; ?>
 </div>
 
-<script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
-function projectShowPage() {
-    return {
-        createSubModal: false,
-        editModal: false,
-        evalModal: false,
-        evalScore: <?= $project['evaluation_score'] !== null ? json_encode((float)$project['evaluation_score']) : json_encode(round((float)$project['progress'], 2)) ?>,
-        evalNotes: <?= json_encode($project['evaluation_notes'] ?? '') ?>,
 
-        openEvalModal() {
-            const defaultScore = <?= $project['evaluation_score'] !== null ? json_encode((float)$project['evaluation_score']) : json_encode(round((float)$project['progress'], 2)) ?>;
-            if (this.evalScore === null || this.evalScore === '' || isNaN(parseFloat(this.evalScore))) {
-                this.evalScore = defaultScore;
-            }
-            this.evalModal = true;
-            this.$nextTick(() => {
-                const inp = document.getElementById('evaluation-score-input');
-                if (inp) {
-                    inp.focus();
-                    inp.select();
-                }
-                if (window.safeCreateIcons) window.safeCreateIcons(this.$el);
-            });
-        },
-
-        get sliderValue() {
-            const s = parseFloat(this.evalScore);
-            return isNaN(s) ? 0 : Math.max(0, Math.min(100, s));
-        },
-
-        onSliderChange(e) {
-            this.evalScore = parseFloat(e.target.value);
-        },
-
-        onScoreInput(e) {
-            const val = e.target.value;
-            if (val === '') {
-                this.evalScore = '';
-                return;
-            }
-            const num = parseFloat(val);
-            if (!isNaN(num)) {
-                if (num > 100) this.evalScore = 100;
-                else if (num < 0) this.evalScore = 0;
-                else this.evalScore = val;
-            }
-        },
-
-        get currentGrade() {
-            const s = parseFloat(this.evalScore);
-            if (isNaN(s) || this.evalScore === '' || this.evalScore === null) {
-                return { 
-                    grade: '-', 
-                    label: 'กรุณาระบุคะแนน (0 - 100)', 
-                    cardBg: 'bg-slate-50 dark:bg-white/[0.02]', 
-                    cardBorder: 'border-slate-200 dark:border-white/10', 
-                    dividerBorder: 'border-slate-200 dark:border-white/10',
-                    text: 'text-slate-600 dark:text-slate-400', 
-                    bar: 'bg-slate-400' 
-                };
-            }
-            if (s >= 90) return { 
-                grade: 'A+', 
-                label: 'ระดับ A+ (ดีเยี่ยมมาก)', 
-                cardBg: 'bg-emerald-500/[0.06] dark:bg-emerald-500/[0.12]', 
-                cardBorder: 'border-emerald-500/40 dark:border-emerald-500/40', 
-                dividerBorder: 'border-emerald-500/20 dark:border-emerald-500/25',
-                text: 'text-emerald-700 dark:text-emerald-400', 
-                bar: 'bg-emerald-600 dark:bg-emerald-500' 
-            };
-            if (s >= 80) return { 
-                grade: 'A', 
-                label: 'ระดับ A (ดีเยี่ยม)', 
-                cardBg: 'bg-sky-500/[0.06] dark:bg-sky-500/[0.12]', 
-                cardBorder: 'border-sky-500/40 dark:border-sky-500/40', 
-                dividerBorder: 'border-sky-500/20 dark:border-sky-500/25',
-                text: 'text-sky-700 dark:text-sky-400', 
-                bar: 'bg-sky-600 dark:bg-sky-500' 
-            };
-            if (s >= 70) return { 
-                grade: 'B', 
-                label: 'ระดับ B (ดี)', 
-                cardBg: 'bg-indigo-500/[0.06] dark:bg-indigo-500/[0.12]', 
-                cardBorder: 'border-indigo-500/40 dark:border-indigo-500/40', 
-                dividerBorder: 'border-indigo-500/20 dark:border-indigo-500/25',
-                text: 'text-indigo-700 dark:text-indigo-400', 
-                bar: 'bg-indigo-600 dark:bg-indigo-500' 
-            };
-            if (s >= 60) return { 
-                grade: 'C', 
-                label: 'ระดับ C (พอใช้)', 
-                cardBg: 'bg-amber-500/[0.06] dark:bg-amber-500/[0.12]', 
-                cardBorder: 'border-amber-500/40 dark:border-amber-500/40', 
-                dividerBorder: 'border-amber-500/20 dark:border-amber-500/25',
-                text: 'text-amber-700 dark:text-amber-400', 
-                bar: 'bg-amber-600 dark:bg-amber-500' 
-            };
-            return { 
-                grade: 'D', 
-                label: 'ระดับ D (ต้องปรับปรุง)', 
-                cardBg: 'bg-rose-500/[0.06] dark:bg-rose-500/[0.12]', 
-                cardBorder: 'border-rose-500/40 dark:border-rose-500/40', 
-                dividerBorder: 'border-rose-500/20 dark:border-rose-500/25',
-                text: 'text-rose-700 dark:text-rose-400', 
-                bar: 'bg-rose-600 dark:bg-rose-500' 
-            };
-        },
-
-        allSubProjects: Object.freeze(<?= $subProjectsJson ?>),
-        subSearch: '',
-        subPage: 1,
-        subPerPage: 5,
-
-        get filteredSubProjects() {
-            if (!this.subSearch.trim()) return this.allSubProjects;
-            const q = this.subSearch.toLowerCase().trim();
-            return this.allSubProjects.filter(s => s.search_text.includes(q));
-        },
-
-        get subTotalPages() {
-            if (this.subPerPage === 'all') return 1;
-            const per = parseInt(this.subPerPage) || 5;
-            return Math.ceil(this.filteredSubProjects.length / per) || 1;
-        },
-
-        get paginatedSubIds() {
-            if (this.subPerPage === 'all') {
-                return new Set(this.filteredSubProjects.map(s => s.id));
-            }
-            const per = parseInt(this.subPerPage) || 5;
-            const start = (this.subPage - 1) * per;
-            return new Set(this.filteredSubProjects.slice(start, start + per).map(s => s.id));
-        },
-
-        isSubVisible(id) {
-            return this.paginatedSubIds.has(id);
-        },
-
-        get subStartIndex() {
-            if (this.filteredSubProjects.length === 0) return 0;
-            if (this.subPerPage === 'all') return 1;
-            const per = parseInt(this.subPerPage) || 5;
-            return (this.subPage - 1) * per + 1;
-        },
-
-        get subEndIndex() {
-            if (this.filteredSubProjects.length === 0) return 0;
-            if (this.subPerPage === 'all') return this.filteredSubProjects.length;
-            const per = parseInt(this.subPerPage) || 5;
-            return Math.min(this.subPage * per, this.filteredSubProjects.length);
-        },
-
-        get subVisiblePages() {
-            const total = this.subTotalPages;
-            const current = this.subPage;
-            if (total <= 7) {
-                const pages = [];
-                for (let i = 1; i <= total; i++) pages.push(i);
-                return pages;
-            }
-            if (current <= 4) {
-                return [1, 2, 3, 4, 5, '...', total];
-            }
-            if (current >= total - 3) {
-                return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
-            }
-            return [1, '...', current - 1, current, current + 1, '...', total];
-        },
-
-        setSubPage(p) {
-            if (p === '...' || p < 1 || p > this.subTotalPages || p === this.subPage) return;
-            this.subPage = p;
-            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
-        },
-
-        prevSubPage() {
-            if (this.subPage > 1) this.setSubPage(this.subPage - 1);
-        },
-
-        nextSubPage() {
-            if (this.subPage < this.subTotalPages) this.setSubPage(this.subPage + 1);
-        },
-
-        setSubPerPage(val) {
-            this.subPerPage = val === 'all' ? 'all' : parseInt(val);
-            this.subPage = 1;
-            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
-        }
-    };
-}
-</script>
 
 <?php
 $content = ob_get_clean();

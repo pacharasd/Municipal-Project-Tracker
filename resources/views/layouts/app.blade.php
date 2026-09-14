@@ -1536,13 +1536,28 @@
                     const scripts = Array.from(currentMain.querySelectorAll('script'));
                     for (const oldScript of scripts) {
                         try {
-                            const newScript = document.createElement('script');
-                            for (const attr of oldScript.attributes) {
-                                newScript.setAttribute(attr.name, attr.value);
+                            if (oldScript.src) {
+                                const newScript = document.createElement('script');
+                                for (const attr of oldScript.attributes) {
+                                    newScript.setAttribute(attr.name, attr.value);
+                                }
+                                newScript.nonce = window.CSP_NONCE || '';
+                                oldScript.parentNode.replaceChild(newScript, oldScript);
+                            } else if (oldScript.text) {
+                                const scriptCode = oldScript.text;
+                                try {
+                                    (new Function(scriptCode))();
+                                } catch (e) {
+                                    console.warn('MPT: Direct function eval notice:', e);
+                                }
+                                const newScript = document.createElement('script');
+                                for (const attr of oldScript.attributes) {
+                                    newScript.setAttribute(attr.name, attr.value);
+                                }
+                                newScript.nonce = window.CSP_NONCE || '';
+                                newScript.text = scriptCode;
+                                oldScript.parentNode.replaceChild(newScript, oldScript);
                             }
-                            newScript.nonce = oldScript.nonce || window.CSP_NONCE || '';
-                            newScript.text = oldScript.text;
-                            oldScript.parentNode.replaceChild(newScript, oldScript);
                         } catch (scriptErr) {
                             console.warn('MPT: Script re-evaluation warning:', scriptErr);
                         }
@@ -1746,13 +1761,28 @@
                     const scripts = Array.from(currentMain.querySelectorAll('script'));
                     for (const oldScript of scripts) {
                         try {
-                            const newScript = document.createElement('script');
-                            for (const attr of oldScript.attributes) {
-                                newScript.setAttribute(attr.name, attr.value);
+                            if (oldScript.src) {
+                                const newScript = document.createElement('script');
+                                for (const attr of oldScript.attributes) {
+                                    newScript.setAttribute(attr.name, attr.value);
+                                }
+                                newScript.nonce = window.CSP_NONCE || '';
+                                oldScript.parentNode.replaceChild(newScript, oldScript);
+                            } else if (oldScript.text) {
+                                const scriptCode = oldScript.text;
+                                try {
+                                    (new Function(scriptCode))();
+                                } catch (e) {
+                                    console.warn('MPT: Direct form script eval notice:', e);
+                                }
+                                const newScript = document.createElement('script');
+                                for (const attr of oldScript.attributes) {
+                                    newScript.setAttribute(attr.name, attr.value);
+                                }
+                                newScript.nonce = window.CSP_NONCE || '';
+                                newScript.text = scriptCode;
+                                oldScript.parentNode.replaceChild(newScript, oldScript);
                             }
-                            newScript.nonce = oldScript.nonce || window.CSP_NONCE || '';
-                            newScript.text = oldScript.text;
-                            oldScript.parentNode.replaceChild(newScript, oldScript);
                         } catch (scriptErr) {
                             console.warn('MPT: Form submit script re-evaluation warning:', scriptErr);
                         }

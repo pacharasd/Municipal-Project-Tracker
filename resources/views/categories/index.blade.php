@@ -20,6 +20,174 @@ foreach ($categories as $cat) {
 $categoriesJson = json_encode($categoriesSummary, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
 ?>
 
+<script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
+window.categoriesPage = function categoriesPage() {
+    return {
+        allCategories: Object.freeze(<?= $categoriesJson ?>),
+        createModal: false,
+        editModal: false,
+        deleteModal: false,
+        activeTab: 'grid', // 'grid' | 'table'
+        searchQuery: '',
+        editData: { id: '', name: '', description: '' },
+        deleteData: { id: '', name: '', project_count: 0 },
+
+        // Grid pagination
+        gridPage: 1,
+        gridPerPage: 6,
+
+        // Table pagination
+        tablePage: 1,
+        tablePerPage: 10,
+
+        get filteredCategories() {
+            if (!this.searchQuery.trim()) return this.allCategories;
+            const q = this.searchQuery.toLowerCase().trim();
+            return this.allCategories.filter(c => c.search_text.includes(q));
+        },
+
+        // Grid getters
+        get gridTotalPages() {
+            if (this.gridPerPage === 'all') return 1;
+            const per = parseInt(this.gridPerPage) || 6;
+            return Math.ceil(this.filteredCategories.length / per) || 1;
+        },
+        get paginatedGridIds() {
+            if (this.gridPerPage === 'all') {
+                return new Set(this.filteredCategories.map(c => c.id));
+            }
+            const per = parseInt(this.gridPerPage) || 6;
+            const start = (this.gridPage - 1) * per;
+            return new Set(this.filteredCategories.slice(start, start + per).map(c => c.id));
+        },
+        isGridVisible(id) {
+            return this.paginatedGridIds.has(id);
+        },
+        get gridStartIndex() {
+            if (this.filteredCategories.length === 0) return 0;
+            if (this.gridPerPage === 'all') return 1;
+            const per = parseInt(this.gridPerPage) || 6;
+            return (this.gridPage - 1) * per + 1;
+        },
+        get gridEndIndex() {
+            if (this.filteredCategories.length === 0) return 0;
+            if (this.gridPerPage === 'all') return this.filteredCategories.length;
+            const per = parseInt(this.gridPerPage) || 6;
+            return Math.min(this.gridPage * per, this.filteredCategories.length);
+        },
+        get gridVisiblePages() {
+            return this.getVisiblePages(this.gridTotalPages, this.gridPage);
+        },
+        setGridPage(p) {
+            if (p === '...' || p < 1 || p > this.gridTotalPages || p === this.gridPage) return;
+            this.gridPage = p;
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
+        },
+        prevGridPage() {
+            if (this.gridPage > 1) this.setGridPage(this.gridPage - 1);
+        },
+        nextGridPage() {
+            if (this.gridPage < this.gridTotalPages) this.setGridPage(this.gridPage + 1);
+        },
+        setGridPerPage(val) {
+            this.gridPerPage = val === 'all' ? 'all' : parseInt(val);
+            this.gridPage = 1;
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
+        },
+
+        // Table getters
+        get tableTotalPages() {
+            if (this.tablePerPage === 'all') return 1;
+            const per = parseInt(this.tablePerPage) || 10;
+            return Math.ceil(this.filteredCategories.length / per) || 1;
+        },
+        get paginatedTableIds() {
+            if (this.tablePerPage === 'all') {
+                return new Set(this.filteredCategories.map(c => c.id));
+            }
+            const per = parseInt(this.tablePerPage) || 10;
+            const start = (this.tablePage - 1) * per;
+            return new Set(this.filteredCategories.slice(start, start + per).map(c => c.id));
+        },
+        isTableVisible(id) {
+            return this.paginatedTableIds.has(id);
+        },
+        get tableStartIndex() {
+            if (this.filteredCategories.length === 0) return 0;
+            if (this.tablePerPage === 'all') return 1;
+            const per = parseInt(this.tablePerPage) || 10;
+            return (this.tablePage - 1) * per + 1;
+        },
+        get tableEndIndex() {
+            if (this.filteredCategories.length === 0) return 0;
+            if (this.tablePerPage === 'all') return this.filteredCategories.length;
+            const per = parseInt(this.tablePerPage) || 10;
+            return Math.min(this.tablePage * per, this.filteredCategories.length);
+        },
+        get tableVisiblePages() {
+            return this.getVisiblePages(this.tableTotalPages, this.tablePage);
+        },
+        setTablePage(p) {
+            if (p === '...' || p < 1 || p > this.tableTotalPages || p === this.tablePage) return;
+            this.tablePage = p;
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
+        },
+        prevTablePage() {
+            if (this.tablePage > 1) this.setTablePage(this.tablePage - 1);
+        },
+        nextTablePage() {
+            if (this.tablePage < this.tableTotalPages) this.setTablePage(this.tablePage + 1);
+        },
+        setTablePerPage(val) {
+            this.tablePerPage = val === 'all' ? 'all' : parseInt(val);
+            this.tablePage = 1;
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
+        },
+
+        getVisiblePages(total, current) {
+            if (total <= 7) {
+                const pages = [];
+                for (let i = 1; i <= total; i++) pages.push(i);
+                return pages;
+            }
+            if (current <= 4) {
+                return [1, 2, 3, 4, 5, '...', total];
+            }
+            if (current >= total - 3) {
+                return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+            }
+            return [1, '...', current - 1, current, current + 1, '...', total];
+        },
+
+        onSearchChange() {
+            this.gridPage = 1;
+            this.tablePage = 1;
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
+        },
+
+        openEdit(cat) {
+            this.editData = {
+                id: cat.id,
+                name: cat.name || '',
+                description: cat.description || ''
+            };
+            this.editModal = true;
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(); });
+        },
+
+        openDelete(cat) {
+            this.deleteData = {
+                id: cat.id,
+                name: cat.name,
+                project_count: parseInt(cat.project_count || 0)
+            };
+            this.deleteModal = true;
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(); });
+        }
+    };
+}
+</script>
+
 <div class="space-y-6 max-w-7xl mx-auto pb-12"
      x-data="categoriesPage()">
 
@@ -863,173 +1031,7 @@ $categoriesJson = json_encode($categoriesSummary, JSON_HEX_TAG | JSON_HEX_APOS |
 
 </div>
 
-<script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
-function categoriesPage() {
-    return {
-        allCategories: Object.freeze(<?= $categoriesJson ?>),
-        createModal: false,
-        editModal: false,
-        deleteModal: false,
-        activeTab: 'grid', // 'grid' | 'table'
-        searchQuery: '',
-        editData: { id: '', name: '', description: '' },
-        deleteData: { id: '', name: '', project_count: 0 },
 
-        // Grid pagination
-        gridPage: 1,
-        gridPerPage: 6,
-
-        // Table pagination
-        tablePage: 1,
-        tablePerPage: 10,
-
-        get filteredCategories() {
-            if (!this.searchQuery.trim()) return this.allCategories;
-            const q = this.searchQuery.toLowerCase().trim();
-            return this.allCategories.filter(c => c.search_text.includes(q));
-        },
-
-        // Grid getters
-        get gridTotalPages() {
-            if (this.gridPerPage === 'all') return 1;
-            const per = parseInt(this.gridPerPage) || 6;
-            return Math.ceil(this.filteredCategories.length / per) || 1;
-        },
-        get paginatedGridIds() {
-            if (this.gridPerPage === 'all') {
-                return new Set(this.filteredCategories.map(c => c.id));
-            }
-            const per = parseInt(this.gridPerPage) || 6;
-            const start = (this.gridPage - 1) * per;
-            return new Set(this.filteredCategories.slice(start, start + per).map(c => c.id));
-        },
-        isGridVisible(id) {
-            return this.paginatedGridIds.has(id);
-        },
-        get gridStartIndex() {
-            if (this.filteredCategories.length === 0) return 0;
-            if (this.gridPerPage === 'all') return 1;
-            const per = parseInt(this.gridPerPage) || 6;
-            return (this.gridPage - 1) * per + 1;
-        },
-        get gridEndIndex() {
-            if (this.filteredCategories.length === 0) return 0;
-            if (this.gridPerPage === 'all') return this.filteredCategories.length;
-            const per = parseInt(this.gridPerPage) || 6;
-            return Math.min(this.gridPage * per, this.filteredCategories.length);
-        },
-        get gridVisiblePages() {
-            return this.getVisiblePages(this.gridTotalPages, this.gridPage);
-        },
-        setGridPage(p) {
-            if (p === '...' || p < 1 || p > this.gridTotalPages || p === this.gridPage) return;
-            this.gridPage = p;
-            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
-        },
-        prevGridPage() {
-            if (this.gridPage > 1) this.setGridPage(this.gridPage - 1);
-        },
-        nextGridPage() {
-            if (this.gridPage < this.gridTotalPages) this.setGridPage(this.gridPage + 1);
-        },
-        setGridPerPage(val) {
-            this.gridPerPage = val === 'all' ? 'all' : parseInt(val);
-            this.gridPage = 1;
-            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
-        },
-
-        // Table getters
-        get tableTotalPages() {
-            if (this.tablePerPage === 'all') return 1;
-            const per = parseInt(this.tablePerPage) || 10;
-            return Math.ceil(this.filteredCategories.length / per) || 1;
-        },
-        get paginatedTableIds() {
-            if (this.tablePerPage === 'all') {
-                return new Set(this.filteredCategories.map(c => c.id));
-            }
-            const per = parseInt(this.tablePerPage) || 10;
-            const start = (this.tablePage - 1) * per;
-            return new Set(this.filteredCategories.slice(start, start + per).map(c => c.id));
-        },
-        isTableVisible(id) {
-            return this.paginatedTableIds.has(id);
-        },
-        get tableStartIndex() {
-            if (this.filteredCategories.length === 0) return 0;
-            if (this.tablePerPage === 'all') return 1;
-            const per = parseInt(this.tablePerPage) || 10;
-            return (this.tablePage - 1) * per + 1;
-        },
-        get tableEndIndex() {
-            if (this.filteredCategories.length === 0) return 0;
-            if (this.tablePerPage === 'all') return this.filteredCategories.length;
-            const per = parseInt(this.tablePerPage) || 10;
-            return Math.min(this.tablePage * per, this.filteredCategories.length);
-        },
-        get tableVisiblePages() {
-            return this.getVisiblePages(this.tableTotalPages, this.tablePage);
-        },
-        setTablePage(p) {
-            if (p === '...' || p < 1 || p > this.tableTotalPages || p === this.tablePage) return;
-            this.tablePage = p;
-            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
-        },
-        prevTablePage() {
-            if (this.tablePage > 1) this.setTablePage(this.tablePage - 1);
-        },
-        nextTablePage() {
-            if (this.tablePage < this.tableTotalPages) this.setTablePage(this.tablePage + 1);
-        },
-        setTablePerPage(val) {
-            this.tablePerPage = val === 'all' ? 'all' : parseInt(val);
-            this.tablePage = 1;
-            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
-        },
-
-        getVisiblePages(total, current) {
-            if (total <= 7) {
-                const pages = [];
-                for (let i = 1; i <= total; i++) pages.push(i);
-                return pages;
-            }
-            if (current <= 4) {
-                return [1, 2, 3, 4, 5, '...', total];
-            }
-            if (current >= total - 3) {
-                return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
-            }
-            return [1, '...', current - 1, current, current + 1, '...', total];
-        },
-
-        onSearchChange() {
-            this.gridPage = 1;
-            this.tablePage = 1;
-            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
-        },
-
-        openEdit(cat) {
-            this.editData = {
-                id: cat.id,
-                name: cat.name || '',
-                description: cat.description || ''
-            };
-            this.editModal = true;
-            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(); });
-        },
-
-        openDelete(cat) {
-            this.deleteData = {
-                id: cat.id,
-                name: cat.name,
-                project_count: parseInt(cat.project_count || 0)
-            };
-            this.deleteModal = true;
-            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(); });
-        }
-    };
-}
-</script>
 
 <?php
 $content = ob_get_clean();

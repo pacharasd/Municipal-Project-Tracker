@@ -54,6 +54,221 @@ $initPerPageRaw = $_GET['per_page'] ?? '5';
 $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw);
 ?>
 
+<script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
+window.mainProjectsPage = function mainProjectsPage() {
+    return {
+        createModal: false,
+        allProjects: Object.freeze(<?= $projectsJson ?>),
+        search: <?= json_encode($filters['search'], JSON_UNESCAPED_UNICODE) ?> || '',
+        fiscalYearFilter: <?= json_encode($filters['fiscal_year_id'], JSON_UNESCAPED_UNICODE) ?> || '',
+        departmentFilter: <?= json_encode($filters['department_id'], JSON_UNESCAPED_UNICODE) ?> || '',
+        statusFilter: 'all',
+        currentPage: 1,
+        perPage: 5,
+        fiscalYearOptions: Object.freeze(<?= json_encode($fiscalYears, JSON_UNESCAPED_UNICODE) ?>),
+
+        get currentFiscalYearLabel() {
+            if (!this.fiscalYearFilter) return '-- ทุกปีงบประมาณ --';
+            const found = this.fiscalYearOptions.find(f => String(f.id) === String(this.fiscalYearFilter));
+            return found ? 'ปี ' + found.year : '-- ทุกปีงบประมาณ --';
+        },
+
+        init() {
+            const params = new URLSearchParams(window.location.search);
+            const pageParam = parseInt(params.get('page'));
+            if (pageParam && pageParam > 0) {
+                this.currentPage = pageParam;
+            }
+            const perPageParam = params.get('per_page');
+            if (perPageParam) {
+                this.perPage = perPageParam === 'all' ? 'all' : parseInt(perPageParam);
+            }
+            if (params.get('status')) {
+                this.statusFilter = params.get('status');
+            }
+        },
+
+        get filteredProjects() {
+            const q = (this.search || '').trim().toLowerCase();
+            const fy = this.fiscalYearFilter;
+            const dept = this.departmentFilter;
+            const status = this.statusFilter;
+
+            return this.allProjects.filter(p => {
+                const matchSearch = !q || (p.search_text && p.search_text.includes(q));
+                const matchFy = !fy || String(p.fiscal_year_id) === String(fy);
+                const matchDept = !dept || String(p.department_id) === String(dept);
+                const matchStatus = status === 'all' || p.status === status;
+                return matchSearch && matchFy && matchDept && matchStatus;
+            });
+        },
+
+        get totalPages() {
+            if (this.perPage === 'all') return 1;
+            const per = parseInt(this.perPage) || 5;
+            return Math.max(1, Math.ceil(this.filteredProjects.length / per));
+        },
+
+        _cachedPaginatedIds: null,
+        _lastFilterKey: '',
+
+        get paginatedIds() {
+            const currentKey = `${this.search}|${this.fiscalYearFilter}|${this.departmentFilter}|${this.statusFilter}|${this.currentPage}|${this.perPage}`;
+            if (this._lastFilterKey === currentKey && this._cachedPaginatedIds) {
+                return this._cachedPaginatedIds;
+            }
+            this._lastFilterKey = currentKey;
+            if (this.perPage === 'all') {
+                this._cachedPaginatedIds = new Set(this.filteredProjects.map(p => p.id));
+            } else {
+                const per = parseInt(this.perPage) || 5;
+                const start = (this.currentPage - 1) * per;
+                const slice = this.filteredProjects.slice(start, start + per);
+                this._cachedPaginatedIds = new Set(slice.map(p => p.id));
+            }
+            return this._cachedPaginatedIds;
+        },
+
+        isProjectVisible(id) {
+            return this.paginatedIds.has(id);
+        },
+
+        get startIndex() {
+            if (this.filteredProjects.length === 0) return 0;
+            if (this.perPage === 'all') return 1;
+            const per = parseInt(this.perPage) || 5;
+            return (this.currentPage - 1) * per + 1;
+        },
+
+        get endIndex() {
+            if (this.filteredProjects.length === 0) return 0;
+            if (this.perPage === 'all') return this.filteredProjects.length;
+            const per = parseInt(this.perPage) || 5;
+            return Math.min(this.currentPage * per, this.filteredProjects.length);
+        },
+
+        get totalFilteredBudget() {
+            const total = this.filteredProjects.reduce((sum, p) => sum + (p.budget || 0), 0);
+            return new Intl.NumberFormat('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(total);
+        },
+
+        get totalFilteredSubCount() {
+            return this.filteredProjects.reduce((sum, p) => sum + (p.sub_count || 0), 0);
+        },
+
+        get visiblePages() {
+            const total = this.totalPages;
+            const current = this.currentPage;
+            if (total <= 7) {
+                const pages = [];
+                for (let i = 1; i <= total; i++) pages.push(i);
+                return pages;
+            }
+            if (current <= 4) {
+                return [1, 2, 3, 4, 5, '...', total];
+            }
+            if (current >= total - 3) {
+                return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+            }
+            return [1, '...', current - 1, current, current + 1, '...', total];
+        },
+
+        setPage(p) {
+            if (p === '...' || p < 1 || p > this.totalPages || p === this.currentPage) return;
+            this.currentPage = p;
+            this.syncUrl();
+            this.$nextTick(() => {
+                this.scrollToTop();
+            });
+        },
+
+        prevPage() {
+            if (this.currentPage > 1) {
+                this.setPage(this.currentPage - 1);
+            }
+        },
+
+        nextPage() {
+            if (this.currentPage < this.totalPages) {
+                this.setPage(this.currentPage + 1);
+            }
+        },
+
+        setPerPage(val) {
+            this.perPage = val === 'all' ? 'all' : parseInt(val);
+            this.currentPage = 1;
+            this.syncUrl();
+            this.$nextTick(() => {
+                this.scrollToTop();
+            });
+        },
+
+        setStatusFilter(val) {
+            this.statusFilter = val;
+            this.currentPage = 1;
+            this.syncUrl();
+            this.$nextTick(() => {
+                this.scrollToTop();
+            });
+        },
+
+        resetFilters() {
+            this.search = '';
+            this.fiscalYearFilter = '';
+            this.departmentFilter = '';
+            this.statusFilter = 'all';
+            this.currentPage = 1;
+            this.syncUrl();
+            this.$nextTick(() => {
+                this.scrollToTop();
+            });
+        },
+
+        syncUrl() {
+            const url = new URL(window.location.href);
+            if (this.currentPage > 1) {
+                url.searchParams.set('page', this.currentPage);
+            } else {
+                url.searchParams.delete('page');
+            }
+            if (this.perPage !== 5) {
+                url.searchParams.set('per_page', this.perPage);
+            } else {
+                url.searchParams.delete('per_page');
+            }
+            if (this.statusFilter !== 'all') {
+                url.searchParams.set('status', this.statusFilter);
+            } else {
+                url.searchParams.delete('status');
+            }
+            window.history.replaceState({}, '', url.toString());
+        },
+
+        scrollToTop() {
+            const main = document.querySelector('main');
+            const target = document.getElementById('projects-toolbar') || document.getElementById('projects-container');
+            if (main && target) {
+                const targetRect = target.getBoundingClientRect();
+                const mainRect = main.getBoundingClientRect();
+                const scrollOffset = main.scrollTop + (targetRect.top - mainRect.top) - 16;
+                main.scrollTo({
+                    top: Math.max(0, scrollOffset),
+                    behavior: 'smooth'
+                });
+            } else if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else if (main) {
+                main.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+    };
+};
+
+if (window.Alpine && typeof Alpine.data === 'function') {
+    window.Alpine.data('mainProjectsPage', window.mainProjectsPage);
+}
+</script>
+
 <div class="space-y-6" x-data="mainProjectsPage()">
     <!-- Header with Action -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white dark:bg-[#181a20] p-5 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-sm">
@@ -757,218 +972,6 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
     </template>
     <?php endif; ?>
 </div>
-
-<script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
-function mainProjectsPage() {
-    return {
-        createModal: false,
-        allProjects: Object.freeze(<?= $projectsJson ?>),
-        search: <?= json_encode($filters['search'], JSON_UNESCAPED_UNICODE) ?> || '',
-        fiscalYearFilter: <?= json_encode($filters['fiscal_year_id'], JSON_UNESCAPED_UNICODE) ?> || '',
-        departmentFilter: <?= json_encode($filters['department_id'], JSON_UNESCAPED_UNICODE) ?> || '',
-        statusFilter: 'all',
-        currentPage: 1,
-        perPage: 5,
-        fiscalYearOptions: Object.freeze(<?= json_encode($fiscalYears, JSON_UNESCAPED_UNICODE) ?>),
-
-        get currentFiscalYearLabel() {
-            if (!this.fiscalYearFilter) return '-- ทุกปีงบประมาณ --';
-            const found = this.fiscalYearOptions.find(f => String(f.id) === String(this.fiscalYearFilter));
-            return found ? 'ปี ' + found.year : '-- ทุกปีงบประมาณ --';
-        },
-
-
-        init() {
-            const params = new URLSearchParams(window.location.search);
-            const pageParam = parseInt(params.get('page'));
-            if (pageParam && pageParam > 0) {
-                this.currentPage = pageParam;
-            }
-            const perPageParam = params.get('per_page');
-            if (perPageParam) {
-                this.perPage = perPageParam === 'all' ? 'all' : parseInt(perPageParam);
-            }
-            if (params.get('status')) {
-                this.statusFilter = params.get('status');
-            }
-        },
-
-        get filteredProjects() {
-            const q = (this.search || '').trim().toLowerCase();
-            const fy = this.fiscalYearFilter;
-            const dept = this.departmentFilter;
-            const status = this.statusFilter;
-
-            return this.allProjects.filter(p => {
-                const matchSearch = !q || (p.search_text && p.search_text.includes(q));
-                const matchFy = !fy || String(p.fiscal_year_id) === String(fy);
-                const matchDept = !dept || String(p.department_id) === String(dept);
-                const matchStatus = status === 'all' || p.status === status;
-                return matchSearch && matchFy && matchDept && matchStatus;
-            });
-        },
-
-        get totalPages() {
-            if (this.perPage === 'all') return 1;
-            const per = parseInt(this.perPage) || 5;
-            return Math.max(1, Math.ceil(this.filteredProjects.length / per));
-        },
-
-        _cachedPaginatedIds: null,
-        _lastFilterKey: '',
-
-        get paginatedIds() {
-            const currentKey = `${this.search}|${this.fiscalYearFilter}|${this.departmentFilter}|${this.statusFilter}|${this.currentPage}|${this.perPage}`;
-            if (this._lastFilterKey === currentKey && this._cachedPaginatedIds) {
-                return this._cachedPaginatedIds;
-            }
-            this._lastFilterKey = currentKey;
-            if (this.perPage === 'all') {
-                this._cachedPaginatedIds = new Set(this.filteredProjects.map(p => p.id));
-            } else {
-                const per = parseInt(this.perPage) || 5;
-                const start = (this.currentPage - 1) * per;
-                const slice = this.filteredProjects.slice(start, start + per);
-                this._cachedPaginatedIds = new Set(slice.map(p => p.id));
-            }
-            return this._cachedPaginatedIds;
-        },
-
-        isProjectVisible(id) {
-            return this.paginatedIds.has(id);
-        },
-
-        get startIndex() {
-            if (this.filteredProjects.length === 0) return 0;
-            if (this.perPage === 'all') return 1;
-            const per = parseInt(this.perPage) || 5;
-            return (this.currentPage - 1) * per + 1;
-        },
-
-        get endIndex() {
-            if (this.filteredProjects.length === 0) return 0;
-            if (this.perPage === 'all') return this.filteredProjects.length;
-            const per = parseInt(this.perPage) || 5;
-            return Math.min(this.currentPage * per, this.filteredProjects.length);
-        },
-
-        get totalFilteredBudget() {
-            const total = this.filteredProjects.reduce((sum, p) => sum + (p.budget || 0), 0);
-            return new Intl.NumberFormat('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(total);
-        },
-
-        get totalFilteredSubCount() {
-            return this.filteredProjects.reduce((sum, p) => sum + (p.sub_count || 0), 0);
-        },
-
-        get visiblePages() {
-            const total = this.totalPages;
-            const current = this.currentPage;
-            if (total <= 7) {
-                const pages = [];
-                for (let i = 1; i <= total; i++) pages.push(i);
-                return pages;
-            }
-            if (current <= 4) {
-                return [1, 2, 3, 4, 5, '...', total];
-            }
-            if (current >= total - 3) {
-                return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
-            }
-            return [1, '...', current - 1, current, current + 1, '...', total];
-        },
-
-        setPage(p) {
-            if (p === '...' || p < 1 || p > this.totalPages || p === this.currentPage) return;
-            this.currentPage = p;
-            this.syncUrl();
-            this.$nextTick(() => {
-                this.scrollToTop();
-            });
-        },
-
-        prevPage() {
-            if (this.currentPage > 1) {
-                this.setPage(this.currentPage - 1);
-            }
-        },
-
-        nextPage() {
-            if (this.currentPage < this.totalPages) {
-                this.setPage(this.currentPage + 1);
-            }
-        },
-
-        setPerPage(val) {
-            this.perPage = val === 'all' ? 'all' : parseInt(val);
-            this.currentPage = 1;
-            this.syncUrl();
-            this.$nextTick(() => {
-                this.scrollToTop();
-            });
-        },
-
-        setStatusFilter(val) {
-            this.statusFilter = val;
-            this.currentPage = 1;
-            this.syncUrl();
-            this.$nextTick(() => {
-                this.scrollToTop();
-            });
-        },
-
-        resetFilters() {
-            this.search = '';
-            this.fiscalYearFilter = '';
-            this.departmentFilter = '';
-            this.statusFilter = 'all';
-            this.currentPage = 1;
-            this.syncUrl();
-            this.$nextTick(() => {
-                this.scrollToTop();
-            });
-        },
-
-        syncUrl() {
-            const url = new URL(window.location.href);
-            if (this.currentPage > 1) {
-                url.searchParams.set('page', this.currentPage);
-            } else {
-                url.searchParams.delete('page');
-            }
-            if (this.perPage !== 5) {
-                url.searchParams.set('per_page', this.perPage);
-            } else {
-                url.searchParams.delete('per_page');
-            }
-            if (this.statusFilter !== 'all') {
-                url.searchParams.set('status', this.statusFilter);
-            } else {
-                url.searchParams.delete('status');
-            }
-            window.history.replaceState({}, '', url.toString());
-        },
-
-        scrollToTop() {
-            const main = document.querySelector('main');
-            const target = document.getElementById('projects-toolbar') || document.getElementById('projects-container');
-            if (main && target) {
-                const targetRect = target.getBoundingClientRect();
-                const mainRect = main.getBoundingClientRect();
-                const scrollOffset = main.scrollTop + (targetRect.top - mainRect.top) - 16;
-                main.scrollTo({
-                    top: Math.max(0, scrollOffset),
-                    behavior: 'smooth'
-                });
-            } else if (target) {
-                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            } else if (main) {
-                main.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-        }
-    };
-}
-</script>
 
 <?php
 $content = ob_get_clean();

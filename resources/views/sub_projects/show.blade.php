@@ -30,6 +30,197 @@ foreach ($project['disbursements'] ?? [] as $disb) {
 $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
 ?>
 
+<script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
+window.subProjectShowPage = function subProjectShowPage() {
+    return {
+        problemModal: false, 
+        resolveModal: false, 
+        disburseModal: false, 
+        activityModal: false, 
+        manualModal: false,
+        editSubModal: false,
+        editActModal: false,
+        editActStatusOpen: false,
+        uploadModal: false,
+        selectedAct: { id: '', name: '', description: '', activity_date: '', location: '', budget: '', target_participant_count: 0, actual_participant_count: 0, participant_count: 0, status: '', progress: '', notes: '' },
+        actStatusList: Object.freeze(<?= $actStatusesJson ?>),
+        get currentActStatusObj() {
+            return this.actStatusList.find(s => s.value === this.selectedAct.status) || this.actStatusList[0];
+        },
+        selectActStatus(st) {
+            this.selectedAct.status = st;
+            this.editActStatusOpen = false;
+            this.onActStatusChange();
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(); });
+        },
+        openEditAct(act) {
+            this.selectedAct = Object.assign({}, act);
+            this.editActStatusOpen = false;
+            // Normalize status to case value if needed
+            const valid = this.actStatusList.find(s => s.value === this.selectedAct.status);
+            if (!valid) {
+                const byLabel = this.actStatusList.find(s => s.label === this.selectedAct.status);
+                this.selectedAct.status = byLabel ? byLabel.value : 'not_started';
+            }
+            if (this.selectedAct.progress !== undefined && this.selectedAct.progress !== null) {
+                this.selectedAct.progress = parseFloat(this.selectedAct.progress);
+            }
+            this.editActModal = true;
+            this.$nextTick(() => { 
+                window.safeCreateIcons && window.safeCreateIcons(); 
+                window.dispatchEvent(new CustomEvent('set-thai-date-edit_activity_date', { detail: act.activity_date || '' }));
+            });
+        },
+        onActStatusChange() {
+            const s = this.selectedAct.status;
+            if (s === 'completed') {
+                this.selectedAct.progress = 100;
+            } else if (s === 'not_started' || s === 'cancelled') {
+                this.selectedAct.progress = 0;
+            } else if (s === 'in_progress' || s === 'has_problem') {
+                let p = parseFloat(this.selectedAct.progress);
+                if (isNaN(p) || p <= 0 || p >= 100) {
+                    this.selectedAct.progress = 50;
+                }
+            }
+        },
+
+        // Activities pagination & search
+        allActivities: Object.freeze(<?= $activitiesJson ?>),
+        actSearch: '',
+        actPage: 1,
+        actPerPage: 5,
+
+        get filteredActivities() {
+            if (!this.actSearch.trim()) return this.allActivities;
+            const q = this.actSearch.toLowerCase().trim();
+            return this.allActivities.filter(a => a.search_text.includes(q));
+        },
+        get actTotalPages() {
+            if (this.actPerPage === 'all') return 1;
+            const per = parseInt(this.actPerPage) || 5;
+            return Math.ceil(this.filteredActivities.length / per) || 1;
+        },
+        get paginatedActIds() {
+            if (this.actPerPage === 'all') {
+                return new Set(this.filteredActivities.map(a => a.id));
+            }
+            const per = parseInt(this.actPerPage) || 5;
+            const start = (this.actPage - 1) * per;
+            return new Set(this.filteredActivities.slice(start, start + per).map(a => a.id));
+        },
+        isActVisible(id) {
+            return this.paginatedActIds.has(id);
+        },
+        get actStartIndex() {
+            if (this.filteredActivities.length === 0) return 0;
+            if (this.actPerPage === 'all') return 1;
+            const per = parseInt(this.actPerPage) || 5;
+            return (this.actPage - 1) * per + 1;
+        },
+        get actEndIndex() {
+            if (this.filteredActivities.length === 0) return 0;
+            if (this.actPerPage === 'all') return this.filteredActivities.length;
+            const per = parseInt(this.actPerPage) || 5;
+            return Math.min(this.actPage * per, this.filteredActivities.length);
+        },
+        get actVisiblePages() {
+            return this.getVisiblePages(this.actTotalPages, this.actPage);
+        },
+        setActPage(p) {
+            if (p === '...' || p < 1 || p > this.actTotalPages || p === this.actPage) return;
+            this.actPage = p;
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
+        },
+        prevActPage() {
+            if (this.actPage > 1) this.setActPage(this.actPage - 1);
+        },
+        nextActPage() {
+            if (this.actPage < this.actTotalPages) this.setActPage(this.actPage + 1);
+        },
+        setActPerPage(val) {
+            this.actPerPage = val === 'all' ? 'all' : parseInt(val);
+            this.actPage = 1;
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
+        },
+
+        // Disbursements pagination & search
+        allDisbursements: Object.freeze(<?= $disbursementsJson ?>),
+        disbSearch: '',
+        disbPage: 1,
+        disbPerPage: 5,
+
+        get filteredDisbursements() {
+            if (!this.disbSearch.trim()) return this.allDisbursements;
+            const q = this.disbSearch.toLowerCase().trim();
+            return this.allDisbursements.filter(d => d.search_text.includes(q));
+        },
+        get disbTotalPages() {
+            if (this.disbPerPage === 'all') return 1;
+            const per = parseInt(this.disbPerPage) || 5;
+            return Math.ceil(this.filteredDisbursements.length / per) || 1;
+        },
+        get paginatedDisbIds() {
+            if (this.disbPerPage === 'all') {
+                return new Set(this.filteredDisbursements.map(d => d.id));
+            }
+            const per = parseInt(this.disbPerPage) || 5;
+            const start = (this.disbPage - 1) * per;
+            return new Set(this.filteredDisbursements.slice(start, start + per).map(d => d.id));
+        },
+        isDisbVisible(id) {
+            return this.paginatedDisbIds.has(id);
+        },
+        get disbStartIndex() {
+            if (this.filteredDisbursements.length === 0) return 0;
+            if (this.disbPerPage === 'all') return 1;
+            const per = parseInt(this.disbPerPage) || 5;
+            return (this.disbPage - 1) * per + 1;
+        },
+        get disbEndIndex() {
+            if (this.filteredDisbursements.length === 0) return 0;
+            if (this.disbPerPage === 'all') return this.filteredDisbursements.length;
+            const per = parseInt(this.disbPerPage) || 5;
+            return Math.min(this.disbPage * per, this.filteredDisbursements.length);
+        },
+        get disbVisiblePages() {
+            return this.getVisiblePages(this.disbTotalPages, this.disbPage);
+        },
+        setDisbPage(p) {
+            if (p === '...' || p < 1 || p > this.disbTotalPages || p === this.disbPage) return;
+            this.disbPage = p;
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
+        },
+        prevDisbPage() {
+            if (this.disbPage > 1) this.setDisbPage(this.disbPage - 1);
+        },
+        nextDisbPage() {
+            if (this.disbPage < this.disbTotalPages) this.setDisbPage(this.disbPage + 1);
+        },
+        setDisbPerPage(val) {
+            this.disbPerPage = val === 'all' ? 'all' : parseInt(val);
+            this.disbPage = 1;
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
+        },
+
+        getVisiblePages(total, current) {
+            if (total <= 7) {
+                const pages = [];
+                for (let i = 1; i <= total; i++) pages.push(i);
+                return pages;
+            }
+            if (current <= 4) {
+                return [1, 2, 3, 4, 5, '...', total];
+            }
+            if (current >= total - 3) {
+                return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+            }
+            return [1, '...', current - 1, current, current + 1, '...', total];
+        }
+    };
+}
+</script>
+
 <div class="space-y-6" x-data="subProjectShowPage()">
     <!-- Breadcrumb & Back Navigation -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1509,196 +1700,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
     </template>
 </div>
 
-<script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
-function subProjectShowPage() {
-    return {
-        problemModal: false, 
-        resolveModal: false, 
-        disburseModal: false, 
-        activityModal: false, 
-        manualModal: false,
-        editSubModal: false,
-        editActModal: false,
-        editActStatusOpen: false,
-        uploadModal: false,
-        selectedAct: { id: '', name: '', description: '', activity_date: '', location: '', budget: '', target_participant_count: 0, actual_participant_count: 0, participant_count: 0, status: '', progress: '', notes: '' },
-        actStatusList: Object.freeze(<?= $actStatusesJson ?>),
-        get currentActStatusObj() {
-            return this.actStatusList.find(s => s.value === this.selectedAct.status) || this.actStatusList[0];
-        },
-        selectActStatus(st) {
-            this.selectedAct.status = st;
-            this.editActStatusOpen = false;
-            this.onActStatusChange();
-            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(); });
-        },
-        openEditAct(act) {
-            this.selectedAct = Object.assign({}, act);
-            this.editActStatusOpen = false;
-            // Normalize status to case value if needed
-            const valid = this.actStatusList.find(s => s.value === this.selectedAct.status);
-            if (!valid) {
-                const byLabel = this.actStatusList.find(s => s.label === this.selectedAct.status);
-                this.selectedAct.status = byLabel ? byLabel.value : 'not_started';
-            }
-            if (this.selectedAct.progress !== undefined && this.selectedAct.progress !== null) {
-                this.selectedAct.progress = parseFloat(this.selectedAct.progress);
-            }
-            this.editActModal = true;
-            this.$nextTick(() => { 
-                window.safeCreateIcons && window.safeCreateIcons(); 
-                window.dispatchEvent(new CustomEvent('set-thai-date-edit_activity_date', { detail: act.activity_date || '' }));
-            });
-        },
-        onActStatusChange() {
-            const s = this.selectedAct.status;
-            if (s === 'completed') {
-                this.selectedAct.progress = 100;
-            } else if (s === 'not_started' || s === 'cancelled') {
-                this.selectedAct.progress = 0;
-            } else if (s === 'in_progress' || s === 'has_problem') {
-                let p = parseFloat(this.selectedAct.progress);
-                if (isNaN(p) || p <= 0 || p >= 100) {
-                    this.selectedAct.progress = 50;
-                }
-            }
-        },
 
-        // Activities pagination & search
-        allActivities: Object.freeze(<?= $activitiesJson ?>),
-        actSearch: '',
-        actPage: 1,
-        actPerPage: 5,
-
-        get filteredActivities() {
-            if (!this.actSearch.trim()) return this.allActivities;
-            const q = this.actSearch.toLowerCase().trim();
-            return this.allActivities.filter(a => a.search_text.includes(q));
-        },
-        get actTotalPages() {
-            if (this.actPerPage === 'all') return 1;
-            const per = parseInt(this.actPerPage) || 5;
-            return Math.ceil(this.filteredActivities.length / per) || 1;
-        },
-        get paginatedActIds() {
-            if (this.actPerPage === 'all') {
-                return new Set(this.filteredActivities.map(a => a.id));
-            }
-            const per = parseInt(this.actPerPage) || 5;
-            const start = (this.actPage - 1) * per;
-            return new Set(this.filteredActivities.slice(start, start + per).map(a => a.id));
-        },
-        isActVisible(id) {
-            return this.paginatedActIds.has(id);
-        },
-        get actStartIndex() {
-            if (this.filteredActivities.length === 0) return 0;
-            if (this.actPerPage === 'all') return 1;
-            const per = parseInt(this.actPerPage) || 5;
-            return (this.actPage - 1) * per + 1;
-        },
-        get actEndIndex() {
-            if (this.filteredActivities.length === 0) return 0;
-            if (this.actPerPage === 'all') return this.filteredActivities.length;
-            const per = parseInt(this.actPerPage) || 5;
-            return Math.min(this.actPage * per, this.filteredActivities.length);
-        },
-        get actVisiblePages() {
-            return this.getVisiblePages(this.actTotalPages, this.actPage);
-        },
-        setActPage(p) {
-            if (p === '...' || p < 1 || p > this.actTotalPages || p === this.actPage) return;
-            this.actPage = p;
-            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
-        },
-        prevActPage() {
-            if (this.actPage > 1) this.setActPage(this.actPage - 1);
-        },
-        nextActPage() {
-            if (this.actPage < this.actTotalPages) this.setActPage(this.actPage + 1);
-        },
-        setActPerPage(val) {
-            this.actPerPage = val === 'all' ? 'all' : parseInt(val);
-            this.actPage = 1;
-            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
-        },
-
-        // Disbursements pagination & search
-        allDisbursements: Object.freeze(<?= $disbursementsJson ?>),
-        disbSearch: '',
-        disbPage: 1,
-        disbPerPage: 5,
-
-        get filteredDisbursements() {
-            if (!this.disbSearch.trim()) return this.allDisbursements;
-            const q = this.disbSearch.toLowerCase().trim();
-            return this.allDisbursements.filter(d => d.search_text.includes(q));
-        },
-        get disbTotalPages() {
-            if (this.disbPerPage === 'all') return 1;
-            const per = parseInt(this.disbPerPage) || 5;
-            return Math.ceil(this.filteredDisbursements.length / per) || 1;
-        },
-        get paginatedDisbIds() {
-            if (this.disbPerPage === 'all') {
-                return new Set(this.filteredDisbursements.map(d => d.id));
-            }
-            const per = parseInt(this.disbPerPage) || 5;
-            const start = (this.disbPage - 1) * per;
-            return new Set(this.filteredDisbursements.slice(start, start + per).map(d => d.id));
-        },
-        isDisbVisible(id) {
-            return this.paginatedDisbIds.has(id);
-        },
-        get disbStartIndex() {
-            if (this.filteredDisbursements.length === 0) return 0;
-            if (this.disbPerPage === 'all') return 1;
-            const per = parseInt(this.disbPerPage) || 5;
-            return (this.disbPage - 1) * per + 1;
-        },
-        get disbEndIndex() {
-            if (this.filteredDisbursements.length === 0) return 0;
-            if (this.disbPerPage === 'all') return this.filteredDisbursements.length;
-            const per = parseInt(this.disbPerPage) || 5;
-            return Math.min(this.disbPage * per, this.filteredDisbursements.length);
-        },
-        get disbVisiblePages() {
-            return this.getVisiblePages(this.disbTotalPages, this.disbPage);
-        },
-        setDisbPage(p) {
-            if (p === '...' || p < 1 || p > this.disbTotalPages || p === this.disbPage) return;
-            this.disbPage = p;
-            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
-        },
-        prevDisbPage() {
-            if (this.disbPage > 1) this.setDisbPage(this.disbPage - 1);
-        },
-        nextDisbPage() {
-            if (this.disbPage < this.disbTotalPages) this.setDisbPage(this.disbPage + 1);
-        },
-        setDisbPerPage(val) {
-            this.disbPerPage = val === 'all' ? 'all' : parseInt(val);
-            this.disbPage = 1;
-            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(this.$el); });
-        },
-
-        getVisiblePages(total, current) {
-            if (total <= 7) {
-                const pages = [];
-                for (let i = 1; i <= total; i++) pages.push(i);
-                return pages;
-            }
-            if (current <= 4) {
-                return [1, 2, 3, 4, 5, '...', total];
-            }
-            if (current >= total - 3) {
-                return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
-            }
-            return [1, '...', current - 1, current, current + 1, '...', total];
-        }
-    };
-}
-</script>
 
 <?php
 $content = ob_get_clean();
