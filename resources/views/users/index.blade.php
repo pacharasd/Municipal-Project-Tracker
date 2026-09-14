@@ -261,7 +261,7 @@ foreach ($users as $u) {
             <!-- Search Keyword -->
             <div class="relative flex-1 max-w-md">
                 <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                <input type="text" x-model="searchQuery" @input="currentPage = 1; $nextTick(() => { if (window.lucide) lucide.createIcons(); });" placeholder="ค้นหาชื่อ, อีเมล, ตำแหน่ง, เบอร์โทร..."
+                <input type="text" x-model="searchQuery" @input="currentPage = 1; $nextTick(() => { if (window.lucide) lucide.createIcons(); });" placeholder="ค้นหาชื่อ, ตำแหน่ง, บทบาท..."
                        class="w-full pl-9 pr-8 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white transition-colors shadow-2xs">
                 <button type="button" x-show="searchQuery" @click="searchQuery = ''; currentPage = 1; $nextTick(() => { if (window.lucide) lucide.createIcons(); });" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 cursor-pointer">
                     <i data-lucide="x" class="w-3.5 h-3.5"></i>
@@ -380,7 +380,6 @@ foreach ($users as $u) {
                                     <span class="text-[10px] px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded font-normal shrink-0">คุณ</span>
                                 </template>
                             </div>
-                            <div class="text-xs text-slate-400 font-mono truncate mt-0.5" x-text="u.email"></div>
                         </div>
                     </div>
 
@@ -391,16 +390,10 @@ foreach ($users as $u) {
                     </span>
                 </div>
 
-                <!-- Info Details: Position, Phone -->
-                <div class="grid grid-cols-2 gap-2 text-xs py-2.5 px-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.05]">
-                    <div>
-                        <span class="text-slate-400 text-[10px] font-semibold uppercase block">ตำแหน่ง / สังกัด</span>
-                        <span class="font-medium text-slate-800 dark:text-slate-200 truncate block mt-0.5" x-text="u.position || 'เจ้าหน้าที่'"></span>
-                    </div>
-                    <div>
-                        <span class="text-slate-400 text-[10px] font-semibold uppercase block">เบอร์โทรศัพท์</span>
-                        <span class="font-mono text-slate-700 dark:text-slate-300 block mt-0.5" x-text="u.phone || '-'"></span>
-                    </div>
+                <!-- Info Details: Position -->
+                <div class="py-2 px-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.05] flex items-center justify-between text-xs">
+                    <span class="text-slate-400 text-[11px] font-medium">ตำแหน่ง / สังกัด:</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-200 truncate" x-text="u.position || 'เจ้าหน้าที่'"></span>
                 </div>
 
                 <!-- Bottom Status & Actions -->
@@ -443,7 +436,6 @@ foreach ($users as $u) {
                         <th class="py-3.5 px-4">ผู้ใช้งาน (เจ้าหน้าที่)</th>
                         <th class="py-3.5 px-4">ตำแหน่ง / สังกัด</th>
                         <th class="py-3.5 px-4 text-center">สิทธิ์การใช้งาน</th>
-                        <th class="py-3.5 px-4">เบอร์โทรศัพท์</th>
                         <th class="py-3.5 px-4 text-center">สถานะ</th>
                         <th class="py-3.5 px-4 text-center w-28">จัดการ</th>
                     </tr>
@@ -451,7 +443,7 @@ foreach ($users as $u) {
                 <tbody class="divide-y divide-slate-100 dark:divide-white/5">
                     <template x-if="paginatedUsers.length === 0">
                         <tr>
-                            <td colspan="7" class="py-12 text-center text-slate-400 dark:text-slate-500">
+                            <td colspan="6" class="py-12 text-center text-slate-400 dark:text-slate-500">
                                 <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
                                 ไม่พบข้อมูลผู้ใช้งานตามเงื่อนไขที่ค้นหา
                             </td>
@@ -473,7 +465,6 @@ foreach ($users as $u) {
                                                 <span class="text-[10px] px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded font-normal">คุณ</span>
                                             </template>
                                         </div>
-                                        <div class="text-[11px] text-slate-400 font-mono" x-text="u.email"></div>
                                     </div>
                                 </div>
                             </td>
@@ -486,7 +477,6 @@ foreach ($users as $u) {
                                       x-text="u.role_label || 'เจ้าหน้าที่'">
                                 </span>
                             </td>
-                            <td class="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400 text-xs sm:text-sm" x-text="u.phone || '-'"></td>
                             <td class="py-3.5 px-4 text-center">
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
@@ -633,10 +623,10 @@ foreach ($users as $u) {
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                            อีเมล (Email) <span class="text-rose-500">*</span>
+                            ตำแหน่ง / สังกัด
                         </label>
-                        <input type="email" name="email" required placeholder="name@municipality.go.th"
-                               class="w-full px-3.5 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white font-mono transition-colors">
+                        <input type="text" name="position" placeholder="เช่น นักวิเคราะห์นโยบายและแผน"
+                               class="w-full px-3.5 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white transition-colors">
                     </div>
                 </div>
 
@@ -672,7 +662,7 @@ foreach ($users as $u) {
                             <svg class="w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 ml-1" 
                                  :class="{ 'rotate-180 text-emerald-600 dark:text-emerald-400': createRoleOpen }" 
                                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </button>
 
@@ -715,28 +705,11 @@ foreach ($users as $u) {
                                     <svg x-show="String(createRoleId) === String(r.id)" 
                                          class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-1" 
                                          fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
                                     </svg>
                                 </div>
                             </template>
                         </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                            ตำแหน่ง / สังกัด
-                        </label>
-                        <input type="text" name="position" placeholder="เช่น นักวิเคราะห์นโยบายและแผน"
-                               class="w-full px-3.5 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white transition-colors">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                            เบอร์โทรศัพท์
-                        </label>
-                        <input type="text" name="phone" placeholder="เช่น 081-2345678"
-                               class="w-full px-3.5 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white font-mono transition-colors">
                     </div>
                 </div>
 
@@ -806,10 +779,10 @@ foreach ($users as $u) {
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                            อีเมล (Email) <span class="text-rose-500">*</span>
+                            ตำแหน่ง / สังกัด
                         </label>
-                        <input type="email" name="email" x-model="editUser.email" required
-                               class="w-full px-3.5 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white font-mono transition-colors">
+                        <input type="text" name="position" x-model="editUser.position"
+                               class="w-full px-3.5 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white transition-colors">
                     </div>
                 </div>
 
@@ -845,7 +818,7 @@ foreach ($users as $u) {
                             <svg class="w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 ml-1" 
                                  :class="{ 'rotate-180 text-emerald-600 dark:text-emerald-400': editRoleOpen }" 
                                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </button>
 
@@ -888,28 +861,11 @@ foreach ($users as $u) {
                                     <svg x-show="String(editUser.role_id) === String(r.id)" 
                                          class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-1" 
                                          fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
                                     </svg>
                                 </div>
                             </template>
                         </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                            ตำแหน่ง / สังกัด
-                        </label>
-                        <input type="text" name="position" x-model="editUser.position"
-                               class="w-full px-3.5 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white transition-colors">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                            เบอร์โทรศัพท์
-                        </label>
-                        <input type="text" name="phone" x-model="editUser.phone"
-                               class="w-full px-3.5 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white font-mono transition-colors">
                     </div>
                 </div>
 

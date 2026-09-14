@@ -42,23 +42,33 @@ class UserController
         }
 
         $name = trim($_POST['name'] ?? '');
-        $email = trim($_POST['email'] ?? '');
+        $email = !empty($_POST['email']) ? trim($_POST['email']) : null;
         $password = $_POST['password'] ?? 'password';
         $position = trim($_POST['position'] ?? '');
-        $phone = trim($_POST['phone'] ?? '');
+        $phone = !empty($_POST['phone']) ? trim($_POST['phone']) : null;
 
-        if (empty($name) || empty($email)) {
-            Session::flash('error', 'กรุณาระบุชื่อ-นามสกุล และอีเมล');
+        if (empty($name)) {
+            Session::flash('error', 'กรุณาระบุชื่อ - นามสกุล');
             header('Location: ' . Router::url('/users'));
             exit;
         }
 
-        // Check duplicate email
-        $exists = Database::fetchColumn("SELECT COUNT(*) FROM users WHERE email = ?", [$email]);
-        if ($exists > 0) {
-            Session::flash('error', "อีเมล '{$email}' มีอยู่ในระบบแล้ว กรุณาใช้อีเมลอื่น");
+        // Check duplicate name
+        $existsName = Database::fetchColumn("SELECT COUNT(*) FROM users WHERE name = ?", [$name]);
+        if ($existsName > 0) {
+            Session::flash('error', "ชื่อผู้ใช้งาน '{$name}' มีอยู่ในระบบแล้ว กรุณาใช้ชื่ออื่น");
             header('Location: ' . Router::url('/users'));
             exit;
+        }
+
+        // Check duplicate email only if provided
+        if ($email !== null) {
+            $exists = Database::fetchColumn("SELECT COUNT(*) FROM users WHERE email = ?", [$email]);
+            if ($exists > 0) {
+                Session::flash('error', "อีเมล '{$email}' มีอยู่ในระบบแล้ว กรุณาใช้อีเมลอื่น");
+                header('Location: ' . Router::url('/users'));
+                exit;
+            }
         }
 
         $roleId = !empty($_POST['role_id']) ? (int)$_POST['role_id'] : 1; // Default to Admin
@@ -73,7 +83,7 @@ class UserController
             'phone'    => $phone,
         ]);
 
-        \App\Services\AuditLogService::log('CREATE_USER', 'User', $userId, null, ['name' => $name, 'email' => $email, 'role_id' => $roleId]);
+        \App\Services\AuditLogService::log('CREATE_USER', 'User', $userId, null, ['name' => $name, 'role_id' => $roleId]);
         Session::flash('success', "เพิ่มผู้ใช้งาน '{$name}' เรียบร้อยแล้ว (รหัสผ่านเริ่มต้น: {$password})");
         header('Location: ' . Router::url('/users'));
         exit;
@@ -96,31 +106,48 @@ class UserController
         }
 
         $name = trim($_POST['name'] ?? '');
-        $email = trim($_POST['email'] ?? '');
         $position = trim($_POST['position'] ?? '');
-        $phone = trim($_POST['phone'] ?? '');
         $newPassword = $_POST['password'] ?? '';
 
-        if (empty($name) || empty($email)) {
-            Session::flash('error', 'กรุณาระบุชื่อ-นามสกุล และอีเมล');
+        if (empty($name)) {
+            Session::flash('error', 'กรุณาระบุชื่อ - นามสกุล');
             header('Location: ' . Router::url('/users'));
             exit;
         }
 
-        // Check duplicate email for another user
-        $exists = Database::fetchColumn("SELECT COUNT(*) FROM users WHERE email = ? AND id != ?", [$email, $userId]);
-        if ($exists > 0) {
-            Session::flash('error', "อีเมล '{$email}' ถูกใช้งานโดยผู้ใช้อื่นแล้ว");
+        // Check duplicate name for another user
+        $existsName = Database::fetchColumn("SELECT COUNT(*) FROM users WHERE name = ? AND id != ?", [$name, $userId]);
+        if ($existsName > 0) {
+            Session::flash('error', "ชื่อผู้ใช้งาน '{$name}' ถูกใช้งานโดยผู้ใช้อื่นแล้ว");
             header('Location: ' . Router::url('/users'));
             exit;
         }
 
         $updateData = [
             'name'     => $name,
-            'email'    => $email,
             'position' => $position,
-            'phone'    => $phone,
         ];
+
+        // If email or phone was explicitly passed in POST, update it; otherwise keep existing or null
+        if (isset($_POST['email'])) {
+            $email = trim($_POST['email']);
+            if (!empty($email)) {
+                $exists = Database::fetchColumn("SELECT COUNT(*) FROM users WHERE email = ? AND id != ?", [$email, $userId]);
+                if ($exists > 0) {
+                    Session::flash('error', "อีเมล '{$email}' ถูกใช้งานโดยผู้ใช้อื่นแล้ว");
+                    header('Location: ' . Router::url('/users'));
+                    exit;
+                }
+                $updateData['email'] = $email;
+            } else {
+                $updateData['email'] = null;
+            }
+        }
+
+        if (isset($_POST['phone'])) {
+            $phone = trim($_POST['phone']);
+            $updateData['phone'] = !empty($phone) ? $phone : null;
+        }
 
         if (!empty($_POST['role_id'])) {
             $updateData['role_id'] = (int)$_POST['role_id'];
@@ -133,8 +160,8 @@ class UserController
         Database::update('users', $updateData, "id = ?", [$userId]);
 
         \App\Services\AuditLogService::log('UPDATE_USER', 'User', $userId, 
-            ['name' => $user['name'], 'email' => $user['email'], 'role_id' => $user['role_id']], 
-            ['name' => $name, 'email' => $email, 'role_id' => $updateData['role_id'] ?? $user['role_id']]
+            ['name' => $user['name'], 'role_id' => $user['role_id']], 
+            ['name' => $name, 'role_id' => $updateData['role_id'] ?? $user['role_id']]
         );
         Session::flash('success', "อัปเดตข้อมูลผู้ใช้ '{$name}' เรียบร้อยแล้ว");
         header('Location: ' . Router::url('/users'));
