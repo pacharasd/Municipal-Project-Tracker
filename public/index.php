@@ -12,6 +12,12 @@ declare(strict_types=1);
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
+// Performance Optimization: Enable Native Output Compression (Gzip) for dynamic pages & API
+if (!ini_get('zlib.output_compression') && extension_loaded('zlib')) {
+    ini_set('zlib.output_compression', '1');
+    ini_set('zlib.output_compression_level', '6');
+}
+
 // Send Anti-Caching Headers (Ensures instant updates during development)
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Pragma: no-cache");

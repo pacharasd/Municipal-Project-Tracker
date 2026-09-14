@@ -181,12 +181,24 @@ class ProgressService
         $project = Database::fetch("SELECT * FROM projects WHERE id = ?", [$subProjectId]);
         if (!$project) return;
 
-        $totalActivities = (int)Database::fetchColumn("SELECT COUNT(*) FROM activities WHERE project_id = ?", [$subProjectId]);
-        $completedActivities = (int)Database::fetchColumn("SELECT COUNT(*) FROM activities WHERE project_id = ? AND status = 'completed'", [$subProjectId]);
-        $inProgressActivities = (int)Database::fetchColumn("SELECT COUNT(*) FROM activities WHERE project_id = ? AND status = 'in_progress'", [$subProjectId]);
-        $hasProblemActivities = (int)Database::fetchColumn("SELECT COUNT(*) FROM activities WHERE project_id = ? AND status = 'has_problem'", [$subProjectId]);
-        $cancelledActivities = (int)Database::fetchColumn("SELECT COUNT(*) FROM activities WHERE project_id = ? AND status = 'cancelled'", [$subProjectId]);
-        $notStartedActivities = (int)Database::fetchColumn("SELECT COUNT(*) FROM activities WHERE project_id = ? AND status = 'not_started'", [$subProjectId]);
+        $actStats = Database::fetch(
+            "SELECT COUNT(*) as total_count,
+                    COALESCE(SUM(progress), 0) as sum_progress,
+                    COALESCE(SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END), 0) as completed_count,
+                    COALESCE(SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END), 0) as in_progress_count,
+                    COALESCE(SUM(CASE WHEN status = 'has_problem' THEN 1 ELSE 0 END), 0) as has_problem_count,
+                    COALESCE(SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END), 0) as cancelled_count,
+                    COALESCE(SUM(CASE WHEN status = 'not_started' THEN 1 ELSE 0 END), 0) as not_started_count
+             FROM activities WHERE project_id = ?",
+            [$subProjectId]
+        ) ?: [];
+
+        $totalActivities      = (int)($actStats['total_count'] ?? 0);
+        $completedActivities  = (int)($actStats['completed_count'] ?? 0);
+        $inProgressActivities = (int)($actStats['in_progress_count'] ?? 0);
+        $hasProblemActivities = (int)($actStats['has_problem_count'] ?? 0);
+        $cancelledActivities  = (int)($actStats['cancelled_count'] ?? 0);
+        $notStartedActivities = (int)($actStats['not_started_count'] ?? 0);
 
         $activeTotal = $totalActivities;
         $planned = max((int)($project['planned_activity_count'] ?? 1), $totalActivities, 1);
@@ -194,7 +206,7 @@ class ProgressService
         // 1. คำนวณเปอร์เซ็นต์ความสำเร็จโครงการย่อยจากกิจกรรมทั้งหมดตามแผนงาน
         // กิจกรรมที่ถูกยกเลิก หรือยังไม่เริ่ม นับความสำเร็จเป็น 0% (ไม่หักออกจากตัวหาร เพื่อสะท้อนความสำเร็จจริงตามแผน)
         if ($totalActivities > 0) {
-            $sumProgress = (float)Database::fetchColumn("SELECT COALESCE(SUM(progress), 0) FROM activities WHERE project_id = ?", [$subProjectId]);
+            $sumProgress = (float)($actStats['sum_progress'] ?? 0);
             $progress = min(100.0, max(0.0, round($sumProgress / $planned, 2)));
         } else {
             $progress = 0.0;

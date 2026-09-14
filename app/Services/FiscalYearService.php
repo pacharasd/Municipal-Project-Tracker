@@ -7,6 +7,17 @@ use Exception;
 
 class FiscalYearService
 {
+    private static bool $ensured = false;
+    private static ?array $cachedActiveYear = null;
+    private static ?array $cachedFilterableYears = null;
+
+    public static function clearCache(): void
+    {
+        self::$ensured = false;
+        self::$cachedActiveYear = null;
+        self::$cachedFilterableYears = null;
+    }
+
     /**
      * ดึงข้อมูลปีงบประมาณทั้งหมด พร้อมสร้างปีงบประมาณล่วงหน้าให้อัตโนมัติอย่างต่อเนื่อง
      */
@@ -23,6 +34,10 @@ class FiscalYearService
      */
     public static function getFilterableYears(): array
     {
+        if (self::$cachedFilterableYears !== null) {
+            return self::$cachedFilterableYears;
+        }
+
         $activeFy = self::getActiveYear();
         $currentYear = $activeFy ? (int)$activeFy['year'] : self::getCurrentFiscalYear();
 
@@ -31,7 +46,8 @@ class FiscalYearService
                    OR id IN (SELECT DISTINCT fiscal_year_id FROM projects WHERE fiscal_year_id IS NOT NULL)
                 ORDER BY year DESC";
 
-        return Database::query($sql, [$currentYear]);
+        self::$cachedFilterableYears = Database::query($sql, [$currentYear]);
+        return self::$cachedFilterableYears;
     }
 
     /**
@@ -50,6 +66,10 @@ class FiscalYearService
      */
     public static function ensureFiscalYears(int $futureYearsAhead = 6): void
     {
+        if (self::$ensured) {
+            return;
+        }
+
         try {
             $currentFiscalYear = self::getCurrentFiscalYear();
             $targetMaxYear = $currentFiscalYear + $futureYearsAhead;
@@ -76,6 +96,7 @@ class FiscalYearService
             if ($hasActive === 0) {
                 Database::execute("UPDATE fiscal_years SET is_active = IF(year = ?, 1, 0)", [$currentFiscalYear]);
             }
+            self::$ensured = true;
         } catch (Exception $e) {
             error_log("FiscalYearService ensureFiscalYears error: " . $e->getMessage());
         }
@@ -86,6 +107,10 @@ class FiscalYearService
      */
     public static function getActiveYear(): ?array
     {
+        if (self::$cachedActiveYear !== null) {
+            return self::$cachedActiveYear;
+        }
+
         $year = Database::fetch("SELECT * FROM fiscal_years WHERE is_active = 1 LIMIT 1");
         if (!$year) {
             $currentYear = self::getCurrentFiscalYear();
@@ -94,7 +119,8 @@ class FiscalYearService
         if (!$year) {
             $year = Database::fetch("SELECT * FROM fiscal_years ORDER BY year DESC LIMIT 1");
         }
-        return $year;
+        self::$cachedActiveYear = $year;
+        return self::$cachedActiveYear;
     }
 
     /**
@@ -102,6 +128,7 @@ class FiscalYearService
      */
     public static function setActiveYear(int $id): bool
     {
+        self::clearCache();
         return Database::transaction(function () use ($id) {
             Database::execute("UPDATE fiscal_years SET is_active = 0");
             Database::execute("UPDATE fiscal_years SET is_active = 1 WHERE id = ?", [$id]);
@@ -135,6 +162,7 @@ class FiscalYearService
      */
     public static function createYear(int $year, ?string $startDate = null, ?string $endDate = null): int
     {
+        self::clearCache();
         $ceYear = $year - 543;
         $start = $startDate ?: (($ceYear - 1) . "-10-01");
         $end = $endDate ?: ($ceYear . "-09-30");
@@ -152,6 +180,7 @@ class FiscalYearService
      */
     public static function updateYear(int $id, string $startDate, string $endDate): bool
     {
+        self::clearCache();
         Database::update('fiscal_years', [
             'start_date' => $startDate,
             'end_date'   => $endDate,

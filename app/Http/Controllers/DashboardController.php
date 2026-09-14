@@ -33,7 +33,7 @@ class DashboardController
              ORDER BY a.id DESC LIMIT 6"
         );
 
-        $departments = Database::query("SELECT * FROM departments ORDER BY id ASC");
+        $departments = \App\Services\DepartmentService::getAll();
 
         $subProjectSql = "SELECT s.id, s.name, s.parent_id, s.budget, s.disbursed_amount, s.progress, s.status, s.start_date, s.end_date,
                     parent.name as parent_name,

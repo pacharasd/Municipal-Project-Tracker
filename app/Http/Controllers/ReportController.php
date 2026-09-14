@@ -51,7 +51,7 @@ class ReportController
 
         $projects = Database::query($sql, $params);
         $fiscalYears = \App\Services\FiscalYearService::getFilterableYears();
-        $departments = Database::query("SELECT * FROM departments ORDER BY id ASC");
+        $departments = \App\Services\DepartmentService::getAll();
 
         $page = max(1, (int)($_GET['page'] ?? 1));
         $perPageRaw = $_GET['per_page'] ?? '15';

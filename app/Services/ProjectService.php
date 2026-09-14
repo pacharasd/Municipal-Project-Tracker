@@ -115,17 +115,34 @@ class ProjectService
 
         $projects = Database::query($sql, $params);
 
-        // Attach sub-projects for each main project
-        foreach ($projects as &$p) {
-            $p['sub_projects'] = Database::query(
+        // Eager-load all sub-projects in a single batch query (Eliminate N+1 Problem)
+        if (!empty($projects)) {
+            $mainIds = array_column($projects, 'id');
+            $placeholders = implode(',', array_fill(0, count($mainIds), '?'));
+            
+            $subRespExpr = self::hasResponsiblePersonColumn()
+                ? "COALESCE(NULLIF(sub.responsible_person, ''), u.name)"
+                : "u.name";
+
+            $allSubs = Database::query(
                 "SELECT sub.*, 
                         (SELECT COUNT(*) FROM activities a WHERE a.project_id = sub.id) as actual_activity_count,
-                        COALESCE(NULLIF(sub.responsible_person, ''), u.name) as responsible_name 
+                        {$subRespExpr} as responsible_name 
                  FROM projects sub 
                  LEFT JOIN users u ON sub.responsible_user_id = u.id
-                 WHERE sub.parent_id = ? ORDER BY sub.id ASC",
-                [$p['id']]
+                 WHERE sub.parent_id IN ({$placeholders}) ORDER BY sub.id ASC",
+                $mainIds
             );
+
+            $subMap = [];
+            foreach ($allSubs as $s) {
+                $subMap[$s['parent_id']][] = $s;
+            }
+
+            foreach ($projects as &$p) {
+                $p['sub_projects'] = $subMap[$p['id']] ?? [];
+            }
+            unset($p);
         }
 
         return $projects;
@@ -445,24 +462,41 @@ class ProjectService
             $subParams = [$fiscalYearId, $fiscalYearId];
         }
 
-        $mainTotal = (int)Database::fetchColumn("SELECT COUNT(*) FROM projects {$mainCond}", $mainParams);
-        $subTotal  = (int)Database::fetchColumn("SELECT COUNT(*) {$subBase}", $subParams);
-        
-        $notStarted = (int)Database::fetchColumn("SELECT COUNT(*) {$subBase} AND s.status = 'not_started'", $subParams);
-        $inProgress = (int)Database::fetchColumn("SELECT COUNT(*) {$subBase} AND s.status = 'in_progress'", $subParams);
-        $completed  = (int)Database::fetchColumn("SELECT COUNT(*) {$subBase} AND s.status = 'completed'", $subParams);
-        $hasProblem = (int)Database::fetchColumn("SELECT COUNT(*) {$subBase} AND s.status = 'has_problem'", $subParams);
-        $cancelled  = (int)Database::fetchColumn("SELECT COUNT(*) {$subBase} AND s.status = 'cancelled'", $subParams);
+        // Main projects stats: Total, Budget, Disbursed, and Average Progress in 1 single query
+        $mainStats = Database::fetch(
+            "SELECT COUNT(*) as main_total,
+                    COALESCE(SUM(budget), 0) as total_budget,
+                    COALESCE(SUM(disbursed_amount), 0) as total_disbursed,
+                    COALESCE(AVG(progress), 0) as avg_progress
+             FROM projects {$mainCond}",
+            $mainParams
+        ) ?: [];
 
-        // Budgets
-        $budgetRow = Database::fetch("SELECT SUM(budget) as total_budget, SUM(disbursed_amount) as total_disbursed FROM projects {$mainCond}", $mainParams);
-        $totalBudget = (float)($budgetRow['total_budget'] ?? 0);
-        $totalDisbursed = (float)($budgetRow['total_disbursed'] ?? 0);
+        $mainTotal = (int)($mainStats['main_total'] ?? 0);
+        $totalBudget = (float)($mainStats['total_budget'] ?? 0);
+        $totalDisbursed = (float)($mainStats['total_disbursed'] ?? 0);
         $totalRemaining = $totalBudget - $totalDisbursed;
         $disbursementPct = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) * 100, 2) : 0.0;
+        $avgProgress = (float)($mainStats['avg_progress'] ?? 0);
 
-        // Average progress
-        $avgProgress = (float)Database::fetchColumn("SELECT AVG(progress) FROM projects {$mainCond}", $mainParams);
+        // Sub-projects status breakdown in 1 single conditional aggregation query
+        $subStats = Database::fetch(
+            "SELECT COUNT(*) as sub_total,
+                    COALESCE(SUM(CASE WHEN s.status = 'not_started' THEN 1 ELSE 0 END), 0) as not_started,
+                    COALESCE(SUM(CASE WHEN s.status = 'in_progress' THEN 1 ELSE 0 END), 0) as in_progress,
+                    COALESCE(SUM(CASE WHEN s.status = 'completed' THEN 1 ELSE 0 END), 0) as completed,
+                    COALESCE(SUM(CASE WHEN s.status = 'has_problem' THEN 1 ELSE 0 END), 0) as has_problem,
+                    COALESCE(SUM(CASE WHEN s.status = 'cancelled' THEN 1 ELSE 0 END), 0) as cancelled
+             {$subBase}",
+            $subParams
+        ) ?: [];
+
+        $subTotal   = (int)($subStats['sub_total'] ?? 0);
+        $notStarted = (int)($subStats['not_started'] ?? 0);
+        $inProgress = (int)($subStats['in_progress'] ?? 0);
+        $completed  = (int)($subStats['completed'] ?? 0);
+        $hasProblem = (int)($subStats['has_problem'] ?? 0);
+        $cancelled  = (int)($subStats['cancelled'] ?? 0);
 
         // 2. Department Chart Data
         if ($fiscalYearId !== null) {

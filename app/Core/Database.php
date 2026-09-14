@@ -9,6 +9,19 @@ use Exception;
 class Database
 {
     private static ?PDO $instance = null;
+    public static int $queryCount = 0;
+
+    public static function resetQueryCount(): int
+    {
+        $count = self::$queryCount;
+        self::$queryCount = 0;
+        return $count;
+    }
+
+    public static function getQueryCount(): int
+    {
+        return self::$queryCount;
+    }
 
     public static function connect(): PDO
     {
@@ -329,6 +342,26 @@ class Database
                     $pdo->exec("ALTER TABLE `projects` ADD COLUMN `evaluation_notes` TEXT NULL AFTER `evaluated_by`");
                 } catch (\Throwable $e) {}
             }
+
+            // Performance Optimization: Ensure high-performance composite indexes exist
+            $indexesToAdd = [
+                ['projects', 'idx_projects_parent_fiscal', '(`parent_id`, `fiscal_year_id`)'],
+                ['projects', 'idx_projects_parent_status', '(`parent_id`, `status`)'],
+                ['projects', 'idx_projects_resp_status', '(`responsible_user_id`, `status`)'],
+                ['activities', 'idx_activities_proj_status', '(`project_id`, `status`)'],
+                ['audit_logs', 'idx_audit_created_at', '(`created_at`)'],
+                ['audit_logs', 'idx_audit_user_created', '(`user_id`, `created_at`)'],
+                ['notifications', 'idx_notifications_user_read', '(`user_id`, `is_read`, `created_at`)'],
+            ];
+
+            foreach ($indexesToAdd as [$table, $indexName, $cols]) {
+                try {
+                    $exists = $pdo->query("SHOW INDEX FROM `{$table}` WHERE Key_name = '{$indexName}'")->fetch();
+                    if (!$exists) {
+                        $pdo->exec("ALTER TABLE `{$table}` ADD INDEX `{$indexName}` {$cols}");
+                    }
+                } catch (\Throwable $e) {}
+            }
         } catch (\Throwable $e) {
             error_log("Auto schema migration notice: " . $e->getMessage());
         }
@@ -627,6 +660,7 @@ DB_PASSWORD=รหัสผ่านที่ตั้งไว้</code></pre>
 
     public static function query(string $sql, array $params = []): array
     {
+        self::$queryCount++;
         $stmt = self::connect()->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll();
@@ -634,6 +668,7 @@ DB_PASSWORD=รหัสผ่านที่ตั้งไว้</code></pre>
 
     public static function fetch(string $sql, array $params = []): ?array
     {
+        self::$queryCount++;
         $stmt = self::connect()->prepare($sql);
         $stmt->execute($params);
         $res = $stmt->fetch();
@@ -642,6 +677,7 @@ DB_PASSWORD=รหัสผ่านที่ตั้งไว้</code></pre>
 
     public static function fetchColumn(string $sql, array $params = []): mixed
     {
+        self::$queryCount++;
         $stmt = self::connect()->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchColumn();
@@ -649,6 +685,7 @@ DB_PASSWORD=รหัสผ่านที่ตั้งไว้</code></pre>
 
     public static function execute(string $sql, array $params = []): int
     {
+        self::$queryCount++;
         $stmt = self::connect()->prepare($sql);
         $stmt->execute($params);
         return $stmt->rowCount();

@@ -437,7 +437,7 @@
         window.addEventListener('DOMContentLoaded', function() {
             if (typeof Alpine === 'undefined') {
                 const s = document.createElement('script');
-                s.src = 'https://cdn.jsdelivr.net/npm/@alpinejs/csp@3.x.x/dist/cdn.min.js';
+                s.src = 'https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js';
                 s.nonce = '<?= \App\Core\SecurityHeaders::nonce() ?>';
                 s.defer = true;
                 document.head.appendChild(s);
@@ -1314,10 +1314,7 @@
             if (window.lucide && typeof lucide.createIcons === 'function') {
                 try {
                     const targetRoot = (root instanceof Element || root instanceof Document) ? root : document;
-                    const unhandled = targetRoot.querySelectorAll('i[data-lucide]');
-                    if (unhandled.length > 0) {
-                        lucide.createIcons({ root: targetRoot });
-                    }
+                    lucide.createIcons({ root: targetRoot });
                 } catch (e) {
                     try { lucide.createIcons(); } catch (err) {}
                 }

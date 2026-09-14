@@ -7,6 +7,8 @@ use App\Core\Session;
 
 class Auth
 {
+    private static ?array $currentUser = null;
+
     public static function check(): bool
     {
         return Session::has('user_id');
@@ -15,17 +17,23 @@ class Auth
     public static function user(): ?array
     {
         if (!self::check()) {
+            self::$currentUser = null;
             return null;
         }
 
         $userId = Session::get('user_id');
+        if (self::$currentUser !== null && (int)(self::$currentUser['id'] ?? 0) === (int)$userId) {
+            return self::$currentUser;
+        }
+
         $sql = "SELECT u.*, r.name as role_name, r.display_name as role_label,
                        d.name as department_name, d.code as department_code 
                 FROM users u 
                 LEFT JOIN roles r ON u.role_id = r.id 
                 LEFT JOIN departments d ON u.department_id = d.id 
                 WHERE u.id = ? LIMIT 1";
-        return Database::fetch($sql, [$userId]);
+        self::$currentUser = Database::fetch($sql, [$userId]);
+        return self::$currentUser;
     }
 
     public static function userStats(?int $userId = null): array
@@ -159,6 +167,7 @@ class Auth
 
     public static function login(array $user): void
     {
+        self::$currentUser = null;
         Session::set('user_id', $user['id']);
         Session::set('user_role', $user['role_name'] ?? 'admin');
         Session::set('user_name', $user['name']);
@@ -166,6 +175,7 @@ class Auth
 
     public static function logout(): void
     {
+        self::$currentUser = null;
         Session::remove('user_id');
         Session::remove('user_role');
         Session::remove('user_name');
