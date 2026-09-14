@@ -1093,9 +1093,15 @@
                                     <div class="text-xs sm:text-sm font-bold font-heading text-slate-900 dark:text-white truncate">
                                         <?= htmlspecialchars($currentUser['name'] ?? 'ผู้ใช้งาน') ?>
                                     </div>
-                                    <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                                        <?= htmlspecialchars($currentUser['email'] ?? 'user@municipal.go.th') ?>
-                                    </div>
+                                    <?php if (!empty($currentUser['position'])): ?>
+                                        <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                                            <?= htmlspecialchars($currentUser['position']) ?>
+                                        </div>
+                                    <?php elseif (!empty($currentUser['department_name'])): ?>
+                                        <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                                            <?= htmlspecialchars($currentUser['department_name']) ?>
+                                        </div>
+                                    <?php endif; ?>
                                     <div class="mt-1 flex items-center gap-1.5 flex-wrap">
                                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold <?= $currentRoleInfo['badge'] ?>">
                                             <i data-lucide="<?= $currentRoleInfo['icon'] ?>" class="w-3 h-3"></i>
@@ -1117,7 +1123,7 @@
                                 </div>
                                 <div class="flex-1">
                                     <div class="font-semibold text-slate-800 dark:text-slate-200">ข้อมูลส่วนตัว (My Profile)</div>
-                                    <div class="text-[10px] text-slate-400">ดูสังกัด ข้อมูลติดต่อ และตำแหน่ง</div>
+                                    <div class="text-[10px] text-slate-400">ดูสังกัดและตำแหน่งงาน</div>
                                 </div>
                                 <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>
                             </button>

@@ -28,18 +28,19 @@ class AuthController
 
     public function login(): void
     {
-        $email = trim($_POST['email'] ?? '');
+        $username = trim($_POST['name'] ?? $_POST['username'] ?? $_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
 
-        if (empty($email) || empty($password)) {
-            Session::flash('error', 'กรุณากรอกอีเมลและรหัสผ่าน');
+        if (empty($username) || empty($password)) {
+            Session::flash('error', 'กรุณากรอกชื่อผู้ใช้งานและรหัสผ่าน');
             header('Location: ' . Router::url('/login'));
             exit;
         }
 
         $user = Database::fetch("SELECT u.*, r.name as role_name, r.display_name as role_label 
                                 FROM users u JOIN roles r ON u.role_id = r.id 
-                                WHERE u.email = ?", [$email]);
+                                WHERE u.name = ? OR u.email = ? 
+                                LIMIT 1", [$username, $username]);
 
         if ($user && password_verify($password, $user['password'])) {
             Auth::login($user);
@@ -49,7 +50,7 @@ class AuthController
             exit;
         }
 
-        Session::flash('error', 'อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+        Session::flash('error', 'ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง');
         header('Location: ' . Router::url('/login'));
         exit;
     }

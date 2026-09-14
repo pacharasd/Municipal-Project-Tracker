@@ -28,8 +28,8 @@ class ProfileController
         }
 
         $name = trim(strip_tags($_POST['name'] ?? ''));
-        $phone = trim(strip_tags($_POST['phone'] ?? ''));
         $position = trim(strip_tags($_POST['position'] ?? ''));
+        $phone = isset($_POST['phone']) ? trim(strip_tags($_POST['phone'])) : ($currentUser['phone'] ?? '');
 
         if (mb_strlen($name) < 2 || mb_strlen($name) > 150) {
             Session::flash('error', 'ชื่อ-นามสกุลต้องมีความยาวระหว่าง 2 ถึง 150 ตัวอักษร');
@@ -37,7 +37,7 @@ class ProfileController
             exit;
         }
 
-        if (!empty($phone)) {
+        if (isset($_POST['phone']) && !empty($phone)) {
             $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
             if (strlen($cleanPhone) < 9 || strlen($cleanPhone) > 10) {
                 Session::flash('error', 'เบอร์โทรศัพท์ต้องประกอบด้วยตัวเลข 9-10 หลัก');
@@ -55,21 +55,26 @@ class ProfileController
         // ค่าเดิมสำหรับ Audit Log
         $oldValues = [
             'name'     => $currentUser['name'] ?? '',
-            'phone'    => $currentUser['phone'] ?? '',
             'position' => $currentUser['position'] ?? '',
         ];
 
         $newValues = [
             'name'     => $name,
-            'phone'    => $phone,
             'position' => $position,
         ];
 
-        Database::update('users', [
+        $updateData = [
             'name'     => $name,
-            'phone'    => $phone,
             'position' => $position,
-        ], 'id = ?', [$userId]);
+        ];
+
+        if (isset($_POST['phone'])) {
+            $oldValues['phone'] = $currentUser['phone'] ?? '';
+            $newValues['phone'] = $phone;
+            $updateData['phone'] = $phone;
+        }
+
+        Database::update('users', $updateData, 'id = ?', [$userId]);
 
         // ปรับปรุงชื่อใน Session
         Session::set('user_name', $name);

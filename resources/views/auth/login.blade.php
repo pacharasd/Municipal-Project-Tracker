@@ -321,7 +321,7 @@ $success = Session::flash('success');
                 <div class="p-1 bg-slate-100 dark:bg-white/[0.04] rounded-2xl flex items-center gap-1 border border-slate-200/60 dark:border-white/[0.06]">
                     <!-- Admin Tab -->
                     <button type="button" 
-                            @click="fillUser('admin@municipality.go.th', 'admin', 'password')"
+                            @click="fillUser('Surachai', 'admin', 'password')"
                             class="flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer"
                             :class="selectedRole === 'admin' 
                                 ? 'bg-white dark:bg-[#1f2330] text-purple-700 dark:text-purple-300 shadow-sm font-bold border border-slate-200/80 dark:border-white/10' 
@@ -332,7 +332,7 @@ $success = Session::flash('success');
 
                     <!-- Executive Tab -->
                     <button type="button" 
-                            @click="fillUser('executive@municipality.go.th', 'executive', 'password')"
+                            @click="fillUser('ดร.สมชาย ทรงคุณ (นายกเทศมนตรี)', 'executive', 'password')"
                             class="flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer"
                             :class="selectedRole === 'executive' 
                                 ? 'bg-white dark:bg-[#1f2330] text-amber-700 dark:text-amber-300 shadow-sm font-bold border border-slate-200/80 dark:border-white/10' 
@@ -347,19 +347,20 @@ $success = Session::flash('success');
             <form action="<?= Router::url('/login') ?>" method="POST" class="space-y-4">
                 <?= Session::csrfField() ?>
 
-                <!-- Email Field -->
+                <!-- Username / Name Field -->
                 <div>
                     <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                        อีเมลผู้ใช้งาน (Email) <span class="text-rose-500">*</span>
+                        ชื่อผู้ใช้งาน (Username / ชื่อ) <span class="text-rose-500">*</span>
                     </label>
                     <div class="relative">
-                        <i data-lucide="mail" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                        <input type="email" 
-                               name="email" 
-                               x-model="email" 
+                        <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                        <input type="text" 
+                               name="name" 
+                               x-model="name" 
                                required 
-                               placeholder="admin@municipality.go.th"
-                               class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-[#11141c] border border-slate-200 dark:border-white/10 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white font-mono focus:bg-white dark:focus:bg-[#161922] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none">
+                               autocomplete="username"
+                               placeholder="Surachai หรือ ชื่อผู้ใช้งาน"
+                               class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-[#11141c] border border-slate-200 dark:border-white/10 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white font-sans focus:bg-white dark:focus:bg-[#161922] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none">
                     </div>
                 </div>
 
@@ -430,7 +431,7 @@ $success = Session::flash('success');
     <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
         function loginPage() {
             return {
-                email: 'admin@municipality.go.th',
+                name: 'Surachai',
                 password: 'password',
                 showPassword: false,
                 selectedRole: 'admin',
@@ -455,8 +456,8 @@ $success = Session::flash('success');
                     } catch (e) {}
                 },
 
-                fillUser(userEmail, role, pass = 'password') {
-                    this.email = userEmail;
+                fillUser(userName, role, pass = 'password') {
+                    this.name = userName;
                     this.password = pass;
                     this.selectedRole = role;
                 },
