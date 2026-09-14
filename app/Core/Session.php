@@ -7,6 +7,29 @@ class Session
     public static function start(): void
     {
         if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+            $isSecure = SecurityHeaders::isHttps();
+
+            // Enforce hardened session settings
+            ini_set('session.use_strict_mode', '1');
+            ini_set('session.use_only_cookies', '1');
+            ini_set('session.cookie_httponly', '1');
+            ini_set('session.cookie_samesite', 'Lax');
+
+            if ($isSecure) {
+                ini_set('session.cookie_secure', '1');
+            }
+
+            $lifetimeMinutes = (int)(getenv('SESSION_LIFETIME') ?: 120);
+
+            session_set_cookie_params([
+                'lifetime' => $lifetimeMinutes * 60,
+                'path'     => '/',
+                'domain'   => '',
+                'secure'   => $isSecure,
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
+
             @session_start();
         }
     }

@@ -64,6 +64,9 @@ if (file_exists($envFile)) {
     }
 }
 
+// Apply Enterprise Security Headers (CSP, HSTS, X-Frame-Options, etc.)
+\App\Core\SecurityHeaders::apply();
+
 // Start Session
 \App\Core\Session::start();
 
