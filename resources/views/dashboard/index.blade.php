@@ -78,14 +78,14 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
 
         <!-- Fiscal Year Custom Dropdown (Right) -->
         <div class="relative w-full sm:w-auto shrink-0" 
-             x-data="{ open: false }" 
-             @click.outside="open = false" 
-             @keydown.escape.window="open = false">
+             x-data="fiscalYearDropdown" 
+             @click.outside="close()" 
+             @keydown.escape.window="close()">
             
             <!-- Trigger Button -->
             <button type="button" 
                     id="fiscal-year-selector-btn"
-                    @click="open = !open; $nextTick(() => { if (window.lucide) lucide.createIcons(); })" 
+                    @click="toggle()" 
                     class="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2.5 px-3.5 py-2 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:border-emerald-400/60 dark:hover:border-emerald-500/40 hover:shadow transition-all cursor-pointer text-left">
                 <div class="flex items-center gap-2 min-w-0">
                     <div class="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
@@ -105,6 +105,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
             <!-- Custom Dropdown Menu Panel -->
             <div x-show="open" 
                  x-cloak 
+                 style="display: none;"
                  x-transition:enter="transition ease-out duration-100"
                  x-transition:enter-start="transform opacity-0 scale-95"
                  x-transition:enter-end="transform opacity-100 scale-100"

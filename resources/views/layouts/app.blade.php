@@ -434,15 +434,135 @@
     </script>
     <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>" defer src="<?= \App\Core\Router::url('/js/alpine.min.js') ?>"></script>
     <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
-        window.addEventListener('DOMContentLoaded', function() {
-            if (typeof Alpine === 'undefined') {
-                const s = document.createElement('script');
-                s.src = 'https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js';
-                s.nonce = '<?= \App\Core\SecurityHeaders::nonce() ?>';
-                s.defer = true;
-                document.head.appendChild(s);
+        (function() {
+            function registerCoreAlpineComponents() {
+                if (typeof Alpine === 'undefined' || window._mptAlpineCoreRegistered) return;
+                window._mptAlpineCoreRegistered = true;
+
+                // 1. Root Application Layout Component
+                Alpine.data('appLayout', () => ({
+                    sidebarOpen: false,
+                    desktopSidebarOpen: (localStorage.getItem('mpt_desktop_sidebar') !== 'false'),
+                    resizeTimer: null,
+                    closeSidebar() {
+                        this.sidebarOpen = false;
+                    },
+                    toggleSidebar() {
+                        if (window.innerWidth >= 1024) {
+                            this.desktopSidebarOpen = !this.desktopSidebarOpen;
+                            try {
+                                localStorage.setItem('mpt_desktop_sidebar', this.desktopSidebarOpen ? 'true' : 'false');
+                            } catch (e) {}
+                        } else {
+                            this.sidebarOpen = !this.sidebarOpen;
+                        }
+                        clearTimeout(this.resizeTimer);
+                        this.resizeTimer = setTimeout(() => {
+                            window.dispatchEvent(new Event('resize'));
+                        }, 220);
+                    }
+                }));
+
+                // 2. Theme Switcher Dropdown Component
+                Alpine.data('themeDropdown', () => ({
+                    open: false,
+                    mode: localStorage.getItem('theme') || 'system',
+                    resolvedDark: document.documentElement.classList.contains('dark'),
+                    init() {
+                        window.addEventListener('theme-changed', (e) => {
+                            this.mode = (e.detail && e.detail.mode) ? e.detail.mode : (localStorage.getItem('theme') || 'system');
+                            this.resolvedDark = document.documentElement.classList.contains('dark');
+                        });
+                        window.addEventListener('close-other-popups', (e) => {
+                            if (e.detail && e.detail.source !== 'theme') {
+                                this.open = false;
+                            }
+                        });
+                    },
+                    toggle() {
+                        this.open = !this.open;
+                        if (this.open) {
+                            window.dispatchEvent(new CustomEvent('close-other-popups', { detail: { source: 'theme' } }));
+                        }
+                    },
+                    close() {
+                        this.open = false;
+                    }
+                }));
+
+                // 3. User Profile Dropdown Component
+                Alpine.data('userProfileMenu', () => ({
+                    userMenuOpen: false,
+                    profileModalOpen: false,
+                    profileTab: 'general',
+                    init() {
+                        this.$watch('profileModalOpen', v => {
+                            if (v) setTimeout(() => { if (typeof safeCreateIcons === 'function') safeCreateIcons(); }, 50);
+                        });
+                        this.$watch('profileTab', () => {
+                            setTimeout(() => { if (typeof safeCreateIcons === 'function') safeCreateIcons(); }, 50);
+                        });
+                        window.addEventListener('close-other-popups', (e) => {
+                            if (e.detail && e.detail.source !== 'user') {
+                                this.userMenuOpen = false;
+                            }
+                        });
+                    },
+                    toggleMenu() {
+                        this.userMenuOpen = !this.userMenuOpen;
+                        if (this.userMenuOpen) {
+                            window.dispatchEvent(new CustomEvent('close-other-popups', { detail: { source: 'user' } }));
+                        }
+                    },
+                    closeMenu() {
+                        this.userMenuOpen = false;
+                    },
+                    openProfile(tab = 'general') {
+                        this.userMenuOpen = false;
+                        this.profileTab = tab;
+                        this.profileModalOpen = true;
+                        setTimeout(() => { if (typeof safeCreateIcons === 'function') safeCreateIcons(); }, 50);
+                    }
+                }));
+
+                // 4. Fiscal Year Dropdown Component
+                Alpine.data('fiscalYearDropdown', () => ({
+                    open: false,
+                    init() {
+                        window.addEventListener('close-other-popups', (e) => {
+                            if (e.detail && e.detail.source !== 'fiscal') {
+                                this.open = false;
+                            }
+                        });
+                    },
+                    toggle() {
+                        this.open = !this.open;
+                        if (this.open) {
+                            window.dispatchEvent(new CustomEvent('close-other-popups', { detail: { source: 'fiscal' } }));
+                            setTimeout(() => { if (typeof safeCreateIcons === 'function') safeCreateIcons(); }, 30);
+                        }
+                    },
+                    close() {
+                        this.open = false;
+                    }
+                }));
             }
-        });
+
+            document.addEventListener('alpine:init', registerCoreAlpineComponents);
+            if (typeof Alpine !== 'undefined') {
+                registerCoreAlpineComponents();
+            }
+
+            window.addEventListener('DOMContentLoaded', function() {
+                if (typeof Alpine === 'undefined') {
+                    const s = document.createElement('script');
+                    s.src = 'https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js';
+                    s.nonce = '<?= \App\Core\SecurityHeaders::nonce() ?>';
+                    s.defer = true;
+                    document.head.appendChild(s);
+                }
+            });
+        })();
     </script>
 
     <style>
@@ -703,6 +823,8 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            height: 100%;
+            height: 100dvh;
         }
         *, *::before, *::after {
             box-sizing: border-box;
@@ -710,12 +832,20 @@
         #main-content {
             max-width: 100% !important;
             overflow-x: hidden !important;
+            overflow-y: auto !important;
             -webkit-overflow-scrolling: touch !important;
-            touch-action: pan-x pan-y;
+            touch-action: pan-y !important;
+            overscroll-behavior-y: contain !important;
         }
         #main-content table,
         #main-content table * {
             max-width: none !important;
+        }
+        /* Mobile horizontal scroll containers (pills, tables) must allow vertical page scrolling seamlessly */
+        .overflow-x-auto, [class*="overflow-x-auto"] {
+            -webkit-overflow-scrolling: touch !important;
+            overscroll-behavior-x: contain !important;
+            touch-action: pan-x pan-y !important;
         }
         canvas, .chartjs-render-monitor {
             touch-action: pan-y !important;
@@ -731,28 +861,7 @@
 <body class="h-full antialiased font-sans text-slate-800 dark:text-slate-100 bg-[#f8fafc] dark:bg-[#0f1014] flex flex-col transition-colors duration-150 w-full max-w-full overflow-x-hidden" 
       :class="{ 'overflow-hidden': sidebarOpen }" 
       @close-sidebar.window="sidebarOpen = false"
-      x-data="{ 
-          sidebarOpen: false, 
-          desktopSidebarOpen: (localStorage.getItem('mpt_desktop_sidebar') !== 'false'),
-          resizeTimer: null,
-          closeSidebar() {
-              this.sidebarOpen = false;
-          },
-          toggleSidebar() {
-              if (window.innerWidth >= 1024) {
-                  this.desktopSidebarOpen = !this.desktopSidebarOpen;
-                  try {
-                      localStorage.setItem('mpt_desktop_sidebar', this.desktopSidebarOpen ? 'true' : 'false');
-                  } catch (e) {}
-              } else {
-                  this.sidebarOpen = !this.sidebarOpen;
-              }
-              clearTimeout(this.resizeTimer);
-              this.resizeTimer = setTimeout(() => { 
-                  window.dispatchEvent(new Event('resize')); 
-              }, 220);
-          }
-      }">
+      x-data="appLayout">
 
     <?php 
         $flashSuccess = \App\Core\Session::flash('success');
@@ -821,14 +930,10 @@
             <div class="flex items-center gap-1 sm:gap-2 shrink-0">
 
                 <!-- Standard 3-State Theme Switcher (Light / Dark / System) -->
-                <div class="relative shrink-0" x-data="{ 
-                    open: false, 
-                    mode: localStorage.getItem('theme') || 'system',
-                    resolvedDark: document.documentElement.classList.contains('dark')
-                }" @theme-changed.window="mode = ($event.detail && $event.detail.mode) ? $event.detail.mode : (localStorage.getItem('theme') || 'system'); resolvedDark = document.documentElement.classList.contains('dark')">
+                <div class="relative shrink-0" x-data="themeDropdown">
                     
                     <button type="button" 
-                            @click="open = !open" 
+                            @click="toggle()" 
                             id="theme-dropdown-btn"
                             class="flex items-center gap-1 sm:gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-100 dark:bg-[#181a20] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/[0.08] text-xs font-semibold hover:bg-slate-200/80 dark:hover:bg-white/5 transition cursor-pointer"
                             title="เลือกโหมดการแสดงผล (สว่าง / มืด / ตามระบบ)">
@@ -854,8 +959,9 @@
 
                     <!-- Theme Selector Dropdown Menu -->
                     <div x-show="open" 
-                         @click.outside="open = false" 
+                         @click.outside="close()" 
                          x-cloak 
+                         style="display: none;"
                          x-transition:enter="transition ease-out duration-100"
                          x-transition:enter-start="transform opacity-0 scale-95"
                          x-transition:enter-end="transform opacity-100 scale-100"
@@ -871,7 +977,7 @@
                         <div class="space-y-0.5">
                             <!-- 1. โหมดสว่าง (Light) -->
                             <button type="button" 
-                                    @click="setAppTheme('light'); open = false" 
+                                    @click="setAppTheme('light'); close()" 
                                     class="w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200"
                                     :class="{ 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/20': mode === 'light' }">
                                 <div class="flex items-center gap-2.5">
@@ -883,7 +989,7 @@
 
                             <!-- 2. โหมดมืด (Dark) -->
                             <button type="button" 
-                                    @click="setAppTheme('dark'); open = false" 
+                                    @click="setAppTheme('dark'); close()" 
                                     class="w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200"
                                     :class="{ 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/20': mode === 'dark' }">
                                 <div class="flex items-center gap-2.5">
@@ -895,7 +1001,7 @@
 
                             <!-- 3. โหมดตามระบบ (System) -->
                             <button type="button" 
-                                    @click="setAppTheme('system'); open = false" 
+                                    @click="setAppTheme('system'); close()" 
                                     class="w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200"
                                     :class="{ 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/20': mode === 'system' }">
                                 <div class="flex items-center gap-2.5">
@@ -927,19 +1033,15 @@
                 ?>
 
                 <!-- Modern Interactive User Profile Dropdown Pill & Modals -->
+                <!-- Modern Interactive User Profile Dropdown Pill & Modals -->
                 <div class="relative shrink-0" 
-                     x-data="{ 
-                         userMenuOpen: false, 
-                         profileModalOpen: false, 
-                         profileTab: 'general' 
-                     }"
+                     x-data="userProfileMenu"
                      @close-profile-modal.window="profileModalOpen = false; userMenuOpen = false"
-                     @open-profile-modal.window="userMenuOpen = false; profileTab = ($event.detail && $event.detail.tab) ? $event.detail.tab : 'general'; profileModalOpen = true"
-                     x-init="$watch('profileModalOpen', v => { if(v) setTimeout(() => { if (typeof safeCreateIcons === 'function') safeCreateIcons(); }, 50); }); $watch('profileTab', () => setTimeout(() => { if (typeof safeCreateIcons === 'function') safeCreateIcons(); }, 50));">
+                     @open-profile-modal.window="openProfile(($event.detail && $event.detail.tab) ? $event.detail.tab : 'general')">
                     
                     <!-- Profile Button Trigger -->
                     <button type="button" 
-                            @click.stop="userMenuOpen = !userMenuOpen" 
+                            @click.stop="toggleMenu()" 
                             id="user-profile-menu-btn"
                             class="flex items-center gap-2 p-1 sm:py-1 sm:pl-1.5 sm:pr-2.5 rounded-2xl bg-slate-100 dark:bg-[#181a20] hover:bg-slate-200/80 dark:hover:bg-white/5 border border-slate-200 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/20 transition-all duration-150 cursor-pointer shadow-xs group"
                             :class="{ 'ring-2 ring-purple-500/25 border-purple-500/50 bg-purple-50/60 dark:bg-purple-500/10': userMenuOpen }"
@@ -970,8 +1072,9 @@
 
                     <!-- Dropdown Flyout Card -->
                     <div x-show="userMenuOpen" 
-                         @click.outside="userMenuOpen = false" 
+                         @click.outside="closeMenu()" 
                          x-cloak 
+                         style="display: none;"
                          x-transition:enter="transition ease-out duration-150"
                          x-transition:enter-start="transform opacity-0 scale-95 -translate-y-1"
                          x-transition:enter-end="transform opacity-100 scale-100 translate-y-0"
@@ -1007,7 +1110,7 @@
                         <div class="space-y-0.5 text-xs">
                             <!-- 1. Open Profile Modal -->
                             <button type="button" 
-                                    @click.stop="userMenuOpen = false; profileTab = 'general'; profileModalOpen = true"
+                                    @click.stop="openProfile('general')"
                                     class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2.5 text-slate-700 dark:text-slate-200 transition cursor-pointer font-medium">
                                 <div class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                                     <i data-lucide="user" class="w-4 h-4"></i>
@@ -1021,7 +1124,7 @@
 
                             <!-- 2. Open Password Modal -->
                             <button type="button" 
-                                    @click.stop="userMenuOpen = false; profileTab = 'security'; profileModalOpen = true"
+                                    @click.stop="openProfile('security')"
                                     class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2.5 text-slate-700 dark:text-slate-200 transition cursor-pointer font-medium">
                                 <div class="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
                                     <i data-lucide="key-round" class="w-4 h-4"></i>
@@ -1330,6 +1433,40 @@
         window.addEventListener('icons:refresh', safeCreateIcons);
     </script>
 
+    <!-- Mobile Touch Scroll Optimization (Forward touch gestures from sticky header to #main-content) -->
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
+        (function() {
+            let startY = 0;
+            let startScrollTop = 0;
+            let isHeaderTouch = false;
+
+            document.addEventListener('touchstart', function(e) {
+                const header = e.target.closest('header');
+                const main = document.getElementById('main-content');
+                if (!header || !main) return;
+                if (e.touches.length === 1 && !e.target.closest('button, a, input, select, textarea, [role="button"], [x-data]')) {
+                    startY = e.touches[0].clientY;
+                    startScrollTop = main.scrollTop;
+                    isHeaderTouch = true;
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchmove', function(e) {
+                if (isHeaderTouch && e.touches.length === 1) {
+                    const main = document.getElementById('main-content');
+                    if (main) {
+                        const currentY = e.touches[0].clientY;
+                        const deltaY = startY - currentY;
+                        main.scrollTop = startScrollTop + deltaY;
+                    }
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchend', function() { isHeaderTouch = false; }, { passive: true });
+            document.addEventListener('touchcancel', function() { isHeaderTouch = false; }, { passive: true });
+        })();
+    </script>
+
     <!-- Seamless SPA Navigation & Mutation Engine (Persistent Sidebar, Header & Zero-Reload Forms) -->
     <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
         window.CSP_NONCE = '<?= \App\Core\SecurityHeaders::nonce() ?>';
@@ -1545,11 +1682,6 @@
                                 oldScript.parentNode.replaceChild(newScript, oldScript);
                             } else if (oldScript.text) {
                                 const scriptCode = oldScript.text;
-                                try {
-                                    (new Function(scriptCode))();
-                                } catch (e) {
-                                    console.warn('MPT: Direct function eval notice:', e);
-                                }
                                 const newScript = document.createElement('script');
                                 for (const attr of oldScript.attributes) {
                                     newScript.setAttribute(attr.name, attr.value);
@@ -1770,11 +1902,6 @@
                                 oldScript.parentNode.replaceChild(newScript, oldScript);
                             } else if (oldScript.text) {
                                 const scriptCode = oldScript.text;
-                                try {
-                                    (new Function(scriptCode))();
-                                } catch (e) {
-                                    console.warn('MPT: Direct form script eval notice:', e);
-                                }
                                 const newScript = document.createElement('script');
                                 for (const attr of oldScript.attributes) {
                                     newScript.setAttribute(attr.name, attr.value);

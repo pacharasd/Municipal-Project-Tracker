@@ -430,7 +430,7 @@ if (window.Alpine && typeof Alpine.data === 'function') {
         </div>
 
         <!-- Right: Status Filter Pills (Scrollable on mobile) -->
-        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 -mx-1 px-1 w-full md:w-auto shrink-0 no-scrollbar">
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 -mx-1 px-1 w-full md:w-auto shrink-0 no-scrollbar touch-pan-y overscroll-x-contain">
             <button type="button" @click="setStatusFilter('all')" 
                     :class="statusFilter === 'all' ? 'bg-slate-800 dark:bg-slate-700 text-white font-semibold shadow-sm' : 'bg-slate-50 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08]'"
                     class="px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition cursor-pointer shrink-0">
@@ -475,7 +475,7 @@ if (window.Alpine && typeof Alpine.data === 'function') {
             ?>
             <div class="bg-white dark:bg-[#181a20] rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm overflow-hidden" 
                  x-show="isProjectVisible(<?= $p['id'] ?>)" 
-                 style="content-visibility: auto; contain-intrinsic-size: 0 160px; <?= $isInitiallyVisible ? '' : 'display: none;' ?>"
+                 style="<?= $isInitiallyVisible ? '' : 'display: none;' ?>"
                  x-data="{ expanded: true }">
                 <!-- Main Project Bar -->
                 <div class="p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 dark:border-white/[0.06]">
