@@ -71,6 +71,17 @@ if (file_exists($envFile)) {
     }
 }
 
+// Configure Error Reporting based on APP_DEBUG (OWASP A05 Information Disclosure Defense)
+$appDebug = filter_var($_ENV['APP_DEBUG'] ?? getenv('APP_DEBUG') ?? false, FILTER_VALIDATE_BOOLEAN);
+if ($appDebug) {
+    error_reporting(E_ALL);
+    ini_set('display_errors', '1');
+} else {
+    error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
+    ini_set('display_errors', '0');
+    ini_set('log_errors', '1');
+}
+
 // Apply Enterprise Security Headers (CSP, HSTS, X-Frame-Options, etc.)
 \App\Core\SecurityHeaders::apply();
 
