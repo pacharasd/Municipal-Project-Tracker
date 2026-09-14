@@ -75,12 +75,12 @@ class ReportController
         $departmentId = $_GET['department_id'] ?? '';
         $status       = $_GET['status'] ?? '';
 
-        $sql = "SELECT p.name, 
-                       CASE WHEN p.parent_id IS NULL THEN 'โครงการหลัก' ELSE 'โครงการย่อย' END as project_level,
+        $sql = "SELECT p.id, p.parent_id, p.project_code, p.name, 
+                       CASE WHEN p.parent_id IS NULL THEN 'โครงการหลัก' ELSE 'กิจกรรมหลัก' END as project_level,
                        f.year as fiscal_year,
                        d.name as department_name,
                        p.budget, p.disbursed_amount, (p.budget - p.disbursed_amount) as remaining,
-                       p.progress, p.status, p.start_date, p.end_date,
+                       p.progress, p.status, p.evaluation_score, p.evaluation_grade, p.start_date, p.end_date,
                        u.name as responsible_name,
                        p.problem_description
                 FROM projects p
@@ -135,6 +135,8 @@ class ReportController
             'คงเหลือ (บาท)',
             'ความคืบหน้า (%)',
             'สถานะ',
+            'คะแนนประเมิน',
+            'เกรดประเมิน',
             'วันที่เริ่ม',
             'วันที่สิ้นสุด',
             'ผู้รับผิดชอบ',
@@ -153,6 +155,8 @@ class ReportController
                 number_format($r['remaining'], 2, '.', ''),
                 $r['progress'],
                 $r['status'],
+                $r['evaluation_score'] !== null ? number_format((float)$r['evaluation_score'], 2, '.', '') : '-',
+                $r['evaluation_grade'] ?? '-',
                 $r['start_date'],
                 $r['end_date'],
                 $r['responsible_name'],

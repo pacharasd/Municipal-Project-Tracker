@@ -131,6 +131,77 @@ class ProjectService
         return $projects;
     }
 
+    public static function calculateEvaluationGrade(?float $score): ?array
+    {
+        if ($score === null) {
+            return null;
+        }
+
+        $score = round($score, 2);
+
+        if ($score >= 90.0) {
+            return [
+                'grade'       => 'A+',
+                'label'       => 'ดีเยี่ยมมาก (A+)',
+                'badgeClass'  => 'bg-emerald-500 text-white',
+                'bgClass'     => 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-500/30',
+                'textClass'   => 'text-emerald-600 dark:text-emerald-400',
+                'ringClass'   => 'ring-emerald-500/30',
+                'barGradient' => 'from-emerald-500 to-teal-400',
+                'desc'        => 'ผ่านเกณฑ์ระดับยอดเยี่ยมมาก (90-100 คะแนน)',
+                'icon'        => 'award',
+            ];
+        } elseif ($score >= 80.0) {
+            return [
+                'grade'       => 'A',
+                'label'       => 'ดีเยี่ยม (A)',
+                'badgeClass'  => 'bg-sky-500 text-white',
+                'bgClass'     => 'bg-sky-50 dark:bg-sky-500/15 text-sky-700 dark:text-sky-400 border-sky-300 dark:border-sky-500/30',
+                'textClass'   => 'text-sky-600 dark:text-sky-400',
+                'ringClass'   => 'ring-sky-500/30',
+                'barGradient' => 'from-sky-500 to-cyan-400',
+                'desc'        => 'ผ่านเกณฑ์ระดับยอดเยี่ยม (80-89 คะแนน)',
+                'icon'        => 'check-circle-2',
+            ];
+        } elseif ($score >= 70.0) {
+            return [
+                'grade'       => 'B',
+                'label'       => 'ดี (B)',
+                'badgeClass'  => 'bg-indigo-500 text-white',
+                'bgClass'     => 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 border-indigo-300 dark:border-indigo-500/30',
+                'textClass'   => 'text-indigo-600 dark:text-indigo-400',
+                'ringClass'   => 'ring-indigo-500/30',
+                'barGradient' => 'from-indigo-500 to-blue-400',
+                'desc'        => 'ผ่านเกณฑ์ระดับดี (70-79 คะแนน)',
+                'icon'        => 'thumbs-up',
+            ];
+        } elseif ($score >= 60.0) {
+            return [
+                'grade'       => 'C',
+                'label'       => 'พอใช้ (C)',
+                'badgeClass'  => 'bg-amber-500 text-white',
+                'bgClass'     => 'bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-500/30',
+                'textClass'   => 'text-amber-600 dark:text-amber-400',
+                'ringClass'   => 'ring-amber-500/30',
+                'barGradient' => 'from-amber-500 to-orange-400',
+                'desc'        => 'ผ่านเกณฑ์ระดับพอใช้ (60-69 คะแนน)',
+                'icon'        => 'alert-circle',
+            ];
+        } else {
+            return [
+                'grade'       => 'D',
+                'label'       => 'ต้องปรับปรุง (D)',
+                'badgeClass'  => 'bg-rose-500 text-white',
+                'bgClass'     => 'bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-300 dark:border-rose-500/30',
+                'textClass'   => 'text-rose-600 dark:text-rose-400',
+                'ringClass'   => 'ring-rose-500/30',
+                'barGradient' => 'from-rose-500 to-red-600',
+                'desc'        => 'ต่ำกว่าเกณฑ์มาตรฐาน (ต่ำกว่า 60 คะแนน)',
+                'icon'        => 'alert-triangle',
+            ];
+        }
+    }
+
     public static function getProjectById(int $id): ?array
     {
         $respExpr = self::hasResponsiblePersonColumn()
@@ -144,6 +215,8 @@ class ProjectService
                        COALESCE(c.icon, parent_cat.icon) as category_icon,
                        COALESCE(f.year, parent_fy.year) as fiscal_year,
                        {$respExpr} as responsible_name, u.position as responsible_position,
+                       evaluator.name as evaluator_name,
+                       evaluator.position as evaluator_position,
                        parent.name as parent_name,
                        parent.budget as parent_budget,
                        parent.start_date as parent_start_date,
@@ -153,6 +226,7 @@ class ProjectService
                 LEFT JOIN project_categories c ON p.category_id = c.id
                 LEFT JOIN fiscal_years f ON p.fiscal_year_id = f.id
                 LEFT JOIN users u ON p.responsible_user_id = u.id
+                LEFT JOIN users evaluator ON p.evaluated_by = evaluator.id
                 LEFT JOIN projects parent ON p.parent_id = parent.id
                 LEFT JOIN departments parent_dept ON parent.department_id = parent_dept.id
                 LEFT JOIN project_categories parent_cat ON parent.category_id = parent_cat.id
@@ -252,8 +326,19 @@ class ProjectService
             'problem_description' => $problemDescription,
         ], "id = ?", [$projectId]);
 
+        // ปรับกิจกรรมย่อยที่กำลังดำเนินการอยู่ ให้เป็นสถานะ 'has_problem' พร้อมบันทึกข้อความปัญหา
+        $inProgAct = Database::fetch("SELECT id FROM activities WHERE project_id = ? AND status = 'in_progress' ORDER BY id ASC LIMIT 1", [$projectId]);
+        if ($inProgAct) {
+            Database::update('activities', ['status' => 'has_problem', 'notes' => $problemDescription], "id = ?", [$inProgAct['id']]);
+        } else {
+            $firstAct = Database::fetch("SELECT id FROM activities WHERE project_id = ? AND status NOT IN ('completed', 'cancelled') ORDER BY id ASC LIMIT 1", [$projectId]);
+            if ($firstAct) {
+                Database::update('activities', ['status' => 'has_problem', 'notes' => $problemDescription], "id = ?", [$firstAct['id']]);
+            }
+        }
+
         if (!empty($project['parent_id'])) {
-            ProgressService::syncParentProjectProgress($project['parent_id']);
+            ProgressService::syncParentProjectProgress((int)$project['parent_id']);
         }
 
         AuditLogService::log('REPORT_PROBLEM', 'Project', $projectId, 
@@ -271,22 +356,73 @@ class ProjectService
             throw new Exception("ไม่พบโครงการ");
         }
 
-        $progress = (float)$project['progress'];
-        $newStatus = $progress >= 100.0 ? 'completed' : ($progress > 0 ? 'in_progress' : 'not_started');
+        // 1. เปลี่ยนสถานะกิจกรรมย่อยที่มีปัญหา เป็น 'กำลังดำเนินการ' (in_progress)
+        $problemActivities = Database::query("SELECT * FROM activities WHERE project_id = ? AND status = 'has_problem'", [$projectId]);
+
+        if (!empty($problemActivities)) {
+            foreach ($problemActivities as $pAct) {
+                $currProg = (float)($pAct['progress'] ?? 0);
+                $newProg = ($currProg > 0 && $currProg < 100) ? $currProg : 50.00;
+
+                $actNotes = $pAct['notes'] ?? '';
+                if (!empty($resolutionNote)) {
+                    $actNotes = !empty($actNotes) ? "{$actNotes} | แก้ไขปัญหา: {$resolutionNote}" : "แก้ไขปัญหา: {$resolutionNote}";
+                }
+
+                Database::update('activities', [
+                    'status'   => 'in_progress',
+                    'progress' => $newProg,
+                    'notes'    => $actNotes,
+                ], "id = ?", [$pAct['id']]);
+
+                AuditLogService::log('RESOLVE_ACTIVITY_PROBLEM', 'Activity', (int)$pAct['id'],
+                    ['status' => 'has_problem'],
+                    ['status' => 'in_progress', 'resolution' => $resolutionNote]
+                );
+            }
+        } else {
+            // หากไม่มีกิจกรรมที่ติด has_problem โดยตรง ให้เปลี่ยนกิจกรรมที่ยังไม่เสร็จสิ้นเป็น in_progress
+            $pendingActivities = Database::query("SELECT * FROM activities WHERE project_id = ? AND status NOT IN ('completed', 'cancelled') ORDER BY id ASC", [$projectId]);
+            if (!empty($pendingActivities)) {
+                foreach ($pendingActivities as $pAct) {
+                    $currProg = (float)($pAct['progress'] ?? 0);
+                    $newProg = ($currProg > 0 && $currProg < 100) ? $currProg : 50.00;
+
+                    $actNotes = $pAct['notes'] ?? '';
+                    if (!empty($resolutionNote)) {
+                        $actNotes = !empty($actNotes) ? "{$actNotes} | แก้ไขปัญหา: {$resolutionNote}" : "แก้ไขปัญหา: {$resolutionNote}";
+                    }
+
+                    Database::update('activities', [
+                        'status'   => 'in_progress',
+                        'progress' => $newProg,
+                        'notes'    => $actNotes,
+                    ], "id = ?", [$pAct['id']]);
+                }
+            }
+        }
+
+        // 2. เคลียร์ข้อความปัญหาของโครงการ
+        $noteAppend = $resolutionNote 
+            ? (!empty($project['notes']) ? $project['notes'] . " | แก้ไขปัญหา: " . $resolutionNote : "แก้ไขปัญหา: " . $resolutionNote) 
+            : $project['notes'];
 
         Database::update('projects', [
-            'status' => $newStatus,
             'problem_description' => null,
-            'notes' => $resolutionNote ? ($project['notes'] . " | แก้ไขปัญหา: " . $resolutionNote) : $project['notes'],
+            'notes'               => $noteAppend,
         ], "id = ?", [$projectId]);
 
+        // 3. ซิงค์สถานะและเปอร์เซ็นต์โครงการย่อยจากกิจกรรมย่อย (100% Activity-Driven)
+        ProgressService::syncFromActivities($projectId);
+
+        // 4. ซิงค์ต่อไปยังโครงการหลัก
         if (!empty($project['parent_id'])) {
-            ProgressService::syncParentProjectProgress($project['parent_id']);
+            ProgressService::syncParentProjectProgress((int)$project['parent_id']);
         }
 
         AuditLogService::log('RESOLVE_PROBLEM', 'Project', $projectId, 
             ['status' => 'has_problem'], 
-            ['status' => $newStatus, 'resolution' => $resolutionNote]
+            ['status' => 'in_progress', 'resolution' => $resolutionNote]
         );
 
         return true;

@@ -23,12 +23,15 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
         </a>
         <div class="flex items-center gap-2">
             <?php if (\App\Core\Auth::canManageProjects()): ?>
+                <button type="button" @click="openEvalModal()" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-300 dark:border-emerald-500/30 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-500/25 transition-all shadow-sm cursor-pointer">
+                    <i data-lucide="award" class="w-3.5 h-3.5"></i> <?= $project['evaluation_score'] !== null ? 'แก้ไขผลประเมิน' : 'ประเมินผลโครงการ' ?>
+                </button>
                 <button type="button" @click="editModal = true" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-[#181a20] border border-slate-300 dark:border-white/10 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-sm cursor-pointer">
                     <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> แก้ไขข้อมูล
                 </button>
             <?php endif; ?>
             <?php if (\App\Core\Auth::isAdmin()): ?>
-                <form action="<?= \App\Core\Router::url("/projects/{$project['id']}/delete") ?>" method="POST" onsubmit="return confirm('ยืนยันการลบโครงการนี้และโครงการย่อยทั้งหมดหรือไม่? ข้อมูลจะไม่สามารถกู้คืนได้');">
+                <form action="<?= \App\Core\Router::url("/projects/{$project['id']}/delete") ?>" method="POST" onsubmit="return confirm('ยืนยันการลบโครงการนี้และกิจกรรมหลักทั้งหมดหรือไม่? ข้อมูลจะไม่สามารถกู้คืนได้');">
                     <input type="hidden" name="_token" value="<?= $csrfToken ?>">
                     <button type="submit" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/15 border border-rose-200 dark:border-rose-500/30 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-500/25 transition-all cursor-pointer">
                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> ลบโครงการ
@@ -47,6 +50,9 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
         $mStartNumeric = !empty($mStartRaw) ? date('d/m/', strtotime($mStartRaw)) . (date('Y', strtotime($mStartRaw)) + 543) : '-';
         $mEndNumeric = !empty($mEndRaw) ? date('d/m/', strtotime($mEndRaw)) . (date('Y', strtotime($mEndRaw)) + 543) : '-';
         $mDurationDays = (!empty($mStartRaw) && !empty($mEndRaw)) ? max(1, round((strtotime($mEndRaw) - strtotime($mStartRaw)) / 86400) + 1) : null;
+        $evalScore = $project['evaluation_score'] !== null ? (float)$project['evaluation_score'] : null;
+        $evalGrade = $evalScore !== null ? \App\Services\ProjectService::calculateEvaluationGrade($evalScore) : null;
+        $evalDateThai = !empty($project['evaluated_at']) ? \App\Core\Helper::thaiDate($project['evaluated_at'], true) : null;
     ?>
     <div class="bg-white dark:bg-[#161922] p-6 sm:p-8 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm">
         <div class="flex flex-wrap items-center gap-2">
@@ -59,6 +65,12 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
             <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30"><?= htmlspecialchars(!empty($project['responsible_person']) ? $project['responsible_person'] : ($project['department_name'] ?? 'ไม่ระบุหน่วยงาน')) ?></span>
             <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-white/10">ปีงบประมาณ <?= htmlspecialchars((string)($project['fiscal_year'] ?? '-')) ?></span>
             <span class="px-3 py-1 text-xs font-semibold rounded-full bg-purple-50 dark:bg-purple-500/15 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/30"><?= htmlspecialchars($project['category_name'] ?? 'ทั่วไป') ?></span>
+            <?php if ($evalGrade): ?>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full border <?= $evalGrade['bgClass'] ?>">
+                    <i data-lucide="award" class="w-3.5 h-3.5"></i>
+                    <span>ผลประเมิน: เกรด <?= $evalGrade['grade'] ?> (<?= number_format($evalScore, 1) ?>)</span>
+                </span>
+            <?php endif; ?>
         </div>
 
         <h1 class="text-xl sm:text-2xl font-bold font-heading text-slate-900 dark:text-white leading-snug tracking-tight mt-3">
@@ -164,6 +176,67 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                 </div>
             </div>
         </div>
+
+        <!-- Evaluation Section Card -->
+        <div class="mt-6 pt-6 border-t border-slate-100 dark:border-white/[0.08]">
+            <div class="p-4 sm:p-5 rounded-2xl <?= $evalGrade ? $evalGrade['bgClass'] : 'bg-slate-50/80 dark:bg-[#12141a]/60 border border-slate-200/80 dark:border-white/[0.06]' ?> transition-all">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="flex items-start sm:items-center gap-3.5 min-w-0">
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 font-heading font-black text-xl shadow-xs <?= $evalGrade ? $evalGrade['badgeClass'] : 'bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-400' ?>">
+                            <?= $evalGrade ? $evalGrade['grade'] : '?' ?>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">ผลการประเมินโครงการหลัก</span>
+                                <?php if ($evalGrade): ?>
+                                    <span class="text-xs font-bold font-mono px-2 py-0.5 rounded-full <?= $evalGrade['badgeClass'] ?>">
+                                        เกรด <?= $evalGrade['grade'] ?>
+                                    </span>
+                                <?php else: ?>
+                                    <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400">
+                                        ยังไม่ได้ประเมินผล
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+                            <div class="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-0.5 flex flex-wrap items-center gap-2">
+                                <?php if ($evalScore !== null): ?>
+                                    <span><?= number_format($evalScore, 2) ?> <span class="text-xs font-normal text-slate-500">/ 100 คะแนน</span></span>
+                                    <span class="text-xs font-medium text-slate-500 dark:text-slate-400">(<?= $evalGrade['desc'] ?>)</span>
+                                <?php else: ?>
+                                    <span class="text-sm font-medium text-slate-500 dark:text-slate-400">ยังไม่มีการบันทึกคะแนนการประเมินโครงการนี้</span>
+                                <?php endif; ?>
+                            </div>
+                            <?php if ($evalDateThai || !empty($project['evaluator_name'])): ?>
+                                <div class="text-xs text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                    <?php if (!empty($project['evaluator_name'])): ?>
+                                        <span>ผู้ประเมิน: <strong class="text-slate-700 dark:text-slate-300"><?= htmlspecialchars($project['evaluator_name']) ?></strong></span>
+                                    <?php endif; ?>
+                                    <?php if ($evalDateThai): ?>
+                                        <span>วันที่ประเมิน: <?= $evalDateThai ?></span>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (!empty($project['evaluation_notes'])): ?>
+                                <div class="text-xs text-slate-600 dark:text-slate-300 mt-2 p-2.5 rounded-xl bg-white/70 dark:bg-black/20 border border-current/10 max-w-2xl">
+                                    <span class="font-semibold text-slate-700 dark:text-slate-200">ข้อเสนอแนะ:</span> <?= nl2br(htmlspecialchars($project['evaluation_notes'])) ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <?php if (\App\Core\Auth::canManageProjects()): ?>
+                        <div class="shrink-0 self-start sm:self-center">
+                            <button type="button" 
+                                    @click="openEvalModal()"
+                                    class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer <?= $evalGrade ? 'bg-white dark:bg-[#1a1d26] hover:bg-slate-50 dark:hover:bg-white/10 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-white/15' : 'bg-emerald-600 hover:bg-emerald-700 text-white' ?>">
+                                <i data-lucide="award" class="w-4 h-4"></i>
+                                <span><?= $evalGrade ? 'แก้ไขผลการประเมิน' : 'ใส่คะแนนการประเมิน' ?></span>
+                            </button>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Sub-projects Section -->
@@ -182,14 +255,14 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                         <div class="min-w-0">
                             <div class="flex items-center gap-2">
                                 <h2 class="text-base sm:text-lg font-bold font-heading text-slate-900 dark:text-white truncate">
-                                    โครงการย่อย
+                                    กิจกรรมหลัก
                                 </h2>
                                 <span class="text-[11px] sm:text-xs font-bold font-mono px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 whitespace-nowrap shrink-0">
-                                    <?= count($project['sub_projects']) ?> โครงการ
+                                    <?= count($project['sub_projects']) ?> กิจกรรมหลัก
                                 </span>
                             </div>
                             <p class="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block truncate mt-0.5">
-                                คลิกเพื่อดูรายละเอียดกิจกรรม งบประมาณ บันทึกปัญหา และอัปเดตความคืบหน้า
+                                คลิกเพื่อดูรายละเอียดกิจกรรมย่อย งบประมาณ บันทึกปัญหา และอัปเดตความคืบหน้า
                             </p>
                         </div>
                     </div>
@@ -198,9 +271,9 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                     <?php if (\App\Core\Auth::canManageProjects()): ?>
                         <button type="button" 
                                 @click="createSubModal = true; $nextTick(() => { window.safeCreateIcons && window.safeCreateIcons($el); });" 
-                                class="md:hidden inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-95 rounded-xl transition-all shadow-sm shadow-emerald-600/20 whitespace-nowrap cursor-pointer shrink-0">
+                                class="md:hidden inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-95 rounded-xl transition-all shadow-sm shadow-emerald-600/20 whitespace-nowrap cursor-pointer shrink-0">
                             <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
-                            <span>เพิ่มโครงการย่อย</span>
+                            <span>เพิ่มกิจกรรมหลัก</span>
                         </button>
                     <?php endif; ?>
                 </div>
@@ -212,7 +285,7 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                             <input type="text" 
                                    x-model="subSearch" 
                                    @input="subPage = 1" 
-                                   placeholder="ค้นหาชื่อโครงการย่อย..." 
+                                   placeholder="ค้นหาชื่อกิจกรรมหลัก..." 
                                    class="w-full pl-8 pr-8 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#1f222e] text-slate-900 dark:text-white placeholder-slate-400 focus:bg-white dark:focus:bg-[#161922] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition">
                             <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                             <button type="button" 
@@ -230,7 +303,7 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                                 @click="createSubModal = true; $nextTick(() => { window.safeCreateIcons && window.safeCreateIcons($el); });" 
                                 class="hidden md:inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-95 rounded-xl transition-all shadow-md shadow-emerald-600/20 whitespace-nowrap cursor-pointer shrink-0">
                             <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                            <span>เพิ่มโครงการย่อย</span>
+                            <span>เพิ่มกิจกรรมหลัก</span>
                         </button>
                     <?php endif; ?>
                 </div>
@@ -240,16 +313,16 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
 
         <?php if (empty($project['sub_projects'])): ?>
             <div class="p-8 text-center text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-[#181a20] rounded-2xl border border-slate-200 dark:border-white/[0.08]">
-                ยังไม่มีโครงการย่อยภายใต้โครงการหลักนี้<?= \App\Core\Auth::canManageProjects() ? ' กรุณากดปุ่ม "เพิ่มโครงการย่อย"' : '' ?>
+                ยังไม่มีกิจกรรมหลักภายใต้โครงการหลักนี้<?= \App\Core\Auth::canManageProjects() ? ' กรุณากดปุ่ม "เพิ่มกิจกรรมหลัก"' : '' ?>
             </div>
         <?php else: ?>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse min-w-[780px]">
                     <thead>
                         <tr class="border-b border-slate-200/80 dark:border-white/[0.08] text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                            <th class="py-3 px-4 min-w-[240px]">ชื่อโครงการย่อย</th>
+                            <th class="py-3 px-4 min-w-[240px]">ชื่อกิจกรรมหลัก</th>
                             <th class="py-3 px-4 whitespace-nowrap">งบประมาณ (บาท)</th>
-                            <th class="py-3 px-4 whitespace-nowrap text-center">จำนวนครั้งกิจกรรม</th>
+                            <th class="py-3 px-4 whitespace-nowrap text-center">จำนวนครั้งกิจกรรมย่อย</th>
                             <th class="py-3 px-4 whitespace-nowrap min-w-[140px]">ความก้าวหน้า</th>
                             <th class="py-3 px-4 whitespace-nowrap text-center">สถานะ</th>
                             <th class="py-3 px-4 whitespace-nowrap text-right">การจัดการ</th>
@@ -313,7 +386,7 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                             <td colspan="7" class="py-10 text-center text-slate-400">
                                 <div class="flex flex-col items-center justify-center">
                                     <i data-lucide="search-x" class="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2"></i>
-                                    <span class="font-medium text-slate-600 dark:text-slate-400">ไม่พบโครงการย่อยที่ค้นหา</span>
+                                    <span class="font-medium text-slate-600 dark:text-slate-400">ไม่พบกิจกรรมหลักที่ค้นหา</span>
                                     <span class="text-xs text-slate-400 mt-0.5">ไม่มีข้อมูลที่ตรงกับคำค้นหา</span>
                                 </div>
                             </td>
@@ -328,7 +401,7 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                     <span class="text-slate-500 dark:text-slate-400">
                         แสดง <span class="font-bold text-slate-900 dark:text-white font-mono" x-text="subStartIndex"></span> ถึง 
                         <span class="font-bold text-slate-900 dark:text-white font-mono" x-text="subEndIndex"></span> จาก 
-                        <span class="font-bold text-emerald-600 dark:text-emerald-400 font-mono" x-text="filteredSubProjects.length"></span> โครงการย่อย
+                        <span class="font-bold text-emerald-600 dark:text-emerald-400 font-mono" x-text="filteredSubProjects.length"></span> กิจกรรมหลัก
                     </span>
                     <div class="relative shrink-0 ml-2 border-l border-slate-200 dark:border-white/10 pl-3" x-data="{ openSubPerPage: false }" @click.outside="openSubPerPage = false">
                         <button type="button" 
@@ -428,7 +501,7 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
             <div class="bg-white dark:bg-[#161922] w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden max-h-[90vh] flex flex-col modal-box-smooth transform-gpu">
                 <div class="p-6 border-b border-slate-100 dark:border-white/[0.08] flex items-center justify-between flex-shrink-0">
                     <div>
-                        <h3 class="text-lg font-bold font-heading text-slate-900 dark:text-white">เพิ่มโครงการย่อย</h3>
+                        <h3 class="text-lg font-bold font-heading text-slate-900 dark:text-white">เพิ่มกิจกรรมหลัก</h3>
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">ภายใต้: <?= htmlspecialchars($project['name']) ?></p>
                     </div>
                     <button type="button" @click.stop="createSubModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
@@ -459,24 +532,24 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                             return false;
                         }
                         if (pStart && start < pStart) {
-                            alert('วันที่เริ่มต้นของโครงการย่อยต้องเท่ากับหรือมากกว่าวันที่เริ่มต้นของโครงการหลัก (<?= $parentStartThai ?>)');
+                            alert('วันที่เริ่มต้นของกิจกรรมหลักต้องเท่ากับหรือมากกว่าวันที่เริ่มต้นของโครงการหลัก (<?= $parentStartThai ?>)');
                             $event.preventDefault();
                             return false;
                         }
                         if (pEnd && end > pEnd) {
-                            alert('วันที่สิ้นสุดของโครงการย่อยต้องไม่เกินวันที่สิ้นสุดของโครงการหลัก (<?= $parentEndThai ?>)');
+                            alert('วันที่สิ้นสุดของกิจกรรมหลักต้องไม่เกินวันที่สิ้นสุดของโครงการหลัก (<?= $parentEndThai ?>)');
                             $event.preventDefault();
                             return false;
                         }
                         if (start > end) {
-                            alert('วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุดของโครงการย่อย');
+                            alert('วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุดของกิจกรรมหลัก');
                             $event.preventDefault();
                             return false;
                         }
                         const maxBudget = <?= (float)$remainingParentBudget ?>;
                         const budgetVal = parseFloat($el.querySelector('input[name=budget]')?.value || 0);
                         if (budgetVal > maxBudget) {
-                            alert('งบประมาณโครงการย่อย (' + budgetVal.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท) ต้องไม่เกินงบประมาณคงเหลือของโครงการหลักที่จัดสรรได้ (' + maxBudget.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท)');
+                            alert('งบประมาณกิจกรรมหลัก (' + budgetVal.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท) ต้องไม่เกินงบประมาณคงเหลือของโครงการหลักที่จัดสรรได้ (' + maxBudget.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท)');
                             $event.preventDefault();
                             return false;
                         }
@@ -486,12 +559,12 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                     <input type="hidden" name="parent_id" value="<?= $project['id'] ?>">
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ชื่อโครงการย่อย <span class="text-rose-500">*</span></label>
-                        <input type="text" name="name" required placeholder="ระบุชื่อโครงการย่อย..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ชื่อกิจกรรมหลัก <span class="text-rose-500">*</span></label>
+                        <input type="text" name="name" required placeholder="ระบุชื่อกิจกรรมหลัก..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ผู้รับผิดชอบโครงการ <span class="text-rose-500">*</span></label>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ผู้รับผิดชอบกิจกรรมหลัก <span class="text-rose-500">*</span></label>
                         <input type="text" name="responsible_person" required maxlength="255" placeholder="ระบุชื่อผู้รับผิดชอบ เช่น นางสาวสมใจ รักดี หรือ กองสาธารณสุข" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                     </div>
 
@@ -530,7 +603,7 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                                 <strong class="font-semibold">กรอบเวลาโครงการหลัก:</strong> 
                                 <?= $parentStartThai ?> ถึง <?= $parentEndThai ?>
                                 <div class="text-[11px] text-blue-600 dark:text-blue-400 mt-0.5">
-                                    * โครงการย่อยต้องเริ่มต้นตั้งแต่วันที่ <?= $parentStartThai ?> เป็นต้นไป และต้องสิ้นสุดไม่เกินวันที่ <?= $parentEndThai ?>
+                                    * กิจกรรมหลักต้องเริ่มต้นตั้งแต่วันที่ <?= $parentStartThai ?> เป็นต้นไป และต้องสิ้นสุดไม่เกินวันที่ <?= $parentEndThai ?>
                                 </div>
                             </div>
                         </div>
@@ -605,7 +678,7 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                                     open: false,
                                     mode: 'auto',
                                     modes: {
-                                        'auto': { label: 'คำนวณอัตโนมัติ (AUTO)', desc: 'คิด % ตามผลสำเร็จของกิจกรรม' },
+                                        'auto': { label: 'คำนวณอัตโนมัติ (AUTO)', desc: 'คิด % ตามผลสำเร็จของกิจกรรมย่อย' },
                                         'manual': { label: 'ระบุเอง (MANUAL)', desc: 'ผู้ดูแลระบุ % ตามดุลยพินิจ' }
                                     },
                                     select(val) {
@@ -663,7 +736,7 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
                             ยกเลิก
                         </button>
                         <button type="submit" class="px-5 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-md shadow-emerald-600/20 cursor-pointer">
-                            บันทึกโครงการย่อย
+                            บันทึกกิจกรรมหลัก
                         </button>
                     </div>
                 </form>
@@ -925,6 +998,162 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
         </div>
     </template>
     <?php endif; ?>
+
+    <!-- Modal: Evaluate Project -->
+    <?php if (\App\Core\Auth::canManageProjects()): ?>
+    <template x-teleport="body">
+        <div x-show="evalModal" x-cloak data-teleport-modal="true" style="display: none;" @click.self="evalModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-smooth">
+            <div class="bg-white dark:bg-[#161922] w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden flex flex-col modal-box-smooth transform-gpu">
+                <div class="p-6 border-b border-slate-100 dark:border-white/[0.08] flex items-center justify-between flex-shrink-0">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                            <i data-lucide="award" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base sm:text-lg font-bold font-heading text-slate-900 dark:text-white">ประเมินผลโครงการหลัก</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate max-w-xs sm:max-w-sm"><?= htmlspecialchars($project['name']) ?></p>
+                        </div>
+                    </div>
+                    <button type="button" @click.stop="evalModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
+                        <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
+                    </button>
+                </div>
+
+                <form action="<?= \App\Core\Router::url("/projects/{$project['id']}/evaluate") ?>" method="POST" class="p-6 space-y-5">
+                    <input type="hidden" name="_token" value="<?= $csrfToken ?>">
+
+                    <!-- Unified Assessment Card (Grade Badge, Centered Score Input, Full-Width Slider & Presets) -->
+                    <div class="p-5 rounded-2xl border-2 transition-all duration-300 space-y-4" :class="currentGrade.cardBorder + ' ' + currentGrade.cardBg">
+                        
+                        <!-- Header Row: Grade Letter + Criteria (Left) & Prominent Score Input (Right) -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b transition-colors" :class="currentGrade.dividerBorder">
+                            <div class="flex items-center gap-3.5 min-w-0">
+                                <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-black text-white shadow-md transition-all shrink-0" :class="currentGrade.bar">
+                                    <span x-text="currentGrade.grade"></span>
+                                </div>
+                                <div class="min-w-0">
+                                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">ผลการประเมินโครงการ</span>
+                                    <div class="text-base sm:text-lg font-bold truncate" :class="currentGrade.text" x-text="currentGrade.label"></div>
+                                    <span class="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
+                                        เกณฑ์: 90-100 <strong class="text-emerald-600 dark:text-emerald-400">A+</strong> | 80-89 <strong class="text-sky-600 dark:text-sky-400">A</strong> | 70-79 <strong class="text-indigo-600 dark:text-indigo-400">B</strong> | 60-69 <strong class="text-amber-600 dark:text-amber-400">C</strong> | &lt;60 <strong class="text-rose-600 dark:text-rose-400">D</strong>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Standard & Clean Score Input Box -->
+                            <div class="shrink-0">
+                                <label for="evaluation-score-input" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 sm:text-right cursor-pointer">
+                                    คะแนนที่ได้รับ (0 – 100) <span class="text-rose-500">*</span>
+                                </label>
+                                <div class="flex items-center rounded-xl border-2 border-slate-300 dark:border-white/20 bg-white dark:bg-[#1a1d26] shadow-xs overflow-hidden focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all h-11">
+                                    <input type="number" 
+                                           id="evaluation-score-input"
+                                           name="evaluation_score" 
+                                           min="0" 
+                                           max="100" 
+                                           step="0.01" 
+                                           x-model="evalScore" 
+                                           @input="onScoreInput($event)"
+                                           placeholder="0.00"
+                                           required 
+                                           class="w-24 sm:w-28 h-full px-3 text-lg sm:text-xl font-bold font-mono text-center text-slate-900 dark:text-white bg-transparent border-0 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                                    <span class="h-full inline-flex items-center px-3 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-white/10 border-l border-slate-200 dark:border-white/10 select-none">
+                                        คะแนน
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Full-Width Range Slider Bar -->
+                        <div class="space-y-1.5">
+                            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                                <span class="font-medium flex items-center gap-1.5">
+                                    <i data-lucide="sliders" class="w-3.5 h-3.5 text-emerald-600"></i>
+                                    <span>เลื่อนสเกลปรับคะแนน</span>
+                                </span>
+                                <span class="font-mono text-xs font-bold" :class="currentGrade.text">
+                                    <span x-text="(parseFloat(evalScore) || 0).toFixed(1)"></span> / 100 คะแนน
+                                </span>
+                            </div>
+
+                            <div class="py-1">
+                                <input type="range" 
+                                       min="0" 
+                                       max="100" 
+                                       step="0.5" 
+                                       :value="sliderValue" 
+                                       @input="onSliderChange($event)"
+                                       class="w-full h-2.5 bg-slate-200 dark:bg-[#1a1d26] rounded-lg appearance-none cursor-pointer accent-emerald-600 focus:outline-none transition-all">
+                            </div>
+
+                            <!-- Clickable Tick Marks -->
+                            <div class="flex justify-between text-[11px] font-mono text-slate-400 dark:text-slate-500 px-0.5 select-none">
+                                <button type="button" @click="evalScore = 0" class="hover:text-slate-700 dark:hover:text-white cursor-pointer font-semibold transition">0</button>
+                                <button type="button" @click="evalScore = 25" class="hover:text-slate-700 dark:hover:text-white cursor-pointer font-semibold transition">25</button>
+                                <button type="button" @click="evalScore = 50" class="hover:text-slate-700 dark:hover:text-white cursor-pointer font-semibold transition">50</button>
+                                <button type="button" @click="evalScore = 75" class="hover:text-slate-700 dark:hover:text-white cursor-pointer font-semibold transition">75</button>
+                                <button type="button" @click="evalScore = 100" class="hover:text-slate-700 dark:hover:text-white cursor-pointer font-semibold transition">100</button>
+                            </div>
+                        </div>
+
+                        <!-- Presets and Progress Sync Buttons -->
+                        <div class="flex items-center justify-between gap-2 pt-3 flex-wrap border-t transition-colors" :class="currentGrade.dividerBorder">
+                            <div class="flex items-center gap-1.5 flex-wrap text-xs">
+                                <span class="text-[11px] font-medium text-slate-400 mr-0.5">เลือกด่วน:</span>
+                                <button type="button" @click="evalScore = 95" class="px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all cursor-pointer" :class="evalScore == 95 ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' : 'bg-white dark:bg-white/5 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-emerald-500'">
+                                    95 (A+)
+                                </button>
+                                <button type="button" @click="evalScore = 85" class="px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all cursor-pointer" :class="evalScore == 85 ? 'bg-sky-600 text-white border-sky-600 shadow-xs' : 'bg-white dark:bg-white/5 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-sky-500'">
+                                    85 (A)
+                                </button>
+                                <button type="button" @click="evalScore = 75" class="px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all cursor-pointer" :class="evalScore == 75 ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' : 'bg-white dark:bg-white/5 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-indigo-500'">
+                                    75 (B)
+                                </button>
+                                <button type="button" @click="evalScore = 65" class="px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all cursor-pointer" :class="evalScore == 65 ? 'bg-amber-600 text-white border-amber-600 shadow-xs' : 'bg-white dark:bg-white/5 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-amber-500'">
+                                    65 (C)
+                                </button>
+                                <button type="button" @click="evalScore = 55" class="px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all cursor-pointer" :class="evalScore == 55 ? 'bg-rose-600 text-white border-rose-600 shadow-xs' : 'bg-white dark:bg-white/5 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-rose-500'">
+                                    55 (D)
+                                </button>
+                            </div>
+
+                            <button type="button" 
+                                    @click="evalScore = <?= round((float)$project['progress'], 2) ?>" 
+                                    class="px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+                                    :class="evalScore == <?= round((float)$project['progress'], 2) ?> ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-500/30 hover:bg-emerald-100'">
+                                <i data-lucide="sparkles" class="w-3 h-3"></i>
+                                <span>ตามความก้าวหน้าโครงการ (<?= number_format((float)$project['progress'], 1) ?>%)</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Notes / Comments -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            ข้อเสนอแนะ / ความคิดเห็นของผู้ประเมิน (ทางเลือก)
+                        </label>
+                        <textarea name="evaluation_notes" 
+                                  x-model="evalNotes"
+                                  rows="3" 
+                                  placeholder="ระบุจุดเด่น ข้อสังเกต หรือข้อเสนอแนะเพื่อการพัฒนาโครงการ..." 
+                                  class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"></textarea>
+                    </div>
+
+                    <!-- Modal Actions -->
+                    <div class="pt-4 border-t border-slate-100 dark:border-white/[0.08] flex items-center justify-end gap-3 flex-shrink-0">
+                        <button type="button" @click="evalModal = false" class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-colors cursor-pointer">
+                            ยกเลิก
+                        </button>
+                        <button type="submit" class="px-5 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-md shadow-emerald-600/20 cursor-pointer flex items-center gap-1.5">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            <span>บันทึกผลการประเมิน</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </template>
+    <?php endif; ?>
 </div>
 
 <script>
@@ -932,6 +1161,109 @@ function projectShowPage() {
     return {
         createSubModal: false,
         editModal: false,
+        evalModal: false,
+        evalScore: <?= $project['evaluation_score'] !== null ? json_encode((float)$project['evaluation_score']) : json_encode(round((float)$project['progress'], 2)) ?>,
+        evalNotes: <?= json_encode($project['evaluation_notes'] ?? '') ?>,
+
+        openEvalModal() {
+            const defaultScore = <?= $project['evaluation_score'] !== null ? json_encode((float)$project['evaluation_score']) : json_encode(round((float)$project['progress'], 2)) ?>;
+            if (this.evalScore === null || this.evalScore === '' || isNaN(parseFloat(this.evalScore))) {
+                this.evalScore = defaultScore;
+            }
+            this.evalModal = true;
+            this.$nextTick(() => {
+                const inp = document.getElementById('evaluation-score-input');
+                if (inp) {
+                    inp.focus();
+                    inp.select();
+                }
+                if (window.safeCreateIcons) window.safeCreateIcons(this.$el);
+            });
+        },
+
+        get sliderValue() {
+            const s = parseFloat(this.evalScore);
+            return isNaN(s) ? 0 : Math.max(0, Math.min(100, s));
+        },
+
+        onSliderChange(e) {
+            this.evalScore = parseFloat(e.target.value);
+        },
+
+        onScoreInput(e) {
+            const val = e.target.value;
+            if (val === '') {
+                this.evalScore = '';
+                return;
+            }
+            const num = parseFloat(val);
+            if (!isNaN(num)) {
+                if (num > 100) this.evalScore = 100;
+                else if (num < 0) this.evalScore = 0;
+                else this.evalScore = val;
+            }
+        },
+
+        get currentGrade() {
+            const s = parseFloat(this.evalScore);
+            if (isNaN(s) || this.evalScore === '' || this.evalScore === null) {
+                return { 
+                    grade: '-', 
+                    label: 'กรุณาระบุคะแนน (0 - 100)', 
+                    cardBg: 'bg-slate-50 dark:bg-white/[0.02]', 
+                    cardBorder: 'border-slate-200 dark:border-white/10', 
+                    dividerBorder: 'border-slate-200 dark:border-white/10',
+                    text: 'text-slate-600 dark:text-slate-400', 
+                    bar: 'bg-slate-400' 
+                };
+            }
+            if (s >= 90) return { 
+                grade: 'A+', 
+                label: 'ระดับ A+ (ดีเยี่ยมมาก)', 
+                cardBg: 'bg-emerald-500/[0.06] dark:bg-emerald-500/[0.12]', 
+                cardBorder: 'border-emerald-500/40 dark:border-emerald-500/40', 
+                dividerBorder: 'border-emerald-500/20 dark:border-emerald-500/25',
+                text: 'text-emerald-700 dark:text-emerald-400', 
+                bar: 'bg-emerald-600 dark:bg-emerald-500' 
+            };
+            if (s >= 80) return { 
+                grade: 'A', 
+                label: 'ระดับ A (ดีเยี่ยม)', 
+                cardBg: 'bg-sky-500/[0.06] dark:bg-sky-500/[0.12]', 
+                cardBorder: 'border-sky-500/40 dark:border-sky-500/40', 
+                dividerBorder: 'border-sky-500/20 dark:border-sky-500/25',
+                text: 'text-sky-700 dark:text-sky-400', 
+                bar: 'bg-sky-600 dark:bg-sky-500' 
+            };
+            if (s >= 70) return { 
+                grade: 'B', 
+                label: 'ระดับ B (ดี)', 
+                cardBg: 'bg-indigo-500/[0.06] dark:bg-indigo-500/[0.12]', 
+                cardBorder: 'border-indigo-500/40 dark:border-indigo-500/40', 
+                dividerBorder: 'border-indigo-500/20 dark:border-indigo-500/25',
+                text: 'text-indigo-700 dark:text-indigo-400', 
+                bar: 'bg-indigo-600 dark:bg-indigo-500' 
+            };
+            if (s >= 60) return { 
+                grade: 'C', 
+                label: 'ระดับ C (พอใช้)', 
+                cardBg: 'bg-amber-500/[0.06] dark:bg-amber-500/[0.12]', 
+                cardBorder: 'border-amber-500/40 dark:border-amber-500/40', 
+                dividerBorder: 'border-amber-500/20 dark:border-amber-500/25',
+                text: 'text-amber-700 dark:text-amber-400', 
+                bar: 'bg-amber-600 dark:bg-amber-500' 
+            };
+            return { 
+                grade: 'D', 
+                label: 'ระดับ D (ต้องปรับปรุง)', 
+                cardBg: 'bg-rose-500/[0.06] dark:bg-rose-500/[0.12]', 
+                cardBorder: 'border-rose-500/40 dark:border-rose-500/40', 
+                dividerBorder: 'border-rose-500/20 dark:border-rose-500/25',
+                text: 'text-rose-700 dark:text-rose-400', 
+                bar: 'bg-rose-600 dark:bg-rose-500' 
+            };
+        },
+
         allSubProjects: Object.freeze(<?= $subProjectsJson ?>),
         subSearch: '',
         subPage: 1,

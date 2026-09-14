@@ -49,7 +49,7 @@ class ProjectController
 
         $departments = Database::query("SELECT * FROM departments ORDER BY id ASC");
         $categories = Database::query("SELECT * FROM project_categories ORDER BY id ASC");
-        $users = Database::query("SELECT id, name, position FROM users ORDER BY name ASC");
+        $users = Database::query("SELECT u.id, u.name, u.position FROM users u JOIN roles r ON u.role_id = r.id WHERE r.name != 'executive' ORDER BY u.name ASC");
 
         View::render('projects.show', [
             'project'     => $project,
@@ -102,6 +102,16 @@ class ProjectController
         }
         if (!$responsibleUserId) {
             $responsibleUserId = Auth::id() ?: 1;
+        }
+
+        // ป้องกันการมอบหมายโครงการให้ผู้บริหาร (Role Segregation & Least Privilege)
+        if ($responsibleUserId) {
+            $userRoleCheck = Database::fetch("SELECT r.name as role_name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = ?", [$responsibleUserId]);
+            if ($userRoleCheck && $userRoleCheck['role_name'] === 'executive') {
+                Session::flash('error', 'ไม่สามารถมอบหมายโครงการให้ผู้ใช้งานในบทบาท "ผู้บริหาร" ได้ (ผู้บริหารมีหน้าที่กำกับดูแลภาพรวม)');
+                header('Location: ' . Router::url('/projects'));
+                exit;
+            }
         }
 
         try {
@@ -208,7 +218,7 @@ class ProjectController
         $earliestSub = Database::fetch("SELECT id, name, start_date FROM projects WHERE parent_id = ? AND start_date < ? ORDER BY start_date ASC LIMIT 1", [$projectId, $newStartDate]);
         if ($earliestSub) {
             $subStartThai = date('d/m/', strtotime($earliestSub['start_date'])) . (date('Y', strtotime($earliestSub['start_date'])) + 543);
-            Session::flash('error', "ไม่สามารถเปลี่ยนวันเริ่มต้นโครงการหลักเป็นวันที่หลังโครงการย่อยได้ เนื่องจากมีโครงการย่อย '{$earliestSub['name']}' เริ่มต้นตั้งแต่วันที่ {$subStartThai}");
+            Session::flash('error', "ไม่สามารถเปลี่ยนวันเริ่มต้นโครงการหลักเป็นวันที่หลังกิจกรรมหลักได้ เนื่องจากมีกิจกรรมหลัก '{$earliestSub['name']}' เริ่มต้นตั้งแต่วันที่ {$subStartThai}");
             header('Location: ' . Router::url("/projects/{$projectId}"));
             exit;
         }
@@ -217,7 +227,7 @@ class ProjectController
         $latestSub = Database::fetch("SELECT id, name, end_date FROM projects WHERE parent_id = ? AND end_date > ? ORDER BY end_date DESC LIMIT 1", [$projectId, $newEndDate]);
         if ($latestSub) {
             $subEndThai = date('d/m/', strtotime($latestSub['end_date'])) . (date('Y', strtotime($latestSub['end_date'])) + 543);
-            Session::flash('error', "ไม่สามารถเปลี่ยนวันสิ้นสุดโครงการหลักเป็นวันก่อนหน้าโครงการย่อยได้ เนื่องจากมีโครงการย่อย '{$latestSub['name']}' สิ้นสุดวันที่ {$subEndThai}");
+            Session::flash('error', "ไม่สามารถเปลี่ยนวันสิ้นสุดโครงการหลักเป็นวันก่อนหน้ากิจกรรมหลักได้ เนื่องจากมีกิจกรรมหลัก '{$latestSub['name']}' สิ้นสุดวันที่ {$subEndThai}");
             header('Location: ' . Router::url("/projects/{$projectId}"));
             exit;
         }
@@ -227,6 +237,16 @@ class ProjectController
             $matchedUser = Database::fetch("SELECT id FROM users WHERE name LIKE ? LIMIT 1", ["%{$responsiblePerson}%"]);
             if ($matchedUser) {
                 $responsibleUserId = (int)$matchedUser['id'];
+            }
+        }
+
+        // ป้องกันการมอบหมายโครงการให้ผู้บริหาร (Role Segregation & Least Privilege)
+        if ($responsibleUserId) {
+            $userRoleCheck = Database::fetch("SELECT r.name as role_name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = ?", [$responsibleUserId]);
+            if ($userRoleCheck && $userRoleCheck['role_name'] === 'executive') {
+                Session::flash('error', 'ไม่สามารถมอบหมายโครงการให้ผู้ใช้งานในบทบาท "ผู้บริหาร" ได้ (ผู้บริหารมีหน้าที่กำกับดูแลภาพรวม)');
+                header('Location: ' . Router::url("/projects/{$projectId}"));
+                exit;
             }
         }
 
@@ -314,6 +334,67 @@ class ProjectController
         exit;
     }
 
+    public function evaluate(string $id): void
+    {
+        if (!Auth::canManageProjects()) {
+            Session::flash('error', 'คุณไม่มีสิทธิ์ประเมินผลโครงการ');
+            header('Location: ' . Router::url("/projects/{$id}"));
+            exit;
+        }
+
+        $projectId = (int)$id;
+        $project = Database::fetch("SELECT * FROM projects WHERE id = ? AND parent_id IS NULL", [$projectId]);
+        if (!$project) {
+            Session::flash('error', 'ไม่พบโครงการหลักที่ต้องการประเมิน');
+            header('Location: ' . Router::url('/projects'));
+            exit;
+        }
+
+        // Validate score
+        if (!isset($_POST['evaluation_score']) || !is_numeric($_POST['evaluation_score'])) {
+            Session::flash('error', 'กรุณาระบุคะแนนการประเมินเป็นตัวเลข');
+            header('Location: ' . Router::url("/projects/{$projectId}"));
+            exit;
+        }
+
+        $score = (float)$_POST['evaluation_score'];
+        if ($score < 0 || $score > 100) {
+            Session::flash('error', 'คะแนนการประเมินต้องอยู่ระหว่าง 0 ถึง 100');
+            header('Location: ' . Router::url("/projects/{$projectId}"));
+            exit;
+        }
+
+        $gradeInfo = ProjectService::calculateEvaluationGrade($score);
+        $grade = $gradeInfo['grade'];
+        $notes = trim($_POST['evaluation_notes'] ?? '');
+        $userId = Auth::id() ?: 1;
+
+        $oldData = [
+            'score' => $project['evaluation_score'],
+            'grade' => $project['evaluation_grade'],
+        ];
+
+        $updateData = [
+            'evaluation_score' => $score,
+            'evaluation_grade' => $grade,
+            'evaluated_at'     => date('Y-m-d H:i:s'),
+            'evaluated_by'     => $userId,
+            'evaluation_notes' => $notes ?: null,
+        ];
+
+        Database::update('projects', $updateData, "id = ?", [$projectId]);
+
+        AuditLogService::log('EVALUATE', 'Project', $projectId, $oldData, [
+            'score' => $score,
+            'grade' => $grade,
+            'notes' => $notes,
+        ]);
+
+        Session::flash('success', "บันทึกผลการประเมินโครงการสำเร็จ: {$score} คะแนน (เกรด {$grade})");
+        header('Location: ' . Router::url("/projects/{$projectId}"));
+        exit;
+    }
+
     public function delete(string $id): void
     {
         if (!Auth::isAdmin()) {
@@ -352,7 +433,7 @@ class ProjectController
 
         AuditLogService::log('DELETE', 'Project', $projectId, ['name' => $name]);
 
-        Session::flash('success', "ลบโครงการ '{$name}' และโครงการย่อยทั้งหมดเรียบร้อยแล้ว");
+        Session::flash('success', "ลบโครงการ '{$name}' และกิจกรรมหลักทั้งหมดเรียบร้อยแล้ว");
         header('Location: ' . Router::url('/projects'));
         exit;
     }

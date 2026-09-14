@@ -9,6 +9,7 @@ use App\Core\Router;
 use App\Core\Validator;
 use App\Services\AuditLogService;
 use App\Services\ProgressService;
+use App\Enums\ActivityStatus;
 use Exception;
 
 class ActivityController
@@ -16,7 +17,7 @@ class ActivityController
     public function store(): void
     {
         if (!Auth::canManageProjects()) {
-            Session::flash('error', 'คุณไม่มีสิทธิ์เพิ่มกิจกรรม');
+            Session::flash('error', 'คุณไม่มีสิทธิ์เพิ่มกิจกรรมย่อย');
             header('Location: ' . Router::url('/projects'));
             exit;
         }
@@ -76,7 +77,7 @@ class ActivityController
 
             AuditLogService::log('CREATE_ACTIVITY', 'Activity', $actId, null, ['name' => $_POST['name'], 'project_id' => $projectId]);
             ProgressService::syncFromActivities($projectId);
-            Session::flash('success', "เพิ่มกิจกรรม '{$_POST['name']}' เรียบร้อยแล้ว");
+            Session::flash('success', "เพิ่มกิจกรรมย่อย '{$_POST['name']}' เรียบร้อยแล้ว");
         } catch (Exception $e) {
             Session::flash('error', 'เกิดข้อผิดพลาด: ' . $e->getMessage());
         }
@@ -88,7 +89,7 @@ class ActivityController
     public function updateStatus(string $id): void
     {
         if (!Auth::canManageProjects()) {
-            Session::flash('error', 'คุณไม่มีสิทธิ์ปรับสถานะกิจกรรม');
+            Session::flash('error', 'คุณไม่มีสิทธิ์ปรับสถานะกิจกรรมย่อย');
             header('Location: ' . Router::url('/projects'));
             exit;
         }
@@ -96,26 +97,47 @@ class ActivityController
         $actId = (int)$id;
         $act = Database::fetch("SELECT * FROM activities WHERE id = ?", [$actId]);
         if (!$act) {
-            Session::flash('error', 'ไม่พบกิจกรรม');
+            Session::flash('error', 'ไม่พบกิจกรรมย่อย');
             header('Location: ' . Router::url('/projects'));
             exit;
         }
 
-        $newStatus = $_POST['status'] ?? 'completed';
-        if ($newStatus === 'completed') {
-            $progress = 100.00;
-        } else {
-            $progress = 0.00;
+        $newStatus = trim($_POST['status'] ?? 'completed');
+        $validStatuses = ['not_started', 'in_progress', 'completed', 'has_problem', 'cancelled'];
+        if (!in_array($newStatus, $validStatuses)) {
+            Session::flash('error', "สถานะกิจกรรมย่อยไม่ถูกต้อง ({$newStatus})");
+            header('Location: ' . Router::url("/sub-projects/{$act['project_id']}"));
+            exit;
         }
 
-        Database::update('activities', [
+        if ($newStatus === 'completed') {
+            $progress = 100.00;
+        } elseif ($newStatus === 'not_started' || $newStatus === 'cancelled') {
+            $progress = 0.00;
+        } elseif ($newStatus === 'in_progress') {
+            $currProg = (float)($act['progress'] ?? 0);
+            $progress = ($currProg > 0 && $currProg < 100) ? $currProg : 50.00;
+        } else {
+            $progress = (float)($act['progress'] ?? 0);
+        }
+
+        $updateFields = [
             'status'   => $newStatus,
             'progress' => $progress,
-        ], "id = ?", [$actId]);
+        ];
+
+        if (isset($_POST['notes'])) {
+            $updateFields['notes'] = trim($_POST['notes']);
+        }
+
+        Database::update('activities', $updateFields, "id = ?", [$actId]);
 
         AuditLogService::log('UPDATE_ACTIVITY_STATUS', 'Activity', $actId, ['status' => $act['status']], ['status' => $newStatus]);
         ProgressService::syncFromActivities((int)$act['project_id']);
-        Session::flash('success', "อัปเดตสถานะกิจกรรมเป็น {$newStatus} เรียบร้อยแล้ว");
+
+        $statusLabel = ActivityStatus::labelFor($newStatus);
+
+        Session::flash('success', "อัปเดตสถานะกิจกรรมย่อยเป็น '{$statusLabel}' เรียบร้อยแล้ว (สถานะโครงการอัปเดตอัตโนมัติ)");
         header('Location: ' . Router::url("/sub-projects/{$act['project_id']}"));
         exit;
     }
@@ -123,7 +145,7 @@ class ActivityController
     public function update(string $id): void
     {
         if (!Auth::canManageProjects()) {
-            Session::flash('error', 'คุณไม่มีสิทธิ์แก้ไขกิจกรรม');
+            Session::flash('error', 'คุณไม่มีสิทธิ์แก้ไขกิจกรรมย่อย');
             header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? Router::url('/projects')));
             exit;
         }
@@ -131,7 +153,7 @@ class ActivityController
         $actId = (int)$id;
         $act = Database::fetch("SELECT * FROM activities WHERE id = ?", [$actId]);
         if (!$act) {
-            Session::flash('error', 'ไม่พบกิจกรรม');
+            Session::flash('error', 'ไม่พบกิจกรรมย่อย');
             header('Location: ' . Router::url('/projects'));
             exit;
         }
@@ -149,26 +171,16 @@ class ActivityController
         }
 
         $status = $_POST['status'] ?? $act['status'];
-        $rawProgress = isset($_POST['progress']) ? (float)$_POST['progress'] : (float)($act['progress'] ?? 0);
+        $currProgress = (float)($act['progress'] ?? 0);
 
         if ($status === 'completed') {
             $progress = 100.00;
         } elseif ($status === 'not_started' || $status === 'cancelled') {
             $progress = 0.00;
-        } elseif ($status === 'in_progress') {
-            if ($rawProgress >= 100.00) {
-                $progress = 0.00;
-            } else {
-                $progress = max(0.00, round($rawProgress, 2));
-            }
-        } elseif ($status === 'has_problem') {
-            if ($rawProgress >= 100.00) {
-                $progress = 0.00;
-            } else {
-                $progress = max(0.00, round($rawProgress, 2));
-            }
+        } elseif ($status === 'in_progress' || $status === 'has_problem') {
+            $progress = ($currProgress > 0 && $currProgress < 100) ? $currProgress : 50.00;
         } else {
-            $progress = min(100.00, max(0.00, round($rawProgress, 2)));
+            $progress = min(100.00, max(0.00, $currProgress));
         }
 
         $targetParticipants = isset($_POST['target_participant_count']) 
@@ -194,7 +206,7 @@ class ActivityController
 
         AuditLogService::log('UPDATE_ACTIVITY', 'Activity', $actId, ['name' => $act['name']], ['name' => $_POST['name']]);
         ProgressService::syncFromActivities((int)$act['project_id']);
-        Session::flash('success', "แก้ไขกิจกรรม '{$_POST['name']}' เรียบร้อยแล้ว");
+        Session::flash('success', "แก้ไขกิจกรรมย่อย '{$_POST['name']}' เรียบร้อยแล้ว");
         header('Location: ' . Router::url("/sub-projects/{$act['project_id']}"));
         exit;
     }
@@ -202,7 +214,7 @@ class ActivityController
     public function delete(string $id): void
     {
         if (!Auth::canManageProjects()) {
-            Session::flash('error', 'คุณไม่มีสิทธิ์ลบกิจกรรม');
+            Session::flash('error', 'คุณไม่มีสิทธิ์ลบกิจกรรมย่อย');
             header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? Router::url('/projects')));
             exit;
         }
@@ -210,7 +222,7 @@ class ActivityController
         $actId = (int)$id;
         $act = Database::fetch("SELECT * FROM activities WHERE id = ?", [$actId]);
         if (!$act) {
-            Session::flash('error', 'ไม่พบกิจกรรม');
+            Session::flash('error', 'ไม่พบกิจกรรมย่อย');
             header('Location: ' . Router::url('/projects'));
             exit;
         }
@@ -222,7 +234,7 @@ class ActivityController
         AuditLogService::log('DELETE_ACTIVITY', 'Activity', $actId, ['name' => $name, 'project_id' => $projectId]);
         ProgressService::syncFromActivities($projectId);
 
-        Session::flash('success', "ลบกิจกรรม '{$name}' เรียบร้อยแล้ว");
+        Session::flash('success', "ลบกิจกรรมย่อย '{$name}' เรียบร้อยแล้ว");
         header('Location: ' . Router::url("/sub-projects/{$projectId}"));
         exit;
     }

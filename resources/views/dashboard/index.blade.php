@@ -180,11 +180,11 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
 
     <!-- 2. 5 Primary KPI Metric Cards (Single Clean Row / 2-Col Grid on Mobile) -->
     <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2.5 sm:gap-4 w-full max-w-full">
-        <!-- 1. โครงการทั้งหมด (Full width on mobile) -->
+        <!-- 1. กิจกรรมหลักทั้งหมด (Full width on mobile) -->
         <div class="col-span-2 sm:col-span-1 group relative p-3 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-blue-400/60 dark:hover:border-blue-500/40 transition-all overflow-hidden flex flex-col justify-between">
             <div class="absolute top-0 left-0 right-0 h-1 bg-blue-500"></div>
             <div class="flex items-center justify-between gap-1.5">
-                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">โครงการทั้งหมด</span>
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">กิจกรรมหลักทั้งหมด</span>
                 <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                     <i data-lucide="folder-kanban" class="w-4 h-4"></i>
                 </div>
@@ -193,7 +193,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                 <div class="text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400 font-heading tracking-tight leading-tight">
                     <?= number_format($stats['sub_total']) ?>
                 </div>
-                <div class="text-[10px] sm:text-[10.5px] text-slate-400 mt-0.5 truncate">โครงการย่อยในระบบ</div>
+                <div class="text-[10px] sm:text-[10.5px] text-slate-400 mt-0.5 truncate">กิจกรรมหลักในระบบ</div>
             </div>
             <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10px] sm:text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
                 <span>โครงการหลัก</span>
@@ -335,7 +335,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                             <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center select-none">
                                 <span class="text-[10px] sm:text-[11px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest font-sans">รวมทั้งหมด</span>
                                 <span class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white font-heading tracking-tight my-0.5 leading-none"><?= $stats['sub_total'] ?></span>
-                                <span class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium">โครงการย่อย</span>
+                                <span class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium">กิจกรรมหลัก</span>
                             </div>
                         </div>
                     </div>
@@ -1136,7 +1136,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                     data: {
                         labels: labels,
                         datasets: [{
-                            label: 'จำนวนโครงการย่อย',
+                            label: 'จำนวนกิจกรรมหลัก',
                             data: subCounts,
                             backgroundColor: catGrad,
                             borderColor: isDark ? '#a78bfa' : '#7c3aed',
@@ -1168,7 +1168,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                                     label: (context) => {
                                         const idx = context.dataIndex;
                                         const c = catData[idx];
-                                        return ` โครงการย่อย: ${context.raw} โครงการ (โครงการหลัก: ${c.project_count})`;
+                                        return ` กิจกรรมหลัก: ${context.raw} กิจกรรม (โครงการหลัก: ${c.project_count})`;
                                     },
                                     afterLabel: (context) => {
                                         const idx = context.dataIndex;

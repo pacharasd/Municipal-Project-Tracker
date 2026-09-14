@@ -14,6 +14,10 @@ foreach ($project['activities'] ?? [] as $act) {
 }
 $activitiesJson = json_encode($activitiesSummary, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
 
+// Activity 5 Unified Statuses (Single Source of Truth)
+$allActivityStatuses = \App\Enums\ActivityStatus::all();
+$actStatusesJson = json_encode($allActivityStatuses, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
+
 $disbursementsSummary = [];
 foreach ($project['disbursements'] ?? [] as $disb) {
     $disbursementsSummary[] = [
@@ -35,12 +39,12 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
         <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
             <?php if (\App\Core\Auth::canManageProjects()): ?>
                 <!-- Upload photos/docs button -->
-                <button type="button" @click="uploadModal = true" class="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-sm">
-                    <i data-lucide="paperclip" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i> <span class="truncate">แนบเอกสาร/รูปภาพ</span>
+                <button type="button" @click="uploadModal = true" class="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm">
+                    <i data-lucide="paperclip" class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 shrink-0"></i> <span class="truncate">แนบเอกสาร/รูปภาพ</span>
                 </button>
 
                 <!-- Edit Subproject button -->
-                <button type="button" @click="editSubModal = true" class="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-xl hover:bg-blue-100 transition-colors shadow-sm">
+                <button type="button" @click="editSubModal = true" class="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/60 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors shadow-sm">
                     <i data-lucide="edit-3" class="w-3.5 h-3.5 shrink-0"></i> <span class="truncate">แก้ไขโครงการ</span>
                 </button>
 
@@ -48,7 +52,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                 <form action="<?= \App\Core\Router::url("/sub-projects/{$project['id']}/delete") ?>" method="POST" class="w-full sm:w-auto"
                       onsubmit="return confirm('ยืนยันการลบโครงการย่อย <?= htmlspecialchars(addslashes($project['name'] ?? ''), ENT_QUOTES, 'UTF-8') ?> ? กิจกรรมและการเบิกจ่ายทั้งหมดจะถูกลบด้วย');">
                     <input type="hidden" name="_token" value="<?= $csrfToken ?>">
-                    <button type="submit" class="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl hover:bg-rose-100 transition-colors shadow-sm">
+                    <button type="submit" class="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 text-xs font-semibold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800/60 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors shadow-sm">
                         <i data-lucide="trash-2" class="w-3.5 h-3.5 shrink-0"></i> <span>ลบ</span>
                     </button>
                 </form>
@@ -56,11 +60,11 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
             <?php if (\App\Core\Auth::canManageProjects()): ?>
                 <?php if ($project['status'] === 'has_problem'): ?>
-                    <button type="button" @click="resolveModal = true" class="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 text-xs font-semibold text-emerald-800 bg-emerald-100 rounded-xl hover:bg-emerald-200 transition-colors">
+                    <button type="button" @click="resolveModal = true" class="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800/60 rounded-xl hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors">
                         <i data-lucide="check-circle-2" class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0"></i> <span class="truncate">แก้ปัญหาแล้ว</span>
                     </button>
                 <?php else: ?>
-                    <button type="button" @click="problemModal = true" class="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 text-xs font-semibold text-rose-800 bg-rose-100 rounded-xl hover:bg-rose-200 transition-colors">
+                    <button type="button" @click="problemModal = true" class="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 text-xs font-semibold text-rose-800 dark:text-rose-300 bg-rose-100 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-800/60 rounded-xl hover:bg-rose-200 dark:hover:bg-rose-900/50 transition-colors">
                         <i data-lucide="alert-triangle" class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0"></i> <span class="truncate">แจ้งปัญหา</span>
                     </button>
                 <?php endif; ?>
@@ -70,26 +74,26 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
     <!-- Red Problem Alert if project has issue -->
     <?php if ($project['status'] === 'has_problem'): ?>
-        <div class="p-5 rounded-2xl bg-rose-50 border-2 border-rose-300 text-rose-900 shadow-sm flex items-start gap-4">
-            <div class="p-2.5 rounded-xl bg-rose-100 text-rose-700 flex-shrink-0">
+        <div class="p-5 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border-2 border-rose-300 dark:border-rose-800/80 text-rose-900 dark:text-rose-200 shadow-sm flex items-start gap-4">
+            <div class="p-2.5 rounded-xl bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300 flex-shrink-0">
                 <i data-lucide="alert-octagon" class="w-6 h-6"></i>
             </div>
-            <div class="flex-1">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-base font-bold text-rose-900">โครงการนี้มีปัญหาหรืออุปสรรคในการดำเนินงาน</h3>
-                    <span class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-rose-200 text-rose-900">อยู่ในบัญชีเฝ้าระวัง</span>
+            <div class="flex-1 min-w-0">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <h3 class="text-base font-bold text-rose-900 dark:text-rose-200">โครงการนี้มีปัญหาหรืออุปสรรคในการดำเนินงาน</h3>
+                    <span class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-rose-200 dark:bg-rose-900/70 text-rose-900 dark:text-rose-200 border border-rose-300 dark:border-rose-700/80">อยู่ในบัญชีเฝ้าระวัง</span>
                 </div>
-                <p class="text-sm text-rose-800 mt-1 font-medium leading-relaxed">
-                    <b>รายละเอียดปัญหา:</b> <?= nl2br(htmlspecialchars($project['problem_description'] ?? '')) ?>
+                <p class="text-sm text-rose-800 dark:text-rose-300 mt-1.5 font-medium leading-relaxed break-words">
+                    <b class="text-rose-900 dark:text-rose-100">รายละเอียดปัญหา:</b> <?= nl2br(htmlspecialchars($project['problem_description'] ?? '')) ?>
                 </p>
                 <?php if (\App\Core\Auth::canManageProjects()): ?>
-                    <div class="mt-3 flex items-center gap-2">
-                        <button type="button" @click="resolveModal = true" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white text-rose-900 border border-rose-300 hover:bg-rose-100 transition-colors">
+                    <div class="mt-3.5 flex flex-wrap items-center gap-2">
+                        <button type="button" @click="resolveModal = true" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-rose-900/80 text-rose-900 dark:text-white border border-rose-300 dark:border-rose-700 hover:bg-rose-100 dark:hover:bg-rose-800 transition-colors shadow-2xs cursor-pointer">
                             <i data-lucide="check" class="w-3.5 h-3.5"></i> แก้ไขปัญหาเรียบร้อยแล้ว
                         </button>
-                        <button type="button" @click="statusModal = true" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-rose-100 text-rose-900 hover:bg-rose-200 transition-colors">
-                            <i data-lucide="sliders" class="w-3.5 h-3.5"></i> ปรับเปลี่ยนสถานะ
-                        </button>
+                        <a href="#activities-section" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-rose-100 dark:bg-rose-950/80 text-rose-900 dark:text-rose-200 hover:bg-rose-200 dark:hover:bg-rose-900 border border-rose-200 dark:border-rose-800/80 transition-colors shadow-2xs">
+                            <i data-lucide="arrow-down" class="w-3.5 h-3.5"></i> ตรวจสอบกิจกรรมย่อย
+                        </a>
                     </div>
                 <?php endif; ?>
             </div>
@@ -100,8 +104,8 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
     <div class="bg-white dark:bg-[#181a20] p-4 sm:p-8 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex flex-wrap items-center gap-2">
-                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200"><?= htmlspecialchars($project['department_name'] ?? 'ไม่ระบุหน่วยงาน') ?></span>
-                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">ปีงบประมาณ <?= htmlspecialchars((string)($project['fiscal_year'] ?? '-')) ?></span>
+                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60"><?= htmlspecialchars($project['department_name'] ?? 'ไม่ระบุหน่วยงาน') ?></span>
+                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300">ปีงบประมาณ <?= htmlspecialchars((string)($project['fiscal_year'] ?? '-')) ?></span>
                 <?php if (!empty($project['category_name'])): ?>
                     <span class="px-3 py-1 text-xs font-semibold rounded-full bg-purple-50 dark:bg-purple-500/15 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/30" title="<?= htmlspecialchars($project['category_name']) ?>"><?= htmlspecialchars($project['category_name']) ?></span>
                 <?php endif; ?>
@@ -109,11 +113,11 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
             <?php
             $stClass = match($project['status']) {
-                'completed' => 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/30',
-                'in_progress' => 'bg-sky-50 text-sky-700 border-sky-300 hover:bg-sky-100 dark:bg-sky-500/10 dark:text-sky-300 dark:border-sky-500/30',
-                'has_problem' => 'bg-rose-50 text-rose-700 border-rose-300 hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-300 dark:border-rose-500/30',
-                'cancelled' => 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 dark:bg-slate-500/10 dark:text-slate-300 dark:border-slate-500/30',
-                default => 'bg-indigo-50 text-indigo-700 border-indigo-300 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-300 dark:border-indigo-500/30'
+                'completed' => 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/30',
+                'in_progress' => 'bg-sky-50 text-sky-700 border-sky-300 dark:bg-sky-500/10 dark:text-sky-300 dark:border-sky-500/30',
+                'has_problem' => 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-500/10 dark:text-rose-300 dark:border-rose-500/30',
+                'cancelled' => 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-500/10 dark:text-slate-300 dark:border-slate-500/30',
+                default => 'bg-indigo-50 text-indigo-700 border-indigo-300 dark:bg-indigo-500/10 dark:text-indigo-300 dark:border-indigo-500/30'
             };
             $stLabel = match($project['status']) {
                 'completed' => 'เสร็จสิ้นสมบูรณ์',
@@ -131,66 +135,58 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
             };
             ?>
 
-            <!-- Interactive Status Button for Admin/Managers -->
-            <?php if (\App\Core\Auth::canManageProjects()): ?>
-                <button type="button" @click="statusModal = true" 
-                        class="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-bold rounded-full border <?= $stClass ?> hover:ring-2 hover:ring-offset-1 hover:ring-indigo-400 transition-all cursor-pointer shadow-sm group"
-                        title="คลิกเพื่อปรับเปลี่ยนสถานะโครงการและเปอร์เซ็นต์">
-                    <span class="w-2 h-2 rounded-full <?= $stDotColor ?>"></span>
+            <!-- Status Indicator (100% Activity-Driven) -->
+            <div class="shrink-0">
+                <span class="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 text-xs font-bold rounded-full border shadow-2xs <?= $stClass ?>"
+                      title="สถานะโครงการคำนวณอัตโนมัติตามกิจกรรมย่อย">
+                    <span class="w-2 h-2 rounded-full <?= $stDotColor ?> <?= $project['status'] === 'in_progress' ? 'animate-pulse' : '' ?>"></span>
                     <span><?= $stLabel ?></span>
-                    <i data-lucide="edit-3" class="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity"></i>
-                </button>
-            <?php else: ?>
-                <span class="px-3.5 py-1 text-xs font-bold rounded-full border <?= $stClass ?>">
-                    <?= $stLabel ?>
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5 opacity-50" title="คำนวณอัตโนมัติจากกิจกรรมย่อย"></i>
                 </span>
-            <?php endif; ?>
+            </div>
         </div>
 
         <h1 class="text-xl sm:text-2xl font-bold font-heading text-slate-900 dark:text-white leading-snug tracking-tight mt-3">
-            <?= htmlspecialchars($project['name'] ?? '') ?>
+            <?= htmlspecialchars($project['name'] ?? 'ไม่มีชื่อโครงการย่อย') ?>
         </h1>
 
-        <div class="text-xs text-slate-500 dark:text-slate-400 mt-2 flex flex-wrap items-baseline gap-1.5 leading-relaxed">
-            <span class="text-slate-400 dark:text-slate-500 font-medium">โครงการหลัก:</span>
-            <a href="<?= \App\Core\Router::url("/projects/{$project['parent_id']}") ?>" class="text-emerald-600 dark:text-emerald-400 font-medium hover:underline">
-                <?= htmlspecialchars($project['parent_name'] ?? 'โครงการหลัก') ?>
-            </a>
-        </div>
+        <!-- Back to parent project link -->
+        <?php if (!empty($project['parent_id'])): ?>
+            <div class="mt-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                <span>โครงการหลัก:</span>
+                <a href="<?= \App\Core\Router::url("/projects/{$project['parent_id']}") ?>" class="text-emerald-600 dark:text-emerald-400 font-semibold hover:underline truncate max-w-md">
+                    <?= htmlspecialchars($project['parent_name'] ?? 'ดูโครงการหลัก') ?>
+                </a>
+            </div>
+        <?php endif; ?>
 
-        <!-- Progress & Status Management Widget -->
-        <div class="mt-5 p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50/30 dark:from-white/[0.02] dark:to-indigo-950/20 border border-slate-200 dark:border-white/[0.08] shadow-sm">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <!-- Progress & Automatic Status Indicator (No manual buttons) -->
+        <div class="mt-6 pt-6 border-t border-slate-100 dark:border-white/[0.08]">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <div class="text-[11px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400 flex items-center gap-1.5">
-                        <i data-lucide="trending-up" class="w-3.5 h-3.5"></i> ความคืบหน้าของโครงการ
-                    </div>
-                    <div class="mt-1.5 flex flex-wrap items-baseline gap-2.5">
-                        <span class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white"><?= number_format($project['progress'], 1) ?>%</span>
+                    <div class="flex items-center gap-2">
                         <span class="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">ความสำเร็จโครงการ</span>
                         <?php 
                             $completedActs = count(array_filter($project['activities'] ?? [], fn($a) => ($a['status'] ?? '') === 'completed'));
                             $plannedActs = max(1, (int)($project['planned_activity_count'] ?? count($project['activities'] ?? [])));
                         ?>
                         <span class="text-[11px] px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 font-medium">
-                            กิจกรรม: <?= $completedActs ?> / <?= $plannedActs ?> ครั้ง
+                            กิจกรรมย่อย: <?= $completedActs ?> / <?= $plannedActs ?> ครั้ง
                         </span>
                     </div>
                     <div class="text-xs text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap items-center gap-2">
                         <span>สถานะปัจจุบัน: <b class="text-slate-800 dark:text-slate-200 font-semibold"><?= $stLabel ?></b></span>
                         <span>•</span>
-                        <span>โหมด: <span class="font-medium text-emerald-700 dark:text-emerald-400">คำนวณอัตโนมัติตามความสำเร็จของกิจกรรม</span></span>
+                        <span class="inline-flex items-center gap-1 font-medium text-emerald-700 dark:text-emerald-400">
+                            <i data-lucide="sparkles" class="w-3 h-3"></i>
+                            คำนวณอัตโนมัติตามความสำเร็จของกิจกรรมย่อย
+                        </span>
                     </div>
                 </div>
 
-                <!-- Action Buttons: Status -->
-                <div class="flex flex-wrap items-center gap-2">
-                    <?php if (\App\Core\Auth::canManageProjects()): ?>
-                        <button type="button" @click="statusModal = true"
-                                class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm shadow-indigo-600/20 transition-all cursor-pointer">
-                             <i data-lucide="tag" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i> ปรับสถานะโครงการ
-                        </button>
-                    <?php endif; ?>
+                <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-white/[0.03] px-3.5 py-1.5 rounded-xl border border-slate-200/60 dark:border-white/[0.06] shrink-0 self-start sm:self-auto">
+                    <i data-lucide="layers" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>
+                    <span>สถานะขับเคลื่อนจากกิจกรรมย่อย</span>
                 </div>
             </div>
 
@@ -318,12 +314,12 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
     <!-- Activities & Budget Two Columns -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Activities Column -->
-        <div class="bg-white dark:bg-[#181a20] p-4 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm space-y-4">
+        <div id="activities-section" class="bg-white dark:bg-[#181a20] p-4 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div class="min-w-0 flex-1">
                     <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <i data-lucide="calendar-check" class="w-5 h-5 text-blue-600 shrink-0"></i>
-                        <span class="truncate">กิจกรรมที่กำหนดในโครงการ</span>
+                        <span class="truncate">กิจกรรมย่อย</span>
                     </h2>
                     <p class="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5 ml-7">
                         (<?= count($project['activities'] ?? []) ?> รายการ)
@@ -333,7 +329,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                 <div class="flex items-center gap-2 w-full sm:w-auto shrink-0">
                     <?php if (!empty($project['activities'])): ?>
                         <div class="relative flex-1 sm:w-36">
-                            <input type="text" x-model="actSearch" @input="actPage = 1" placeholder="ค้นหากิจกรรม..." 
+                            <input type="text" x-model="actSearch" @input="actPage = 1" placeholder="ค้นหากิจกรรมย่อย..." 
                                    class="w-full pl-7 pr-6 py-1.5 sm:py-1 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#12141a] text-slate-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none">
                             <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                             <button type="button" x-show="actSearch" @click="actSearch = ''; actPage = 1;" class="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 cursor-pointer">
@@ -345,7 +341,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                     <?php if (\App\Core\Auth::canManageProjects()): ?>
                         <button type="button" @click="activityModal = true" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors shadow-sm shrink-0 whitespace-nowrap cursor-pointer">
                             <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                            <span>เพิ่มกิจกรรม</span>
+                            <span>เพิ่มกิจกรรมย่อย</span>
                         </button>
                     <?php endif; ?>
                 </div>
@@ -353,29 +349,96 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
             <?php if (empty($project['activities'])): ?>
                 <div class="p-6 text-center text-xs text-slate-400 bg-slate-50 dark:bg-[#12141a] rounded-xl border border-slate-200 dark:border-white/[0.08]">
-                    ยังไม่มีรายการกิจกรรมในโครงการนี้
+                    ยังไม่มีรายการกิจกรรมย่อยในกิจกรรมหลักนี้
                 </div>
             <?php else: ?>
                 <div class="space-y-3">
                     <?php foreach ($project['activities'] as $act): ?>
+                        <?php
+                            $actSt = $act['status'] ?? 'not_started';
+                            $actCase = \App\Enums\ActivityStatus::resolveCase($actSt);
+                            $actStInfo = [
+                                'label' => $actCase ? $actCase->label() : \App\Enums\ActivityStatus::labelFor($actSt),
+                                'badge' => $actCase ? $actCase->badgeClasses() : 'bg-slate-100 text-slate-700 border-slate-200',
+                                'dot'   => $actCase ? $actCase->dotClass() : 'bg-slate-400',
+                                'desc'  => $actCase ? $actCase->description() : '',
+                            ];
+                        ?>
                         <div x-show="isActVisible(<?= $act['id'] ?>)" 
                              class="p-4 rounded-xl border border-slate-200 dark:border-white/[0.08] hover:border-blue-300 dark:hover:border-blue-500/40 transition-all bg-white dark:bg-[#12141a] flex items-start justify-between gap-3">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2">
-                                    <h4 class="text-sm font-bold text-slate-900 dark:text-white"><?= htmlspecialchars($act['name'] ?? '') ?></h4>
-                                    <?php if ($act['status'] === 'completed'): ?>
-                                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-full whitespace-nowrap bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">เสร็จแล้ว</span>
-                                    <?php elseif ($act['status'] === 'in_progress'): ?>
-                                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-full whitespace-nowrap bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/40">ดำเนินการอยู่</span>
-                                    <?php elseif ($act['status'] === 'has_problem'): ?>
-                                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-full whitespace-nowrap bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40">มีปัญหา</span>
-                                    <?php elseif ($act['status'] === 'cancelled'): ?>
-                                        <span class="px-2 py-0.5 text-[10px] font-semibold rounded-full whitespace-nowrap bg-slate-100 dark:bg-slate-900/40 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800/40">ยกเลิก</span>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <h4 class="text-sm font-bold text-slate-900 dark:text-white truncate max-w-sm sm:max-w-md"><?= htmlspecialchars($act['name'] ?? '') ?></h4>
+
+                                    <!-- Activity Status: Interactive Dropdown for Managers, Badge for Viewers -->
+                                    <?php if (\App\Core\Auth::canManageProjects()): ?>
+                                        <div class="relative" x-data="{ openStatusMenu: false }" @click.outside="openStatusMenu = false">
+                                            <button type="button" 
+                                                    @click="openStatusMenu = !openStatusMenu" 
+                                                    class="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-bold rounded-full border transition-all cursor-pointer shadow-2xs hover:shadow-xs <?= $actStInfo['badge'] ?>"
+                                                    title="คลิกเพื่อเปลี่ยนสถานะกิจกรรมย่อยนี้">
+                                                <span class="w-1.5 h-1.5 rounded-full <?= $actStInfo['dot'] ?> <?= $actSt === 'in_progress' ? 'animate-pulse' : '' ?>"></span>
+                                                <span><?= $actStInfo['label'] ?></span>
+                                                <svg class="w-3 h-3 opacity-60 transition-transform duration-150" :class="openStatusMenu ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </button>
+
+                                            <!-- Themed Status Selector Dropdown (5 สถานะตรงกัน 100%) -->
+                                            <div x-show="openStatusMenu" 
+                                                 x-cloak
+                                                 x-transition:enter="transition ease-out duration-150"
+                                                 x-transition:enter-start="opacity-0 translate-y-1 scale-98"
+                                                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                                 x-transition:leave="transition ease-in duration-100"
+                                                 x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                                                 x-transition:leave-end="opacity-0 translate-y-1 scale-98"
+                                                 class="absolute left-0 top-full mt-1.5 w-60 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200/90 dark:border-slate-700/90 p-1.5 z-50 text-xs text-left space-y-1 overflow-hidden backdrop-blur-md">
+                                                <div class="px-2.5 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                                    <span>เปลี่ยนสถานะกิจกรรมย่อย:</span>
+                                                    <span class="text-[9px] lowercase font-normal opacity-70">5 สถานะ</span>
+                                                </div>
+                                                
+                                                <?php foreach ($allActivityStatuses as $stOption): ?>
+                                                    <form action="<?= \App\Core\Router::url("/activities/{$act['id']}/status") ?>" method="POST">
+                                                        <input type="hidden" name="_token" value="<?= $csrfToken ?>">
+                                                        <input type="hidden" name="status" value="<?= $stOption['value'] ?>">
+                                                        <button type="submit" 
+                                                                class="w-full text-left px-2.5 py-2 rounded-xl flex items-center justify-between gap-2 transition cursor-pointer <?= $actSt === $stOption['value'] ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 font-semibold ring-1 ring-blue-500/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200' ?>">
+                                                            <div class="flex items-center gap-2.5 min-w-0">
+                                                                <span class="w-2 h-2 rounded-full shrink-0 <?= $stOption['dot'] ?>"></span>
+                                                                <div>
+                                                                    <div class="text-xs font-semibold leading-snug"><?= $stOption['label'] ?></div>
+                                                                    <div class="text-[10px] text-slate-400 dark:text-slate-500 leading-tight"><?= $stOption['desc'] ?></div>
+                                                                </div>
+                                                            </div>
+                                                            <?php if ($actSt === $stOption['value']): ?>
+                                                                <div class="text-blue-600 dark:text-blue-400 shrink-0">
+                                                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                                                    </svg>
+                                                                </div>
+                                                            <?php endif; ?>
+                                                        </button>
+                                                    </form>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        </div>
                                     <?php else: ?>
-                                        <span class="px-2 py-0.5 text-[10px] font-semibold rounded-full whitespace-nowrap bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/40">ยังไม่เริ่ม</span>
+                                        <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full whitespace-nowrap border <?= $actStInfo['badge'] ?>">
+                                            <?= $actStInfo['label'] ?>
+                                        </span>
                                     <?php endif; ?>
                                 </div>
-                                <p class="text-xs text-slate-500 mt-1"><?= htmlspecialchars($act['description'] ?? 'ไม่มีรายละเอียด') ?></p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1"><?= htmlspecialchars($act['description'] ?? 'ไม่มีรายละเอียด') ?></p>
+                                
+                                <?php if (!empty($act['notes']) && $act['status'] === 'has_problem'): ?>
+                                    <div class="mt-2 p-2 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/40 text-[11px] text-rose-800 dark:text-rose-300 flex items-start gap-1.5">
+                                        <i data-lucide="alert-circle" class="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5"></i>
+                                        <span><strong>ปัญหา/อุปสรรค:</strong> <?= htmlspecialchars($act['notes']) ?></span>
+                                    </div>
+                                <?php endif; ?>
+
                                 <?php 
                                     $actTarget = (int)($act['target_participant_count'] ?? 0);
                                     $actActual = (int)($act['actual_participant_count'] ?? $act['participant_count'] ?? 0);
@@ -412,28 +475,9 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                             </div>
 
                             <div class="flex items-center gap-1 flex-shrink-0">
-                                <?php if (\App\Core\Auth::canManageProjects() && $act['status'] !== 'completed'): ?>
-                                    <form action="<?= \App\Core\Router::url("/activities/{$act['id']}/status") ?>" method="POST">
-                                        <input type="hidden" name="_token" value="<?= $csrfToken ?>">
-                                        <input type="hidden" name="status" value="completed">
-                                        <button type="submit" class="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer" title="บันทึกว่าเสร็จสิ้นแล้ว">
-                                            <i data-lucide="check-circle" class="w-4 h-4"></i>
-                                        </button>
-                                    </form>
-                                <?php elseif (\App\Core\Auth::canManageProjects() && $act['status'] === 'completed'): ?>
-                                    <form action="<?= \App\Core\Router::url("/activities/{$act['id']}/status") ?>" method="POST"
-                                          onsubmit="return confirm('ต้องการยกเลิกสถานะเสร็จสิ้น และเปลี่ยนกลับเป็นกำลังดำเนินการ ใช่หรือไม่?');">
-                                        <input type="hidden" name="_token" value="<?= $csrfToken ?>">
-                                        <input type="hidden" name="status" value="in_progress">
-                                        <button type="submit" class="p-1.5 text-amber-500 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-lg transition-colors cursor-pointer" title="เปลี่ยนกลับเป็นกำลังดำเนินการ (ยกเลิกเสร็จสิ้น)">
-                                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                                        </button>
-                                    </form>
-                                <?php endif; ?>
-
                                 <?php if (\App\Core\Auth::canManageProjects()): ?>
                                     <form action="<?= \App\Core\Router::url("/activities/{$act['id']}/delete") ?>" method="POST"
-                                          onsubmit="return confirm('ยืนยันการลบกิจกรรม <?= htmlspecialchars(addslashes($act['name'] ?? ''), ENT_QUOTES, 'UTF-8') ?> ?');">
+                                          onsubmit="return confirm('ยืนยันการลบกิจกรรมย่อย <?= htmlspecialchars(addslashes($act['name'] ?? ''), ENT_QUOTES, 'UTF-8') ?> ?');">
                                         <input type="hidden" name="_token" value="<?= $csrfToken ?>">
                                         <?php $actJson = htmlspecialchars(json_encode([
                                             'id'                       => $act['id'],
@@ -450,10 +494,10 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                                             'notes'                    => $act['notes'] ?? '',
                                         ]), ENT_QUOTES, 'UTF-8'); ?>
                                         <button type="button" @click="openEditAct(<?= $actJson ?>)"
-                                                class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="แก้ไขกิจกรรม">
+                                                class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg transition-colors cursor-pointer" title="แก้ไขกิจกรรมย่อย">
                                             <i data-lucide="edit-3" class="w-4 h-4"></i>
                                         </button>
-                                        <button type="submit" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="ลบกิจกรรม">
+                                        <button type="submit" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer" title="ลบกิจกรรมย่อย">
                                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                                         </button>
                                     </form>
@@ -464,7 +508,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
                     <!-- Empty state when search returns 0 -->
                     <div x-show="filteredActivities.length === 0" class="p-6 text-center text-xs text-slate-400 bg-slate-50 dark:bg-[#12141a] rounded-xl border border-slate-200 dark:border-white/[0.08]">
-                        ไม่พบกิจกรรมที่ค้นหา
+                        ไม่พบกิจกรรมย่อยที่ค้นหา
                     </div>
                 </div>
 
@@ -706,9 +750,9 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
             <div>
                 <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
                     <i data-lucide="image" class="w-5 h-5 text-emerald-600"></i>
-                    เอกสารแนบและภาพถ่ายกิจกรรม (<?= count($project['attachments'] ?? []) ?> รายการ)
+                    เอกสารแนบและภาพถ่ายกิจกรรมย่อย (<?= count($project['attachments'] ?? []) ?> รายการ)
                 </h2>
-                <p class="text-xs text-slate-500 mt-0.5">ภาพถ่ายการดำเนินกิจกรรม เอกสารอนุมัติ และหลักฐานเชิงประจักษ์</p>
+                <p class="text-xs text-slate-500 mt-0.5">ภาพถ่ายการดำเนินกิจกรรมย่อย เอกสารอนุมัติ และหลักฐานเชิงประจักษ์</p>
             </div>
             <?php if (\App\Core\Auth::canManageProjects()): ?>
                 <button type="button" @click="uploadModal = true" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors shadow-sm">
@@ -767,18 +811,18 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
     <!-- Modal: Report Problem -->
     <template x-teleport="body">
         <div x-show="problemModal" x-cloak data-teleport-modal="true" style="display: none;" @click.self="problemModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-smooth">
-            <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden modal-box-smooth transform-gpu">
-                <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-rose-50/50">
+            <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden modal-box-smooth transform-gpu">
+                <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-rose-50/70 dark:bg-rose-950/40">
                     <div class="flex items-center gap-3">
-                        <div class="p-2 rounded-xl bg-rose-100 text-rose-700">
+                        <div class="p-2.5 rounded-2xl bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300 shadow-sm">
                             <i data-lucide="alert-triangle" class="w-5 h-5"></i>
                         </div>
                         <div>
-                            <h3 class="text-base font-bold text-rose-900">แจ้งปัญหาและอุปสรรค</h3>
-                            <p class="text-xs text-rose-700">โครงการจะถูกจัดเข้าสู่บัญชีเฝ้าระวัง (Watchlist) ทันที</p>
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white">แจ้งปัญหาและอุปสรรค</h3>
+                            <p class="text-xs text-rose-700 dark:text-rose-400 font-medium">โครงการจะถูกจัดเข้าสู่บัญชีเฝ้าระวัง (Watchlist) ทันที</p>
                         </div>
                     </div>
-                    <button type="button" @click.stop="problemModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 hover:bg-rose-100 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
+                    <button type="button" @click.stop="problemModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-rose-100/60 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
                         <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
                     </button>
                 </div>
@@ -787,13 +831,18 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                     <input type="hidden" name="_token" value="<?= $csrfToken ?>">
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">รายละเอียดปัญหาและอุปสรรคที่พบ <span class="text-rose-500">*</span></label>
-                        <textarea name="problem_description" rows="4" required placeholder="อธิบายสาเหตุ ปัญหา หรือความล่าช้า เช่น ผู้รับจ้างส่งงานล่าช้า, ขาดแคลนวัสดุ..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500"></textarea>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                            รายละเอียดปัญหาและอุปสรรคที่พบ <span class="text-rose-500">*</span>
+                        </label>
+                        <textarea name="problem_description" rows="4" required placeholder="อธิบายสาเหตุ ปัญหา หรือความล่าช้า เช่น ผู้รับจ้างส่งงานล่าช้า, ขาดแคลนวัสดุ..." class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none dark:text-white placeholder-slate-400"></textarea>
                     </div>
 
-                    <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-                        <button type="button" @click="problemModal = false" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl">ยกเลิก</button>
-                        <button type="submit" class="px-5 py-2 text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-sm shadow-rose-600/30">
+                    <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5">
+                        <button type="button" @click="problemModal = false" class="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer">
+                            ยกเลิก
+                        </button>
+                        <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-md hover:shadow-lg transition cursor-pointer flex items-center gap-1.5">
+                            <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
                             บันทึกแจ้งปัญหา
                         </button>
                     </div>
@@ -805,18 +854,18 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
     <!-- Modal: Resolve Problem -->
     <template x-teleport="body">
         <div x-show="resolveModal" x-cloak data-teleport-modal="true" style="display: none;" @click.self="resolveModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-smooth">
-            <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden modal-box-smooth transform-gpu">
-                <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-emerald-50/50">
+            <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden modal-box-smooth transform-gpu">
+                <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-emerald-50/70 dark:bg-emerald-950/40">
                     <div class="flex items-center gap-3">
-                        <div class="p-2 rounded-xl bg-emerald-100 text-emerald-700">
+                        <div class="p-2.5 rounded-2xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 shadow-sm">
                             <i data-lucide="check-circle-2" class="w-5 h-5"></i>
                         </div>
                         <div>
-                            <h3 class="text-base font-bold text-emerald-900">บันทึกการแก้ไขปัญหาเรียบร้อย</h3>
-                            <p class="text-xs text-emerald-700">ปลดโครงการออกจากสถานะ "มีปัญหา"</p>
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white">บันทึกการแก้ไขปัญหาเรียบร้อย</h3>
+                            <p class="text-xs text-emerald-700 dark:text-emerald-400 font-medium">ปลดโครงการออกจากสถานะ "มีปัญหา" และเปลี่ยนกิจกรรมย่อยเป็น "กำลังดำเนินการ"</p>
                         </div>
                     </div>
-                    <button type="button" @click.stop="resolveModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 hover:bg-emerald-100 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
+                    <button type="button" @click.stop="resolveModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-emerald-100/60 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
                         <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
                     </button>
                 </div>
@@ -824,14 +873,27 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                 <form action="<?= \App\Core\Router::url("/sub-projects/{$project['id']}/resolve-problem") ?>" method="POST" class="p-6 space-y-4">
                     <input type="hidden" name="_token" value="<?= $csrfToken ?>">
 
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">บันทึกแนวทางและผลการแก้ไขปัญหา (ถ้ามี)</label>
-                        <textarea name="resolution_note" rows="3" placeholder="ระบุสิ่งที่ดำเนินการแก้ไข เช่น ได้รับวัสดุอุปกรณ์ครบถ้วนแล้ว..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                    <!-- Notice banner -->
+                    <div class="p-3.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 rounded-2xl flex items-start gap-3 text-xs text-blue-800 dark:text-blue-300">
+                        <i data-lucide="info" class="w-4 h-4 shrink-0 text-blue-600 dark:text-blue-400 mt-0.5"></i>
+                        <div class="leading-relaxed">
+                            เมื่อยืนยันการแก้ไขปัญหา ระบบจะเปลี่ยนสถานะกิจกรรมย่อยที่มีปัญหาเป็น <strong class="font-bold text-blue-900 dark:text-blue-200">"กำลังดำเนินการ"</strong> และคำนวณสถานะโครงการใหม่อัตโนมัติ
+                        </div>
                     </div>
 
-                    <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-                        <button type="button" @click="resolveModal = false" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl">ยกเลิก</button>
-                        <button type="submit" class="px-5 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm shadow-emerald-600/30">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                            บันทึกแนวทางและผลการแก้ไขปัญหา (ถ้ามี)
+                        </label>
+                        <textarea name="resolution_note" rows="3" placeholder="ระบุสิ่งที่ดำเนินการแก้ไข เช่น ได้รับวัสดุอุปกรณ์ครบถ้วนแล้ว หรือแก้ไขจุดกีดขวางแล้ว..." class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white placeholder-slate-400"></textarea>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5">
+                        <button type="button" @click="resolveModal = false" class="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer">
+                            ยกเลิก
+                        </button>
+                        <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md hover:shadow-lg transition cursor-pointer flex items-center gap-1.5">
+                            <i data-lucide="check" class="w-3.5 h-3.5"></i>
                             ยืนยันการแก้ไขเสร็จสิ้น
                         </button>
                     </div>
@@ -845,7 +907,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
         <div x-show="activityModal" x-cloak data-teleport-modal="true" style="display: none;" @click.self="activityModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-smooth">
             <div class="bg-white dark:bg-[#181a20] w-full max-w-xl rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 relative modal-box-smooth transform-gpu">
                 <div class="p-6 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
-                    <h3 class="text-base font-bold text-slate-900 dark:text-white">เพิ่มกิจกรรมใหม่</h3>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white">เพิ่มกิจกรรมย่อยใหม่</h3>
                     <button type="button" @click.stop="activityModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
                         <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
                     </button>
@@ -855,7 +917,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                       @submit="
                         const actDate = $el.querySelector('input[name=activity_date]')?.value;
                         if (!actDate) {
-                            alert('กรุณาเลือกวันที่จัดกิจกรรม');
+                            alert('กรุณาเลือกวันที่จัดกิจกรรมย่อย');
                             $event.preventDefault();
                             return false;
                         }
@@ -865,12 +927,12 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                     <input type="hidden" name="project_id" value="<?= $project['id'] ?>">
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ชื่อกิจกรรม <span class="text-rose-500">*</span></label>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ชื่อกิจกรรมย่อย <span class="text-rose-500">*</span></label>
                         <input type="text" name="name" required placeholder="เช่น อบรมให้ความรู้..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">รายละเอียดกิจกรรม</label>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">รายละเอียดกิจกรรมย่อย</label>
                         <textarea name="description" rows="2" placeholder="รายละเอียดเนื้อหา..." class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"></textarea>
                     </div>
 
@@ -878,14 +940,14 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                         <div>
                             <?php \App\Core\View::component('thai-datepicker', [
                                 'name' => 'activity_date',
-                                'label' => 'วันที่จัดกิจกรรม',
+                                'label' => 'วันที่จัดกิจกรรมย่อย',
                                 'required' => true,
                                 'placement' => 'top',
                                 'align' => 'left',
                             ]); ?>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">งบประมาณกิจกรรม (บาท)</label>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">งบประมาณกิจกรรมย่อย (บาท)</label>
                             <input type="number" step="0.01" min="0" name="budget" value="0.00" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
                         </div>
                     </div>
@@ -908,7 +970,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
                     <div class="pt-4 border-t border-slate-100 dark:border-white/10 flex items-center justify-end gap-3">
                         <button type="button" @click="activityModal = false" class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl cursor-pointer">ยกเลิก</button>
-                        <button type="submit" class="px-5 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm shadow-blue-600/30 cursor-pointer">บันทึกกิจกรรม</button>
+                        <button type="submit" class="px-5 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm shadow-blue-600/30 cursor-pointer">บันทึกกิจกรรมย่อย</button>
                     </div>
                 </form>
             </div>
@@ -1009,215 +1071,6 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
         </div>
     </template>
 
-    <!-- Modal: Update Status and Progress Directly -->
-    <template x-teleport="body">
-        <div x-show="statusModal" x-cloak data-teleport-modal="true" style="display: none;" @click.self="statusModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-smooth"
-             x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="transition ease-in duration-150"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0">
-            
-            <div class="bg-white dark:bg-[#181a20] w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden space-y-5 p-6 modal-box-smooth transform-gpu">
-                
-                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/10">
-                    <div class="flex items-center gap-3">
-                        <span class="p-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl">
-                            <i data-lucide="sliders" class="w-5 h-5"></i>
-                        </span>
-                        <div>
-                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">ปรับสถานะโครงการ</h3>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">แอดมินและผู้ดูแลโครงการปรับสถานะการดำเนินงานของโครงการย่อย</p>
-                        </div>
-                    </div>
-                    <button type="button" @click.stop="statusModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
-                        <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
-                    </button>
-                </div>
-
-                <form action="<?= \App\Core\Router::url("/sub-projects/{$project['id']}/status") ?>" method="POST" class="space-y-4">
-                    <input type="hidden" name="_token" value="<?= $csrfToken ?>">
-
-                    <!-- 1. Status Selection -->
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                            เลือกสถานะโครงการ <span class="text-rose-500">*</span>
-                        </label>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                            <!-- 1. ยังไม่เริ่มดำเนินการ (not_started: Tech Indigo #6366f1) -->
-                            <button type="button" @click="setStatus('not_started')"
-                                    :class="selectedStatus === 'not_started' 
-                                        ? 'ring-2 ring-indigo-500 dark:ring-indigo-400 bg-indigo-50/80 dark:bg-indigo-600/20 border-indigo-500 dark:border-indigo-400 shadow-sm shadow-indigo-500/20' 
-                                        : 'bg-slate-50/70 dark:bg-[#12141a] border-indigo-200/60 dark:border-indigo-500/30 hover:bg-indigo-50/40 dark:hover:bg-indigo-500/10 hover:border-indigo-300 dark:hover:border-indigo-500/50'"
-                                    class="p-3 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer group">
-                                <div class="flex items-center gap-3 min-w-0">
-                                    <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors"
-                                         :class="selectedStatus === 'not_started' ? 'bg-[#6366f1] text-white shadow-sm shadow-indigo-500/30' : 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500/25'">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <circle cx="12" cy="12" r="10" stroke-width="2"/>
-                                            <polyline points="12 6 12 12 16 14" stroke-width="2" stroke-linecap="round"/>
-                                        </svg>
-                                    </div>
-                                    <div class="min-w-0">
-                                        <div class="text-xs font-bold transition-colors truncate"
-                                             :class="selectedStatus === 'not_started' ? 'text-indigo-950 dark:text-white' : 'text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400'">
-                                            ยังไม่เริ่มดำเนินการ
-                                        </div>
-                                        <div class="text-[11px] font-medium transition-colors"
-                                             :class="selectedStatus === 'not_started' ? 'text-indigo-700 dark:text-indigo-300' : 'text-indigo-600 dark:text-indigo-400'">
-                                            ยังไม่มีการจัดกิจกรรม
-                                        </div>
-                                    </div>
-                                </div>
-                                <div x-show="selectedStatus === 'not_started'" class="w-5 h-5 rounded-full bg-[#6366f1] text-white flex items-center justify-center shrink-0 shadow-sm">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                                </div>
-                            </button>
-
-                            <!-- 2. กำลังดำเนินการ (in_progress: Electric Sky #0ea5e9) -->
-                            <button type="button" @click="setStatus('in_progress')"
-                                    :class="selectedStatus === 'in_progress' 
-                                        ? 'ring-2 ring-sky-500 dark:ring-sky-400 bg-sky-50/80 dark:bg-sky-600/20 border-sky-500 dark:border-sky-400 shadow-sm shadow-sky-500/20' 
-                                        : 'bg-slate-50/70 dark:bg-[#12141a] border-sky-200/60 dark:border-sky-500/30 hover:bg-sky-50/40 dark:hover:bg-sky-500/10 hover:border-sky-300 dark:hover:border-sky-500/50'"
-                                    class="p-3 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer group">
-                                <div class="flex items-center gap-3 min-w-0">
-                                    <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors"
-                                         :class="selectedStatus === 'in_progress' ? 'bg-[#0ea5e9] text-white shadow-sm shadow-sky-500/30' : 'bg-sky-50 dark:bg-sky-500/15 text-sky-600 dark:text-sky-400 group-hover:bg-sky-100 dark:group-hover:bg-sky-500/25'">
-                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                            <polygon points="5 3 19 12 5 21 5 3"/>
-                                        </svg>
-                                    </div>
-                                    <div class="min-w-0">
-                                        <div class="text-xs font-bold transition-colors truncate"
-                                             :class="selectedStatus === 'in_progress' ? 'text-sky-950 dark:text-white' : 'text-slate-800 dark:text-slate-200 group-hover:text-sky-600 dark:group-hover:text-sky-400'">
-                                            กำลังดำเนินการ
-                                        </div>
-                                        <div class="text-[11px] font-medium transition-colors"
-                                             :class="selectedStatus === 'in_progress' ? 'text-sky-700 dark:text-sky-300' : 'text-sky-600 dark:text-sky-400'">
-                                            ดำเนินกิจกรรมตามแผนงาน
-                                        </div>
-                                    </div>
-                                </div>
-                                <div x-show="selectedStatus === 'in_progress'" class="w-5 h-5 rounded-full bg-[#0ea5e9] text-white flex items-center justify-center shrink-0 shadow-sm">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                                </div>
-                            </button>
-
-                            <!-- 3. เสร็จสิ้นสมบูรณ์ (completed: Luminous Emerald #10b981) -->
-                            <button type="button" @click="setStatus('completed')"
-                                    :class="selectedStatus === 'completed' 
-                                        ? 'ring-2 ring-emerald-500 dark:ring-emerald-400 bg-emerald-50/80 dark:bg-emerald-600/20 border-emerald-500 dark:border-emerald-400 shadow-sm shadow-emerald-500/20' 
-                                        : 'bg-slate-50/70 dark:bg-[#12141a] border-emerald-200/60 dark:border-emerald-500/30 hover:bg-emerald-50/40 dark:hover:bg-emerald-500/10 hover:border-emerald-300 dark:hover:border-emerald-500/50'"
-                                    class="p-3 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer group">
-                                <div class="flex items-center gap-3 min-w-0">
-                                    <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors"
-                                         :class="selectedStatus === 'completed' ? 'bg-[#10b981] text-white shadow-sm shadow-emerald-500/30' : 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-500/25'">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        </svg>
-                                    </div>
-                                    <div class="min-w-0">
-                                        <div class="text-xs font-bold transition-colors truncate"
-                                             :class="selectedStatus === 'completed' ? 'text-emerald-950 dark:text-white' : 'text-slate-800 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400'">
-                                            เสร็จสิ้นสมบูรณ์
-                                        </div>
-                                        <div class="text-[11px] font-medium transition-colors"
-                                             :class="selectedStatus === 'completed' ? 'text-emerald-700 dark:text-emerald-300' : 'text-emerald-600 dark:text-emerald-400'">
-                                            ดำเนินกิจกรรมครบถ้วนตามแผน
-                                        </div>
-                                    </div>
-                                </div>
-                                <div x-show="selectedStatus === 'completed'" class="w-5 h-5 rounded-full bg-[#10b981] text-white flex items-center justify-center shrink-0 shadow-sm">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                                </div>
-                            </button>
-
-                            <!-- 4. มีปัญหา / อุปสรรค (has_problem: Radiant Coral #f43f5e) -->
-                            <button type="button" @click="setStatus('has_problem')"
-                                    :class="selectedStatus === 'has_problem' 
-                                        ? 'ring-2 ring-rose-500 dark:ring-rose-400 bg-rose-50/80 dark:bg-rose-600/20 border-rose-500 dark:border-rose-400 shadow-sm shadow-rose-500/20' 
-                                        : 'bg-slate-50/70 dark:bg-[#12141a] border-rose-200/60 dark:border-rose-500/30 hover:bg-rose-50/40 dark:hover:bg-rose-500/10 hover:border-rose-300 dark:hover:border-rose-500/50'"
-                                    class="p-3 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer group">
-                                <div class="flex items-center gap-3 min-w-0">
-                                    <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors"
-                                         :class="selectedStatus === 'has_problem' ? 'bg-[#f43f5e] text-white shadow-sm shadow-rose-500/30' : 'bg-rose-50 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400 group-hover:bg-rose-100 dark:group-hover:bg-rose-500/25'">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                                        </svg>
-                                    </div>
-                                    <div class="min-w-0">
-                                        <div class="text-xs font-bold transition-colors truncate"
-                                             :class="selectedStatus === 'has_problem' ? 'text-rose-950 dark:text-white' : 'text-slate-800 dark:text-slate-200 group-hover:text-rose-600 dark:group-hover:text-rose-400'">
-                                            มีปัญหา / อุปสรรค
-                                        </div>
-                                        <div class="text-[11px] font-medium transition-colors"
-                                             :class="selectedStatus === 'has_problem' ? 'text-rose-700 dark:text-rose-300' : 'text-rose-600 dark:text-rose-400'">
-                                            เข้าสู่บัญชีเฝ้าระวัง
-                                        </div>
-                                    </div>
-                                </div>
-                                <div x-show="selectedStatus === 'has_problem'" class="w-5 h-5 rounded-full bg-[#f43f5e] text-white flex items-center justify-center shrink-0 shadow-sm">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                                </div>
-                            </button>
-
-                            <!-- 5. ยกเลิกโครงการ (cancelled: Deep Slate #64748b) -->
-                            <button type="button" @click="setStatus('cancelled')"
-                                    :class="selectedStatus === 'cancelled' 
-                                        ? 'ring-2 ring-slate-500 dark:ring-slate-400 bg-slate-100/80 dark:bg-slate-500/20 border-slate-500 dark:border-slate-400 shadow-sm shadow-slate-500/20' 
-                                        : 'bg-slate-50/70 dark:bg-[#12141a] border-slate-200/80 dark:border-slate-500/30 hover:bg-slate-100/80 dark:hover:bg-slate-500/10 hover:border-slate-300 dark:hover:border-slate-500/50'"
-                                    class="p-3 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer group sm:col-span-2">
-                                <div class="flex items-center gap-3 min-w-0">
-                                    <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors"
-                                         :class="selectedStatus === 'cancelled' ? 'bg-[#64748b] text-white shadow-sm shadow-slate-500/30' : 'bg-slate-100 dark:bg-slate-500/15 text-slate-500 dark:text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-slate-500/25'">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <circle cx="12" cy="12" r="10" stroke-width="2"/>
-                                            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" stroke-width="2"/>
-                                        </svg>
-                                    </div>
-                                    <div class="min-w-0">
-                                        <div class="text-xs font-bold transition-colors truncate"
-                                             :class="selectedStatus === 'cancelled' ? 'text-slate-900 dark:text-white' : 'text-slate-800 dark:text-slate-200 group-hover:text-slate-600 dark:group-hover:text-slate-300'">
-                                            ยกเลิกโครงการ
-                                        </div>
-                                        <div class="text-[11px] font-medium transition-colors"
-                                             :class="selectedStatus === 'cancelled' ? 'text-slate-700 dark:text-slate-300' : 'text-slate-500 dark:text-slate-400'">
-                                            ระงับการดำเนินงาน
-                                        </div>
-                                    </div>
-                                </div>
-                                <div x-show="selectedStatus === 'cancelled'" class="w-5 h-5 rounded-full bg-[#64748b] text-white flex items-center justify-center shrink-0 shadow-sm">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                                </div>
-                            </button>
-                        </div>
-                        <input type="hidden" name="status" :value="selectedStatus">
-                    </div>
-
-                    <!-- Problem note if has_problem -->
-                    <div x-show="selectedStatus === 'has_problem'" class="pt-2">
-                        <label class="block text-xs font-semibold text-rose-600 dark:text-rose-400 mb-1">
-                            ระบุรายละเอียดปัญหา / อุปสรรคที่พบ <span class="text-rose-500">*</span>
-                        </label>
-                        <textarea name="problem_description" rows="2" x-model="statusNote" placeholder="เช่น ผู้รับเหมาทิ้งงาน, รอย้ายจุดเสาไฟฟ้า, รอการอนุมัติ..."
-                                  class="w-full px-3 py-2 text-xs rounded-xl bg-white dark:bg-[#12141a] text-slate-900 dark:text-white border border-rose-300 dark:border-rose-500/40 focus:outline-none focus:ring-2 focus:ring-rose-500 placeholder-slate-400"></textarea>
-                    </div>
-
-                    <div class="pt-4 border-t border-slate-100 dark:border-white/10 flex items-center justify-end gap-2.5">
-                        <button type="button" @click="statusModal = false" class="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition cursor-pointer">
-                            ยกเลิก
-                        </button>
-                        <button type="submit" 
-                                :class="selectedStatus === 'completed' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/25' : (selectedStatus === 'not_started' ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/25' : (selectedStatus === 'has_problem' ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/25' : (selectedStatus === 'cancelled' ? 'bg-slate-600 hover:bg-slate-700 shadow-slate-600/25' : 'bg-sky-600 hover:bg-sky-700 shadow-sky-600/25')))"
-                                class="px-5 py-2 text-xs font-bold text-white rounded-xl shadow-md hover:shadow-lg transition-all cursor-pointer">
-                            บันทึกสถานะโครงการ
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </template>
 
     <!-- Modal: Edit Sub-Project -->
     <template x-teleport="body">
@@ -1432,8 +1285,8 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                         <i data-lucide="edit-3" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <h3 class="font-heading font-bold text-base text-slate-900 dark:text-white">แก้ไขข้อมูลกิจกรรม</h3>
-                        <p class="text-xs text-slate-400">อัปเดตรายละเอียด งบประมาณ และความคืบหน้ากิจกรรม</p>
+                        <h3 class="font-heading font-bold text-base text-slate-900 dark:text-white">แก้ไขข้อมูลกิจกรรมย่อย</h3>
+                        <p class="text-xs text-slate-400">อัปเดตรายละเอียด งบประมาณ และสถานะกิจกรรมย่อย</p>
                     </div>
                 </div>
                 <button type="button" @click.stop="editActModal = false" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer flex items-center justify-center" title="ปิดหน้าต่าง">
@@ -1446,7 +1299,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        ชื่อกิจกรรม <span class="text-rose-500">*</span>
+                        ชื่อกิจกรรมย่อย <span class="text-rose-500">*</span>
                     </label>
                     <input type="text" name="name" x-model="selectedAct.name" required
                            class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white">
@@ -1457,7 +1310,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                         <?php \App\Core\View::component('thai-datepicker', [
                             'name' => 'activity_date',
                             'id' => 'edit_activity_date',
-                            'label' => 'วันที่จัดกิจกรรม',
+                            'label' => 'วันที่จัดกิจกรรมย่อย',
                             'required' => true,
                             'xModel' => 'selectedAct.activity_date',
                             'placement' => 'top',
@@ -1466,7 +1319,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                            งบประมาณกิจกรรม (บาท) <span class="text-rose-500">*</span>
+                            งบประมาณกิจกรรมย่อย (บาท) <span class="text-rose-500">*</span>
                         </label>
                         <input type="number" step="0.01" min="0" name="budget" x-model="selectedAct.budget" required
                                class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white font-mono">
@@ -1475,7 +1328,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        สถานที่จัดกิจกรรม
+                        สถานที่จัดกิจกรรมย่อย
                     </label>
                     <input type="text" name="location" x-model="selectedAct.location" placeholder="เช่น อาคารอเนกประสงค์"
                            class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white">
@@ -1498,35 +1351,80 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                            สถานะกิจกรรม
+                <div class="space-y-4">
+                    <!-- Dropdown สถานะกิจกรรมย่อย ให้เข้าธีมเทศบาล Modern Theme -->
+                    <div class="relative" @click.outside="editActStatusOpen = false">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                            สถานะกิจกรรมย่อย <span class="text-rose-500">*</span>
                         </label>
-                        <select name="status" x-model="selectedAct.status" @change="onActStatusChange()"
-                                class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white">
-                            <option value="not_started">ยังไม่เริ่ม</option>
-                            <option value="in_progress">กำลังดำเนินการ</option>
-                            <option value="completed">เสร็จสิ้น</option>
-                            <option value="has_problem">มีปัญหา</option>
-                            <option value="cancelled">ยกเลิก</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                            ความคืบหน้ากิจกรรม (%)
-                        </label>
-                        <input type="number" min="0" max="100" step="1" name="progress" x-model="selectedAct.progress" @input="onActProgressInput()"
-                               class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white font-mono">
-                    </div>
-                </div>
+                        <input type="hidden" name="status" :value="selectedAct.status">
 
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        รายละเอียด / หมายเหตุ
-                    </label>
-                    <textarea name="notes" rows="2" x-model="selectedAct.notes" placeholder="หมายเหตุ..."
-                              class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white"></textarea>
+                        <!-- Trigger Button -->
+                        <button type="button" 
+                                @click="editActStatusOpen = !editActStatusOpen"
+                                class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-xs flex items-center justify-between transition focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 shadow-2xs">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <span class="w-2.5 h-2.5 rounded-full shrink-0 ring-4 ring-slate-100 dark:ring-slate-700/50" :class="currentActStatusObj.dot"></span>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border"
+                                      :class="currentActStatusObj.badge"
+                                      x-text="currentActStatusObj.label">
+                                </span>
+                                <span class="text-slate-400 dark:text-slate-500 text-[11px] truncate hidden sm:inline" x-text="'(' + currentActStatusObj.desc + ')'"></span>
+                            </div>
+                            <svg class="w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0" :class="editActStatusOpen ? 'rotate-180 text-blue-500' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        <!-- Dropdown Menu Popover (Drop-Up เพื่อไม่ให้ล้นหรือถูกตัดขอบล่างของ Modal) -->
+                        <div x-show="editActStatusOpen" 
+                             x-cloak
+                             x-transition:enter="transition ease-out duration-150"
+                             x-transition:enter-start="opacity-0 -translate-y-1 scale-98"
+                             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                             x-transition:leave="transition ease-in duration-100"
+                             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                             x-transition:leave-end="opacity-0 -translate-y-1 scale-98"
+                             class="absolute left-0 right-0 bottom-full mb-1.5 z-50 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200/90 dark:border-slate-700/90 p-1.5 space-y-1 max-h-72 overflow-y-auto backdrop-blur-md">
+                            <div class="px-2.5 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                <span>เลือกสถานะกิจกรรมย่อย (5 สถานะ)</span>
+                            </div>
+                            <template x-for="st in actStatusList" :key="st.value">
+                                <button type="button" 
+                                        @click="selectActStatus(st.value)"
+                                        class="w-full text-left px-3 py-2 rounded-xl flex items-center justify-between gap-2 transition cursor-pointer"
+                                        :class="selectedAct.status === st.value 
+                                            ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 font-semibold ring-1 ring-blue-500/20' 
+                                            : 'hover:bg-slate-50 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200'">
+                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        <span class="w-2.5 h-2.5 rounded-full shrink-0" :class="st.dot"></span>
+                                        <div>
+                                            <div class="text-xs font-semibold leading-snug" x-text="st.label"></div>
+                                            <div class="text-[11px] text-slate-400 dark:text-slate-500 leading-tight" x-text="st.desc"></div>
+                                        </div>
+                                    </div>
+                                    <div x-show="selectedAct.status === st.value" class="text-blue-600 dark:text-blue-400 shrink-0">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Details / Notes -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            รายละเอียด / หมายเหตุ
+                            <span x-show="selectedAct.status === 'has_problem'" class="text-rose-500 dark:text-rose-400 font-normal ml-1">
+                                (โปรดระบุปัญหาหรืออุปสรรคที่พบ เช่น เครื่องจักรเสีย, รอการอนุมัติ)
+                            </span>
+                        </label>
+                        <textarea name="notes" rows="2" x-model="selectedAct.notes" placeholder="หมายเหตุหรือรายละเอียดเพิ่มเติม..."
+                                  class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white"
+                                  :class="selectedAct.status === 'has_problem' ? 'border-rose-300 dark:border-rose-800/80 focus:ring-rose-500' : ''"></textarea>
+                    </div>
                 </div>
 
                 <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2">
@@ -1577,7 +1475,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
                 <?php if (!empty($project['activities'])): ?>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                            เชื่อมโยงกับกิจกรรม (ถ้ามี)
+                            เชื่อมโยงกับกิจกรรมย่อย (ถ้ามี)
                         </label>
                         <select name="activity_id"
                                 class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white">
@@ -1619,13 +1517,30 @@ function subProjectShowPage() {
         disburseModal: false, 
         activityModal: false, 
         manualModal: false,
-        statusModal: false,
         editSubModal: false,
         editActModal: false,
+        editActStatusOpen: false,
         uploadModal: false,
         selectedAct: { id: '', name: '', description: '', activity_date: '', location: '', budget: '', target_participant_count: 0, actual_participant_count: 0, participant_count: 0, status: '', progress: '', notes: '' },
+        actStatusList: Object.freeze(<?= $actStatusesJson ?>),
+        get currentActStatusObj() {
+            return this.actStatusList.find(s => s.value === this.selectedAct.status) || this.actStatusList[0];
+        },
+        selectActStatus(st) {
+            this.selectedAct.status = st;
+            this.editActStatusOpen = false;
+            this.onActStatusChange();
+            this.$nextTick(() => { window.safeCreateIcons && window.safeCreateIcons(); });
+        },
         openEditAct(act) {
             this.selectedAct = Object.assign({}, act);
+            this.editActStatusOpen = false;
+            // Normalize status to case value if needed
+            const valid = this.actStatusList.find(s => s.value === this.selectedAct.status);
+            if (!valid) {
+                const byLabel = this.actStatusList.find(s => s.label === this.selectedAct.status);
+                this.selectedAct.status = byLabel ? byLabel.value : 'not_started';
+            }
             if (this.selectedAct.progress !== undefined && this.selectedAct.progress !== null) {
                 this.selectedAct.progress = parseFloat(this.selectedAct.progress);
             }
@@ -1637,40 +1552,16 @@ function subProjectShowPage() {
         },
         onActStatusChange() {
             const s = this.selectedAct.status;
-            let p = parseFloat(this.selectedAct.progress);
-            if (isNaN(p)) p = 0;
-
             if (s === 'completed') {
                 this.selectedAct.progress = 100;
             } else if (s === 'not_started' || s === 'cancelled') {
                 this.selectedAct.progress = 0;
             } else if (s === 'in_progress' || s === 'has_problem') {
-                if (p >= 100) {
-                    this.selectedAct.progress = 0;
+                let p = parseFloat(this.selectedAct.progress);
+                if (isNaN(p) || p <= 0 || p >= 100) {
+                    this.selectedAct.progress = 50;
                 }
             }
-        },
-        onActProgressInput() {
-            let p = parseFloat(this.selectedAct.progress);
-            if (isNaN(p)) return;
-
-            if (p >= 100) {
-                this.selectedAct.progress = 100;
-                this.selectedAct.status = 'completed';
-            } else if (p <= 0) {
-                if (this.selectedAct.status === 'completed') {
-                    this.selectedAct.status = 'not_started';
-                }
-            } else {
-                if (this.selectedAct.status === 'completed' || this.selectedAct.status === 'not_started') {
-                    this.selectedAct.status = 'in_progress';
-                }
-            }
-        },
-        selectedStatus: '<?= $project['status'] ?>',
-        statusNote: <?= json_encode((string)($project['problem_description'] ?? ''), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>,
-        setStatus(s) {
-            this.selectedStatus = s;
         },
 
         // Activities pagination & search

@@ -1,6 +1,6 @@
 <?php
 ob_start();
-$title = "จัดการโครงการหลักและโครงการย่อย";
+$title = "จัดการโครงการหลักและกิจกรรมหลัก";
 
 // Prepare JSON summary for reactive Alpine.js pagination & live search
 $projectsSummary = [];
@@ -61,9 +61,9 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
             <div class="flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 mb-1">
                 <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="hover:underline">หน้าหลัก</a>
                 <span>/</span>
-                <span>โครงการหลักและย่อย</span>
+                <span>โครงการหลักและกิจกรรมหลัก</span>
             </div>
-            <h1 class="text-xl sm:text-2xl font-bold font-heading text-slate-900 dark:text-white tracking-tight">โครงการหลักและโครงการย่อย</h1>
+            <h1 class="text-xl sm:text-2xl font-bold font-heading text-slate-900 dark:text-white tracking-tight">โครงการหลักและกิจกรรมหลัก</h1>
             <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">บริหารจัดการโครงการตามแผนพัฒนาเทศบาล ติดตามความก้าวหน้าและงบประมาณแบบลำดับชั้น</p>
         </div>
         <div class="flex items-center gap-2 w-full sm:w-auto">
@@ -82,7 +82,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                 <i data-lucide="search" class="w-4 h-4"></i>
             </div>
-            <input type="text" name="search" x-model.debounce.250ms="search" @input.debounce.250ms="currentPage = 1; syncUrl()" value="<?= htmlspecialchars($filters['search']) ?>" placeholder="ค้นหาชื่อโครงการ หรือโครงการย่อย..." class="w-full pl-9 pr-4 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+            <input type="text" name="search" x-model.debounce.250ms="search" @input.debounce.250ms="currentPage = 1; syncUrl()" value="<?= htmlspecialchars($filters['search']) ?>" placeholder="ค้นหาชื่อโครงการ หรือกิจกรรมหลัก..." class="w-full pl-9 pr-4 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
         </div>
 
         <!-- Fiscal Year Filter (Custom Dropdown) -->
@@ -210,7 +210,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
 
             <div class="text-right sm:text-left text-xs truncate">
                 พบ <span class="font-bold text-slate-900 dark:text-white" x-text="filteredProjects.length"></span> โครงการ 
-                <span class="text-slate-400 hidden sm:inline">(รวม <span class="font-bold text-emerald-600" x-text="totalFilteredSubCount"></span> โครงการย่อย)</span>
+                <span class="text-slate-400 hidden sm:inline">(รวม <span class="font-bold text-emerald-600" x-text="totalFilteredSubCount"></span> กิจกรรมหลัก)</span>
             </div>
         </div>
 
@@ -265,7 +265,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                 <!-- Main Project Bar -->
                 <div class="p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 dark:border-white/[0.06]">
                     <div class="flex items-start gap-3 sm:gap-4">
-                        <button type="button" @click="expanded = !expanded" class="mt-1 p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer shrink-0" title="ย่อ/ขยายโครงการย่อย">
+                        <button type="button" @click="expanded = !expanded" class="mt-1 p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer shrink-0" title="ย่อ/ขยายกิจกรรมหลัก">
                             <i data-lucide="chevron-down" class="w-5 h-5 transform transition-transform" :class="expanded ? 'rotate-0' : '-rotate-90'"></i>
                         </button>
                         <div class="min-w-0 flex-1">
@@ -287,6 +287,15 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                                         <i data-lucide="calendar" class="w-3 h-3 text-emerald-600 dark:text-emerald-400"></i>
                                         <?= !empty($p['start_date']) ? date('d/m/', strtotime($p['start_date'])) . (date('Y', strtotime($p['start_date'])) + 543) : '-' ?> – <?= !empty($p['end_date']) ? date('d/m/', strtotime($p['end_date'])) . (date('Y', strtotime($p['end_date'])) + 543) : '-' ?>
                                     </span>
+                                <?php endif; ?>
+                                <?php if (isset($p['evaluation_score']) && $p['evaluation_score'] !== null): ?>
+                                    <?php $cardGrade = \App\Services\ProjectService::calculateEvaluationGrade((float)$p['evaluation_score']); ?>
+                                    <?php if ($cardGrade): ?>
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-bold rounded-full border <?= $cardGrade['bgClass'] ?>">
+                                            <i data-lucide="award" class="w-3 h-3"></i>
+                                            <span>เกรด <?= $cardGrade['grade'] ?> (<?= number_format((float)$p['evaluation_score'], 1) ?>)</span>
+                                        </span>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             </div>
                             <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-1">
@@ -332,16 +341,16 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                     <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3.5 flex items-center justify-between">
                         <span class="flex items-center gap-1.5">
                             <i data-lucide="layers" class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500"></i>
-                            โครงการย่อยในความรับผิดชอบ (<?= count($p['sub_projects']) ?> โครงการ)
+                            กิจกรรมหลักในความรับผิดชอบ (<?= count($p['sub_projects']) ?> กิจกรรมหลัก)
                         </span>
                         <a href="<?= \App\Core\Router::url("/projects/{$p['id']}") ?>" class="text-emerald-600 dark:text-emerald-400 hover:underline normal-case font-semibold text-xs flex items-center gap-1">
-                            <i data-lucide="plus" class="w-3.5 h-3.5"></i> เพิ่มโครงการย่อย
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i> เพิ่มกิจกรรมหลัก
                         </a>
                     </div>
 
                     <?php if (empty($p['sub_projects'])): ?>
                         <div class="p-4 text-center text-xs text-slate-400 dark:text-slate-500 bg-white dark:bg-[#181a20] rounded-xl border border-slate-200 dark:border-white/[0.08]">
-                            ยังไม่มีโครงการย่อยภายใต้โครงการหลักนี้
+                            ยังไม่มีกิจกรรมหลักภายใต้โครงการหลักนี้
                         </div>
                     <?php else: ?>
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
@@ -378,7 +387,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                                     <?php $subTier = \App\Services\ProgressService::getProgressTier((float)$sub['progress'], $sub['status'] ?? null); ?>
                                     <div class="mt-3.5">
                                         <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                                            <span>กิจกรรม: <b class="text-slate-700 dark:text-slate-200"><?= $sub['actual_activity_count'] ?></b> / <?= $sub['planned_activity_count'] ?> ครั้ง</span>
+                                            <span>กิจกรรมย่อย: <b class="text-slate-700 dark:text-slate-200"><?= $sub['actual_activity_count'] ?></b> / <?= $sub['planned_activity_count'] ?> ครั้ง</span>
                                             <span class="font-bold <?= $subTier['textClass'] ?>"><?= number_format($sub['progress'], 1) ?>%</span>
                                         </div>
 
@@ -424,7 +433,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
 
             <div class="flex items-center gap-4 text-[11px]">
                 <div>งบประมาณรวม: <span class="font-bold text-slate-900" x-text="totalFilteredBudget"></span> บาท</div>
-                <div>โครงการย่อยรวม: <span class="font-bold text-emerald-600" x-text="totalFilteredSubCount"></span> โครงการ</div>
+                <div>กิจกรรมหลักรวม: <span class="font-bold text-emerald-600" x-text="totalFilteredSubCount"></span> รายการ</div>
             </div>
         </div>
 

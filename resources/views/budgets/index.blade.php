@@ -271,7 +271,7 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
                         สถานะเพดานงบประมาณโครงการหลัก
                         <span class="block sm:inline text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 sm:ml-1">(Project Budget Allocations)</span>
                     </h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">ยอดเบิกจ่ายจะคำนวณและสรุปอัตโนมัติจากโครงการย่อยทั้งหมดภายใต้โครงการหลัก</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">ยอดเบิกจ่ายจะคำนวณและสรุปอัตโนมัติจากกิจกรรมหลักทั้งหมดภายใต้โครงการหลัก</p>
                 </div>
             </div>
 
@@ -594,7 +594,7 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
                 <thead>
                     <tr class="border-b border-slate-200/80 dark:border-white/[0.08] bg-slate-50/70 dark:bg-white/[0.02] text-slate-600 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
                         <th class="py-3 px-4 min-w-[110px] whitespace-nowrap">วันที่เบิกจ่าย</th>
-                        <th class="py-3 px-4 min-w-[220px]">โครงการย่อย</th>
+                        <th class="py-3 px-4 min-w-[220px]">กิจกรรมหลัก</th>
                         <th class="py-3 px-4 min-w-[180px] max-w-xs">รายละเอียด / วัตถุประสงค์</th>
                         <th class="py-3 px-4 min-w-[140px] whitespace-nowrap">ผู้รับเงิน / หน่วยงาน</th>
                         <th class="py-3 px-4 text-right min-w-[130px] whitespace-nowrap">จำนวนเงิน (บาท)</th>
@@ -788,11 +788,11 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
                 <!-- Select Sub Project -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        เลือกโครงการย่อยที่ทำการเบิกจ่าย <span class="text-rose-500">*</span>
+                        เลือกกิจกรรมหลักที่ทำการเบิกจ่าย <span class="text-rose-500">*</span>
                     </label>
                     <select name="project_id" x-model="selectedSubProject" required
                             class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-[#12141a] border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white">
-                        <option value="">-- กรุณาเลือกโครงการย่อย --</option>
+                        <option value="">-- กรุณาเลือกกิจกรรมหลัก --</option>
                         <?php foreach ($subProjects as $p): ?>
                             <option value="<?= $p['id'] ?>">
                                 <?= htmlspecialchars($p['name'] . ' (คงเหลือ ฿' . number_format($p['remaining'], 2) . ')') ?>

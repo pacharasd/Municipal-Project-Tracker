@@ -38,6 +38,7 @@ Router::get('/projects', [ProjectController::class, 'index']);
 Router::post('/projects', [ProjectController::class, 'store']);
 Router::get('/projects/{id}', [ProjectController::class, 'show']);
 Router::post('/projects/{id}', [ProjectController::class, 'update']);
+Router::post('/projects/{id}/evaluate', [ProjectController::class, 'evaluate']);
 Router::post('/projects/{id}/delete', [ProjectController::class, 'delete']);
 
 // Sub Project Routes

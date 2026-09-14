@@ -600,6 +600,47 @@
             border-color: rgba(255, 255, 255, 0.08) !important;
         }
 
+        /* Dark Mode Alert Banners & Callout Contrast Guards (Prevents white text on light backgrounds) */
+        html.dark .bg-rose-50:not([class*="dark:bg-"]) {
+            background-color: rgba(244, 63, 94, 0.16) !important;
+            border-color: rgba(244, 63, 94, 0.4) !important;
+            color: #fecdd3 !important;
+        }
+        html.dark .bg-rose-50 h1, html.dark .bg-rose-50 h2, html.dark .bg-rose-50 h3, html.dark .bg-rose-50 h4,
+        html.dark [class*="bg-rose-"] h1, html.dark [class*="bg-rose-"] h2, html.dark [class*="bg-rose-"] h3, html.dark [class*="bg-rose-"] h4 {
+            color: #fecdd3 !important;
+        }
+        html.dark .bg-rose-50 .text-rose-900, html.dark .bg-rose-50 .text-rose-800, html.dark .bg-rose-50 .text-rose-700 {
+            color: #fecdd3 !important;
+        }
+        html.dark .bg-amber-50:not([class*="dark:bg-"]) {
+            background-color: rgba(245, 158, 11, 0.16) !important;
+            border-color: rgba(245, 158, 11, 0.4) !important;
+            color: #fde68a !important;
+        }
+        html.dark .bg-amber-50 h1, html.dark .bg-amber-50 h2, html.dark .bg-amber-50 h3, html.dark .bg-amber-50 h4,
+        html.dark [class*="bg-amber-"] h1, html.dark [class*="bg-amber-"] h2, html.dark [class*="bg-amber-"] h3, html.dark [class*="bg-amber-"] h4 {
+            color: #fde68a !important;
+        }
+        html.dark .bg-emerald-50:not([class*="dark:bg-"]) {
+            background-color: rgba(16, 185, 129, 0.16) !important;
+            border-color: rgba(16, 185, 129, 0.4) !important;
+            color: #a7f3d0 !important;
+        }
+        html.dark .bg-emerald-50 h1, html.dark .bg-emerald-50 h2, html.dark .bg-emerald-50 h3, html.dark .bg-emerald-50 h4,
+        html.dark [class*="bg-emerald-"] h1, html.dark [class*="bg-emerald-"] h2, html.dark [class*="bg-emerald-"] h3, html.dark [class*="bg-emerald-"] h4 {
+            color: #a7f3d0 !important;
+        }
+        html.dark .bg-blue-50:not([class*="dark:bg-"]) {
+            background-color: rgba(59, 130, 246, 0.16) !important;
+            border-color: rgba(59, 130, 246, 0.4) !important;
+            color: #bfdbfe !important;
+        }
+        html.dark .bg-blue-50 h1, html.dark .bg-blue-50 h2, html.dark .bg-blue-50 h3, html.dark .bg-blue-50 h4,
+        html.dark [class*="bg-blue-"] h1, html.dark [class*="bg-blue-"] h2, html.dark [class*="bg-blue-"] h3, html.dark [class*="bg-blue-"] h4 {
+            color: #bfdbfe !important;
+        }
+
         /* Dark table rows hover */
         html.dark tr:hover {
             background-color: rgba(255, 255, 255, 0.03) !important;
@@ -1151,14 +1192,14 @@
                         <i data-lucide="chevron-right" class="w-4 h-4 <?= $isDashboard ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
                     </a>
 
-                    <!-- โครงการหลัก & ย่อย -->
+                    <!-- โครงการหลัก & กิจกรรมหลัก -->
                     <?php $isProjects = (str_contains($currentReqUri, '/projects') || str_contains($currentReqUri, '/sub-projects')); ?>
                     <a href="<?= \App\Core\Router::url('/projects') ?>" 
                        @click="sidebarOpen = false"
                        class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isProjects ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
                         <div class="flex items-center gap-3">
                             <i data-lucide="folder-kanban" class="w-5 h-5 <?= $isProjects ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
-                            <span>โครงการหลัก & ย่อย</span>
+                            <span>โครงการหลัก & กิจกรรมหลัก</span>
                         </div>
                         <i data-lucide="chevron-right" class="w-4 h-4 <?= $isProjects ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
                     </a>

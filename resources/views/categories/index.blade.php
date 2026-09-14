@@ -227,7 +227,7 @@ $categoriesJson = json_encode($categoriesSummary, JSON_HEX_TAG | JSON_HEX_APOS |
                                 </div>
                             </div>
                             <div>
-                                <span class="text-[10px] uppercase font-bold text-slate-400">โครงการย่อย</span>
+                                <span class="text-[10px] uppercase font-bold text-slate-400">กิจกรรมหลัก</span>
                                 <div class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5 mt-0.5">
                                     <i data-lucide="layers" class="w-3.5 h-3.5 text-blue-500"></i>
                                     <span><?= number_format($subCount) ?> รายการ</span>
@@ -420,7 +420,7 @@ $categoriesJson = json_encode($categoriesSummary, JSON_HEX_TAG | JSON_HEX_APOS |
                         <th class="py-3.5 px-4 font-bold text-center w-12">#</th>
                         <th class="py-3.5 px-4 font-bold">ประเภทโครงการ</th>
                         <th class="py-3.5 px-3 font-bold text-center">โครงการหลัก</th>
-                        <th class="py-3.5 px-3 font-bold text-center">โครงการย่อย</th>
+                        <th class="py-3.5 px-3 font-bold text-center">กิจกรรมหลัก</th>
                         <th class="py-3.5 px-3 font-bold text-right">งบประมาณรวม</th>
                         <th class="py-3.5 px-3 font-bold text-right">ยอดเบิกจ่าย</th>
                         <th class="py-3.5 px-4 font-bold text-left min-w-[170px]">ความคืบหน้าเฉลี่ย</th>

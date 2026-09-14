@@ -309,6 +309,26 @@ class Database
             try {
                 $pdo->exec("ALTER TABLE `projects` MODIFY COLUMN `department_id` BIGINT UNSIGNED NULL DEFAULT 1");
             } catch (\Throwable $e) {}
+
+            // Ensure evaluation columns exist in projects
+            $evalColCheck = $pdo->query("SHOW COLUMNS FROM `projects` LIKE 'evaluation_score'")->fetch();
+            if (!$evalColCheck) {
+                try {
+                    $pdo->exec("ALTER TABLE `projects` ADD COLUMN `evaluation_score` DECIMAL(5,2) NULL AFTER `progress_mode`");
+                } catch (\Throwable $e) {}
+                try {
+                    $pdo->exec("ALTER TABLE `projects` ADD COLUMN `evaluation_grade` VARCHAR(10) NULL AFTER `evaluation_score`");
+                } catch (\Throwable $e) {}
+                try {
+                    $pdo->exec("ALTER TABLE `projects` ADD COLUMN `evaluated_at` DATETIME NULL AFTER `evaluation_grade`");
+                } catch (\Throwable $e) {}
+                try {
+                    $pdo->exec("ALTER TABLE `projects` ADD COLUMN `evaluated_by` BIGINT UNSIGNED NULL AFTER `evaluated_at`");
+                } catch (\Throwable $e) {}
+                try {
+                    $pdo->exec("ALTER TABLE `projects` ADD COLUMN `evaluation_notes` TEXT NULL AFTER `evaluated_by`");
+                } catch (\Throwable $e) {}
+            }
         } catch (\Throwable $e) {
             error_log("Auto schema migration notice: " . $e->getMessage());
         }

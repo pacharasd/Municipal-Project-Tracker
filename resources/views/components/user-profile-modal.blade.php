@@ -148,14 +148,16 @@ $memberSinceText = "สมาชิกตั้งแต่ {$d} {$m} {$y}";
                         <span>ความปลอดภัย</span>
                     </button>
 
-                    <!-- Tab 3: โครงการที่ดูแล -->
-                    <button type="button" 
-                            @click="profileTab = 'projects'"
-                            class="flex-1 min-w-[95px] py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer relative"
-                            :class="profileTab === 'projects' ? 'bg-white dark:bg-[#181a20] text-slate-900 dark:text-white shadow-sm border border-slate-200/80 dark:border-white/10 font-bold' : 'hover:text-slate-900 dark:hover:text-white'">
-                        <i data-lucide="folder-kanban" class="w-3.5 h-3.5"></i>
-                        <span>โครงการ (<?= $userStats['project_count'] ?>)</span>
-                    </button>
+                    <?php if ($userRole !== 'executive'): ?>
+                        <!-- Tab 3: โครงการที่ดูแล -->
+                        <button type="button" 
+                                @click="profileTab = 'projects'"
+                                class="flex-1 min-w-[95px] py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer relative"
+                                :class="profileTab === 'projects' ? 'bg-white dark:bg-[#181a20] text-slate-900 dark:text-white shadow-sm border border-slate-200/80 dark:border-white/10 font-bold' : 'hover:text-slate-900 dark:hover:text-white'">
+                            <i data-lucide="folder-kanban" class="w-3.5 h-3.5"></i>
+                            <span>โครงการ (<?= $userStats['project_count'] ?>)</span>
+                        </button>
+                    <?php endif; ?>
 
                     <!-- Tab 4: ประวัติการใช้งาน -->
                     <button type="button" 
@@ -432,6 +434,7 @@ $memberSinceText = "สมาชิกตั้งแต่ {$d} {$m} {$y}";
                     </form>
                 </div>
 
+                <?php if ($userRole !== 'executive'): ?>
                 <!-- TAB 3: โครงการที่ดูแล (My Assigned Projects & KPI) -->
                 <div x-show="profileTab === 'projects'" x-cloak class="space-y-4">
                     <!-- KPI Cards Grid -->
@@ -502,7 +505,7 @@ $memberSinceText = "สมาชิกตั้งแต่ {$d} {$m} {$y}";
                                             <div class="min-w-0 flex-1">
                                                 <div class="flex items-center gap-1.5 flex-wrap">
                                                     <?php if ($isSub): ?>
-                                                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">โครงการย่อย</span>
+                                                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">กิจกรรมหลัก</span>
                                                     <?php else: ?>
                                                         <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">โครงการหลัก</span>
                                                     <?php endif; ?>
@@ -541,6 +544,7 @@ $memberSinceText = "สมาชิกตั้งแต่ {$d} {$m} {$y}";
                         <?php endif; ?>
                     </div>
                 </div>
+                <?php endif; ?>
 
                 <!-- TAB 4: ประวัติการใช้งาน (Recent Activity & Audit Log) -->
                 <div x-show="profileTab === 'activity'" x-cloak class="space-y-3">

@@ -399,7 +399,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                                         <span class="text-blue-600 dark:text-blue-400 font-semibold">[โครงการหลัก]</span>
                                     </template>
                                     <template x-if="p.parent_id">
-                                        <span x-text="'โครงการย่อยภายใต้: ' + (p.parent_name || '-')"></span>
+                                        <span x-text="'กิจกรรมหลักภายใต้: ' + (p.parent_name || '-')"></span>
                                     </template>
                                 </div>
                                 <template x-if="p.problem_description">

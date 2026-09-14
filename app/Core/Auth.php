@@ -42,6 +42,30 @@ class Auth
             ];
         }
 
+        // บทบาทผู้บริหาร (Executive) มีหน้าที่กำกับดูแลภาพรวม ไม่ได้เป็นผู้รับผิดชอบโครงการรายโครงการ (Least Privilege & Role Segregation)
+        $targetUser = Database::fetch("SELECT r.name as role_name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = ?", [$userId]);
+        $isExecutive = ($targetUser && ($targetUser['role_name'] ?? '') === 'executive');
+
+        if ($isExecutive) {
+            $recentLogs = Database::query(
+                "SELECT action, module, record_id, created_at 
+                 FROM audit_logs 
+                 WHERE user_id = ? 
+                 ORDER BY created_at DESC 
+                 LIMIT 5",
+                [$userId]
+            ) ?: [];
+
+            return [
+                'project_count'     => 0,
+                'in_progress_count' => 0,
+                'completed_count'   => 0,
+                'total_budget'      => 0.0,
+                'assigned_projects' => [],
+                'recent_activities' => $recentLogs,
+            ];
+        }
+
         // Summary counts
         $counts = Database::fetch(
             "SELECT 

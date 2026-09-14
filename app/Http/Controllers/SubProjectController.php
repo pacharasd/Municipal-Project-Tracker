@@ -20,12 +20,12 @@ class SubProjectController
     {
         $project = ProjectService::getProjectById((int)$id);
         if (!$project || $project['parent_id'] === null) {
-            Session::flash('error', 'ไม่พบโครงการย่อยที่ระบุ');
+            Session::flash('error', 'ไม่พบกิจกรรมหลักที่ระบุ');
             header('Location: ' . Router::url('/projects'));
             exit;
         }
 
-        $users = Database::query("SELECT id, name, position FROM users ORDER BY name ASC");
+        $users = Database::query("SELECT u.id, u.name, u.position FROM users u JOIN roles r ON u.role_id = r.id WHERE r.name != 'executive' ORDER BY u.name ASC");
 
         View::render('sub_projects.show', [
             'project' => $project,
@@ -36,7 +36,7 @@ class SubProjectController
     public function store(): void
     {
         if (!Auth::canManageProjects()) {
-            Session::flash('error', 'คุณไม่มีสิทธิ์เพิ่มโครงการย่อย');
+            Session::flash('error', 'คุณไม่มีสิทธิ์เพิ่มกิจกรรมหลัก');
             header('Location: ' . Router::url('/projects'));
             exit;
         }
@@ -67,7 +67,7 @@ class SubProjectController
         $endDate = !empty($_POST['end_date']) ? trim($_POST['end_date']) : null;
 
         if ($startDate && $endDate && $startDate > $endDate) {
-            Session::flash('error', 'วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุดของโครงการย่อย');
+            Session::flash('error', 'วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุดของกิจกรรมหลัก');
             header('Location: ' . Router::url("/projects/{$parentId}"));
             exit;
         }
@@ -77,14 +77,14 @@ class SubProjectController
 
         if ($parentStartDate && $startDate && $startDate < $parentStartDate) {
             $formattedParentStart = date('d/m/', strtotime($parentStartDate)) . (date('Y', strtotime($parentStartDate)) + 543);
-            Session::flash('error', "วันที่เริ่มต้นของโครงการย่อยต้องเท่ากับหรือมากกว่าวันที่เริ่มต้นของโครงการหลัก ({$formattedParentStart})");
+            Session::flash('error', "วันที่เริ่มต้นของกิจกรรมหลักต้องเท่ากับหรือมากกว่าวันที่เริ่มต้นของโครงการหลัก ({$formattedParentStart})");
             header('Location: ' . Router::url("/projects/{$parentId}"));
             exit;
         }
 
         if ($parentEndDate && $endDate && $endDate > $parentEndDate) {
             $formattedParentEnd = date('d/m/', strtotime($parentEndDate)) . (date('Y', strtotime($parentEndDate)) + 543);
-            Session::flash('error', "วันที่สิ้นสุดของโครงการย่อยต้องไม่เกินวันที่สิ้นสุดของโครงการหลัก ({$formattedParentEnd})");
+            Session::flash('error', "วันที่สิ้นสุดของกิจกรรมหลักต้องไม่เกินวันที่สิ้นสุดของโครงการหลัก ({$formattedParentEnd})");
             header('Location: ' . Router::url("/projects/{$parentId}"));
             exit;
         }
@@ -97,7 +97,7 @@ class SubProjectController
         );
         $remainingBudget = max(0, $parentBudget - $totalAllocated);
         if ($budget > $remainingBudget) {
-            Session::flash('error', "งบประมาณโครงการย่อย (" . number_format($budget, 2) . " บาท) เกินกว่างบประมาณคงเหลือของโครงการหลักที่สามารถจัดสรรได้ (คงเหลือ: " . number_format($remainingBudget, 2) . " บาท)");
+            Session::flash('error', "งบประมาณกิจกรรมหลัก (" . number_format($budget, 2) . " บาท) เกินกว่างบประมาณคงเหลือของโครงการหลักที่สามารถจัดสรรได้ (คงเหลือ: " . number_format($remainingBudget, 2) . " บาท)");
             header('Location: ' . Router::url("/projects/{$parentId}"));
             exit;
         }
@@ -115,6 +115,16 @@ class SubProjectController
             }
             if (!$responsibleUserId) {
                 $responsibleUserId = Auth::id() ?: 1;
+            }
+
+            // ป้องกันการมอบหมายโครงการให้ผู้บริหาร (Role Segregation & Least Privilege)
+            if ($responsibleUserId) {
+                $userRoleCheck = Database::fetch("SELECT r.name as role_name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = ?", [$responsibleUserId]);
+                if ($userRoleCheck && $userRoleCheck['role_name'] === 'executive') {
+                    Session::flash('error', 'ไม่สามารถมอบหมายโครงการให้ผู้ใช้งานในบทบาท "ผู้บริหาร" ได้ (ผู้บริหารมีหน้าที่กำกับดูแลภาพรวม)');
+                    header('Location: ' . Router::url("/projects/{$parentId}"));
+                    exit;
+                }
             }
 
             $subId = Database::insert('projects', [
@@ -148,7 +158,7 @@ class SubProjectController
             ProgressService::syncParentProjectProgress($parentId);
 
             AuditLogService::log('CREATE_SUBPROJECT', 'Project', $subId, null, ['name' => $_POST['name']]);
-            Session::flash('success', "เพิ่มโครงการย่อย '{$_POST['name']}' เรียบร้อยแล้ว");
+            Session::flash('success', "เพิ่มกิจกรรมหลัก '{$_POST['name']}' เรียบร้อยแล้ว");
             header('Location: ' . Router::url("/sub-projects/{$subId}"));
             exit;
         } catch (Exception $e) {
@@ -217,13 +227,11 @@ class SubProjectController
         }
 
         $subId = (int)$id;
-        $status = trim($_POST['status'] ?? 'in_progress');
-        $note = trim($_POST['problem_description'] ?? '');
 
         try {
-            $res = ProgressService::updateStatusAndProgress($subId, $status, null, $note);
+            $res = ProgressService::updateStatusAndProgress($subId);
             $statusLabel = \App\Enums\ProjectStatus::labelFor($res['status']);
-            Session::flash('success', "อัปเดตสถานะโครงการเป็น '{$statusLabel}' เรียบร้อยแล้ว");
+            Session::flash('success', "สถานะโครงการคำนวณจากกิจกรรมย่อยเป็น '{$statusLabel}' เรียบร้อยแล้ว");
         } catch (Exception $e) {
             Session::flash('error', $e->getMessage());
         }
@@ -273,7 +281,7 @@ class SubProjectController
 
         try {
             ProjectService::resolveProblem($subId, $note);
-            Session::flash('success', 'บันทึกการแก้ไขปัญหาเรียบร้อยแล้ว');
+            Session::flash('success', 'บันทึกการแก้ไขปัญหาเรียบร้อยแล้ว (เปลี่ยนสถานะกิจกรรมย่อยเป็นกำลังดำเนินการ)');
         } catch (Exception $e) {
             Session::flash('error', $e->getMessage());
         }
@@ -285,7 +293,7 @@ class SubProjectController
     public function update(string $id): void
     {
         if (!Auth::canManageProjects()) {
-            Session::flash('error', 'คุณไม่มีสิทธิ์แก้ไขโครงการย่อย');
+            Session::flash('error', 'คุณไม่มีสิทธิ์แก้ไขกิจกรรมหลัก');
             header('Location: ' . Router::url("/sub-projects/{$id}"));
             exit;
         }
@@ -293,7 +301,7 @@ class SubProjectController
         $subId = (int)$id;
         $project = Database::fetch("SELECT * FROM projects WHERE id = ? AND parent_id IS NOT NULL", [$subId]);
         if (!$project) {
-            Session::flash('error', 'ไม่พบโครงการย่อย');
+            Session::flash('error', 'ไม่พบกิจกรรมหลัก');
             header('Location: ' . Router::url('/projects'));
             exit;
         }
@@ -316,7 +324,7 @@ class SubProjectController
         $endDate = !empty($_POST['end_date']) ? trim($_POST['end_date']) : null;
 
         if ($startDate && $endDate && $startDate > $endDate) {
-            Session::flash('error', 'วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุดของโครงการย่อย');
+            Session::flash('error', 'วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุดของกิจกรรมหลัก');
             header('Location: ' . Router::url("/sub-projects/{$subId}"));
             exit;
         }
@@ -326,14 +334,14 @@ class SubProjectController
 
         if ($parentStartDate && $startDate && $startDate < $parentStartDate) {
             $formattedParentStart = date('d/m/', strtotime($parentStartDate)) . (date('Y', strtotime($parentStartDate)) + 543);
-            Session::flash('error', "วันที่เริ่มต้นของโครงการย่อยต้องเท่ากับหรือมากกว่าวันที่เริ่มต้นของโครงการหลัก ({$formattedParentStart})");
+            Session::flash('error', "วันที่เริ่มต้นของกิจกรรมหลักต้องเท่ากับหรือมากกว่าวันที่เริ่มต้นของโครงการหลัก ({$formattedParentStart})");
             header('Location: ' . Router::url("/sub-projects/{$subId}"));
             exit;
         }
 
         if ($parentEndDate && $endDate && $endDate > $parentEndDate) {
             $formattedParentEnd = date('d/m/', strtotime($parentEndDate)) . (date('Y', strtotime($parentEndDate)) + 543);
-            Session::flash('error', "วันที่สิ้นสุดของโครงการย่อยต้องไม่เกินวันที่สิ้นสุดของโครงการหลัก ({$formattedParentEnd})");
+            Session::flash('error', "วันที่สิ้นสุดของกิจกรรมหลักต้องไม่เกินวันที่สิ้นสุดของโครงการหลัก ({$formattedParentEnd})");
             header('Location: ' . Router::url("/sub-projects/{$subId}"));
             exit;
         }
@@ -347,7 +355,7 @@ class SubProjectController
         );
         $maxAllowed = max(0, $parentBudget - $otherSubsBudget);
         if ($parent && $newBudget > $maxAllowed) {
-            Session::flash('error', "งบประมาณโครงการย่อย (" . number_format($newBudget, 2) . " บาท) เกินกว่างบประมาณคงเหลือของโครงการหลักที่สามารถจัดสรรได้ (สามารถจัดสรรได้สูงสุด: " . number_format($maxAllowed, 2) . " บาท)");
+            Session::flash('error', "งบประมาณกิจกรรมหลัก (" . number_format($newBudget, 2) . " บาท) เกินกว่างบประมาณคงเหลือของโครงการหลักที่สามารถจัดสรรได้ (สามารถจัดสรรได้สูงสุด: " . number_format($maxAllowed, 2) . " บาท)");
             header('Location: ' . Router::url("/sub-projects/{$subId}"));
             exit;
         }
@@ -359,6 +367,16 @@ class SubProjectController
             $matchedUser = Database::fetch("SELECT id FROM users WHERE name LIKE ? LIMIT 1", ["%{$responsiblePerson}%"]);
             if ($matchedUser) {
                 $responsibleUserId = (int)$matchedUser['id'];
+            }
+        }
+
+        // ป้องกันการมอบหมายโครงการให้ผู้บริหาร (Role Segregation & Least Privilege)
+        if ($responsibleUserId) {
+            $userRoleCheck = Database::fetch("SELECT r.name as role_name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = ?", [$responsibleUserId]);
+            if ($userRoleCheck && $userRoleCheck['role_name'] === 'executive') {
+                Session::flash('error', 'ไม่สามารถมอบหมายโครงการให้ผู้ใช้งานในบทบาท "ผู้บริหาร" ได้ (ผู้บริหารมีหน้าที่กำกับดูแลภาพรวม)');
+                header('Location: ' . Router::url("/sub-projects/{$projectId}"));
+                exit;
             }
         }
 
@@ -390,7 +408,7 @@ class SubProjectController
         BudgetService::syncParentProjectBudget($project['parent_id']);
 
         AuditLogService::log('UPDATE_SUBPROJECT', 'Project', $subId, ['name' => $project['name'], 'budget' => $project['budget']], ['name' => $_POST['name'], 'budget' => $newBudget]);
-        Session::flash('success', 'อัปเดตข้อมูลโครงการย่อยเรียบร้อยแล้ว');
+        Session::flash('success', 'อัปเดตข้อมูลกิจกรรมหลักเรียบร้อยแล้ว');
         header('Location: ' . Router::url("/sub-projects/{$subId}"));
         exit;
     }
@@ -398,7 +416,7 @@ class SubProjectController
     public function delete(string $id): void
     {
         if (!Auth::isAdmin()) {
-            Session::flash('error', 'เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถลบโครงการย่อยได้');
+            Session::flash('error', 'เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถลบกิจกรรมหลักได้');
             header('Location: ' . Router::url("/sub-projects/{$id}"));
             exit;
         }
@@ -406,7 +424,7 @@ class SubProjectController
         $subId = (int)$id;
         $project = Database::fetch("SELECT * FROM projects WHERE id = ? AND parent_id IS NOT NULL", [$subId]);
         if (!$project) {
-            Session::flash('error', 'ไม่พบโครงการย่อย');
+            Session::flash('error', 'ไม่พบกิจกรรมหลัก');
             header('Location: ' . Router::url('/projects'));
             exit;
         }
@@ -427,7 +445,7 @@ class SubProjectController
         ProgressService::syncParentProjectProgress($parentId);
 
         AuditLogService::log('DELETE_SUBPROJECT', 'Project', $subId, ['name' => $name, 'parent_id' => $parentId]);
-        Session::flash('success', "ลบโครงการย่อย '{$name}' เรียบร้อยแล้ว");
+        Session::flash('success', "ลบกิจกรรมหลัก '{$name}' เรียบร้อยแล้ว");
         header('Location: ' . Router::url("/projects/{$parentId}"));
         exit;
     }
