@@ -85,8 +85,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Tailwind CSS (STRICTLY NO Bootstrap) -->
-    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>" src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS (STRICTLY NO Bootstrap) - Self-Hosted Offline-First & SRI-Free -->
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>" src="<?= \App\Core\Router::url('/js/tailwindcss.min.js') ?>"></script>
     <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
         tailwind.config = {
             darkMode: 'class',

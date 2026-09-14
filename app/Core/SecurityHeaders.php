@@ -118,7 +118,7 @@ class SecurityHeaders
         }
 
         // 2. MIME type sniffing protection
-        header('X-Content-Type-Options: nosniff');
+        header('X-Content-Type-Options: nosniff', true);
 
         // 3. Clickjacking protection
         header('X-Frame-Options: SAMEORIGIN');

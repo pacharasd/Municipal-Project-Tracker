@@ -33,7 +33,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&family=Prompt:wght@500;600;700&display=swap" rel="stylesheet">
-    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>" src="https://cdn.tailwindcss.com"></script>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>" src="<?= \App\Core\Router::url('/js/tailwindcss.min.js') ?>"></script>
     <style>
         body { font-family: 'Sarabun', sans-serif; font-size: 13px; }
         h1, h2, h3, .font-heading { font-family: 'Prompt', sans-serif; }

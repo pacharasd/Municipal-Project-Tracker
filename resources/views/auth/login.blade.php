@@ -86,8 +86,8 @@ $success = Session::flash('success');
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Tailwind CSS CDN -->
-    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>" src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS (Self-Hosted) -->
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>" src="<?= Router::url('/js/tailwindcss.min.js') ?>"></script>
     <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
         tailwind.config = {
             darkMode: 'class',
@@ -119,9 +119,9 @@ $success = Session::flash('success');
         }
     </script>
 
-    <!-- Alpine.js & Lucide Icons -->
-    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>" defer src="https://cdn.jsdelivr.net/npm/@alpinejs/csp@3.x.x/dist/cdn.min.js"></script>
-    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>" src="https://unpkg.com/lucide@latest"></script>
+    <!-- Alpine.js & Lucide Icons (Self-Hosted Offline-First) -->
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>" defer src="<?= Router::url('/js/alpine.min.js') ?>"></script>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>" src="<?= Router::url('/js/lucide.min.js') ?>"></script>
     <style>
         body { font-family: 'Sarabun', sans-serif; }
         h1, h2, h3, h4, .font-heading { font-family: 'Prompt', sans-serif; }
