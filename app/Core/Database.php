@@ -264,6 +264,19 @@ class Database
             }
 
             // Auto-migrate newly added columns seamlessly
+            try {
+                $emailCol = $pdo->query("SHOW COLUMNS FROM `users` LIKE 'email'")->fetch();
+                if ($emailCol && strtolower($emailCol['Null'] ?? '') === 'no') {
+                    $pdo->exec("ALTER TABLE `users` MODIFY COLUMN `email` VARCHAR(150) NULL DEFAULT NULL");
+                }
+                $phoneCol = $pdo->query("SHOW COLUMNS FROM `users` LIKE 'phone'")->fetch();
+                if ($phoneCol && strtolower($phoneCol['Null'] ?? '') === 'no') {
+                    $pdo->exec("ALTER TABLE `users` MODIFY COLUMN `phone` VARCHAR(50) NULL DEFAULT NULL");
+                }
+            } catch (\Throwable $e) {
+                error_log("Auto schema notice (users table): " . $e->getMessage());
+            }
+
             $colCheck = $pdo->query("SHOW COLUMNS FROM `projects` LIKE 'responsible_person'")->fetch();
             if (!$colCheck) {
                 $pdo->exec("ALTER TABLE `projects` ADD COLUMN `responsible_person` VARCHAR(255) NULL AFTER `responsible_user_id`");

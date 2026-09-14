@@ -69,22 +69,61 @@ class UserController
                 header('Location: ' . Router::url('/users'));
                 exit;
             }
+        } else {
+            // Defensive: Check if column allows null on the current host database
+            try {
+                $col = Database::fetch("SHOW COLUMNS FROM `users` LIKE 'email'");
+                if ($col && strtolower($col['Null'] ?? '') === 'no') {
+                    $slug = preg_replace('/[^a-zA-Z0-9]/', '', $name) ?: 'user';
+                    $email = strtolower($slug) . '_' . time() . '_' . mt_rand(100, 999) . '@mpt.local';
+                }
+            } catch (\Throwable $e) {
+                // Ignore check failure
+            }
         }
 
         $roleId = !empty($_POST['role_id']) ? (int)$_POST['role_id'] : 1; // Default to Admin
-
         $hash = password_hash($password ?: 'password', PASSWORD_BCRYPT);
-        $userId = Database::insert('users', [
-            'name'     => $name,
-            'email'    => $email,
-            'password' => $hash,
-            'role_id'  => $roleId,
-            'position' => $position,
-            'phone'    => $phone,
-        ]);
 
-        \App\Services\AuditLogService::log('CREATE_USER', 'User', $userId, null, ['name' => $name, 'role_id' => $roleId]);
-        Session::flash('success', "เพิ่มผู้ใช้งาน '{$name}' เรียบร้อยแล้ว (รหัสผ่านเริ่มต้น: {$password})");
+        try {
+            $userId = Database::insert('users', [
+                'name'     => $name,
+                'email'    => $email,
+                'password' => $hash,
+                'role_id'  => $roleId,
+                'position' => $position,
+                'phone'    => $phone,
+            ]);
+
+            \App\Services\AuditLogService::log('CREATE_USER', 'User', $userId, null, ['name' => $name, 'role_id' => $roleId]);
+            Session::flash('success', "เพิ่มผู้ใช้งาน '{$name}' เรียบร้อยแล้ว (รหัสผ่านเริ่มต้น: {$password})");
+        } catch (\Throwable $e) {
+            error_log("Failed to create user: " . $e->getMessage());
+            
+            // Auto-recovery: If host DB still enforces NOT NULL on email, retry with safe internal identifier
+            if (str_contains($e->getMessage(), 'email') || str_contains($e->getMessage(), '1048')) {
+                try {
+                    $fallbackEmail = 'user_' . time() . '_' . mt_rand(1000, 9999) . '@mpt.local';
+                    $userId = Database::insert('users', [
+                        'name'     => $name,
+                        'email'    => $fallbackEmail,
+                        'password' => $hash,
+                        'role_id'  => $roleId,
+                        'position' => $position,
+                        'phone'    => $phone,
+                    ]);
+                    \App\Services\AuditLogService::log('CREATE_USER', 'User', $userId, null, ['name' => $name, 'role_id' => $roleId]);
+                    Session::flash('success', "เพิ่มผู้ใช้งาน '{$name}' เรียบร้อยแล้ว (รหัสผ่านเริ่มต้น: {$password})");
+                    header('Location: ' . Router::url('/users'));
+                    exit;
+                } catch (\Throwable $retryE) {
+                    error_log("Auto-recovery create user failed: " . $retryE->getMessage());
+                }
+            }
+
+            Session::flash('error', "ไม่สามารถเพิ่มผู้ใช้งานได้: " . $e->getMessage());
+        }
+
         header('Location: ' . Router::url('/users'));
         exit;
     }
@@ -140,7 +179,13 @@ class UserController
                 }
                 $updateData['email'] = $email;
             } else {
-                $updateData['email'] = null;
+                // If column allows null, set null; otherwise keep existing
+                try {
+                    $col = Database::fetch("SHOW COLUMNS FROM `users` LIKE 'email'");
+                    if ($col && strtolower($col['Null'] ?? '') === 'yes') {
+                        $updateData['email'] = null;
+                    }
+                } catch (\Throwable $e) {}
             }
         }
 
@@ -157,13 +202,19 @@ class UserController
             $updateData['password'] = password_hash($newPassword, PASSWORD_BCRYPT);
         }
 
-        Database::update('users', $updateData, "id = ?", [$userId]);
+        try {
+            Database::update('users', $updateData, "id = ?", [$userId]);
 
-        \App\Services\AuditLogService::log('UPDATE_USER', 'User', $userId, 
-            ['name' => $user['name'], 'role_id' => $user['role_id']], 
-            ['name' => $name, 'role_id' => $updateData['role_id'] ?? $user['role_id']]
-        );
-        Session::flash('success', "อัปเดตข้อมูลผู้ใช้ '{$name}' เรียบร้อยแล้ว");
+            \App\Services\AuditLogService::log('UPDATE_USER', 'User', $userId, 
+                ['name' => $user['name'], 'role_id' => $user['role_id']], 
+                ['name' => $name, 'role_id' => $updateData['role_id'] ?? $user['role_id']]
+            );
+            Session::flash('success', "อัปเดตข้อมูลผู้ใช้ '{$name}' เรียบร้อยแล้ว");
+        } catch (\Throwable $e) {
+            error_log("Failed to update user: " . $e->getMessage());
+            Session::flash('error', "ไม่สามารถอัปเดตข้อมูลผู้ใช้ได้: " . $e->getMessage());
+        }
+
         header('Location: ' . Router::url('/users'));
         exit;
     }

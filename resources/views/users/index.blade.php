@@ -49,7 +49,7 @@ foreach ($users as $u) {
     },
 
     openCreate() {
-        this.createRoleId = '';
+        this.createRoleId = (this.rolesList && this.rolesList.length > 0) ? this.rolesList[0].id : 1;
         this.createRoleOpen = false;
         this.createModal = true;
         this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
