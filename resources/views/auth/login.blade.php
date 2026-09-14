@@ -120,7 +120,7 @@ $success = Session::flash('success');
     </script>
 
     <!-- Alpine.js & Lucide Icons -->
-    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>" defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>" defer src="https://cdn.jsdelivr.net/npm/@alpinejs/csp@3.x.x/dist/cdn.min.js"></script>
     <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>" src="https://unpkg.com/lucide@latest"></script>
     <style>
         body { font-family: 'Sarabun', sans-serif; }

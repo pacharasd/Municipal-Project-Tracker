@@ -437,7 +437,7 @@
         window.addEventListener('DOMContentLoaded', function() {
             if (typeof Alpine === 'undefined') {
                 const s = document.createElement('script');
-                s.src = 'https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js';
+                s.src = 'https://cdn.jsdelivr.net/npm/@alpinejs/csp@3.x.x/dist/cdn.min.js';
                 s.nonce = '<?= \App\Core\SecurityHeaders::nonce() ?>';
                 s.defer = true;
                 document.head.appendChild(s);
