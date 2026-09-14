@@ -83,6 +83,12 @@ class Router
                 // Run Middlewares
                 foreach ($route['middlewares'] as $mw) {
                     if ($mw === 'auth' && !Auth::check()) {
+                        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                            http_response_code(401);
+                            header('Content-Type: application/json; charset=utf-8');
+                            echo json_encode(['status' => 'error', 'message' => 'Unauthenticated', 'redirect' => self::url('/login')]);
+                            exit;
+                        }
                         header('Location: ' . self::url('/login'));
                         exit;
                     }

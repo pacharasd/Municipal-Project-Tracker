@@ -8,9 +8,10 @@
 
 declare(strict_types=1);
 
-// Error Reporting
+// Error Reporting & Timezone
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
+date_default_timezone_set('Asia/Bangkok');
 
 // Performance Optimization: Enable Native Output Compression (Gzip) for dynamic pages & API
 if (!ini_get('zlib.output_compression') && extension_loaded('zlib')) {
@@ -76,21 +77,26 @@ if (file_exists($envFile)) {
 // Start Session
 \App\Core\Session::start();
 
-// If not visiting /login or /logout, default to Administrator for seamless testing
+// Authentication Guard: Protected routes require an active authenticated session
 $reqUri = $_SERVER['REQUEST_URI'] ?? '';
 $isAuthRoute = strpos($reqUri, '/login') !== false || strpos($reqUri, '/logout') !== false;
 
 if (!$isAuthRoute && !\App\Core\Auth::check()) {
-    try {
-        $admin = \App\Core\Database::fetch("SELECT u.*, r.name as role_name, r.display_name as role_label FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = 1");
-        if ($admin) {
-            \App\Core\Auth::login($admin);
-        }
-    } catch (\Throwable $e) {
-        error_log("Auto-login error / missing tables: " . $e->getMessage());
-        \App\Core\Database::renderMissingTablesError($e);
+    // If request is AJAX, return 401 Unauthorized JSON
+    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+        http_response_code(401);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'status'   => 'error',
+            'message'  => 'Unauthenticated',
+            'redirect' => \App\Core\Router::url('/login')
+        ], JSON_UNESCAPED_UNICODE);
         exit;
     }
+
+    // Normal browser navigation: strictly redirect to login
+    header('Location: ' . \App\Core\Router::url('/login'));
+    exit;
 }
 
 // Load Web Routes

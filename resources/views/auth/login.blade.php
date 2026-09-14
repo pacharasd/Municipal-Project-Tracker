@@ -4,6 +4,7 @@ use App\Core\Session;
 
 $error = Session::flash('error');
 $success = Session::flash('success');
+$lockoutSeconds = (int)(Session::flash('lockout_seconds') ?: 0);
 ?>
 <!DOCTYPE html>
 <html lang="th" class="h-full">
@@ -271,11 +272,24 @@ $success = Session::flash('success');
                 </p>
             </div>
 
-            <!-- Flash Alert: Error Message -->
-            <?php if ($error): ?>
+            <!-- Flash Alert: Lockout Banner (When rate-limited) -->
+            <?php if ($lockoutSeconds > 0): ?>
+                <div x-data="{ remaining: <?= $lockoutSeconds ?>, timer: null }"
+                     x-init="timer = setInterval(() => { if (remaining > 0) remaining--; else clearInterval(timer); }, 1000)"
+                     class="mb-5 p-4 bg-amber-50 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-700/60 rounded-2xl text-xs text-amber-900 dark:text-amber-200 flex items-start gap-3 shadow-xs">
+                    <i data-lucide="shield-alert" class="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"></i>
+                    <div class="flex-1">
+                        <div class="font-bold text-sm mb-0.5">ระงับการเข้าสู่ระบบชั่วคราว (Security Lockout)</div>
+                        <div><?= htmlspecialchars($error ?? 'ระบบตรวจพบการพยายามเข้าสู่ระบบผิดพลาดเกินกำหนด') ?></div>
+                        <div class="mt-2 font-mono text-[11px] font-semibold text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                            <span>โปรดรออีก: <span x-text="Math.floor(remaining / 60) + ' นาที ' + (remaining % 60) + ' วินาที'"></span></span>
+                        </div>
+                    </div>
+                </div>
+            <?php elseif ($error): ?>
                 <div x-data="{ show: true }"
                      x-show="show"
-                     x-init="setTimeout(() => show = false, 5000)"
                      x-transition:enter="transition ease-out duration-200"
                      x-transition:enter-start="opacity-0 -translate-y-1"
                      x-transition:enter-end="opacity-100 translate-y-0"
@@ -315,33 +329,7 @@ $success = Session::flash('success');
                 </div>
             <?php endif; ?>
 
-            <!-- 1-Click Role Quick Switcher (Clear & Elegant Tabs) -->
-            <div class="mb-5">
-                <!-- 2-Option Segmented Tab Switcher -->
-                <div class="p-1 bg-slate-100 dark:bg-white/[0.04] rounded-2xl flex items-center gap-1 border border-slate-200/60 dark:border-white/[0.06]">
-                    <!-- Admin Tab -->
-                    <button type="button" 
-                            @click="fillUser('Surachai', 'admin', 'password')"
-                            class="flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer"
-                            :class="selectedRole === 'admin' 
-                                ? 'bg-white dark:bg-[#1f2330] text-purple-700 dark:text-purple-300 shadow-sm font-bold border border-slate-200/80 dark:border-white/10' 
-                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'">
-                        <span class="w-2 h-2 rounded-full" :class="selectedRole === 'admin' ? 'bg-purple-600' : 'bg-slate-400'"></span>
-                        <span>ผู้ดูแลระบบ (Admin)</span>
-                    </button>
 
-                    <!-- Executive Tab -->
-                    <button type="button" 
-                            @click="fillUser('ดร.สมชาย ทรงคุณ (นายกเทศมนตรี)', 'executive', 'password')"
-                            class="flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer"
-                            :class="selectedRole === 'executive' 
-                                ? 'bg-white dark:bg-[#1f2330] text-amber-700 dark:text-amber-300 shadow-sm font-bold border border-slate-200/80 dark:border-white/10' 
-                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'">
-                        <span class="w-2 h-2 rounded-full" :class="selectedRole === 'executive' ? 'bg-amber-500' : 'bg-slate-400'"></span>
-                        <span>ผู้บริหาร (Executive)</span>
-                    </button>
-                </div>
-            </div>
 
             <!-- Login Form -->
             <form action="<?= Router::url('/login') ?>" method="POST" class="space-y-4">
@@ -359,7 +347,7 @@ $success = Session::flash('success');
                                x-model="name" 
                                required 
                                autocomplete="username"
-                               placeholder="Surachai หรือ ชื่อผู้ใช้งาน"
+                               placeholder="กรอกชื่อผู้ใช้งาน หรือ Username"
                                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-[#11141c] border border-slate-200 dark:border-white/10 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white font-sans focus:bg-white dark:focus:bg-[#161922] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none">
                     </div>
                 </div>
@@ -377,7 +365,8 @@ $success = Session::flash('success');
                                name="password" 
                                x-model="password" 
                                required
-                               placeholder="••••••••"
+                               autocomplete="current-password"
+                               placeholder="กรอกรหัสผ่าน"
                                class="w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-[#11141c] border border-slate-200 dark:border-white/10 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white font-mono focus:bg-white dark:focus:bg-[#161922] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none">
                         
                         <!-- Toggle Password Visibility -->
@@ -431,10 +420,9 @@ $success = Session::flash('success');
     <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
         function loginPage() {
             return {
-                name: 'Surachai',
-                password: 'password',
+                name: '',
+                password: '',
                 showPassword: false,
-                selectedRole: 'admin',
                 themeMode: localStorage.getItem('theme') || 'system',
 
                 init() {
@@ -454,12 +442,6 @@ $success = Session::flash('success');
                         if (mq.addEventListener) mq.addEventListener('change', listener);
                         else if (mq.addListener) mq.addListener(listener);
                     } catch (e) {}
-                },
-
-                fillUser(userName, role, pass = 'password') {
-                    this.name = userName;
-                    this.password = pass;
-                    this.selectedRole = role;
                 },
 
                 setTheme(mode) {

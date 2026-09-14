@@ -165,19 +165,58 @@ class Auth
         return self::isAdmin();
     }
 
+    /**
+     * Pre-calculated dummy Bcrypt hash to equalize timing against enumeration attacks (OWASP ASVS 2.1.8).
+     */
+    private const DUMMY_BCRYPT_HASH = '$2y$10$EulcO7BKJ9sqnUMTvwK8z.hXVkqIbW480F5H/MFrScpCTlxgfWfzO';
+
+    /**
+     * Equalize timing for non-existent users to mitigate timing attacks.
+     */
+    public static function dummyPasswordVerify(string $password): void
+    {
+        password_verify($password, self::DUMMY_BCRYPT_HASH);
+    }
+
+    /**
+     * Authenticate and establish a session for the user with Session Fixation mitigation (OWASP ASVS 3.2.1).
+     */
     public static function login(array $user): void
     {
         self::$currentUser = null;
+
+        // Mitigate Session Fixation by issuing a brand-new session ID
+        Session::regenerate(true);
+
         Session::set('user_id', $user['id']);
         Session::set('user_role', $user['role_name'] ?? 'admin');
         Session::set('user_name', $user['name']);
+        Session::set('login_time', time());
+
+        // Update user telemetry
+        $ip = substr($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1', 0, 45);
+        try {
+            Database::query(
+                "UPDATE users SET last_login_at = NOW(), last_login_ip = ? WHERE id = ?",
+                [$ip, $user['id']]
+            );
+        } catch (\Throwable $e) {
+            // Non-blocking telemetry failure
+        }
     }
 
+    /**
+     * Log out current user, clear session tokens, and invalidate session ID cleanly.
+     */
     public static function logout(): void
     {
         self::$currentUser = null;
         Session::remove('user_id');
         Session::remove('user_role');
         Session::remove('user_name');
+        Session::remove('login_time');
+
+        // Regenerate to prevent session reuse
+        Session::regenerate(true);
     }
 }

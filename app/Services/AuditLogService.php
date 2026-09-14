@@ -7,14 +7,14 @@ use App\Core\Auth;
 
 class AuditLogService
 {
-    public static function log(string $action, string $module, ?int $recordId = null, ?array $oldValues = null, ?array $newValues = null): void
+    public static function log(string $action, string $module, ?int $recordId = null, ?array $oldValues = null, ?array $newValues = null, ?int $userId = null): void
     {
-        $userId = Auth::id() ?: 1;
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+        $effectiveUserId = $userId !== null ? $userId : Auth::id();
+        $ip = substr($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1', 0, 50);
         $userAgent = substr($_SERVER['HTTP_USER_AGENT'] ?? 'CLI/Browser', 0, 255);
 
         Database::insert('audit_logs', [
-            'user_id'    => $userId,
+            'user_id'    => $effectiveUserId,
             'action'     => $action,
             'module'     => $module,
             'record_id'  => $recordId,

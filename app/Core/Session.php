@@ -58,6 +58,42 @@ class Session
         unset($_SESSION[$key]);
     }
 
+    /**
+     * Regenerate session ID to mitigate session fixation attacks (OWASP ASVS 3.2.1).
+     */
+    public static function regenerate(bool $deleteOldSession = true): bool
+    {
+        self::start();
+        if (session_status() === PHP_SESSION_ACTIVE && !headers_sent()) {
+            return session_regenerate_id($deleteOldSession);
+        }
+        return false;
+    }
+
+    /**
+     * Destroy current session cleanly and clear session cookies.
+     */
+    public static function destroy(): void
+    {
+        self::start();
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            $_SESSION = [];
+            if (ini_get('session.use_cookies')) {
+                $params = session_get_cookie_params();
+                setcookie(
+                    session_name(),
+                    '',
+                    time() - 42000,
+                    $params['path'],
+                    $params['domain'],
+                    $params['secure'],
+                    $params['httponly']
+                );
+            }
+            @session_destroy();
+        }
+    }
+
     private static array $flashCache = [];
 
     public static function flash(string $key, mixed $value = null): mixed
