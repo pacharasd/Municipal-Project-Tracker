@@ -223,7 +223,7 @@ window.projectShowPage = function projectShowPage() {
                 </button>
             <?php endif; ?>
             <?php if (\App\Core\Auth::isAdmin()): ?>
-                <form action="<?= \App\Core\Router::url("/projects/{$project['id']}/delete") ?>" method="POST" onsubmit="return confirm('ยืนยันการลบโครงการนี้และกิจกรรมหลักทั้งหมดหรือไม่? ข้อมูลจะไม่สามารถกู้คืนได้');">
+                <form action="<?= \App\Core\Router::url("/projects/{$project['id']}/delete") ?>" method="POST" data-confirm="ยืนยันการลบโครงการนี้และกิจกรรมหลักทั้งหมดหรือไม่? ข้อมูลจะไม่สามารถกู้คืนได้">
                     <input type="hidden" name="_token" value="<?= $csrfToken ?>">
                     <button type="submit" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/15 border border-rose-200 dark:border-rose-500/30 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-500/25 transition-all cursor-pointer">
                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> ลบโครงการ
@@ -714,34 +714,34 @@ window.projectShowPage = function projectShowPage() {
                         const start = $el.querySelector('input[name=start_date]')?.value;
                         const end = $el.querySelector('input[name=end_date]')?.value;
                         if (!start) {
-                            alert('กรุณาเลือกวันที่เริ่มต้น');
+                            window.notify.warning('กรุณาเลือกวันที่เริ่มต้น');
                             $event.preventDefault();
                             return false;
                         }
                         if (!end) {
-                            alert('กรุณาเลือกวันที่สิ้นสุด');
+                            window.notify.warning('กรุณาเลือกวันที่สิ้นสุด');
                             $event.preventDefault();
                             return false;
                         }
                         if (pStart && start < pStart) {
-                            alert('วันที่เริ่มต้นของกิจกรรมหลักต้องเท่ากับหรือมากกว่าวันที่เริ่มต้นของโครงการหลัก (<?= $parentStartThai ?>)');
+                            window.notify.warning('วันที่เริ่มต้นของกิจกรรมหลักต้องเท่ากับหรือมากกว่าวันที่เริ่มต้นของโครงการหลัก (<?= $parentStartThai ?>)');
                             $event.preventDefault();
                             return false;
                         }
                         if (pEnd && end > pEnd) {
-                            alert('วันที่สิ้นสุดของกิจกรรมหลักต้องไม่เกินวันที่สิ้นสุดของโครงการหลัก (<?= $parentEndThai ?>)');
+                            window.notify.warning('วันที่สิ้นสุดของกิจกรรมหลักต้องไม่เกินวันที่สิ้นสุดของโครงการหลัก (<?= $parentEndThai ?>)');
                             $event.preventDefault();
                             return false;
                         }
                         if (start > end) {
-                            alert('วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุดของกิจกรรมหลัก');
+                            window.notify.warning('วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุดของกิจกรรมหลัก');
                             $event.preventDefault();
                             return false;
                         }
                         const maxBudget = <?= (float)$remainingParentBudget ?>;
                         const budgetVal = parseFloat($el.querySelector('input[name=budget]')?.value || 0);
                         if (budgetVal > maxBudget) {
-                            alert('งบประมาณกิจกรรมหลัก (' + budgetVal.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท) ต้องไม่เกินงบประมาณคงเหลือของโครงการหลักที่จัดสรรได้ (' + maxBudget.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท)');
+                            window.notify.warning('งบประมาณกิจกรรมหลัก (' + budgetVal.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท) ต้องไม่เกินงบประมาณคงเหลือของโครงการหลักที่จัดสรรได้ (' + maxBudget.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท)');
                             $event.preventDefault();
                             return false;
                         }

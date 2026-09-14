@@ -241,7 +241,7 @@ window.subProjectShowPage = function subProjectShowPage() {
 
                 <!-- Delete Subproject button -->
                 <form action="<?= \App\Core\Router::url("/sub-projects/{$project['id']}/delete") ?>" method="POST" class="w-full sm:w-auto"
-                      onsubmit="return confirm('ยืนยันการลบโครงการย่อย <?= htmlspecialchars(addslashes($project['name'] ?? ''), ENT_QUOTES, 'UTF-8') ?> ? กิจกรรมและการเบิกจ่ายทั้งหมดจะถูกลบด้วย');">
+                      data-confirm="ยืนยันการลบโครงการย่อย <?= htmlspecialchars($project['name'] ?? '', ENT_QUOTES, 'UTF-8') ?> ? กิจกรรมและการเบิกจ่ายทั้งหมดจะถูกลบด้วย">
                     <input type="hidden" name="_token" value="<?= $csrfToken ?>">
                     <button type="submit" class="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 text-xs font-semibold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800/60 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors shadow-sm">
                         <i data-lucide="trash-2" class="w-3.5 h-3.5 shrink-0"></i> <span>ลบ</span>
@@ -668,7 +668,7 @@ window.subProjectShowPage = function subProjectShowPage() {
                             <div class="flex items-center gap-1 flex-shrink-0">
                                 <?php if (\App\Core\Auth::canManageProjects()): ?>
                                     <form action="<?= \App\Core\Router::url("/activities/{$act['id']}/delete") ?>" method="POST"
-                                          onsubmit="return confirm('ยืนยันการลบกิจกรรมย่อย <?= htmlspecialchars(addslashes($act['name'] ?? ''), ENT_QUOTES, 'UTF-8') ?> ?');">
+                                          data-confirm="ยืนยันการลบกิจกรรมย่อย <?= htmlspecialchars($act['name'] ?? '', ENT_QUOTES, 'UTF-8') ?> ?">
                                         <input type="hidden" name="_token" value="<?= $csrfToken ?>">
                                         <?php $actJson = htmlspecialchars(json_encode([
                                             'id'                       => $act['id'],
@@ -847,7 +847,7 @@ window.subProjectShowPage = function subProjectShowPage() {
                                 <?php endif; ?>
                                 <?php if (\App\Core\Auth::isAdmin()): ?>
                                     <form action="<?= \App\Core\Router::url("/budgets/disbursements/{$disb['id']}/delete") ?>" method="POST"
-                                          onsubmit="return confirm('ยืนยันยกเลิกรายการเบิกจ่ายจำนวน <?= number_format($disb['amount'], 2) ?> บาท? (ยอดเงินจะคืนกลับเข้างบโครงการ)');">
+                                          data-confirm="ยืนยันยกเลิกรายการเบิกจ่ายจำนวน <?= number_format($disb['amount'], 2) ?> บาท? (ยอดเงินจะคืนกลับเข้างบโครงการ)">
                                         <input type="hidden" name="_token" value="<?= $csrfToken ?>">
                                         <button type="submit" class="p-1 text-slate-400 hover:text-rose-600 rounded transition" title="ยกเลิกการเบิกจ่าย">
                                             <i data-lucide="trash-2" class="w-4 h-4"></i>
@@ -985,7 +985,7 @@ window.subProjectShowPage = function subProjectShowPage() {
                             </span>
                             <?php if (\App\Core\Auth::canManageProjects()): ?>
                                 <form action="<?= \App\Core\Router::url("/attachments/{$att['id']}/delete") ?>" method="POST"
-                                      onsubmit="return confirm('ยืนยันการลบไฟล์แนบ <?= htmlspecialchars(addslashes($att['file_name'] ?? ''), ENT_QUOTES, 'UTF-8') ?> ?');">
+                                      data-confirm="ยืนยันการลบไฟล์แนบ <?= htmlspecialchars($att['file_name'] ?? '', ENT_QUOTES, 'UTF-8') ?> ?">
                                     <input type="hidden" name="_token" value="<?= $csrfToken ?>">
                                     <button type="submit" class="p-1 text-slate-400 hover:text-rose-600 transition" title="ลบไฟล์">
                                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
@@ -1108,7 +1108,7 @@ window.subProjectShowPage = function subProjectShowPage() {
                       @submit="
                         const actDate = $el.querySelector('input[name=activity_date]')?.value;
                         if (!actDate) {
-                            alert('กรุณาเลือกวันที่จัดกิจกรรมย่อย');
+                            window.notify.warning('กรุณาเลือกวันที่จัดกิจกรรมย่อย');
                             $event.preventDefault();
                             return false;
                         }
@@ -1186,7 +1186,7 @@ window.subProjectShowPage = function subProjectShowPage() {
                       @submit="
                         const disDate = $el.querySelector('input[name=disbursement_date]')?.value;
                         if (!disDate) {
-                            alert('กรุณาเลือกวันที่เบิกจ่าย');
+                            window.notify.warning('กรุณาเลือกวันที่เบิกจ่าย');
                             $event.preventDefault();
                             return false;
                         }
@@ -1294,7 +1294,7 @@ window.subProjectShowPage = function subProjectShowPage() {
                     const maxB = <?= $maxAllowedSubBudget ?>;
                     const bVal = parseFloat($el.querySelector('input[name=budget]')?.value || 0);
                     if (maxB > 0 && bVal > maxB) {
-                        alert('งบประมาณโครงการย่อย (' + bVal.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท) ต้องไม่เกินงบประมาณคงเหลือของโครงการหลักที่จัดสรรได้ (' + maxB.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท)');
+                        window.notify.warning('งบประมาณโครงการย่อย (' + bVal.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท) ต้องไม่เกินงบประมาณคงเหลือของโครงการหลักที่จัดสรรได้ (' + maxB.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท)');
                         $event.preventDefault();
                         return false;
                     }
@@ -1303,22 +1303,22 @@ window.subProjectShowPage = function subProjectShowPage() {
                     const sStart = $el.querySelector('input[name=start_date]')?.value || '';
                     const sEnd = $el.querySelector('input[name=end_date]')?.value || '';
                     if (!sStart || !sEnd) {
-                        alert('กรุณาระบุวันที่เริ่มต้นและวันที่สิ้นสุดของโครงการย่อย');
+                        window.notify.warning('กรุณาระบุวันที่เริ่มต้นและวันที่สิ้นสุดของโครงการย่อย');
                         $event.preventDefault();
                         return false;
                     }
                     if (pStart && sStart < pStart) {
-                        alert('วันที่เริ่มต้นของโครงการย่อยต้องเท่ากับหรือมากกว่าวันที่เริ่มต้นของโครงการหลัก (<?= $parentStartThai ?>)');
+                        window.notify.warning('วันที่เริ่มต้นของโครงการย่อยต้องเท่ากับหรือมากกว่าวันที่เริ่มต้นของโครงการหลัก (<?= $parentStartThai ?>)');
                         $event.preventDefault();
                         return false;
                     }
                     if (pEnd && sEnd > pEnd) {
-                        alert('วันที่สิ้นสุดของโครงการย่อยต้องไม่เกินวันที่สิ้นสุดของโครงการหลัก (<?= $parentEndThai ?>)');
+                        window.notify.warning('วันที่สิ้นสุดของโครงการย่อยต้องไม่เกินวันที่สิ้นสุดของโครงการหลัก (<?= $parentEndThai ?>)');
                         $event.preventDefault();
                         return false;
                     }
                     if (sStart > sEnd) {
-                        alert('วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุดของโครงการย่อย');
+                        window.notify.warning('วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุดของโครงการย่อย');
                         $event.preventDefault();
                         return false;
                     }

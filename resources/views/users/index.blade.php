@@ -411,7 +411,7 @@ foreach ($users as $u) {
                         </button>
                         <template x-if="parseInt(u.id) !== currentUserId">
                             <form :action="'<?= Router::url('/users/') ?>' + u.id + '/delete'" method="POST" 
-                                  @submit="if(!confirm(`ยืนยันการลบผู้ใช้ ${u.name} ออกจากระบบ?`)) $event.preventDefault();">
+                                  :data-confirm="'ยืนยันการลบผู้ใช้ ' + u.name + ' ออกจากระบบ? ข้อมูลจะไม่สามารถกู้คืนได้'">
                                 <input type="hidden" name="_token" value="<?= $csrfToken ?>">
                                 <button type="submit" 
                                         class="px-2.5 py-1.5 text-xs font-medium text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 rounded-xl transition-colors flex items-center gap-1 cursor-pointer">
@@ -491,7 +491,7 @@ foreach ($users as $u) {
                                     </button>
                                     <template x-if="parseInt(u.id) !== currentUserId">
                                         <form :action="'<?= Router::url('/users/') ?>' + u.id + '/delete'" method="POST" 
-                                              @submit="if(!confirm(`ยืนยันการลบผู้ใช้ ${u.name} ออกจากระบบ?`)) $event.preventDefault();">
+                                              :data-confirm="'ยืนยันการลบผู้ใช้ ' + u.name + ' ออกจากระบบ? ข้อมูลจะไม่สามารถกู้คืนได้'">
                                             <input type="hidden" name="_token" value="<?= $csrfToken ?>">
                                             <button type="submit" 
                                                     class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition cursor-pointer" title="ลบผู้ใช้งาน">
@@ -609,7 +609,7 @@ foreach ($users as $u) {
             </div>
 
             <form action="<?= Router::url('/users') ?>" method="POST" 
-                  @submit="if(!createRoleId) { alert('กรุณาเลือกบทบาท / สิทธิ์'); $event.preventDefault(); return false; }"
+                  @submit="if(!createRoleId) { window.notify.warning('กรุณาเลือกบทบาท / สิทธิ์การใช้งาน'); $event.preventDefault(); return false; }"
                   class="p-5 sm:p-6 space-y-4 rounded-b-3xl">
                 <input type="hidden" name="_token" value="<?= $csrfToken ?>">
 
@@ -765,7 +765,7 @@ foreach ($users as $u) {
             </div>
 
             <form :action="'<?= Router::url('/users/') ?>' + editUser.id + '/update'" method="POST" 
-                  @submit="if(!editUser.role_id) { alert('กรุณาเลือกบทบาท / สิทธิ์'); $event.preventDefault(); return false; }"
+                  @submit="if(!editUser.role_id) { window.notify.warning('กรุณาเลือกบทบาท / สิทธิ์การใช้งาน'); $event.preventDefault(); return false; }"
                   class="p-5 sm:p-6 space-y-4 rounded-b-3xl">
                 <input type="hidden" name="_token" value="<?= $csrfToken ?>">
 

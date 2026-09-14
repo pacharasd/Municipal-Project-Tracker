@@ -457,7 +457,7 @@ window.categoriesPage = function categoriesPage() {
                             <i data-lucide="plus" class="w-4 h-4"></i>
                             <span>เพิ่มประเภทโครงการใหม่</span>
                         </button>
-                        <form action="<?= Router::url('/categories/seed-defaults') ?>" method="POST" onsubmit="return confirm('ต้องการนำเข้า 5 หมวดหมู่มาตรฐานของเทศบาลหรือไม่?');">
+                        <form action="<?= Router::url('/categories/seed-defaults') ?>" method="POST" data-confirm="ต้องการนำเข้า 5 หมวดหมู่มาตรฐานของเทศบาลหรือไม่?" data-confirm-type="warning">
                             <input type="hidden" name="_token" value="<?= $csrfToken ?>">
                             <button type="submit" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/15 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer">
                                 <i data-lucide="download-cloud" class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></i>

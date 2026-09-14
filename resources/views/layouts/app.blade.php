@@ -866,20 +866,58 @@
     <?php 
         $flashSuccess = \App\Core\Session::flash('success');
         $flashError = \App\Core\Session::flash('error');
+        $flashWarning = \App\Core\Session::flash('warning');
         $flashInfo = \App\Core\Session::flash('info');
     ?>
 
     <!-- SPA Top Progress Bar (Neon Green Glow) -->
     <div id="spa-progress" class="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 via-teal-300 to-green-500 shadow-[0_0_12px_#10b981] z-[9999] transition-all duration-200 pointer-events-none opacity-0" style="width: 0%;"></div>
 
-    <!-- Floating Toast Notifications Container -->
-    <div id="toast-container" class="fixed top-4 right-4 sm:top-6 sm:right-6 z-[99999] pointer-events-none flex flex-col gap-2.5 max-w-sm w-full px-4 sm:px-0"></div>
+    <!-- Floating Toast Notifications Container (W3C WAI-ARIA Alert Region) -->
+    <div id="toast-container" 
+         class="fixed top-4 right-4 sm:top-6 sm:right-6 z-[99999] pointer-events-none flex flex-col gap-2.5 max-w-sm w-full px-4 sm:px-0"
+         role="region" 
+         aria-label="การแจ้งเตือนระบบ"></div>
+
+    <!-- Global Accessible Confirmation Modal Container (W3C WAI-ARIA alertdialog) -->
+    <div id="mpt-confirm-modal" 
+         class="fixed inset-0 z-[100000] hidden items-center justify-center p-4 sm:p-6 bg-slate-950/65 backdrop-blur-sm transition-opacity duration-200 opacity-0 pointer-events-auto"
+         role="alertdialog" 
+         aria-modal="true" 
+         aria-labelledby="mpt-confirm-title" 
+         aria-describedby="mpt-confirm-message">
+        <div id="mpt-confirm-box" 
+             class="relative w-full max-w-md bg-white dark:bg-[#181a20] rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 p-6 sm:p-7 transform scale-95 transition-all duration-200 flex flex-col gap-5">
+            
+            <div class="flex items-start gap-4">
+                <div id="mpt-confirm-icon-wrap" class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-xs"></div>
+                <div class="flex-1 min-w-0 pt-0.5">
+                    <h3 id="mpt-confirm-title" class="text-base sm:text-lg font-bold font-heading text-slate-900 dark:text-white leading-snug"></h3>
+                    <p id="mpt-confirm-message" class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-sans mt-1.5 leading-relaxed break-words"></p>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100 dark:border-white/[0.06]">
+                <button type="button" 
+                        id="mpt-confirm-cancel-btn" 
+                        class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-400">
+                    ยกเลิก
+                </button>
+                <button type="button" 
+                        id="mpt-confirm-accept-btn" 
+                        class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white shadow-md transition-all cursor-pointer focus:outline-none focus:ring-2">
+                    ยืนยัน
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Flash Message Carrier for SPA and initial page load -->
     <div id="flash-message-carrier" 
          style="display: none;" 
          data-success="<?= htmlspecialchars($flashSuccess ?? '', ENT_QUOTES) ?>" 
          data-error="<?= htmlspecialchars($flashError ?? '', ENT_QUOTES) ?>"
+         data-warning="<?= htmlspecialchars($flashWarning ?? '', ENT_QUOTES) ?>"
          data-info="<?= htmlspecialchars($flashInfo ?? '', ENT_QUOTES) ?>"></div>
 
     <!-- Top Navigation Bar -->
@@ -1476,61 +1514,269 @@
     <!-- Seamless SPA Navigation & Mutation Engine (Persistent Sidebar, Header & Zero-Reload Forms) -->
     <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
         window.CSP_NONCE = '<?= \App\Core\SecurityHeaders::nonce() ?>';
-        // Floating Toast Notification System
-        window.showToast = function(message, type = 'success', duration = 3500) {
-            if (!message) return;
-            const container = document.getElementById('toast-container');
-            if (!container) return;
+        // ==========================================
+        // 1. Enterprise Toast Notification Engine (WCAG 2.1 AA & W3C WAI-ARIA)
+        // ==========================================
+        const MAX_TOASTS = 4;
 
-            const toast = document.createElement('div');
-            toast.className = 'pointer-events-auto flex items-start gap-3 p-4 rounded-2xl shadow-xl backdrop-blur-md border transition-all duration-300 transform translate-y-[-10px] opacity-0';
-            
-            let colorClasses = '';
-            let iconSvg = '';
-            let title = '';
+        window.notify = {
+            show(message, type = 'info', duration = 3800) {
+                if (!message) return;
+                const container = document.getElementById('toast-container');
+                if (!container) return;
 
-            if (type === 'success') {
-                colorClasses = 'bg-white/95 dark:bg-[#161a22]/95 border-emerald-500/30 dark:border-emerald-500/40 text-slate-800 dark:text-white shadow-emerald-500/10';
-                iconSvg = '<div class="w-7 h-7 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg></div>';
-                title = 'ดำเนินการสำเร็จ';
-            } else if (type === 'error') {
-                colorClasses = 'bg-white/95 dark:bg-[#161a22]/95 border-rose-500/30 dark:border-rose-500/40 text-slate-800 dark:text-white shadow-rose-500/10';
-                iconSvg = '<div class="w-7 h-7 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg></div>';
-                title = 'เกิดข้อผิดพลาด';
-            } else {
-                colorClasses = 'bg-white/95 dark:bg-[#161a22]/95 border-blue-500/30 dark:border-blue-500/40 text-slate-800 dark:text-white shadow-blue-500/10';
-                iconSvg = '<div class="w-7 h-7 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>';
-                title = 'แจ้งเตือนระบบ';
+                // Evict oldest if limit reached
+                while (container.children.length >= MAX_TOASTS) {
+                    const oldest = container.firstChild;
+                    if (oldest) oldest.remove();
+                }
+
+                const toast = document.createElement('div');
+                toast.className = 'pointer-events-auto relative overflow-hidden flex items-start gap-3 p-4 rounded-2xl shadow-xl backdrop-blur-md border transition-all duration-300 transform translate-y-[-10px] opacity-0';
+                
+                let colorClasses = '';
+                let iconSvg = '';
+                let title = '';
+                let progressBg = '';
+
+                if (type === 'success') {
+                    colorClasses = 'bg-white/98 dark:bg-[#161a22]/98 border-emerald-500/30 dark:border-emerald-500/40 text-slate-800 dark:text-white shadow-emerald-500/10';
+                    iconSvg = '<div class="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-xs"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg></div>';
+                    title = 'ดำเนินการสำเร็จ';
+                    progressBg = 'bg-emerald-500';
+                    toast.setAttribute('role', 'status');
+                    toast.setAttribute('aria-live', 'polite');
+                } else if (type === 'error' || type === 'danger') {
+                    colorClasses = 'bg-white/98 dark:bg-[#161a22]/98 border-rose-500/30 dark:border-rose-500/40 text-slate-800 dark:text-white shadow-rose-500/10';
+                    iconSvg = '<div class="w-8 h-8 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 shadow-xs"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg></div>';
+                    title = 'เกิดข้อผิดพลาด';
+                    progressBg = 'bg-rose-500';
+                    toast.setAttribute('role', 'alert');
+                    toast.setAttribute('aria-live', 'assertive');
+                } else if (type === 'warning') {
+                    colorClasses = 'bg-white/98 dark:bg-[#161a22]/98 border-amber-500/30 dark:border-amber-500/40 text-slate-800 dark:text-white shadow-amber-500/10';
+                    iconSvg = '<div class="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-xs"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div>';
+                    title = 'แจ้งเตือนความเสี่ยง';
+                    progressBg = 'bg-amber-500';
+                    toast.setAttribute('role', 'alert');
+                    toast.setAttribute('aria-live', 'assertive');
+                } else {
+                    colorClasses = 'bg-white/98 dark:bg-[#161a22]/98 border-sky-500/30 dark:border-sky-500/40 text-slate-800 dark:text-white shadow-sky-500/10';
+                    iconSvg = '<div class="w-8 h-8 rounded-xl bg-sky-500/15 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0 shadow-xs"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>';
+                    title = 'ข้อมูลระบบ';
+                    progressBg = 'bg-sky-500';
+                    toast.setAttribute('role', 'status');
+                    toast.setAttribute('aria-live', 'polite');
+                }
+
+                toast.className += ' ' + colorClasses;
+
+                // DOM-safe sanitization to prevent XSS (OWASP A03)
+                const msgHolder = document.createElement('div');
+                msgHolder.textContent = message;
+
+                toast.innerHTML = `
+                    ${iconSvg}
+                    <div class="flex-1 min-w-0 pr-2">
+                        <h4 class="text-xs font-bold font-heading mb-0.5 tracking-tight">${title}</h4>
+                        <p class="text-xs text-slate-600 dark:text-slate-300 font-sans leading-relaxed break-words">${msgHolder.innerHTML}</p>
+                    </div>
+                    <button type="button" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg transition-colors cursor-pointer shrink-0" aria-label="ปิดการแจ้งเตือน">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                    <!-- Animated Progress Countdown Bar -->
+                    <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-200/50 dark:bg-white/5 overflow-hidden">
+                        <div class="toast-progress h-full ${progressBg} transition-all" style="width: 100%;"></div>
+                    </div>
+                `;
+
+                const closeBtn = toast.querySelector('button');
+                const progressBar = toast.querySelector('.toast-progress');
+                let remainingTime = duration;
+                let startTime = Date.now();
+                let timer = null;
+                let isPaused = false;
+
+                const removeToast = () => {
+                    if (timer) clearTimeout(timer);
+                    toast.classList.remove('translate-y-0', 'opacity-100');
+                    toast.classList.add('translate-y-[-10px]', 'opacity-0');
+                    setTimeout(() => { if (toast.parentNode) toast.remove(); }, 250);
+                };
+
+                if (closeBtn) closeBtn.addEventListener('click', removeToast);
+
+                // Pause auto-dismiss when hovered (WCAG 2.2 Pause, Stop, Hide)
+                toast.addEventListener('mouseenter', () => {
+                    isPaused = true;
+                    clearTimeout(timer);
+                    remainingTime -= (Date.now() - startTime);
+                    if (progressBar) progressBar.style.transition = 'none';
+                });
+
+                toast.addEventListener('mouseleave', () => {
+                    if (!isPaused) return;
+                    isPaused = false;
+                    startTime = Date.now();
+                    const safeRemaining = Math.max(remainingTime, 1000);
+                    if (progressBar) {
+                        progressBar.style.transition = `width ${safeRemaining}ms linear`;
+                        progressBar.style.width = '0%';
+                    }
+                    timer = setTimeout(removeToast, safeRemaining);
+                });
+
+                container.appendChild(toast);
+                requestAnimationFrame(() => {
+                    toast.classList.remove('translate-y-[-10px]', 'opacity-0');
+                    toast.classList.add('translate-y-0', 'opacity-100');
+                    if (progressBar) {
+                        progressBar.style.transition = `width ${duration}ms linear`;
+                        requestAnimationFrame(() => {
+                            progressBar.style.width = '0%';
+                        });
+                    }
+                });
+
+                timer = setTimeout(removeToast, duration);
+            },
+            success(msg, duration = 3800) { this.show(msg, 'success', duration); },
+            error(msg, duration = 4800) { this.show(msg, 'error', duration); },
+            warning(msg, duration = 4800) { this.show(msg, 'warning', duration); },
+            info(msg, duration = 3800) { this.show(msg, 'info', duration); }
+        };
+
+        // Backward compatibility for existing code calling window.showToast
+        window.showToast = function(message, type = 'success', duration = 3800) {
+            window.notify.show(message, type, duration);
+        };
+
+        // Safe Non-blocking window.alert override (prevents browser freezing)
+        window.alert = function(message) {
+            window.notify.warning(String(message));
+        };
+
+        // ==========================================
+        // 2. Global Accessible Confirmation Modal Engine
+        // ==========================================
+        window.confirmModal = function(options = {}) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('mpt-confirm-modal');
+                const box = document.getElementById('mpt-confirm-box');
+                const titleEl = document.getElementById('mpt-confirm-title');
+                const msgEl = document.getElementById('mpt-confirm-message');
+                const iconWrap = document.getElementById('mpt-confirm-icon-wrap');
+                const acceptBtn = document.getElementById('mpt-confirm-accept-btn');
+                const cancelBtn = document.getElementById('mpt-confirm-cancel-btn');
+
+                if (!modal || !box) {
+                    // Fallback if modal DOM element is not found
+                    resolve(window.confirm(options.message || 'ยืนยันการดำเนินการ?'));
+                    return;
+                }
+
+                const type = options.type || 'danger';
+                const title = options.title || (type === 'danger' ? 'ยืนยันการลบข้อมูล' : 'ยืนยันการดำเนินการ');
+                const message = options.message || 'คุณแน่ใจหรือไม่ว่าต้องการดำเนินการนี้? ข้อมูลอาจไม่สามารถกู้คืนได้';
+                const confirmText = options.confirmText || (type === 'danger' ? 'ยืนยันการลบ' : 'ยืนยัน');
+                const cancelText = options.cancelText || 'ยกเลิก';
+
+                titleEl.textContent = title;
+                msgEl.textContent = message;
+                acceptBtn.textContent = confirmText;
+                cancelBtn.textContent = cancelText;
+
+                // Theme-aware Icon & Button variants
+                if (type === 'danger') {
+                    iconWrap.className = 'w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-xs bg-rose-500/15 text-rose-600 dark:text-rose-400';
+                    iconWrap.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>';
+                    acceptBtn.className = 'px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-lg shadow-rose-600/30 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-rose-500';
+                } else if (type === 'warning') {
+                    iconWrap.className = 'w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-xs bg-amber-500/15 text-amber-600 dark:text-amber-400';
+                    iconWrap.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
+                    acceptBtn.className = 'px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-amber-600 hover:bg-amber-700 shadow-lg shadow-amber-600/30 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500';
+                } else {
+                    iconWrap.className = 'w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-xs bg-emerald-500/15 text-emerald-600 dark:text-emerald-400';
+                    iconWrap.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+                    acceptBtn.className = 'px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/30 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500';
+                }
+
+                // Smooth Entrance
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                requestAnimationFrame(() => {
+                    modal.classList.remove('opacity-0');
+                    modal.classList.add('opacity-100');
+                    box.classList.remove('scale-95');
+                    box.classList.add('scale-100');
+                    cancelBtn.focus();
+                });
+
+                const closeModal = (confirmed) => {
+                    modal.classList.remove('opacity-100');
+                    modal.classList.add('opacity-0');
+                    box.classList.remove('scale-100');
+                    box.classList.add('scale-95');
+                    document.removeEventListener('keydown', onKeyDown);
+                    modal.removeEventListener('click', onBackdropClick);
+                    acceptBtn.removeEventListener('click', onAccept);
+                    cancelBtn.removeEventListener('click', onCancel);
+                    setTimeout(() => {
+                        modal.classList.remove('flex');
+                        modal.classList.add('hidden');
+                        resolve(confirmed);
+                    }, 200);
+                };
+
+                const onAccept = () => closeModal(true);
+                const onCancel = () => closeModal(false);
+                const onBackdropClick = (e) => {
+                    if (e.target === modal) closeModal(false);
+                };
+                const onKeyDown = (e) => {
+                    if (e.key === 'Escape') closeModal(false);
+                };
+
+                acceptBtn.addEventListener('click', onAccept);
+                cancelBtn.addEventListener('click', onCancel);
+                modal.addEventListener('click', onBackdropClick);
+                document.addEventListener('keydown', onKeyDown);
+            });
+        };
+
+        // Declarative Event Delegation for [data-confirm] Forms
+        document.addEventListener('submit', async function(e) {
+            const form = e.target;
+            if (!form || !form.hasAttribute('data-confirm')) return;
+            if (form._mptConfirmBypassed) {
+                delete form._mptConfirmBypassed;
+                return;
             }
 
-            toast.className += ' ' + colorClasses;
-            toast.innerHTML = `
-                ${iconSvg}
-                <div class="flex-1 min-w-0 pr-2">
-                    <h4 class="text-xs font-bold font-heading mb-0.5">${title}</h4>
-                    <p class="text-xs text-slate-600 dark:text-slate-300 font-sans leading-relaxed break-words">${message}</p>
-                </div>
-                <button type="button" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg transition-colors cursor-pointer shrink-0" aria-label="ปิดการแจ้งเตือน">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            `;
+            e.preventDefault();
+            e.stopPropagation();
 
-            const closeBtn = toast.querySelector('button');
-            const removeToast = () => {
-                toast.classList.remove('translate-y-0', 'opacity-100');
-                toast.classList.add('translate-y-[-10px]', 'opacity-0');
-                setTimeout(() => toast.remove(), 300);
-            };
-            if (closeBtn) closeBtn.addEventListener('click', removeToast);
+            const message = form.getAttribute('data-confirm');
+            const title = form.getAttribute('data-confirm-title') || 'ยืนยันการดำเนินการ';
+            const type = form.getAttribute('data-confirm-type') || 'danger';
+            const confirmText = form.getAttribute('data-confirm-btn') || (type === 'danger' ? 'ยืนยันการลบ' : 'ยืนยัน');
 
-            container.appendChild(toast);
-            requestAnimationFrame(() => {
-                toast.classList.remove('translate-y-[-10px]', 'opacity-0');
-                toast.classList.add('translate-y-0', 'opacity-100');
+            const confirmed = await window.confirmModal({
+                title: title,
+                message: message,
+                type: type,
+                confirmText: confirmText
             });
 
-            setTimeout(removeToast, duration);
-        };
+            if (confirmed) {
+                form._mptConfirmBypassed = true;
+                if (typeof form.requestSubmit === 'function') {
+                    form.requestSubmit(e.submitter);
+                } else {
+                    form.submit();
+                }
+            }
+        }, true);
 
         // Helper to check and display flash messages from carrier
         function checkAndDisplayFlash(doc = document) {
@@ -1538,14 +1784,17 @@
             if (!carrier) return;
             const success = carrier.getAttribute('data-success');
             const error = carrier.getAttribute('data-error');
+            const warning = carrier.getAttribute('data-warning');
             const info = carrier.getAttribute('data-info');
-            if (success) window.showToast(success, 'success');
-            if (error) window.showToast(error, 'error');
-            if (info) window.showToast(info, 'info');
+            if (success) window.notify.success(success);
+            if (error) window.notify.error(error);
+            if (warning) window.notify.warning(warning);
+            if (info) window.notify.info(info);
 
             // Clear carrier attributes so message isn't shown twice
             carrier.removeAttribute('data-success');
             carrier.removeAttribute('data-error');
+            carrier.removeAttribute('data-warning');
             carrier.removeAttribute('data-info');
         }
 

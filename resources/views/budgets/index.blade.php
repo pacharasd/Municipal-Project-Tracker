@@ -649,7 +649,8 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
                             <?php if (Auth::isAdmin()): ?>
                             <td class="py-3.5 px-4 text-center whitespace-nowrap">
                                 <form :action="'<?= Router::url('/budgets/disbursements/') ?>' + d.id + '/delete'" method="POST"
-                                      @submit="if(!confirm(`ยืนยันยกเลิกรายการเบิกจ่ายจำนวน ฿${formatCurrency(d.amount)} บาท? (ยอดเงินจะคืนกลับเข้างบโครงการ)`)) $event.preventDefault();">
+                                      :data-confirm="`ยืนยันยกเลิกรายการเบิกจ่ายจำนวน ฿${formatCurrency(d.amount)} บาท? (ยอดเงินจะคืนกลับเข้างบโครงการ)`"
+                                      data-confirm-type="danger">
                                     <input type="hidden" name="_token" value="<?= $csrfToken ?>">
                                     <button type="submit" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition cursor-pointer" title="ยกเลิกรายการเบิกจ่าย">
                                         <i data-lucide="trash-2" class="w-4 h-4"></i>

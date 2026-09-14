@@ -274,12 +274,12 @@ $memberSinceText = "สมาชิกตั้งแต่ {$d} {$m} {$y}";
                           }"
                           @submit="
                               if (newPass.length < 8) { 
-                                  alert('รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 8 ตัวอักษร'); 
+                                  window.notify.warning('รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 8 ตัวอักษร'); 
                                   $event.preventDefault(); 
                                   return false; 
                               } 
                               if (newPass !== confirmPass) { 
-                                  alert('รหัสผ่านใหม่และการยืนยันรหัสผ่านไม่ตรงกัน'); 
+                                  window.notify.warning('รหัสผ่านใหม่และการยืนยันรหัสผ่านไม่ตรงกัน'); 
                                   $event.preventDefault(); 
                                   return false; 
                               }

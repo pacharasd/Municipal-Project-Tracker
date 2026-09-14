@@ -774,27 +774,27 @@ if (window.Alpine && typeof Alpine.data === 'function') {
                         const start = $el.querySelector('input[name=start_date]')?.value;
                         const end = $el.querySelector('input[name=end_date]')?.value;
                         if (!cat) {
-                            if (window.showToast) window.showToast('กรุณาเลือกประเภทโครงการ', 'error'); else alert('กรุณาเลือกประเภทโครงการ');
+                            window.notify.warning('กรุณาเลือกประเภทโครงการ');
                             $event.preventDefault();
                             return false;
                         }
                         if (!resp || !resp.trim()) {
-                            if (window.showToast) window.showToast('กรุณาระบุชื่อผู้รับผิดชอบโครงการ', 'error'); else alert('กรุณาระบุชื่อผู้รับผิดชอบโครงการ');
+                            window.notify.warning('กรุณาระบุชื่อผู้รับผิดชอบโครงการ');
                             $event.preventDefault();
                             return false;
                         }
                         if (!start) {
-                            if (window.showToast) window.showToast('กรุณาเลือกวันที่เริ่มต้นโครงการ', 'error'); else alert('กรุณาเลือกวันที่เริ่มต้นโครงการ');
+                            window.notify.warning('กรุณาเลือกวันที่เริ่มต้นโครงการ');
                             $event.preventDefault();
                             return false;
                         }
                         if (!end) {
-                            if (window.showToast) window.showToast('กรุณาเลือกวันที่สิ้นสุดโครงการ', 'error'); else alert('กรุณาเลือกวันที่สิ้นสุดโครงการ');
+                            window.notify.warning('กรุณาเลือกวันที่สิ้นสุดโครงการ');
                             $event.preventDefault();
                             return false;
                         }
                         if (start > end) {
-                            if (window.showToast) window.showToast('วันที่สิ้นสุดโครงการต้องไม่น้อยกว่าวันที่เริ่มต้น', 'error'); else alert('วันที่สิ้นสุดโครงการต้องไม่น้อยกว่าวันที่เริ่มต้น');
+                            window.notify.warning('วันที่สิ้นสุดโครงการต้องไม่น้อยกว่าวันที่เริ่มต้น');
                             $event.preventDefault();
                             return false;
                         }
