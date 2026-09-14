@@ -443,7 +443,7 @@ window.categoriesPage = function categoriesPage() {
             <?php endforeach; ?>
 
             <!-- Empty State when no categories exist at all -->
-            <div x-show="allCategories.length === 0" class="col-span-full p-12 text-center bg-white dark:bg-[#181a20] rounded-3xl border border-dashed border-slate-200 dark:border-white/10 shadow-sm">
+            <div x-show="allCategories.length === 0" style="display: none;" class="col-span-full p-12 text-center bg-white dark:bg-[#181a20] rounded-3xl border border-dashed border-slate-200 dark:border-white/10 shadow-sm">
                 <div class="w-16 h-16 rounded-3xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-4 border border-emerald-500/20 shadow-sm">
                     <i data-lucide="folder-plus" class="w-8 h-8"></i>
                 </div>
@@ -469,7 +469,7 @@ window.categoriesPage = function categoriesPage() {
             </div>
 
             <!-- Empty State when search returns 0 results -->
-            <div x-show="allCategories.length > 0 && filteredCategories.length === 0" class="col-span-full p-12 text-center bg-white dark:bg-[#181a20] rounded-3xl border border-dashed border-slate-200 dark:border-white/10">
+            <div x-show="allCategories.length > 0 && filteredCategories.length === 0" style="display: none;" class="col-span-full p-12 text-center bg-white dark:bg-[#181a20] rounded-3xl border border-dashed border-slate-200 dark:border-white/10">
                 <div class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/[0.05] text-slate-400 flex items-center justify-center mx-auto mb-3">
                     <i data-lucide="search-x" class="w-6 h-6"></i>
                 </div>
@@ -670,7 +670,7 @@ window.categoriesPage = function categoriesPage() {
                     <?php endforeach; ?>
 
                     <!-- Empty state in Table when allCategories is empty -->
-                    <tr x-show="allCategories.length === 0">
+                    <tr x-show="allCategories.length === 0" style="display: none;">
                         <td colspan="8" class="text-center py-12 text-slate-400">
                             <div class="flex flex-col items-center justify-center">
                                 <i data-lucide="folder-plus" class="w-8 h-8 text-emerald-500/50 mb-2"></i>
@@ -681,7 +681,7 @@ window.categoriesPage = function categoriesPage() {
                     </tr>
 
                     <!-- Empty state in Table when search returns 0 -->
-                    <tr x-show="allCategories.length > 0 && filteredCategories.length === 0">
+                    <tr x-show="allCategories.length > 0 && filteredCategories.length === 0" style="display: none;">
                         <td colspan="8" class="text-center py-10 text-slate-400">
                             <div class="flex flex-col items-center justify-center">
                                 <i data-lucide="search-x" class="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2"></i>

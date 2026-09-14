@@ -4,27 +4,38 @@ $title = "จัดการโครงการหลักและกิจ�
 
 // Prepare JSON summary for reactive Alpine.js pagination & live search
 $projectsSummary = [];
+$totalInitialSubCount = 0;
+$inProgressCount = 0;
+$completedCount = 0;
+$hasProblemCount = 0;
+
 foreach ($projects as $p) {
     $subKeywords = [];
-    $completedCount = 0;
+    $subCompletedCount = 0;
     $hasProblem = false;
     foreach ($p['sub_projects'] as $sub) {
         $subResp = !empty($sub['responsible_person']) ? $sub['responsible_person'] : ($sub['responsible_name'] ?? '');
         $subKeywords[] = ($sub['name'] ?? '') . ' ' . $subResp;
-        if (($sub['status'] ?? '') === 'completed') $completedCount++;
+        if (($sub['status'] ?? '') === 'completed') $subCompletedCount++;
         if (($sub['status'] ?? '') === 'has_problem') $hasProblem = true;
     }
+
+    $totalInitialSubCount += count($p['sub_projects']);
 
     $calcStatus = 'in_progress';
     if (!empty($p['sub_projects'])) {
         if ($hasProblem) {
             $calcStatus = 'has_problem';
-        } elseif ($completedCount === count($p['sub_projects'])) {
+        } elseif ($subCompletedCount === count($p['sub_projects'])) {
             $calcStatus = 'completed';
         }
     } elseif (($p['progress'] ?? 0) >= 100) {
         $calcStatus = 'completed';
     }
+
+    if ($calcStatus === 'in_progress') $inProgressCount++;
+    elseif ($calcStatus === 'completed') $completedCount++;
+    elseif ($calcStatus === 'has_problem') $hasProblemCount++;
 
     $projectsSummary[] = [
         'id' => (int)$p['id'],
@@ -52,6 +63,16 @@ $projectsJson = json_encode($projectsSummary, JSON_HEX_TAG | JSON_HEX_APOS | JSO
 $initPage = max(1, (int)($_GET['page'] ?? 1));
 $initPerPageRaw = $_GET['per_page'] ?? '5';
 $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw);
+
+$currentFyLabel = '-- ทุกปีงบประมาณ --';
+if (!empty($filters['fiscal_year_id'])) {
+    foreach ($fiscalYears as $fy) {
+        if ((string)$fy['id'] === (string)$filters['fiscal_year_id']) {
+            $currentFyLabel = 'ปี ' . $fy['year'] . ($fy['is_active'] ? ' (ปัจจุบัน)' : '');
+            break;
+        }
+    }
+}
 ?>
 
 <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
@@ -71,6 +92,18 @@ window.mainProjectsPage = function mainProjectsPage() {
             if (!this.fiscalYearFilter) return '-- ทุกปีงบประมาณ --';
             const found = this.fiscalYearOptions.find(f => String(f.id) === String(this.fiscalYearFilter));
             return found ? 'ปี ' + found.year : '-- ทุกปีงบประมาณ --';
+        },
+
+        get inProgressCount() {
+            return this.allProjects.filter(p => p.status === 'in_progress').length;
+        },
+
+        get completedCount() {
+            return this.allProjects.filter(p => p.status === 'completed').length;
+        },
+
+        get hasProblemCount() {
+            return this.allProjects.filter(p => p.status === 'has_problem').length;
         },
 
         init() {
@@ -264,12 +297,18 @@ window.mainProjectsPage = function mainProjectsPage() {
     };
 };
 
+function registerMainProjectsPage() {
+    if (window.Alpine && typeof Alpine.data === 'function') {
+        Alpine.data('mainProjectsPage', window.mainProjectsPage);
+    }
+}
+document.addEventListener('alpine:init', registerMainProjectsPage);
 if (window.Alpine && typeof Alpine.data === 'function') {
-    window.Alpine.data('mainProjectsPage', window.mainProjectsPage);
+    registerMainProjectsPage();
 }
 </script>
 
-<div class="space-y-6" x-data="mainProjectsPage()">
+<div class="space-y-6" x-data="mainProjectsPage">
     <!-- Header with Action -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white dark:bg-[#181a20] p-5 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-sm">
         <div>
@@ -306,7 +345,7 @@ if (window.Alpine && typeof Alpine.data === 'function') {
             <button type="button" 
                     @click="openFy = !openFy" 
                     class="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] text-slate-900 dark:text-white flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer transition-all">
-                <span x-text="currentFiscalYearLabel" class="truncate font-medium"></span>
+                <span x-text="currentFiscalYearLabel" class="truncate font-medium"><?= htmlspecialchars($currentFyLabel) ?></span>
                 <svg class="w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0" :class="{ 'rotate-180': openFy }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
@@ -387,7 +426,7 @@ if (window.Alpine && typeof Alpine.data === 'function') {
                     <button type="button" 
                             @click="openPerPage = !openPerPage" 
                             class="px-2.5 py-1 text-xs rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#12141a] font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer shadow-xs">
-                        <span x-text="perPage === 'all' ? 'ทั้งหมด' : perPage + '/หน้า'"></span>
+                        <span x-text="perPage === 'all' ? 'ทั้งหมด' : perPage + '/หน้า'"><?= ($initPerPage === 'all') ? 'ทั้งหมด' : $initPerPage . '/หน้า' ?></span>
                         <svg class="w-3 h-3 text-slate-400 transition-transform duration-200" :class="{ 'rotate-180': openPerPage }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
@@ -424,8 +463,8 @@ if (window.Alpine && typeof Alpine.data === 'function') {
             <div class="hidden sm:block text-slate-300">|</div>
 
             <div class="text-right sm:text-left text-xs truncate">
-                พบ <span class="font-bold text-slate-900 dark:text-white" x-text="filteredProjects.length"></span> โครงการ 
-                <span class="text-slate-400 hidden sm:inline">(รวม <span class="font-bold text-emerald-600" x-text="totalFilteredSubCount"></span> กิจกรรมหลัก)</span>
+                พบ <span class="font-bold text-slate-900 dark:text-white" x-text="filteredProjects.length"><?= count($projects) ?></span> โครงการ 
+                <span class="text-slate-400 hidden sm:inline">(รวม <span class="font-bold text-emerald-600" x-text="totalFilteredSubCount"><?= $totalInitialSubCount ?></span> กิจกรรมหลัก)</span>
             </div>
         </div>
 
@@ -434,22 +473,22 @@ if (window.Alpine && typeof Alpine.data === 'function') {
             <button type="button" @click="setStatusFilter('all')" 
                     :class="statusFilter === 'all' ? 'bg-slate-800 dark:bg-slate-700 text-white font-semibold shadow-sm' : 'bg-slate-50 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08]'"
                     class="px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition cursor-pointer shrink-0">
-                ทั้งหมด (<span x-text="allProjects.length"></span>)
+                ทั้งหมด (<span x-text="allProjects.length"><?= count($projects) ?></span>)
             </button>
             <button type="button" @click="setStatusFilter('in_progress')" 
                     :class="statusFilter === 'in_progress' ? 'bg-blue-600 text-white font-semibold shadow-sm' : 'bg-blue-50/60 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100/60 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800/40'"
                     class="px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition cursor-pointer shrink-0">
-                กำลังดำเนินการ
+                กำลังดำเนินการ (<span x-text="inProgressCount"><?= $inProgressCount ?></span>)
             </button>
             <button type="button" @click="setStatusFilter('completed')" 
                     :class="statusFilter === 'completed' ? 'bg-emerald-600 text-white font-semibold shadow-sm' : 'bg-emerald-50/60 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800/40'"
                     class="px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition cursor-pointer shrink-0">
-                เสร็จสิ้น
+                เสร็จสิ้น (<span x-text="completedCount"><?= $completedCount ?></span>)
             </button>
             <button type="button" @click="setStatusFilter('has_problem')" 
                     :class="statusFilter === 'has_problem' ? 'bg-rose-600 text-white font-semibold shadow-sm' : 'bg-rose-50/60 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100/60 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-800/40'"
                     class="px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition cursor-pointer shrink-0">
-                มีปัญหา
+                มีปัญหา (<span x-text="hasProblemCount"><?= $hasProblemCount ?></span>)
             </button>
         </div>
     </div>
@@ -457,7 +496,7 @@ if (window.Alpine && typeof Alpine.data === 'function') {
     <!-- Main Projects List (Hierarchical Structure) -->
     <div id="projects-container" class="space-y-4">
         <!-- Empty state when search or filter yields no results -->
-        <div x-show="filteredProjects.length === 0" x-cloak class="bg-white p-12 text-center rounded-2xl border border-slate-200 shadow-sm">
+        <div x-show="filteredProjects.length === 0" x-cloak style="display: none;" class="bg-white p-12 text-center rounded-2xl border border-slate-200 shadow-sm">
             <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
             </div>

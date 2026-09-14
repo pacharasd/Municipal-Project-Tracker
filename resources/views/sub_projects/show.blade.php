@@ -698,7 +698,7 @@ window.subProjectShowPage = function subProjectShowPage() {
                     <?php endforeach; ?>
 
                     <!-- Empty state when search returns 0 -->
-                    <div x-show="filteredActivities.length === 0" class="p-6 text-center text-xs text-slate-400 bg-slate-50 dark:bg-[#12141a] rounded-xl border border-slate-200 dark:border-white/[0.08]">
+                    <div x-show="filteredActivities.length === 0" style="display: none;" class="p-6 text-center text-xs text-slate-400 bg-slate-50 dark:bg-[#12141a] rounded-xl border border-slate-200 dark:border-white/[0.08]">
                         ไม่พบกิจกรรมย่อยที่ค้นหา
                     </div>
                 </div>
@@ -859,7 +859,7 @@ window.subProjectShowPage = function subProjectShowPage() {
                     <?php endforeach; ?>
 
                     <!-- Empty state when search returns 0 -->
-                    <div x-show="filteredDisbursements.length === 0" class="p-6 text-center text-xs text-slate-400 bg-slate-50 dark:bg-[#12141a] rounded-xl border border-slate-200 dark:border-white/[0.08]">
+                    <div x-show="filteredDisbursements.length === 0" style="display: none;" class="p-6 text-center text-xs text-slate-400 bg-slate-50 dark:bg-[#12141a] rounded-xl border border-slate-200 dark:border-white/[0.08]">
                         ไม่พบรายการเบิกจ่ายที่ค้นหา
                     </div>
                 </div>

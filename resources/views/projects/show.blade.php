@@ -574,7 +574,7 @@ window.projectShowPage = function projectShowPage() {
                         <?php endforeach; ?>
 
                         <!-- Empty state when search has no match -->
-                        <tr x-show="filteredSubProjects.length === 0">
+                        <tr x-show="filteredSubProjects.length === 0" style="display: none;">
                             <td colspan="7" class="py-10 text-center text-slate-400">
                                 <div class="flex flex-col items-center justify-center">
                                     <i data-lucide="search-x" class="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2"></i>
