@@ -863,7 +863,7 @@ $categoriesJson = json_encode($categoriesSummary, JSON_HEX_TAG | JSON_HEX_APOS |
 
 </div>
 
-<script>
+<script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
 function categoriesPage() {
     return {
         allCategories: Object.freeze(<?= $categoriesJson ?>),

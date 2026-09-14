@@ -730,7 +730,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
 </div>
 
 <!-- สคริปต์ Chart.js ตามมาตรฐาน AGENTS.md Rule #10: 4 Core Charts (Data-Driven + IIFE Scoped) -->
-<script>
+<script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
 (function() {
     'use strict';
 

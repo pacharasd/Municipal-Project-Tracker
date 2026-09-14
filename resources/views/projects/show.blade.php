@@ -1156,7 +1156,7 @@ $subProjectsJson = json_encode($subProjectsSummary, JSON_HEX_TAG | JSON_HEX_APOS
     <?php endif; ?>
 </div>
 
-<script>
+<script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
 function projectShowPage() {
     return {
         createSubModal: false,

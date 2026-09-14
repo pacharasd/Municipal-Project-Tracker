@@ -247,7 +247,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
             </a>
 
             <!-- Print Page (Standard Browser Print) -->
-            <button onclick="window.print()" 
+            <button @click="window.print()" 
                     class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl shadow-xs transition-all cursor-pointer text-center">
                 <i data-lucide="printer" class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0"></i>
                 <span class="truncate">พิมพ์</span>

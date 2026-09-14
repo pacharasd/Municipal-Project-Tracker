@@ -758,7 +758,7 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
     <?php endif; ?>
 </div>
 
-<script>
+<script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
 function mainProjectsPage() {
     return {
         createModal: false,

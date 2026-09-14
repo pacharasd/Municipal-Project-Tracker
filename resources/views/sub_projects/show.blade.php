@@ -1509,7 +1509,7 @@ $disbursementsJson = json_encode($disbursementsSummary, JSON_HEX_TAG | JSON_HEX_
     </template>
 </div>
 
-<script>
+<script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
 function subProjectShowPage() {
     return {
         problemModal: false, 

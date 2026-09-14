@@ -14,7 +14,7 @@ $success = Session::flash('success');
     <link rel="icon" type="image/webp" href="<?= Router::url('/images/mobile-logo.webp') ?>">
     
     <!-- Browser DevTools / Web-Vitals Suppression Guard -->
-    <script>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
         (function() {
             function isDevToolsError(err) {
                 if (!err) return false;
@@ -59,7 +59,7 @@ $success = Session::flash('success');
     </script>
 
     <!-- Theme Detection & Anti-Flicker Script (Light / Dark / System) -->
-    <script>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
         (function() {
             try {
                 const theme = localStorage.getItem('theme') || 'system';
@@ -87,8 +87,8 @@ $success = Session::flash('success');
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>" src="https://cdn.tailwindcss.com"></script>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
         tailwind.config = {
             darkMode: 'class',
             theme: {
@@ -120,8 +120,8 @@ $success = Session::flash('success');
     </script>
 
     <!-- Alpine.js & Lucide Icons -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>" defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>" src="https://unpkg.com/lucide@latest"></script>
     <style>
         body { font-family: 'Sarabun', sans-serif; }
         h1, h2, h3, h4, .font-heading { font-family: 'Prompt', sans-serif; }
@@ -427,7 +427,7 @@ $success = Session::flash('success');
     </footer>
 
     <!-- Alpine.js & Utility Logic -->
-    <script>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
         function loginPage() {
             return {
                 email: 'admin@municipality.go.th',

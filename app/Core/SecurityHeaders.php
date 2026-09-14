@@ -59,21 +59,38 @@ class SecurityHeaders
         return false;
     }
 
+    private static ?string $nonce = null;
+
+    /**
+     * Get or generate a cryptographically secure, per-request CSP nonce.
+     */
+    public static function nonce(): string
+    {
+        if (self::$nonce === null) {
+            self::$nonce = base64_encode(random_bytes(16));
+        }
+        return self::$nonce;
+    }
+
     /**
      * Build standard Content Security Policy directives compatible with Tailwind CDN,
      * Alpine.js (eval/Function runtime), Lucide Icons, Chart.js, and Google Fonts.
+     * Complies with Mozilla Observatory strict CSP rules (removes 'unsafe-inline' from script-src, sets object-src 'none').
      */
     public static function getCspDirectives(): string
     {
+        $nonce = self::nonce();
+
         $directives = [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://unpkg.com",
+            "script-src 'self' 'nonce-{$nonce}' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://unpkg.com",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
             "font-src 'self' https://fonts.gstatic.com data:",
             "img-src 'self' data: blob: https:",
             "connect-src 'self' https://cdn.tailwindcss.com",
-            "frame-ancestors 'self'",
+            "object-src 'none'",
             "base-uri 'self'",
+            "frame-ancestors 'self'",
             "form-action 'self'",
         ];
 

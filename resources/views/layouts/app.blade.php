@@ -11,7 +11,7 @@
     <meta name="color-scheme" id="meta-color-scheme" content="light">
 
     <!-- Browser DevTools / Web-Vitals Suppression Guard -->
-    <script>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
         (function() {
             function isDevToolsError(err) {
                 if (!err) return false;
@@ -56,7 +56,7 @@
     </script>
     
     <!-- Theme Detection & Anti-Flicker Script (Standard 3-State Tailwind Pattern: Light / Dark / System) -->
-    <script>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
         (function() {
             try {
                 const theme = localStorage.getItem('theme') || 'system';
@@ -86,8 +86,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS (STRICTLY NO Bootstrap) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>" src="https://cdn.tailwindcss.com"></script>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
         tailwind.config = {
             darkMode: 'class',
             theme: {
@@ -143,7 +143,7 @@
     </script>
     
     <!-- Global DOM-based Thai Datepicker Component (Available before Alpine initializes) -->
-    <script>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
         function thaiDatePicker(config = {}) {
             const today = new Date();
             let viewDate = today;
@@ -414,24 +414,31 @@
     </script>
 
     <!-- Alpine.js, Lucide Icons & Chart.js (Local Offline-First with CDN fallback) -->
-    <script src="<?= \App\Core\Router::url('/js/chart.umd.min.js') ?>"></script>
-    <script>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>" src="<?= \App\Core\Router::url('/js/chart.umd.min.js') ?>"></script>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
         if (typeof Chart === 'undefined') {
-            document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>');
+            const s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+            s.nonce = '<?= \App\Core\SecurityHeaders::nonce() ?>';
+            document.head.appendChild(s);
         }
     </script>
-    <script src="<?= \App\Core\Router::url('/js/lucide.min.js') ?>"></script>
-    <script>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>" src="<?= \App\Core\Router::url('/js/lucide.min.js') ?>"></script>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
         if (typeof lucide === 'undefined') {
-            document.write('<script src="https://unpkg.com/lucide@latest"><\/script>');
+            const s = document.createElement('script');
+            s.src = 'https://unpkg.com/lucide@latest';
+            s.nonce = '<?= \App\Core\SecurityHeaders::nonce() ?>';
+            document.head.appendChild(s);
         }
     </script>
-    <script defer src="<?= \App\Core\Router::url('/js/alpine.min.js') ?>"></script>
-    <script>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>" defer src="<?= \App\Core\Router::url('/js/alpine.min.js') ?>"></script>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
         window.addEventListener('DOMContentLoaded', function() {
             if (typeof Alpine === 'undefined') {
                 const s = document.createElement('script');
                 s.src = 'https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js';
+                s.nonce = '<?= \App\Core\SecurityHeaders::nonce() ?>';
                 s.defer = true;
                 document.head.appendChild(s);
             }
@@ -1302,7 +1309,7 @@
     </div>
 
     <!-- Initialize Lucide Icons -->
-    <script>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
         function safeCreateIcons(root) {
             if (window.lucide && typeof lucide.createIcons === 'function') {
                 try {
@@ -1327,7 +1334,8 @@
     </script>
 
     <!-- Seamless SPA Navigation & Mutation Engine (Persistent Sidebar, Header & Zero-Reload Forms) -->
-    <script>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
+        window.CSP_NONCE = '<?= \App\Core\SecurityHeaders::nonce() ?>';
         // Floating Toast Notification System
         window.showToast = function(message, type = 'success', duration = 3500) {
             if (!message) return;
@@ -1527,7 +1535,7 @@
                     currentMain.innerHTML = newMain.innerHTML;
                     currentMain.scrollTop = 0;
 
-                    // 7. Re-evaluate <script> tags inside newMain
+                    // 7. Re-evaluate script tags inside newMain
                     const scripts = Array.from(currentMain.querySelectorAll('script'));
                     for (const oldScript of scripts) {
                         try {
@@ -1535,6 +1543,7 @@
                             for (const attr of oldScript.attributes) {
                                 newScript.setAttribute(attr.name, attr.value);
                             }
+                            newScript.nonce = oldScript.nonce || window.CSP_NONCE || '';
                             newScript.text = oldScript.text;
                             oldScript.parentNode.replaceChild(newScript, oldScript);
                         } catch (scriptErr) {
@@ -1736,7 +1745,7 @@
                     currentMain.innerHTML = newMain.innerHTML;
                     currentMain.scrollTop = 0;
 
-                    // 7. Re-evaluate <script> tags inside newMain
+                    // 7. Re-evaluate script tags inside newMain
                     const scripts = Array.from(currentMain.querySelectorAll('script'));
                     for (const oldScript of scripts) {
                         try {
@@ -1744,6 +1753,7 @@
                             for (const attr of oldScript.attributes) {
                                 newScript.setAttribute(attr.name, attr.value);
                             }
+                            newScript.nonce = oldScript.nonce || window.CSP_NONCE || '';
                             newScript.text = oldScript.text;
                             oldScript.parentNode.replaceChild(newScript, oldScript);
                         } catch (scriptErr) {
@@ -1867,7 +1877,7 @@
     </script>
 
     <!-- Standard Theme Management JavaScript (Light / Dark / System + OS Live Sync) -->
-    <script>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
         function applyThemeSynchronously(callback) {
             // Temporarily disable CSS transitions across all elements to prevent desync
             const style = document.createElement('style');
