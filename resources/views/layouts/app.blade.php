@@ -922,45 +922,40 @@
 
     <!-- Top Navigation Bar -->
     <header class="bg-white/98 dark:bg-[#101115]/98 border-b border-slate-200 dark:border-white/[0.08] sticky top-0 z-30 shadow-sm dark:shadow-md transition-colors duration-150 w-full max-w-full will-change-transform">
-        <div class="px-2.5 sm:px-6 lg:px-8 flex items-center justify-between h-14 sm:h-16 w-full max-w-full">
+        <div class="px-2.5 sm:px-6 lg:px-8 flex items-center justify-between h-13 sm:h-14 w-full max-w-full">
             <!-- Left Logo & Title -->
-            <div class="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1 sm:flex-initial">
+            <div class="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 sm:flex-initial">
                 <button type="button" 
                         @click="toggleSidebar()" 
-                        class="p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition shrink-0 cursor-pointer flex items-center justify-center" 
+                        class="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition shrink-0 cursor-pointer flex items-center justify-center" 
                         :title="(window.innerWidth >= 1024 && !desktopSidebarOpen) ? 'แสดงแถบเมนู' : 'เปิด/ปิดแถบเมนู'"
                         aria-label="เปิด/ปิดแถบเมนู">
-                    <i data-lucide="menu" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                    <i data-lucide="menu" class="w-4.5 h-4.5 sm:w-5 sm:h-5"></i>
                 </button>
                 <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="shrink-0 flex items-center gap-1.5 sm:gap-2 group" title="ระบบติดตามและบริหารโครงการเทศบาล">
                     <!-- โลโก้เทศบาล (พื้นหลังขาวคมชัดทุกธีม) -->
-                    <div data-keep-white class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-white p-1 shadow-sm border border-slate-200/80 dark:border-white/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <div data-keep-white class="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl bg-white p-1 shadow-xs border border-slate-200/80 dark:border-white/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                         <img src="<?= \App\Core\Router::url('/images/mobile-logo.webp') ?>" 
                              alt="โลโก้เทศบาล" 
                              class="w-full h-full object-contain"
                              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                         <div style="display:none;" class="w-full h-full rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-400 items-center justify-center text-slate-950 font-bold shadow-neon-green">
-                            <i data-lucide="activity" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                            <i data-lucide="activity" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
                         </div>
                     </div>
 
                     <!-- โลโก้ กปท. (กองทุนหลักประกันสุขภาพท้องถิ่น - พื้นหลังขาวคมชัดทุกธีม) -->
-                    <div data-keep-white class="h-8 sm:h-10 px-2 sm:px-2.5 py-1 rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-white/20 bg-white shadow-sm flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <div data-keep-white class="h-8 sm:h-8.5 px-2 py-0.5 rounded-xl border border-slate-200/80 dark:border-white/20 bg-white shadow-xs flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                         <img src="<?= \App\Core\Router::url('/images/kpth-logo.png') ?>" 
                              alt="โลโก้ กปท. กองทุนหลักประกันสุขภาพท้องถิ่น" 
-                             class="h-5 sm:h-7 w-auto max-w-[70px] sm:max-w-[105px] object-contain shrink-0">
+                             class="h-4.5 sm:h-5 w-auto max-w-[65px] sm:max-w-[75px] object-contain shrink-0">
                     </div>
                 </a>
                 <div class="min-w-0 hidden md:block">
-                    <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="font-bold font-heading text-slate-900 dark:text-white tracking-tight flex items-center gap-1 sm:gap-2">
-                        <span class="text-base sm:text-lg whitespace-nowrap">ระบบติดตามและบริหารโครงการเทศบาล</span>
-                        <?php 
-                            $navActiveFy = \App\Services\FiscalYearService::getActiveYear(); 
-                            $navActiveYearStr = $navActiveFy ? $navActiveFy['year'] : \App\Services\FiscalYearService::getCurrentFiscalYear();
-                        ?>
-                        <span class="inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 dark:border-emerald-500/40 font-sans shrink-0">ปี <?= htmlspecialchars((string)$navActiveYearStr) ?></span>
+                    <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="font-bold font-heading text-slate-900 dark:text-white tracking-tight flex items-center gap-1.5 leading-tight">
+                        <span class="text-xs sm:text-sm font-bold whitespace-nowrap">ระบบติดตามและบริหารโครงการเทศบาล</span>
                     </a>
-                    <p class="text-[11px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-semibold truncate">คณะอนุกรรมการฝ่ายติดตามและการประเมินผล</p>
+                    <p class="text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-medium truncate leading-tight">คณะอนุกรรมการฝ่ายติดตามและการประเมินผล</p>
                 </div>
             </div>
 
@@ -1251,7 +1246,7 @@
             <div class="w-64 h-full flex flex-col justify-between overflow-hidden">
                 
                 <!-- Mobile Sidebar Brand Header with Municipal Logo (Replaces empty top space) -->
-                <div class="lg:hidden h-14 sm:h-16 px-3.5 flex items-center justify-between border-b border-slate-200/80 dark:border-white/[0.08] shrink-0 bg-slate-50/70 dark:bg-white/[0.02]">
+                <div class="lg:hidden h-13 sm:h-14 px-3.5 flex items-center justify-between border-b border-slate-200/80 dark:border-white/[0.08] shrink-0 bg-slate-50/70 dark:bg-white/[0.02]">
                     <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="flex items-center gap-2 min-w-0 group" title="ระบบติดตามและบริหารโครงการเทศบาล">
                         <!-- โลโก้เทศบาล (พื้นหลังขาวคมชัดทุกธีม) -->
                         <div data-keep-white class="w-8 h-8 rounded-xl bg-white p-1 shadow-sm border border-slate-200/80 dark:border-white/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
