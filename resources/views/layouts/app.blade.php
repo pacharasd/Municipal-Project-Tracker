@@ -695,7 +695,7 @@
             box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5) !important;
             color: #f1f5f9;
         }
-        html.dark .bg-white {
+        html.dark .bg-white:not([data-keep-white]) {
             background-color: #181a20 !important;
             color: #f1f5f9;
         }
@@ -934,7 +934,7 @@
                 </button>
                 <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="shrink-0 flex items-center gap-1.5 sm:gap-2 group" title="ระบบติดตามและบริหารโครงการเทศบาล">
                     <!-- โลโก้เทศบาล (พื้นหลังขาวคมชัดทุกธีม) -->
-                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-white p-1 shadow-sm border border-slate-200/80 dark:border-white/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <div data-keep-white class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-white p-1 shadow-sm border border-slate-200/80 dark:border-white/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                         <img src="<?= \App\Core\Router::url('/images/mobile-logo.webp') ?>" 
                              alt="โลโก้เทศบาล" 
                              class="w-full h-full object-contain"
@@ -945,7 +945,7 @@
                     </div>
 
                     <!-- โลโก้ กปท. (กองทุนหลักประกันสุขภาพท้องถิ่น - พื้นหลังขาวคมชัดทุกธีม) -->
-                    <div class="h-8 sm:h-10 px-2 sm:px-2.5 py-1 rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-white/20 bg-white shadow-sm flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <div data-keep-white class="h-8 sm:h-10 px-2 sm:px-2.5 py-1 rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-white/20 bg-white shadow-sm flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                         <img src="<?= \App\Core\Router::url('/images/kpth-logo.png') ?>" 
                              alt="โลโก้ กปท. กองทุนหลักประกันสุขภาพท้องถิ่น" 
                              class="h-5 sm:h-7 w-auto max-w-[70px] sm:max-w-[105px] object-contain shrink-0">
@@ -972,7 +972,11 @@
                     
                     <button type="button" 
                             @click="toggle()" 
+                            @keydown.escape="close()"
                             id="theme-dropdown-btn"
+                            aria-haspopup="menu"
+                            :aria-expanded="open.toString()"
+                            aria-label="เลือกโหมดการแสดงผล สว่าง มืด หรือตามระบบ"
                             class="flex items-center gap-1 sm:gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-100 dark:bg-[#181a20] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/[0.08] text-xs font-semibold hover:bg-slate-200/80 dark:hover:bg-white/5 transition cursor-pointer"
                             title="เลือกโหมดการแสดงผล (สว่าง / มืด / ตามระบบ)">
                         
@@ -998,7 +1002,11 @@
                     <!-- Theme Selector Dropdown Menu -->
                     <div x-show="open" 
                          @click.outside="close()" 
+                         @keydown.escape.window="close()"
                          x-cloak 
+                         role="menu"
+                         aria-orientation="vertical"
+                         aria-labelledby="theme-dropdown-btn"
                          style="display: none;"
                          x-transition:enter="transition ease-out duration-100"
                          x-transition:enter-start="transform opacity-0 scale-95"
@@ -1012,9 +1020,11 @@
                             โหมดการแสดงผล (Theme)
                         </div>
 
-                        <div class="space-y-0.5">
+                        <div class="space-y-0.5" role="none">
                             <!-- 1. โหมดสว่าง (Light) -->
                             <button type="button" 
+                                    role="menuitemradio"
+                                    :aria-checked="mode === 'light'"
                                     @click="setAppTheme('light'); close()" 
                                     class="w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200"
                                     :class="{ 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/20': mode === 'light' }">
@@ -1027,6 +1037,8 @@
 
                             <!-- 2. โหมดมืด (Dark) -->
                             <button type="button" 
+                                    role="menuitemradio"
+                                    :aria-checked="mode === 'dark'"
                                     @click="setAppTheme('dark'); close()" 
                                     class="w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200"
                                     :class="{ 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/20': mode === 'dark' }">
@@ -1039,6 +1051,8 @@
 
                             <!-- 3. โหมดตามระบบ (System) -->
                             <button type="button" 
+                                    role="menuitemradio"
+                                    :aria-checked="mode === 'system'"
                                     @click="setAppTheme('system'); close()" 
                                     class="w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200"
                                     :class="{ 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/20': mode === 'system' }">
@@ -1240,7 +1254,7 @@
                 <div class="lg:hidden h-14 sm:h-16 px-3.5 flex items-center justify-between border-b border-slate-200/80 dark:border-white/[0.08] shrink-0 bg-slate-50/70 dark:bg-white/[0.02]">
                     <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="flex items-center gap-2 min-w-0 group" title="ระบบติดตามและบริหารโครงการเทศบาล">
                         <!-- โลโก้เทศบาล (พื้นหลังขาวคมชัดทุกธีม) -->
-                        <div class="w-8 h-8 rounded-xl bg-white p-1 shadow-sm border border-slate-200/80 dark:border-white/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                        <div data-keep-white class="w-8 h-8 rounded-xl bg-white p-1 shadow-sm border border-slate-200/80 dark:border-white/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                             <img src="<?= \App\Core\Router::url('/images/mobile-logo.webp') ?>" 
                                  alt="โลโก้เทศบาล" 
                                  class="w-full h-full object-contain"
@@ -1251,7 +1265,7 @@
                         </div>
 
                         <!-- โลโก้ กปท. -->
-                        <div class="h-8 px-1.5 py-0.5 rounded-xl border border-slate-200/80 dark:border-white/20 bg-white shadow-sm flex items-center justify-center shrink-0">
+                        <div data-keep-white class="h-8 px-1.5 py-0.5 rounded-xl border border-slate-200/80 dark:border-white/20 bg-white shadow-sm flex items-center justify-center shrink-0">
                             <img src="<?= \App\Core\Router::url('/images/kpth-logo.png') ?>" 
                                  alt="กปท." 
                                  class="h-5 w-auto max-w-[60px] object-contain shrink-0">
@@ -2273,14 +2287,16 @@
             }
         }
 
-        function setAppTheme(mode) {
+        function setAppTheme(mode, persist = true) {
             if (mode !== 'light' && mode !== 'dark' && mode !== 'system') {
                 mode = 'system';
             }
 
-            try {
-                localStorage.setItem('theme', mode);
-            } catch (e) {}
+            if (persist) {
+                try {
+                    localStorage.setItem('theme', mode);
+                } catch (e) {}
+            }
 
             const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
             const isDark = (mode === 'dark') || (mode === 'system' && prefersDark);
@@ -2333,21 +2349,7 @@
             const handleSystemThemeChange = function(e) {
                 const currentMode = localStorage.getItem('theme') || 'system';
                 if (currentMode === 'system') {
-                    applyThemeSynchronously(function() {
-                        if (e.matches) {
-                            document.documentElement.classList.add('dark');
-                        } else {
-                            document.documentElement.classList.remove('dark');
-                        }
-                        window.dispatchEvent(new CustomEvent('theme-changed', {
-                            detail: { 
-                                theme: e.matches ? 'dark' : 'light', 
-                                mode: 'system',
-                                isInstant: true
-                            }
-                        }));
-                        if (typeof safeCreateIcons === 'function') safeCreateIcons();
-                    });
+                    setAppTheme('system', false);
                 }
             };
 
@@ -2357,6 +2359,13 @@
                 mediaQuery.addListener(handleSystemThemeChange);
             }
         } catch (e) {}
+
+        // Cross-tab Synchronization (Updates instantly when theme changed in another tab)
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'theme') {
+                setAppTheme(e.newValue || 'system', false);
+            }
+        });
     </script>
 </body>
 </html>

@@ -13,6 +13,7 @@ $lockoutSeconds = (int)(Session::flash('lockout_seconds') ?: 0);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>เข้าสู่ระบบ - ระบบติดตามและบริหารโครงการเทศบาล</title>
     <link rel="icon" type="image/webp" href="<?= Router::url('/images/mobile-logo.webp') ?>">
+    <meta name="color-scheme" id="meta-color-scheme" content="light">
     
     <!-- Browser DevTools / Web-Vitals Suppression Guard -->
     <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
@@ -59,7 +60,7 @@ $lockoutSeconds = (int)(Session::flash('lockout_seconds') ?: 0);
         })();
     </script>
 
-    <!-- Theme Detection & Anti-Flicker Script (Light / Dark / System) -->
+    <!-- Theme Detection & Anti-Flicker Script (Standard 3-State Tailwind Pattern: Light / Dark / System) -->
     <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
         (function() {
             try {
@@ -73,6 +74,8 @@ $lockoutSeconds = (int)(Session::flash('lockout_seconds') ?: 0);
                     document.documentElement.classList.remove('dark');
                     document.documentElement.style.colorScheme = 'light';
                 }
+                const metaScheme = document.getElementById('meta-color-scheme');
+                if (metaScheme) metaScheme.content = isDark ? 'dark' : 'light';
             } catch (e) {
                 if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
                     document.documentElement.classList.add('dark');
@@ -143,52 +146,63 @@ $lockoutSeconds = (int)(Session::flash('lockout_seconds') ?: 0);
     </div>
 
     <!-- Top Navigation Bar -->
-    <header class="w-full border-b border-slate-200/80 dark:border-white/[0.06] bg-white/70 dark:bg-[#0f121a]/70 backdrop-blur-md relative z-20 px-4 sm:px-8 py-3 transition-colors">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
+    <header class="w-full border-b border-slate-200/80 dark:border-white/[0.06] bg-white/80 dark:bg-[#0f121a]/80 backdrop-blur-md relative z-20 px-4 sm:px-8 py-2 sm:py-2.5 transition-colors">
+        <div class="max-w-7xl mx-auto flex items-center justify-between h-11 sm:h-12">
             <!-- Left Branding -->
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-white dark:bg-white/10 p-1 shadow-xs border border-slate-200/60 dark:border-white/10 flex items-center justify-center shrink-0">
+            <div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                <!-- โลโก้เทศบาล (พื้นหลังขาวคมชัดทุกธีม) -->
+                <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white p-1 shadow-xs border border-slate-200/80 dark:border-white/20 flex items-center justify-center shrink-0">
                     <img src="<?= Router::url('/images/mobile-logo.webp') ?>" 
                          alt="โลโก้เทศบาล" 
                          class="w-full h-full object-contain">
                 </div>
-                <div class="hidden sm:block">
-                    <div class="font-heading font-bold text-xs sm:text-sm text-slate-900 dark:text-white">
+
+                <!-- โลโก้ กปท. (กองทุนหลักประกันสุขภาพท้องถิ่น - พื้นหลังขาวคมชัดทุกธีม) -->
+                <div class="h-8 sm:h-9 px-2 py-0.5 rounded-xl border border-slate-200/80 dark:border-white/20 bg-white shadow-xs flex items-center justify-center shrink-0">
+                    <img src="<?= Router::url('/images/kpth-logo.png') ?>" 
+                         alt="โลโก้ กปท. กองทุนหลักประกันสุขภาพท้องถิ่น" 
+                         class="h-5 sm:h-5.5 w-auto max-w-[75px] object-contain shrink-0">
+                </div>
+
+                <div class="min-w-0 hidden sm:block">
+                    <div class="font-bold font-heading text-slate-900 dark:text-white tracking-tight text-xs sm:text-sm whitespace-nowrap leading-tight">
                         ระบบติดตามและบริหารโครงการเทศบาล
                     </div>
-                    <div class="text-[11px] text-slate-500 dark:text-slate-400">
-                        คณะอนุกรรมการฝ่ายติดตามและประเมินผลโครงการ
-                    </div>
+                    <p class="text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold truncate leading-tight mt-0.5">คณะอนุกรรมการฝ่ายติดตามและการประเมินผล</p>
                 </div>
             </div>
 
-            <!-- Right: Theme Switcher Pill -->
-            <div class="relative shrink-0" x-data="{ open: false }" @click.outside="open = false">
+            <!-- Right: Theme Switcher Pill (International Standard 3-State) -->
+            <div class="relative shrink-0" x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false">
                 <button type="button" 
                         @click="open = !open"
                         id="theme-dropdown-btn"
-                        class="px-3 py-1.5 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200 dark:border-white/10 shadow-xs text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all flex items-center gap-2 cursor-pointer"
-                        title="เลือกโหมดการแสดงผล (สว่าง / มืด / ตามระบบ)">
+                        class="flex items-center gap-1 sm:gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-100 dark:bg-[#181a20] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/[0.08] text-xs font-semibold hover:bg-slate-200/80 dark:hover:bg-white/5 transition cursor-pointer"
+                        title="เลือกโหมดการแสดงผล (สว่าง / มืด / ตามระบบ)"
+                        aria-haspopup="true"
+                        :aria-expanded="open">
                     <span class="flex items-center gap-1.5">
                         <span x-show="themeMode === 'light'" class="inline-flex items-center gap-1.5">
                             <i data-lucide="sun" class="w-4 h-4 text-amber-500"></i>
-                            <span class="hidden sm:inline font-sans">สว่าง (Light)</span>
+                            <span class="hidden md:inline text-[11px] font-sans">สว่าง</span>
                         </span>
                         <span x-show="themeMode === 'dark'" x-cloak class="inline-flex items-center gap-1.5">
                             <i data-lucide="moon" class="w-4 h-4 text-emerald-400"></i>
-                            <span class="hidden sm:inline font-sans">มืด (Dark)</span>
+                            <span class="hidden md:inline text-[11px] font-sans">มืด</span>
                         </span>
                         <span x-show="themeMode === 'system'" x-cloak class="inline-flex items-center gap-1.5">
-                            <i data-lucide="monitor" class="w-4 h-4 text-slate-400"></i>
-                            <span class="hidden sm:inline font-sans">ตามระบบ (System)</span>
+                            <i data-lucide="monitor" class="w-4 h-4 text-slate-500 dark:text-slate-400"></i>
+                            <span class="hidden md:inline text-[11px] font-sans">ตามระบบ</span>
                         </span>
                     </span>
-                    <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-150 shrink-0" :class="{ 'rotate-180': open }"></i>
+                    <i data-lucide="chevron-down" class="w-3 h-3 sm:w-3.5 sm:h-3.5 opacity-60 ml-0.5 transition-transform duration-150 hidden xs:inline-block" :class="{ 'rotate-180': open }"></i>
                 </button>
 
-                <!-- Theme Selector Dropdown Menu -->
+                <!-- Theme Selector Dropdown Menu (Accessible W3C WAI-ARIA) -->
                 <div x-show="open" 
                      x-cloak
+                     role="menu"
+                     aria-label="เลือกโหมดการแสดงผล (Theme)"
                      x-transition:enter="transition ease-out duration-100"
                      x-transition:enter-start="transform opacity-0 scale-95"
                      x-transition:enter-end="transform opacity-100 scale-100"
@@ -204,6 +218,8 @@ $lockoutSeconds = (int)(Session::flash('lockout_seconds') ?: 0);
                     <div class="space-y-0.5">
                         <!-- 1. โหมดสว่าง (Light) -->
                         <button type="button" 
+                                role="menuitemradio"
+                                :aria-checked="themeMode === 'light'"
                                 @click="setTheme('light'); open = false" 
                                 class="w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer transition" 
                                 :class="{ 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/20': themeMode === 'light' }">
@@ -216,6 +232,8 @@ $lockoutSeconds = (int)(Session::flash('lockout_seconds') ?: 0);
 
                         <!-- 2. โหมดมืด (Dark) -->
                         <button type="button" 
+                                role="menuitemradio"
+                                :aria-checked="themeMode === 'dark'"
                                 @click="setTheme('dark'); open = false" 
                                 class="w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer transition" 
                                 :class="{ 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/20': themeMode === 'dark' }">
@@ -228,6 +246,8 @@ $lockoutSeconds = (int)(Session::flash('lockout_seconds') ?: 0);
 
                         <!-- 3. โหมดตามระบบ (System) -->
                         <button type="button" 
+                                role="menuitemradio"
+                                :aria-checked="themeMode === 'system'"
                                 @click="setTheme('system'); open = false" 
                                 class="w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer transition" 
                                 :class="{ 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/20': themeMode === 'system' }">
@@ -418,6 +438,24 @@ $lockoutSeconds = (int)(Session::flash('lockout_seconds') ?: 0);
 
     <!-- Alpine.js & Utility Logic -->
     <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
+        function applyThemeSynchronously(callback) {
+            const style = document.createElement('style');
+            style.appendChild(document.createTextNode('* { -webkit-transition: none !important; -moz-transition: none !important; -o-transition: none !important; -ms-transition: none !important; transition: none !important; }'));
+            document.head.appendChild(style);
+            try {
+                callback();
+            } finally {
+                void document.documentElement.offsetHeight;
+                requestAnimationFrame(function() {
+                    requestAnimationFrame(function() {
+                        if (style.parentNode) {
+                            style.parentNode.removeChild(style);
+                        }
+                    });
+                });
+            }
+        }
+
         function loginPage() {
             return {
                 name: '',
@@ -426,17 +464,19 @@ $lockoutSeconds = (int)(Session::flash('lockout_seconds') ?: 0);
                 themeMode: localStorage.getItem('theme') || 'system',
 
                 init() {
+                    // Cross-tab real-time theme synchronization
+                    window.addEventListener('storage', (e) => {
+                        if (e.key === 'theme') {
+                            this.setTheme(e.newValue || 'system', false);
+                        }
+                    });
+
+                    // Dynamic OS preference change listener
                     try {
                         const mq = window.matchMedia('(prefers-color-scheme: dark)');
                         const listener = (e) => {
                             if (this.themeMode === 'system') {
-                                if (e.matches) {
-                                    document.documentElement.classList.add('dark');
-                                    document.documentElement.style.colorScheme = 'dark';
-                                } else {
-                                    document.documentElement.classList.remove('dark');
-                                    document.documentElement.style.colorScheme = 'light';
-                                }
+                                this.setTheme('system', false);
                             }
                         };
                         if (mq.addEventListener) mq.addEventListener('change', listener);
@@ -444,18 +484,35 @@ $lockoutSeconds = (int)(Session::flash('lockout_seconds') ?: 0);
                     } catch (e) {}
                 },
 
-                setTheme(mode) {
+                setTheme(mode, persist = true) {
+                    if (mode !== 'light' && mode !== 'dark' && mode !== 'system') {
+                        mode = 'system';
+                    }
                     this.themeMode = mode;
-                    localStorage.setItem('theme', mode);
+                    if (persist) {
+                        try {
+                            localStorage.setItem('theme', mode);
+                        } catch (e) {}
+                    }
                     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
                     const isDark = (mode === 'dark' || (mode === 'system' && prefersDark));
-                    if (isDark) {
-                        document.documentElement.classList.add('dark');
-                        document.documentElement.style.colorScheme = 'dark';
-                    } else {
-                        document.documentElement.classList.remove('dark');
-                        document.documentElement.style.colorScheme = 'light';
-                    }
+
+                    applyThemeSynchronously(() => {
+                        if (isDark) {
+                            document.documentElement.classList.add('dark');
+                            document.documentElement.style.colorScheme = 'dark';
+                        } else {
+                            document.documentElement.classList.remove('dark');
+                            document.documentElement.style.colorScheme = 'light';
+                        }
+                        const metaScheme = document.getElementById('meta-color-scheme');
+                        if (metaScheme) metaScheme.content = isDark ? 'dark' : 'light';
+
+                        window.dispatchEvent(new CustomEvent('theme-changed', {
+                            detail: { theme: isDark ? 'dark' : 'light', mode: mode, isInstant: true }
+                        }));
+                    });
+
                     this.$nextTick(() => safeIcons());
                 }
             };
