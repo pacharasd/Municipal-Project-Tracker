@@ -280,10 +280,6 @@ $lockoutSeconds = (int)(Session::flash('lockout_seconds') ?: 0);
                          class="h-7 w-auto object-contain">
                 </div>
 
-                <div class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40 mb-2 font-heading">
-                    เทศบาลตำบล / เมือง • กองทุนหลักประกันสุขภาพ
-                </div>
-
                 <h1 class="font-heading text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
                     เข้าสู่ระบบการทำงาน
                 </h1>
@@ -424,7 +420,7 @@ $lockoutSeconds = (int)(Session::flash('lockout_seconds') ?: 0);
     <footer class="w-full border-t border-slate-200/80 dark:border-white/[0.06] bg-white/50 dark:bg-[#0f121a]/50 py-3 px-4 text-center relative z-20 text-xs text-slate-400 dark:text-slate-500">
         <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
             <div>
-                เทศบาลตำบล / เมือง • ระบบติดตามและบริหารโครงการ (Municipal Project Tracker)
+                ระบบติดตามและบริหารโครงการเทศบาล (Municipal Project Tracker)
             </div>
             <div class="flex items-center gap-3 font-mono text-[11px]">
                 <span class="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-sans font-semibold">
