@@ -284,7 +284,7 @@ $lockoutSeconds = (int)(Session::flash('lockout_seconds') ?: 0);
                     เข้าสู่ระบบการทำงาน
                 </h1>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    ระบบติดตามและบริหารโครงการเทศบาล (MPT)
+                    ระบบติดตามและบริหารโครงการเทศบาล
                 </p>
             </div>
 
