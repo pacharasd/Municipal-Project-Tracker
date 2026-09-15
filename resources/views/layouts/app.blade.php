@@ -1222,56 +1222,6 @@
         </div>
     </header>
 
-    <!-- Global Floating Toast Notification (Light & Dark Mode Compatible) -->
-    <div class="fixed top-20 right-4 sm:right-8 z-50 max-w-md w-[calc(100%-2rem)] pointer-events-none space-y-3">
-        <?php if (!empty($flashSuccess)): ?>
-            <div x-data="{ show: true }" 
-                 x-show="show" 
-                 x-cloak
-                 x-init="setTimeout(() => show = false, 4500)"
-                 x-transition:enter="transition ease-out duration-300 transform"
-                 x-transition:enter-start="opacity-0 -translate-y-2 sm:translate-y-0 sm:translate-x-4 scale-95"
-                 x-transition:enter-end="opacity-100 translate-y-0 sm:translate-x-0 scale-100"
-                 x-transition:leave="transition ease-in duration-200 transform"
-                 x-transition:leave-start="opacity-100 scale-100"
-                 x-transition:leave-end="opacity-0 scale-95"
-                 class="pointer-events-auto p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#181a20] border border-emerald-500/30 dark:border-emerald-500/40 shadow-xl shadow-emerald-500/10 dark:shadow-2xl flex items-center gap-3 text-slate-800 dark:text-slate-100 backdrop-blur-md">
-                <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-200/60 dark:border-emerald-500/20">
-                    <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                </div>
-                <div class="text-xs sm:text-sm font-semibold flex-1 leading-snug">
-                    <?= htmlspecialchars($flashSuccess) ?>
-                </div>
-                <button type="button" @click="show = false" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white transition shrink-0 cursor-pointer" aria-label="ปิดการแจ้งเตือน">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                </button>
-            </div>
-        <?php endif; ?>
-
-        <?php if (!empty($flashError)): ?>
-            <div x-data="{ show: true }" 
-                 x-show="show" 
-                 x-cloak
-                 x-init="setTimeout(() => show = false, 5000)"
-                 x-transition:enter="transition ease-out duration-300 transform"
-                 x-transition:enter-start="opacity-0 -translate-y-2 sm:translate-y-0 sm:translate-x-4 scale-95"
-                 x-transition:enter-end="opacity-100 translate-y-0 sm:translate-x-0 scale-100"
-                 x-transition:leave="transition ease-in duration-200 transform"
-                 x-transition:leave-start="opacity-100 scale-100"
-                 x-transition:leave-end="opacity-0 scale-95"
-                 class="pointer-events-auto p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#181a20] border border-rose-500/30 dark:border-rose-500/40 shadow-xl shadow-rose-500/10 dark:shadow-2xl flex items-center gap-3 text-slate-800 dark:text-slate-100 backdrop-blur-md">
-                <div class="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-200/60 dark:border-rose-500/20">
-                    <i data-lucide="alert-triangle" class="w-4 h-4"></i>
-                </div>
-                <div class="text-xs sm:text-sm font-semibold flex-1 leading-snug">
-                    <?= htmlspecialchars($flashError) ?>
-                </div>
-                <button type="button" @click="show = false" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white transition shrink-0 cursor-pointer" aria-label="ปิดการแจ้งเตือน">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                </button>
-            </div>
-        <?php endif; ?>
-    </div>
 
     <!-- Main Container Layout -->
     <div class="flex-1 flex overflow-hidden w-full max-w-full min-w-0">
@@ -1518,10 +1468,23 @@
         // 1. Enterprise Toast Notification Engine (WCAG 2.1 AA & W3C WAI-ARIA)
         // ==========================================
         const MAX_TOASTS = 4;
+        let lastToastMsg = '';
+        let lastToastType = '';
+        let lastToastTime = 0;
 
         window.notify = {
             show(message, type = 'info', duration = 3800) {
                 if (!message) return;
+
+                // Deduplication guard: prevent duplicate alert spam within 1.5s
+                const now = Date.now();
+                if (message === lastToastMsg && type === lastToastType && (now - lastToastTime < 1500)) {
+                    return;
+                }
+                lastToastMsg = message;
+                lastToastType = type;
+                lastToastTime = now;
+
                 const container = document.getElementById('toast-container');
                 if (!container) return;
 
