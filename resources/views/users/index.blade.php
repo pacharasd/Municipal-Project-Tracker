@@ -242,6 +242,14 @@ foreach ($users as $u) {
             case 'executive': return 'bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200/80 dark:border-blue-500/30';
             default: return 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-500/30';
         }
+    },
+
+    getRoleAvatarBgClass(roleName) {
+        switch (roleName) {
+            case 'admin': return 'bg-gradient-to-tr from-purple-600 to-indigo-600 text-white shadow-sm shadow-purple-500/25';
+            case 'executive': return 'bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-sm shadow-amber-500/25';
+            default: return 'bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-sm shadow-emerald-500/25';
+        }
     }
 }">
 
@@ -463,8 +471,11 @@ foreach ($users as $u) {
                 <!-- Card Header: Avatar, Name, Email, Role -->
                 <div class="flex items-start justify-between gap-3">
                     <div class="flex items-center gap-3 min-w-0">
-                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0 font-heading"
-                             x-text="(u.name || '').substring(0, 1)">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 ring-2 ring-white dark:ring-white/10 shadow-xs"
+                             :class="getRoleAvatarBgClass(u.role_name)">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+                            </svg>
                         </div>
                         <div class="min-w-0">
                             <div class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-1.5 truncate">
@@ -548,8 +559,11 @@ foreach ($users as $u) {
                             <td class="py-3.5 px-4 text-center text-slate-400 font-mono text-xs" x-text="(perPage === 'all' ? idx + 1 : (currentPage - 1) * perPage + idx + 1)"></td>
                             <td class="py-3.5 px-4">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white flex items-center justify-center font-bold text-xs shadow-sm font-heading"
-                                         x-text="(u.name || '').substring(0, 1)">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 ring-1.5 ring-white dark:ring-white/10 shadow-xs"
+                                         :class="getRoleAvatarBgClass(u.role_name)">
+                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+                                        </svg>
                                     </div>
                                     <div>
                                         <div class="font-medium text-slate-900 dark:text-white flex items-center gap-1.5">
@@ -803,7 +817,7 @@ foreach ($users as $u) {
                                 <template x-if="createRoleId">
                                     <span class="inline-flex items-center gap-2 font-semibold text-slate-900 dark:text-white truncate">
                                         <span class="w-2 h-2 rounded-full shrink-0" 
-                                              :class="createRoleId == 1 ? 'bg-purple-500' : 'bg-blue-500'"></span>
+                                              :class="createRoleId == 1 ? 'bg-purple-500' : (createRoleId == 2 ? 'bg-blue-500' : 'bg-emerald-500')"></span>
                                         <span x-text="getRoleNameById(createRoleId)"></span>
                                     </span>
                                 </template>
@@ -835,15 +849,20 @@ foreach ($users as $u) {
                                      :class="{ 'bg-emerald-50/80 dark:bg-emerald-500/20 border border-emerald-200/60 dark:border-emerald-500/30': String(createRoleId) === String(r.id) }">
                                     <div class="flex items-start gap-2.5 min-w-0">
                                         <div class="p-1.5 rounded-lg shrink-0 mt-0.5"
-                                             :class="r.name === 'admin' ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-300' : 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300'">
+                                             :class="r.name === 'admin' ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-300' : (r.name === 'executive' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300' : 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-300')">
                                             <template x-if="r.name === 'admin'">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                                                 </svg>
                                             </template>
-                                            <template x-if="r.name !== 'admin'">
+                                            <template x-if="r.name === 'executive'">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                                </svg>
+                                            </template>
+                                            <template x-if="r.name !== 'admin' && r.name !== 'executive'">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                                                 </svg>
                                             </template>
                                         </div>
@@ -999,7 +1018,7 @@ foreach ($users as $u) {
                                 <template x-if="editUser.role_id">
                                     <span class="inline-flex items-center gap-2 font-semibold text-slate-900 dark:text-white truncate">
                                         <span class="w-2 h-2 rounded-full shrink-0" 
-                                              :class="editUser.role_id == 1 ? 'bg-purple-500' : 'bg-blue-500'"></span>
+                                              :class="editUser.role_id == 1 ? 'bg-purple-500' : (editUser.role_id == 2 ? 'bg-blue-500' : 'bg-emerald-500')"></span>
                                         <span x-text="getRoleNameById(editUser.role_id)"></span>
                                     </span>
                                 </template>
@@ -1031,15 +1050,20 @@ foreach ($users as $u) {
                                      :class="{ 'bg-emerald-50/80 dark:bg-emerald-500/20 border border-emerald-200/60 dark:border-emerald-500/30': String(editUser.role_id) === String(r.id) }">
                                     <div class="flex items-start gap-2.5 min-w-0">
                                         <div class="p-1.5 rounded-lg shrink-0 mt-0.5"
-                                             :class="r.name === 'admin' ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-300' : 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300'">
+                                             :class="r.name === 'admin' ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-300' : (r.name === 'executive' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300' : 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-300')">
                                             <template x-if="r.name === 'admin'">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                                                 </svg>
                                             </template>
-                                            <template x-if="r.name !== 'admin'">
+                                            <template x-if="r.name === 'executive'">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                                </svg>
+                                            </template>
+                                            <template x-if="r.name !== 'admin' && r.name !== 'executive'">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                                                 </svg>
                                             </template>
                                         </div>

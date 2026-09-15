@@ -798,7 +798,7 @@ window.subProjectShowPage = function subProjectShowPage() {
                         </div>
                     <?php endif; ?>
 
-                    <?php if (\App\Core\Auth::canManageProjects()): ?>
+                    <?php if (\App\Core\Auth::canDisburse()): ?>
                         <button type="button" @click="disburseModal = true" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-xl transition-colors shadow-sm shrink-0 whitespace-nowrap cursor-pointer">
                             <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                             <span>เบิกจ่ายงบ</span>
@@ -1169,6 +1169,7 @@ window.subProjectShowPage = function subProjectShowPage() {
     </template>
 
     <!-- Modal: Disburse Budget -->
+    <?php if (\App\Core\Auth::canDisburse()): ?>
     <template x-teleport="body">
         <div x-show="disburseModal" x-cloak data-teleport-modal="true" style="display: none;" @click.self="disburseModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-smooth">
             <div class="bg-white dark:bg-[#181a20] w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 relative modal-box-smooth transform-gpu">
@@ -1236,6 +1237,7 @@ window.subProjectShowPage = function subProjectShowPage() {
             </div>
         </div>
     </template>
+    <?php endif; ?>
 
     <!-- Modal: Manual Progress Override -->
     <template x-teleport="body">

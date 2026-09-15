@@ -17,21 +17,28 @@ $roleMeta = [
     'admin'     => [
         'label'       => 'ผู้ดูแลระบบ',
         'badge'       => 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60',
-        'avatar_bg'   => 'bg-purple-600 text-white',
+        'avatar_bg'   => 'bg-gradient-to-tr from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-500/25',
         'icon'        => 'shield-check',
         'description' => 'สิทธิ์สูงสุดในการจัดการข้อมูลทุกส่วนของระบบ'
     ],
     'executive' => [
         'label'       => 'ผู้บริหาร (ดูอย่างเดียว)',
         'badge'       => 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60',
-        'avatar_bg'   => 'bg-amber-600 text-white',
-        'icon'        => 'eye',
+        'avatar_bg'   => 'bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/25',
+        'icon'        => 'award',
         'description' => 'เข้าถึงรายงาน สรุปข้อมูล และแดชบอร์ดภาพรวม'
+    ],
+    'staff'     => [
+        'label'       => 'เจ้าหน้าที่ (Staff)',
+        'badge'       => 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60',
+        'avatar_bg'   => 'bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25',
+        'icon'        => 'user-check',
+        'description' => 'จัดการเพิ่ม ลบ แก้ไขข้อมูลกิจกรรมหลักและกิจกรรมย่อย'
     ],
     'officer'   => [
         'label'       => 'เจ้าหน้าที่',
         'badge'       => 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60',
-        'avatar_bg'   => 'bg-blue-600 text-white',
+        'avatar_bg'   => 'bg-gradient-to-tr from-blue-600 to-cyan-600 text-white shadow-md shadow-blue-500/25',
         'icon'        => 'user-check',
         'description' => 'บันทึกและอัปเดตความคืบหน้าโครงการที่ได้รับมอบหมาย'
     ],
@@ -39,13 +46,12 @@ $roleMeta = [
 $currentRoleInfo = $roleMeta[$userRole] ?? [
     'label'       => $currentUser['role_label'] ?? 'ผู้ใช้งาน',
     'badge'       => 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10',
-    'avatar_bg'   => 'bg-slate-700 text-white',
+    'avatar_bg'   => 'bg-gradient-to-tr from-slate-600 to-slate-700 text-white shadow-sm',
     'icon'        => 'user',
     'description' => 'ผู้ใช้งานระบบเทศบาล'
 ];
 
 $userName = trim($currentUser['name'] ?? 'ผู้ใช้งาน');
-$avatarInitials = mb_substr($userName, 0, 2, 'UTF-8');
 
 // แปลงวันที่สมัครใช้งานเป็นปี พ.ศ.
 $thMonths = ['01'=>'ม.ค.','02'=>'ก.พ.','03'=>'มี.ค.','04'=>'เม.ย.','05'=>'พ.ค.','06'=>'มิ.ย.','07'=>'ก.ค.','08'=>'ส.ค.','09'=>'ก.ย.','10'=>'ต.ค.','11'=>'พ.ย.','12'=>'ธ.ค.'];
@@ -88,12 +94,14 @@ $memberSinceText = "สมาชิกตั้งแต่ {$d} {$m} {$y}";
 
                 <!-- Profile User Details -->
                 <div class="flex items-start sm:items-center gap-4">
-                    <!-- Avatar with Status Dot (Solid Role-Matched Color) -->
+                    <!-- Avatar with Status Dot (Circular Human Silhouette with Role Glow) -->
                     <div class="relative shrink-0">
-                        <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl <?= $currentRoleInfo['avatar_bg'] ?> font-heading font-extrabold text-xl sm:text-2xl flex items-center justify-center shadow-md border-2 border-white dark:border-[#181a20]">
-                            <?= htmlspecialchars($avatarInitials) ?>
+                        <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full <?= $currentRoleInfo['avatar_bg'] ?> flex items-center justify-center shadow-lg ring-4 ring-white dark:ring-[#181a20]">
+                            <svg class="w-9 h-9 sm:w-11 sm:h-11 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+                            </svg>
                         </div>
-                        <span class="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-2 border-white dark:border-[#181a20] rounded-full flex items-center justify-center" title="ออนไลน์ (Active)">
+                        <span class="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-emerald-500 border-2 border-white dark:border-[#181a20] rounded-full flex items-center justify-center shadow-xs" title="ออนไลน์ (Active)">
                             <span class="w-2 h-2 bg-white rounded-full"></span>
                         </span>
                     </div>

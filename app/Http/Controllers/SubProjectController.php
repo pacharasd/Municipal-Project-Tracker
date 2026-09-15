@@ -475,8 +475,8 @@ class SubProjectController
 
     public function delete(string $id): void
     {
-        if (!Auth::isAdmin()) {
-            Session::flash('error', 'เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถลบกิจกรรมหลักได้');
+        if (!Auth::canManageSubProjects()) {
+            Session::flash('error', 'คุณไม่มีสิทธิ์ลบกิจกรรมหลัก');
             header('Location: ' . Router::url("/sub-projects/{$id}"));
             exit;
         }

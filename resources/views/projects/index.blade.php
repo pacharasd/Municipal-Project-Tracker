@@ -321,7 +321,7 @@ if (window.Alpine && typeof Alpine.data === 'function') {
             <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">บริหารจัดการโครงการตามแผนพัฒนาเทศบาล ติดตามความก้าวหน้าและงบประมาณแบบลำดับชั้น</p>
         </div>
         <div class="flex items-center gap-2 w-full sm:w-auto">
-            <?php if (\App\Core\Auth::canManageProjects()): ?>
+            <?php if (\App\Core\Auth::canManageParentProjects()): ?>
                 <button type="button" @click="createModal = true" class="w-full sm:w-auto justify-center inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors shadow-sm shadow-emerald-600/30 cursor-pointer">
                     <i data-lucide="plus-circle" class="w-4 h-4"></i> สร้างโครงการหลักใหม่
                 </button>
@@ -753,7 +753,7 @@ if (window.Alpine && typeof Alpine.data === 'function') {
     </div>
 
     <!-- Modal: Create Main Project -->
-    <?php if (\App\Core\Auth::canManageProjects()): ?>
+    <?php if (\App\Core\Auth::canManageParentProjects()): ?>
     <template x-teleport="body">
         <div x-show="createModal" x-cloak data-teleport-modal="true" style="display: none;" @click.self="createModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 modal-backdrop-smooth overflow-y-auto">
             <div class="bg-white dark:bg-[#181a20] w-full max-w-2xl rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 relative modal-box-smooth transform-gpu overflow-hidden max-h-[90vh] flex flex-col my-auto">

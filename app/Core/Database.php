@@ -375,6 +375,14 @@ class Database
                     }
                 } catch (\Throwable $e) {}
             }
+
+            // Ensure 'staff' role exists in roles table
+            try {
+                $hasStaffRole = $pdo->query("SELECT 1 FROM `roles` WHERE `name` = 'staff' LIMIT 1")->fetch();
+                if (!$hasStaffRole) {
+                    $pdo->exec("INSERT INTO `roles` (`name`, `display_name`, `description`, `created_at`, `updated_at`) VALUES ('staff', 'เจ้าหน้าที่ (Staff)', 'จัดการเพิ่ม ลบ แก้ไข กิจกรรมหลักและกิจกรรมย่อย', NOW(), NOW())");
+                }
+            } catch (\Throwable $e) {}
         } catch (\Throwable $e) {
             error_log("Auto schema migration notice: " . $e->getMessage());
         }

@@ -49,8 +49,8 @@ class BudgetController
 
     public function disburse(): void
     {
-        if (!Auth::canManageProjects()) {
-            Session::flash('error', 'คุณไม่มีสิทธิ์บันทึกการเบิกจ่ายงบประมาณ');
+        if (!Auth::canDisburse()) {
+            Session::flash('error', 'คุณไม่มีสิทธิ์บันทึกการเบิกจ่ายงบประมาณ (เฉพาะผู้ดูแลระบบ)');
             header('Location: ' . Router::url('/budgets'));
             exit;
         }

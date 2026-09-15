@@ -16,7 +16,7 @@ class ActivityController
 {
     public function store(): void
     {
-        if (!Auth::canManageProjects()) {
+        if (!Auth::canManageActivities()) {
             Session::flash('error', 'คุณไม่มีสิทธิ์เพิ่มกิจกรรมย่อย');
             header('Location: ' . Router::url('/projects'));
             exit;
@@ -88,7 +88,7 @@ class ActivityController
 
     public function updateStatus(string $id): void
     {
-        if (!Auth::canManageProjects()) {
+        if (!Auth::canManageActivities()) {
             Session::flash('error', 'คุณไม่มีสิทธิ์ปรับสถานะกิจกรรมย่อย');
             header('Location: ' . Router::url('/projects'));
             exit;
@@ -144,7 +144,7 @@ class ActivityController
 
     public function update(string $id): void
     {
-        if (!Auth::canManageProjects()) {
+        if (!Auth::canManageActivities()) {
             Session::flash('error', 'คุณไม่มีสิทธิ์แก้ไขกิจกรรมย่อย');
             header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? Router::url('/projects')));
             exit;
@@ -213,7 +213,7 @@ class ActivityController
 
     public function delete(string $id): void
     {
-        if (!Auth::canManageProjects()) {
+        if (!Auth::canManageActivities()) {
             Session::flash('error', 'คุณไม่มีสิทธิ์ลบกิจกรรมย่อย');
             header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? Router::url('/projects')));
             exit;

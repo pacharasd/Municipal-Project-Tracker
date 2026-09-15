@@ -61,8 +61,8 @@ class ProjectController
 
     public function store(): void
     {
-        if (!Auth::canManageProjects()) {
-            Session::flash('error', 'คุณไม่มีสิทธิ์สร้างโครงการ');
+        if (!Auth::canManageParentProjects()) {
+            Session::flash('error', 'คุณไม่มีสิทธิ์สร้างโครงการหลัก (เฉพาะผู้ดูแลระบบ)');
             header('Location: ' . Router::url('/projects'));
             exit;
         }
@@ -167,8 +167,8 @@ class ProjectController
 
     public function update(string $id): void
     {
-        if (!Auth::canManageProjects()) {
-            Session::flash('error', 'คุณไม่มีสิทธิ์แก้ไขโครงการ');
+        if (!Auth::canManageParentProjects()) {
+            Session::flash('error', 'คุณไม่มีสิทธิ์แก้ไขโครงการหลัก (เฉพาะผู้ดูแลระบบ)');
             header('Location: ' . Router::url("/projects/{$id}"));
             exit;
         }
@@ -336,8 +336,8 @@ class ProjectController
 
     public function evaluate(string $id): void
     {
-        if (!Auth::canManageProjects()) {
-            Session::flash('error', 'คุณไม่มีสิทธิ์ประเมินผลโครงการ');
+        if (!Auth::canManageParentProjects()) {
+            Session::flash('error', 'คุณไม่มีสิทธิ์ประเมินผลโครงการหลัก (เฉพาะผู้ดูแลระบบ)');
             header('Location: ' . Router::url("/projects/{$id}"));
             exit;
         }

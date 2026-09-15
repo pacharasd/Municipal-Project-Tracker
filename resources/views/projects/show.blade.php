@@ -214,7 +214,7 @@ window.projectShowPage = function projectShowPage() {
             <i data-lucide="arrow-left" class="w-4 h-4"></i> ย้อนกลับไปหน้ารายการโครงการ
         </a>
         <div class="flex items-center gap-2">
-            <?php if (\App\Core\Auth::canManageProjects()): ?>
+            <?php if (\App\Core\Auth::canManageParentProjects()): ?>
                 <button type="button" @click="openEvalModal()" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-300 dark:border-emerald-500/30 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-500/25 transition-all shadow-sm cursor-pointer">
                     <i data-lucide="award" class="w-3.5 h-3.5"></i> <?= $project['evaluation_score'] !== null ? 'แก้ไขผลประเมิน' : 'ประเมินผลโครงการ' ?>
                 </button>
@@ -416,7 +416,7 @@ window.projectShowPage = function projectShowPage() {
                         </div>
                     </div>
 
-                    <?php if (\App\Core\Auth::canManageProjects()): ?>
+                    <?php if (\App\Core\Auth::canManageParentProjects()): ?>
                         <div class="shrink-0 self-start sm:self-center">
                             <button type="button" 
                                     @click="openEvalModal()"
@@ -889,7 +889,7 @@ window.projectShowPage = function projectShowPage() {
     <?php endif; ?>
 
     <!-- Modal: Edit Project -->
-    <?php if (\App\Core\Auth::canManageProjects()): ?>
+    <?php if (\App\Core\Auth::canManageParentProjects()): ?>
     <template x-teleport="body">
         <div x-show="editModal" x-cloak data-teleport-modal="true" style="display: none;" @click.self="editModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-smooth">
             <div class="bg-white dark:bg-[#161922] w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden max-h-[90vh] flex flex-col modal-box-smooth transform-gpu">
@@ -1143,7 +1143,7 @@ window.projectShowPage = function projectShowPage() {
     <?php endif; ?>
 
     <!-- Modal: Evaluate Project -->
-    <?php if (\App\Core\Auth::canManageProjects()): ?>
+    <?php if (\App\Core\Auth::canManageParentProjects()): ?>
     <template x-teleport="body">
         <div x-show="evalModal" x-cloak data-teleport-modal="true" style="display: none;" @click.self="evalModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-smooth">
             <div class="bg-white dark:bg-[#161922] w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden flex flex-col modal-box-smooth transform-gpu">

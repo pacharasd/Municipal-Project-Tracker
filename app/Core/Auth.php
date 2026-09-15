@@ -121,18 +121,37 @@ class Auth
         return Session::get('user_id');
     }
 
+    public static function setUser(?array $user): void
+    {
+        self::$currentUser = $user;
+        if ($user) {
+            Session::set('user_id', $user['id'] ?? null);
+            Session::set('user_role', $user['role_name'] ?? null);
+            Session::set('user_name', $user['name'] ?? null);
+        } else {
+            Session::remove('user_id');
+            Session::remove('user_role');
+            Session::remove('user_name');
+        }
+    }
+
     public static function role(): string
     {
         $user = self::user();
-        return $user['role_name'] ?? 'guest';
+        if ($user && !empty($user['role_name'])) {
+            return $user['role_name'];
+        }
+        return Session::get('user_role') ?? 'guest';
     }
 
     public static function isAdmin(): bool
     {
+        $role = strtolower(self::role());
+        if (in_array($role, ['admin', 'administrator'])) {
+            return true;
+        }
         $user = self::user();
-        if (!$user) return false;
-        $role = strtolower($user['role_name'] ?? '');
-        return in_array($role, ['admin', 'administrator']) || ((int)($user['role_id'] ?? 0) === 1);
+        return $user && ((int)($user['role_id'] ?? 0) === 1);
     }
 
     public static function isExecutive(): bool
@@ -140,27 +159,72 @@ class Auth
         return in_array(self::role(), ['admin', 'executive']);
     }
 
-    public static function isOfficer(): bool
+    public static function isStaff(): bool
+    {
+        $role = strtolower(self::role());
+        return in_array($role, ['staff', 'officer']);
+    }
+
+    /**
+     * เฉพาะ Administrator เท่านั้นที่สามารถจัดการโครงการหลักได้ (Parent Projects)
+     */
+    public static function canManageParentProjects(): bool
     {
         return self::isAdmin();
     }
 
-    public static function isProjectManager(): bool
+    /**
+     * Administrator และ Staff สามารถจัดการกิจกรรมหลักได้ (Sub-projects)
+     */
+    public static function canManageSubProjects(): bool
     {
-        return self::isAdmin();
+        return self::isAdmin() || self::isStaff();
     }
 
+    /**
+     * Administrator และ Staff สามารถจัดการกิจกรรมย่อยได้ (Activities)
+     */
+    public static function canManageActivities(): bool
+    {
+        return self::isAdmin() || self::isStaff();
+    }
+
+    /**
+     * สิทธิ์เดิมสำหรับการจัดการโครงการย่อย/กิจกรรม (คงไว้เพื่อ Backward Compatibility)
+     */
     public static function canManageProjects(): bool
     {
-        return self::isAdmin();
+        return self::canManageSubProjects();
     }
 
+    /**
+     * เฉพาะ Administrator เท่านั้นที่สามารถบันทึกหรือแก้ไขการเบิกจ่ายงบประมาณได้
+     */
     public static function canDisburse(): bool
     {
         return self::isAdmin();
     }
 
+    /**
+     * เฉพาะ Administrator เท่านั้นที่สามารถจัดการผู้ใช้งานได้
+     */
     public static function canManageUsers(): bool
+    {
+        return self::isAdmin();
+    }
+
+    /**
+     * เฉพาะ Administrator เท่านั้นที่สามารถจัดการประเภทโครงการได้
+     */
+    public static function canManageCategories(): bool
+    {
+        return self::isAdmin();
+    }
+
+    /**
+     * เฉพาะ Administrator เท่านั้นที่สามารถดูและจัดการ Audit Logs ได้
+     */
+    public static function canViewAuditLogs(): bool
     {
         return self::isAdmin();
     }

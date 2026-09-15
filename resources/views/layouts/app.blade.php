@@ -1218,18 +1218,18 @@
                 $currentUser = $currentUser ?? \App\Core\Auth::user() ?? [];
                 $userRole = $currentUser['role_name'] ?? 'admin';
                 $roleMeta = [
-                    'admin'     => ['label' => 'ผู้ดูแลระบบ', 'badge' => 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60', 'avatar_bg' => 'bg-purple-600 text-white', 'icon' => 'shield-check'],
-                    'executive' => ['label' => 'ผู้บริหาร (ดูอย่างเดียว)', 'badge' => 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60', 'avatar_bg' => 'bg-amber-600 text-white', 'icon' => 'eye'],
-                    'officer'   => ['label' => 'เจ้าหน้าที่', 'badge' => 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60', 'avatar_bg' => 'bg-blue-600 text-white', 'icon' => 'user-check'],
+                    'admin'     => ['label' => 'ผู้ดูแลระบบ', 'badge' => 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60', 'avatar_bg' => 'bg-gradient-to-tr from-purple-600 to-indigo-600 text-white shadow-sm shadow-purple-500/25', 'icon' => 'shield-check'],
+                    'executive' => ['label' => 'ผู้บริหาร (ดูอย่างเดียว)', 'badge' => 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60', 'avatar_bg' => 'bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-sm shadow-amber-500/25', 'icon' => 'award'],
+                    'staff'     => ['label' => 'เจ้าหน้าที่ (Staff)', 'badge' => 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60', 'avatar_bg' => 'bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-sm shadow-emerald-500/25', 'icon' => 'user-check'],
+                    'officer'   => ['label' => 'เจ้าหน้าที่', 'badge' => 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60', 'avatar_bg' => 'bg-gradient-to-tr from-blue-600 to-cyan-600 text-white shadow-sm shadow-blue-500/25', 'icon' => 'user-check'],
                 ];
                 $currentRoleInfo = $roleMeta[$userRole] ?? [
                     'label'     => $currentUser['role_label'] ?? 'ผู้ใช้งาน',
                     'badge'     => 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10',
-                    'avatar_bg' => 'bg-slate-700 text-white',
+                    'avatar_bg' => 'bg-gradient-to-tr from-slate-600 to-slate-700 text-white shadow-sm',
                     'icon'      => 'user'
                 ];
                 $userName = trim($currentUser['name'] ?? 'ผู้ใช้งาน');
-                $avatarInitials = mb_substr($userName, 0, 2, 'UTF-8');
                 ?>
 
                 <!-- Modern Interactive User Profile Dropdown Pill & Modals -->
@@ -1247,12 +1247,14 @@
                             :class="{ 'ring-2 ring-purple-500/25 border-purple-500/50 bg-purple-50/60 dark:bg-purple-500/10': userMenuOpen }"
                             title="ข้อมูลผู้ใช้งานและเมนูบัญชี">
                         
-                        <!-- Refined Solid Avatar with Online Indicator -->
+                        <!-- Refined Circular Avatar with Online Indicator -->
                         <div class="relative shrink-0">
-                            <div class="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl <?= $currentRoleInfo['avatar_bg'] ?> font-heading font-semibold text-xs flex items-center justify-center shadow-sm">
-                                <?= htmlspecialchars($avatarInitials) ?>
+                            <div class="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-full <?= $currentRoleInfo['avatar_bg'] ?> flex items-center justify-center ring-2 ring-white/80 dark:ring-white/10 shadow-xs">
+                                <svg class="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+                                </svg>
                             </div>
-                            <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#181a20]"></span>
+                            <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#181a20]" title="ออนไลน์"></span>
                         </div>
 
                         <!-- User Name & Role (Hidden on mobile <640px) -->
@@ -1286,8 +1288,13 @@
                         <!-- Header User Info Card (Clean Solid Surface) -->
                         <div class="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.06] mb-2">
                             <div class="flex items-center gap-3">
-                                <div class="w-11 h-11 rounded-xl <?= $currentRoleInfo['avatar_bg'] ?> font-heading font-bold text-sm flex items-center justify-center shadow-md shrink-0">
-                                    <?= htmlspecialchars($avatarInitials) ?>
+                                <div class="relative shrink-0">
+                                    <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-full <?= $currentRoleInfo['avatar_bg'] ?> flex items-center justify-center shrink-0 ring-2 ring-white dark:ring-white/10 shadow-sm">
+                                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+                                        </svg>
+                                    </div>
+                                    <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#181a20]" title="ออนไลน์"></span>
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <div class="text-xs sm:text-sm font-bold font-heading text-slate-900 dark:text-white truncate">
