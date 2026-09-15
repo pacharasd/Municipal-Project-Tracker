@@ -1133,7 +1133,7 @@ window.subProjectShowPage = function subProjectShowPage() {
                                 'name' => 'activity_date',
                                 'label' => 'วันที่จัดกิจกรรมย่อย',
                                 'required' => true,
-                                'placement' => 'top',
+                                'placement' => 'auto',
                                 'align' => 'left',
                             ]); ?>
                         </div>
@@ -1290,41 +1290,53 @@ window.subProjectShowPage = function subProjectShowPage() {
                 $parentEndThai = !empty($parentEndRaw) ? date('d/m/', strtotime($parentEndRaw)) . (date('Y', strtotime($parentEndRaw)) + 543) : 'ไม่ระบุ';
             ?>
             <form action="<?= \App\Core\Router::url("/sub-projects/{$project['id']}/update") ?>" method="POST" 
-                  @submit="
+                  @submit.prevent="
+                    const form = $el;
                     const maxB = <?= $maxAllowedSubBudget ?>;
-                    const bVal = parseFloat($el.querySelector('input[name=budget]')?.value || 0);
+                    const bVal = parseFloat(form.querySelector('input[name=budget]')?.value || 0);
                     if (maxB > 0 && bVal > maxB) {
                         window.notify.warning('งบประมาณโครงการย่อย (' + bVal.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท) ต้องไม่เกินงบประมาณคงเหลือของโครงการหลักที่จัดสรรได้ (' + maxB.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท)');
-                        $event.preventDefault();
                         return false;
                     }
                     const pStart = '<?= $parentStartRaw ?>';
                     const pEnd = '<?= $parentEndRaw ?>';
-                    const sStart = $el.querySelector('input[name=start_date]')?.value || '';
-                    const sEnd = $el.querySelector('input[name=end_date]')?.value || '';
+                    const pStartThai = '<?= $parentStartThai ?>';
+                    const pEndThai = '<?= $parentEndThai ?>';
+                    const sStart = form.querySelector('input[name=start_date]')?.value || '';
+                    const sEnd = form.querySelector('input[name=end_date]')?.value || '';
                     if (!sStart || !sEnd) {
                         window.notify.warning('กรุณาระบุวันที่เริ่มต้นและวันที่สิ้นสุดของโครงการย่อย');
-                        $event.preventDefault();
-                        return false;
-                    }
-                    if (pStart && sStart < pStart) {
-                        window.notify.warning('วันที่เริ่มต้นของโครงการย่อยต้องเท่ากับหรือมากกว่าวันที่เริ่มต้นของโครงการหลัก (<?= $parentStartThai ?>)');
-                        $event.preventDefault();
-                        return false;
-                    }
-                    if (pEnd && sEnd > pEnd) {
-                        window.notify.warning('วันที่สิ้นสุดของโครงการย่อยต้องไม่เกินวันที่สิ้นสุดของโครงการหลัก (<?= $parentEndThai ?>)');
-                        $event.preventDefault();
                         return false;
                     }
                     if (sStart > sEnd) {
                         window.notify.warning('วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุดของโครงการย่อย');
-                        $event.preventDefault();
                         return false;
                     }
+                    const isOutsideBounds = (pStart && sStart < pStart) || (pEnd && sEnd > pEnd);
+                    const confirmInput = form.querySelector('input[name=confirm_outside_dates]');
+                    if (isOutsideBounds && confirmInput && confirmInput.value !== '1') {
+                        let warnDetails = [];
+                        if (pStart && sStart < pStart) warnDetails.push('วันที่เริ่มต้นอยู่ก่อนกำหนดการของโครงการหลัก (' + pStartThai + ')');
+                        if (pEnd && sEnd > pEnd) warnDetails.push('วันที่สิ้นสุดเกินกำหนดการของโครงการหลัก (' + pEndThai + ')');
+                        window.confirmModal({
+                            type: 'warning',
+                            title: 'ยืนยันกำหนดวันที่นอกกรอบเวลา',
+                            message: 'วันที่ของกิจกรรมหลักอยู่นอกกรอบเวลาของโครงการหลัก (' + pStartThai + ' ถึง ' + pEndThai + ')\n• ' + warnDetails.join('\n• ') + '\n\nคุณต้องการยืนยันการบันทึกกิจกรรมหลักนี้หรือไม่?',
+                            confirmText: 'ยืนยันบันทึก',
+                            cancelText: 'กลับไปแก้ไข'
+                        }).then((confirmed) => {
+                            if (confirmed) {
+                                confirmInput.value = '1';
+                                form.submit();
+                            }
+                        });
+                        return false;
+                    }
+                    form.submit();
                   "
                   class="p-6 space-y-4 overflow-y-auto">
                 <input type="hidden" name="_token" value="<?= $csrfToken ?>">
+                <input type="hidden" name="confirm_outside_dates" value="0">
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
@@ -1369,10 +1381,10 @@ window.subProjectShowPage = function subProjectShowPage() {
                     <div class="p-3 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/60 text-xs text-blue-800 dark:text-blue-300 flex items-start gap-2.5">
                         <i data-lucide="calendar" class="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5"></i>
                         <div>
-                            <strong class="font-semibold">กรอบเวลาโครงการหลัก:</strong> 
+                            <strong class="font-semibold">กรอบเวลาอ้างอิงโครงการหลัก:</strong> 
                             <?= $parentStartThai ?> ถึง <?= $parentEndThai ?>
                             <div class="text-[11px] text-blue-600 dark:text-blue-400 mt-0.5">
-                                * โครงการย่อยต้องเริ่มต้นตั้งแต่วันที่ <?= $parentStartThai ?> เป็นต้นไป และต้องสิ้นสุดไม่เกินวันที่ <?= $parentEndThai ?>
+                                * สามารถระบุวันที่สิ้นสุดเกินกรอบเวลาได้ตามความจำเป็น โดยระบบจะขอการยืนยันตาม Rule #18
                             </div>
                         </div>
                     </div>
@@ -1385,7 +1397,7 @@ window.subProjectShowPage = function subProjectShowPage() {
                             'label' => 'วันที่เริ่มต้น',
                             'value' => $project['start_date'] ?? '',
                             'required' => true,
-                            'placement' => 'top',
+                            'placement' => 'auto',
                             'align' => 'left',
                         ]); ?>
                     </div>
@@ -1395,7 +1407,7 @@ window.subProjectShowPage = function subProjectShowPage() {
                             'label' => 'วันที่สิ้นสุด',
                             'value' => $project['end_date'] ?? '',
                             'required' => true,
-                            'placement' => 'top',
+                            'placement' => 'auto',
                             'align' => 'right',
                         ]); ?>
                     </div>
@@ -1504,7 +1516,7 @@ window.subProjectShowPage = function subProjectShowPage() {
                             'label' => 'วันที่จัดกิจกรรมย่อย',
                             'required' => true,
                             'xModel' => 'selectedAct.activity_date',
-                            'placement' => 'top',
+                            'placement' => 'auto',
                             'align' => 'left',
                         ]); ?>
                     </div>

@@ -80,6 +80,7 @@ $configJson = json_encode([
         <!-- Dropdown Calendar Panel (Buddhist Era พ.ศ.) -->
         <div x-show="open" 
              x-cloak
+             x-ref="calendarDropdown"
              x-transition:enter="transition ease-out duration-100"
              x-transition:enter-start="transform opacity-0 scale-95"
              x-transition:enter-end="transform opacity-100 scale-100"
@@ -87,10 +88,10 @@ $configJson = json_encode([
              x-transition:leave-start="transform opacity-100 scale-100"
              x-transition:leave-end="transform opacity-0 scale-95"
              :class="{
-                 'bottom-full mb-2': placement === 'top',
-                 'top-full mt-2': placement !== 'top',
-                 'right-0': align === 'right',
-                 'left-0': align !== 'right'
+                 'bottom-full mb-2': actualPlacement === 'top',
+                 'top-full mt-2': actualPlacement !== 'top',
+                 'right-0': actualAlign === 'right',
+                 'left-0': actualAlign !== 'right'
              }"
              class="absolute z-50 w-72 max-w-[calc(100vw-2rem)] bg-white dark:bg-[#1f222e] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-3.5 select-none"
              style="display: none;">

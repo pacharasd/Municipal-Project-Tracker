@@ -75,18 +75,30 @@ class SubProjectController
         $parentStartDate = !empty($parent['start_date']) ? $parent['start_date'] : null;
         $parentEndDate = !empty($parent['end_date']) ? $parent['end_date'] : null;
 
+        $confirmOutside = !empty($_POST['confirm_outside_dates']) && $_POST['confirm_outside_dates'] === '1';
+        $isOutsideDateBounds = false;
+        $outsideReasons = [];
+
         if ($parentStartDate && $startDate && $startDate < $parentStartDate) {
             $formattedParentStart = date('d/m/', strtotime($parentStartDate)) . (date('Y', strtotime($parentStartDate)) + 543);
-            Session::flash('error', "วันที่เริ่มต้นของกิจกรรมหลักต้องเท่ากับหรือมากกว่าวันที่เริ่มต้นของโครงการหลัก ({$formattedParentStart})");
-            header('Location: ' . Router::url("/projects/{$parentId}"));
-            exit;
+            if (!$confirmOutside) {
+                Session::flash('error', "วันที่เริ่มต้นของกิจกรรมหลักต้องเท่ากับหรือมากกว่าวันที่เริ่มต้นของโครงการหลัก ({$formattedParentStart}) หรือต้องได้รับการยืนยันตาม Rule #18");
+                header('Location: ' . Router::url("/projects/{$parentId}"));
+                exit;
+            }
+            $isOutsideDateBounds = true;
+            $outsideReasons[] = "เริ่มก่อนโครงการหลัก ({$formattedParentStart})";
         }
 
         if ($parentEndDate && $endDate && $endDate > $parentEndDate) {
             $formattedParentEnd = date('d/m/', strtotime($parentEndDate)) . (date('Y', strtotime($parentEndDate)) + 543);
-            Session::flash('error', "วันที่สิ้นสุดของกิจกรรมหลักต้องไม่เกินวันที่สิ้นสุดของโครงการหลัก ({$formattedParentEnd})");
-            header('Location: ' . Router::url("/projects/{$parentId}"));
-            exit;
+            if (!$confirmOutside) {
+                Session::flash('error', "วันที่สิ้นสุดของกิจกรรมหลักต้องไม่เกินวันที่สิ้นสุดของโครงการหลัก ({$formattedParentEnd}) หรือต้องได้รับการยืนยันตาม Rule #18");
+                header('Location: ' . Router::url("/projects/{$parentId}"));
+                exit;
+            }
+            $isOutsideDateBounds = true;
+            $outsideReasons[] = "สิ้นสุดหลังโครงการหลัก ({$formattedParentEnd})";
         }
 
         $budget = (float)$_POST['budget'];
@@ -150,7 +162,7 @@ class SubProjectController
                 'disbursed_amount'       => 0.00,
                 'status'                 => 'not_started',
                 'progress'               => 0.00,
-                'progress_mode'          => $_POST['progress_mode'] ?? 'auto',
+                'progress_mode'          => 'auto',
             ]);
 
             // Sync parent budget & progress
@@ -158,6 +170,24 @@ class SubProjectController
             ProgressService::syncParentProjectProgress($parentId);
 
             AuditLogService::log('CREATE_SUBPROJECT', 'Project', $subId, null, ['name' => $_POST['name']]);
+            if ($isOutsideDateBounds) {
+                AuditLogService::log(
+                    'CONFIRM_DATE_OUTSIDE_PARENT',
+                    'Project',
+                    $subId,
+                    null,
+                    [
+                        'action'            => 'บันทึกกิจกรรมหลักนอกกรอบเวลาโครงการหลักตาม Rule #18',
+                        'sub_project_id'    => $subId,
+                        'parent_id'         => $parentId,
+                        'sub_start_date'    => $startDate,
+                        'sub_end_date'      => $endDate,
+                        'parent_start_date' => $parentStartDate,
+                        'parent_end_date'   => $parentEndDate,
+                        'reasons'           => implode(', ', $outsideReasons),
+                    ]
+                );
+            }
             Session::flash('success', "เพิ่มกิจกรรมหลัก '{$_POST['name']}' เรียบร้อยแล้ว");
             header('Location: ' . Router::url("/sub-projects/{$subId}"));
             exit;
@@ -332,18 +362,30 @@ class SubProjectController
         $parentStartDate = !empty($parent['start_date']) ? $parent['start_date'] : null;
         $parentEndDate = !empty($parent['end_date']) ? $parent['end_date'] : null;
 
+        $confirmOutside = !empty($_POST['confirm_outside_dates']) && $_POST['confirm_outside_dates'] === '1';
+        $isOutsideDateBounds = false;
+        $outsideReasons = [];
+
         if ($parentStartDate && $startDate && $startDate < $parentStartDate) {
             $formattedParentStart = date('d/m/', strtotime($parentStartDate)) . (date('Y', strtotime($parentStartDate)) + 543);
-            Session::flash('error', "วันที่เริ่มต้นของกิจกรรมหลักต้องเท่ากับหรือมากกว่าวันที่เริ่มต้นของโครงการหลัก ({$formattedParentStart})");
-            header('Location: ' . Router::url("/sub-projects/{$subId}"));
-            exit;
+            if (!$confirmOutside) {
+                Session::flash('error', "วันที่เริ่มต้นของกิจกรรมหลักต้องเท่ากับหรือมากกว่าวันที่เริ่มต้นของโครงการหลัก ({$formattedParentStart}) หรือต้องได้รับการยืนยันตาม Rule #18");
+                header('Location: ' . Router::url("/sub-projects/{$subId}"));
+                exit;
+            }
+            $isOutsideDateBounds = true;
+            $outsideReasons[] = "เริ่มก่อนโครงการหลัก ({$formattedParentStart})";
         }
 
         if ($parentEndDate && $endDate && $endDate > $parentEndDate) {
             $formattedParentEnd = date('d/m/', strtotime($parentEndDate)) . (date('Y', strtotime($parentEndDate)) + 543);
-            Session::flash('error', "วันที่สิ้นสุดของกิจกรรมหลักต้องไม่เกินวันที่สิ้นสุดของโครงการหลัก ({$formattedParentEnd})");
-            header('Location: ' . Router::url("/sub-projects/{$subId}"));
-            exit;
+            if (!$confirmOutside) {
+                Session::flash('error', "วันที่สิ้นสุดของกิจกรรมหลักต้องไม่เกินวันที่สิ้นสุดของโครงการหลัก ({$formattedParentEnd}) หรือต้องได้รับการยืนยันตาม Rule #18");
+                header('Location: ' . Router::url("/sub-projects/{$subId}"));
+                exit;
+            }
+            $isOutsideDateBounds = true;
+            $outsideReasons[] = "สิ้นสุดหลังโครงการหลัก ({$formattedParentEnd})";
         }
 
         $newBudget = (float)$_POST['budget'];
@@ -408,6 +450,24 @@ class SubProjectController
         BudgetService::syncParentProjectBudget($project['parent_id']);
 
         AuditLogService::log('UPDATE_SUBPROJECT', 'Project', $subId, ['name' => $project['name'], 'budget' => $project['budget']], ['name' => $_POST['name'], 'budget' => $newBudget]);
+        if ($isOutsideDateBounds) {
+            AuditLogService::log(
+                'CONFIRM_DATE_OUTSIDE_PARENT',
+                'Project',
+                $subId,
+                ['start_date' => $project['start_date'], 'end_date' => $project['end_date']],
+                [
+                    'action'            => 'แก้ไขกิจกรรมหลักให้มีวันที่นอกกรอบเวลาโครงการหลักตาม Rule #18',
+                    'sub_project_id'    => $subId,
+                    'parent_id'         => $project['parent_id'],
+                    'sub_start_date'    => $startDate,
+                    'sub_end_date'      => $endDate,
+                    'parent_start_date' => $parentStartDate,
+                    'parent_end_date'   => $parentEndDate,
+                    'reasons'           => implode(', ', $outsideReasons),
+                ]
+            );
+        }
         Session::flash('success', 'อัปเดตข้อมูลกิจกรรมหลักเรียบร้อยแล้ว');
         header('Location: ' . Router::url("/sub-projects/{$subId}"));
         exit;

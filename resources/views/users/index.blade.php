@@ -41,6 +41,13 @@ foreach ($users as $u) {
     editRoleOpen: false,
     currentUserId: <?= (int)$currentUserId ?>,
     editUser: { id: '', name: '', email: '', position: '', phone: '', role_id: '' },
+
+    // Password Management State
+    createPassword: '',
+    createShowPassword: false,
+    copiedPassword: false,
+    editPassword: '',
+    editShowPassword: false,
     
     getRoleNameById(id) {
         if (!id) return '';
@@ -51,6 +58,9 @@ foreach ($users as $u) {
     openCreate() {
         this.createRoleId = (this.rolesList && this.rolesList.length > 0) ? this.rolesList[0].id : 1;
         this.createRoleOpen = false;
+        this.createPassword = '';
+        this.createShowPassword = false;
+        this.copiedPassword = false;
         this.createModal = true;
         this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
     },
@@ -58,8 +68,91 @@ foreach ($users as $u) {
     openEdit(u) {
         this.editUser = Object.assign({}, u);
         this.editRoleOpen = false;
+        this.editPassword = '';
+        this.editShowPassword = false;
         this.editModal = true;
         this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+    },
+
+    // Password Security & Strength Helpers (NIST SP 800-63B / OWASP)
+    calculateStrength(pwd) {
+        if (!pwd) return 0;
+        let score = 0;
+        if (pwd.length >= 6) score++;
+        if (pwd.length >= 8) score++;
+        if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) score++;
+        if (/[0-9]/.test(pwd)) score++;
+        if (/[^A-Za-z0-9]/.test(pwd)) score++;
+        if (pwd.toLowerCase() === 'password' || pwd === '123456' || pwd === '12345678') return 1;
+        return Math.min(4, Math.max(1, score));
+    },
+
+    passwordStrengthLabel(pwd) {
+        if (!pwd) return '';
+        if (pwd.toLowerCase() === 'password') return 'ง่ายมาก (ค่าเริ่มต้น)';
+        const s = this.calculateStrength(pwd);
+        if (s <= 1) return 'ง่ายเกินไป';
+        if (s === 2) return 'ปานกลาง';
+        if (s === 3) return 'ปลอดภัย';
+        return 'ปลอดภัยสูง';
+    },
+
+    passwordStrengthColor(pwd) {
+        if (!pwd) return 'text-slate-400';
+        if (pwd.toLowerCase() === 'password') return 'text-amber-500';
+        const s = this.calculateStrength(pwd);
+        if (s <= 1) return 'text-rose-500';
+        if (s === 2) return 'text-amber-500';
+        if (s === 3) return 'text-emerald-500';
+        return 'text-teal-500';
+    },
+
+    strengthBarClass(pwd, level) {
+        const s = this.calculateStrength(pwd);
+        if (s < level) return 'bg-slate-200 dark:bg-white/10';
+        if (s === 1 || pwd.toLowerCase() === 'password') return 'bg-rose-500';
+        if (s === 2) return 'bg-amber-500';
+        if (s === 3) return 'bg-emerald-500';
+        return 'bg-teal-500';
+    },
+
+    generateRandomPassword() {
+        const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+        const lowercase = 'abcdefghijkmnpqrstuvwxyz';
+        const numbers = '23456789';
+        const symbols = '!@#$%^&*';
+        const all = uppercase + lowercase + numbers + symbols;
+        
+        let result = '';
+        const array = new Uint8Array(10);
+        window.crypto.getRandomValues(array);
+        
+        // Guarantee at least one from each character class
+        result += uppercase[array[0] % uppercase.length];
+        result += lowercase[array[1] % lowercase.length];
+        result += numbers[array[2] % numbers.length];
+        result += symbols[array[3] % symbols.length];
+        
+        for (let i = 4; i < 10; i++) {
+            result += all[array[i] % all.length];
+        }
+        
+        result = result.split('').sort(() => 0.5 - Math.random()).join('');
+        this.createPassword = result;
+        this.createShowPassword = true;
+        this.copyToClipboard(result);
+        if (window.notify) window.notify.success('สุ่มรหัสผ่านใหม่และคัดลอกลงคลิปบอร์ดแล้ว');
+        this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+    },
+
+    copyToClipboard(text) {
+        if (!text) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                this.copiedPassword = true;
+                setTimeout(() => { this.copiedPassword = false; }, 2000);
+            }).catch(() => {});
+        }
     },
 
     get filteredUsers() {
@@ -632,11 +725,70 @@ foreach ($users as $u) {
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                            รหัสผ่านเริ่มต้น <span class="text-slate-400 font-normal">(ค่าเริ่มต้น: password)</span>
-                        </label>
-                        <input type="text" name="password" value="password" placeholder="password"
-                               class="w-full px-3.5 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white font-mono transition-colors">
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                รหัสผ่าน <span class="text-rose-500">*</span>
+                            </label>
+                            <button type="button" 
+                                    @click="generateRandomPassword()" 
+                                    class="text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 cursor-pointer font-medium text-[11px]"
+                                    title="สุ่มรหัสผ่านที่ปลอดภัยอัตโนมัติ">
+                                <i data-lucide="sparkles" class="w-3 h-3"></i>
+                                <span>สุ่มรหัสผ่าน</span>
+                            </button>
+                        </div>
+                        <div class="relative">
+                            <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                            <input :type="createShowPassword ? 'text' : 'password'" 
+                                   name="password" 
+                                   x-model="createPassword"
+                                   required
+                                   autocomplete="new-password"
+                                   placeholder="กรอกรหัสผ่านสำหรับผู้ใช้งานใหม่"
+                                   class="w-full pl-10 pr-20 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white font-mono transition-colors">
+                            
+                            <!-- Action Buttons (Copy & Toggle Visibility) -->
+                            <div class="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+                                <!-- Copy button -->
+                                <button type="button" 
+                                        x-show="createPassword.length > 0"
+                                        x-cloak
+                                        @click="copyToClipboard(createPassword)"
+                                        class="p-1.5 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg hover:bg-slate-200/60 dark:hover:bg-white/10 transition cursor-pointer"
+                                        :title="copiedPassword ? 'คัดลอกแล้ว!' : 'คัดลอกรหัสผ่าน'"
+                                        tabindex="-1">
+                                    <i x-show="!copiedPassword" data-lucide="copy" class="w-3.5 h-3.5"></i>
+                                    <i x-show="copiedPassword" x-cloak data-lucide="check" class="w-3.5 h-3.5 text-emerald-500"></i>
+                                </button>
+
+                                <!-- Show/Hide Toggle -->
+                                <button type="button" 
+                                        @click="createShowPassword = !createShowPassword; $nextTick(() => { if(window.lucide) lucide.createIcons(); })" 
+                                        class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-200/60 dark:hover:bg-white/10 transition cursor-pointer"
+                                        :title="createShowPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'"
+                                        :aria-label="createShowPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'"
+                                        tabindex="-1">
+                                    <i x-show="!createShowPassword" data-lucide="eye" class="w-3.5 h-3.5"></i>
+                                    <i x-show="createShowPassword" x-cloak data-lucide="eye-off" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Password Strength Meter -->
+                        <div class="mt-1.5" x-show="createPassword.length > 0">
+                            <div class="flex items-center justify-between mb-1 text-[10px]">
+                                <span class="text-slate-400 font-sans">ระดับความปลอดภัย:</span>
+                                <span class="font-bold font-sans" :class="passwordStrengthColor(createPassword)" x-text="passwordStrengthLabel(createPassword)"></span>
+                            </div>
+                            <div class="h-1 w-full bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden flex gap-1">
+                                <div class="h-full w-1/4 rounded-full transition-all duration-300" :class="strengthBarClass(createPassword, 1)"></div>
+                                <div class="h-full w-1/4 rounded-full transition-all duration-300" :class="strengthBarClass(createPassword, 2)"></div>
+                                <div class="h-full w-1/4 rounded-full transition-all duration-300" :class="strengthBarClass(createPassword, 3)"></div>
+                                <div class="h-full w-1/4 rounded-full transition-all duration-300" :class="strengthBarClass(createPassword, 4)"></div>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1 font-sans">
+                            * แนะนำความยาวอย่างน้อย 8 ตัวอักษรขึ้นไป หรือกดปุ่ม "สุ่มรหัสผ่าน" เพื่อสร้างรหัสผ่านที่ปลอดภัย
+                        </p>
                     </div>
                     <div class="relative" @click.outside="createRoleOpen = false">
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
@@ -788,11 +940,51 @@ foreach ($users as $u) {
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                            เปลี่ยนรหัสผ่าน <span class="text-slate-400 font-normal">(เว้นว่างหากไม่เปลี่ยน)</span>
-                        </label>
-                        <input type="password" name="password" placeholder="••••••••"
-                               class="w-full px-3.5 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white font-mono transition-colors">
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                เปลี่ยนรหัสผ่าน <span class="text-slate-400 font-normal">(เว้นว่างหากไม่เปลี่ยน)</span>
+                            </label>
+                            <button type="button" 
+                                    x-show="editPassword.length > 0"
+                                    x-cloak
+                                    @click="editPassword = ''; editShowPassword = false; $nextTick(() => { if(window.lucide) lucide.createIcons(); })"
+                                    class="text-[11px] text-rose-500 hover:underline cursor-pointer">
+                                ล้างค่า
+                            </button>
+                        </div>
+                        <div class="relative">
+                            <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                            <input :type="editShowPassword ? 'text' : 'password'" 
+                                   name="password" 
+                                   x-model="editPassword"
+                                   autocomplete="new-password"
+                                   placeholder="•••••••• (เว้นว่างหากไม่เปลี่ยน)"
+                                   class="w-full pl-10 pr-10 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white font-mono transition-colors">
+                            
+                            <!-- Show/Hide Toggle -->
+                            <button type="button" 
+                                    @click="editShowPassword = !editShowPassword; $nextTick(() => { if(window.lucide) lucide.createIcons(); })" 
+                                    class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-200/60 dark:hover:bg-white/10 transition cursor-pointer absolute right-1.5 top-1/2 -translate-y-1/2"
+                                    :title="editShowPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'"
+                                    :aria-label="editShowPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'"
+                                    tabindex="-1">
+                                <i x-show="!editShowPassword" data-lucide="eye" class="w-3.5 h-3.5"></i>
+                                <i x-show="editShowPassword" x-cloak data-lucide="eye-off" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                        <!-- Password Strength Meter when typing in Edit Modal -->
+                        <div class="mt-1.5" x-show="editPassword.length > 0">
+                            <div class="flex items-center justify-between mb-1 text-[10px]">
+                                <span class="text-slate-400 font-sans">ระดับความปลอดภัย:</span>
+                                <span class="font-bold font-sans" :class="passwordStrengthColor(editPassword)" x-text="passwordStrengthLabel(editPassword)"></span>
+                            </div>
+                            <div class="h-1 w-full bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden flex gap-1">
+                                <div class="h-full w-1/4 rounded-full transition-all duration-300" :class="strengthBarClass(editPassword, 1)"></div>
+                                <div class="h-full w-1/4 rounded-full transition-all duration-300" :class="strengthBarClass(editPassword, 2)"></div>
+                                <div class="h-full w-1/4 rounded-full transition-all duration-300" :class="strengthBarClass(editPassword, 3)"></div>
+                                <div class="h-full w-1/4 rounded-full transition-all duration-300" :class="strengthBarClass(editPassword, 4)"></div>
+                            </div>
+                        </div>
                     </div>
                     <div class="relative" @click.outside="editRoleOpen = false">
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">

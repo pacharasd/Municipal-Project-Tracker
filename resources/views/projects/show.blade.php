@@ -708,47 +708,58 @@ window.projectShowPage = function projectShowPage() {
                     $parentEndThai = !empty($parentEndRaw) ? date('d/m/', strtotime($parentEndRaw)) . (date('Y', strtotime($parentEndRaw)) + 543) : 'ไม่ระบุ';
                 ?>
                 <form action="<?= \App\Core\Router::url('/sub-projects') ?>" method="POST" 
-                      @submit="
+                      @submit.prevent="
+                        const form = $el;
                         const pStart = '<?= $parentStartRaw ?>';
                         const pEnd = '<?= $parentEndRaw ?>';
-                        const start = $el.querySelector('input[name=start_date]')?.value;
-                        const end = $el.querySelector('input[name=end_date]')?.value;
+                        const pStartThai = '<?= $parentStartThai ?>';
+                        const pEndThai = '<?= $parentEndThai ?>';
+                        const start = form.querySelector('input[name=start_date]')?.value;
+                        const end = form.querySelector('input[name=end_date]')?.value;
                         if (!start) {
                             window.notify.warning('กรุณาเลือกวันที่เริ่มต้น');
-                            $event.preventDefault();
                             return false;
                         }
                         if (!end) {
                             window.notify.warning('กรุณาเลือกวันที่สิ้นสุด');
-                            $event.preventDefault();
-                            return false;
-                        }
-                        if (pStart && start < pStart) {
-                            window.notify.warning('วันที่เริ่มต้นของกิจกรรมหลักต้องเท่ากับหรือมากกว่าวันที่เริ่มต้นของโครงการหลัก (<?= $parentStartThai ?>)');
-                            $event.preventDefault();
-                            return false;
-                        }
-                        if (pEnd && end > pEnd) {
-                            window.notify.warning('วันที่สิ้นสุดของกิจกรรมหลักต้องไม่เกินวันที่สิ้นสุดของโครงการหลัก (<?= $parentEndThai ?>)');
-                            $event.preventDefault();
                             return false;
                         }
                         if (start > end) {
                             window.notify.warning('วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุดของกิจกรรมหลัก');
-                            $event.preventDefault();
                             return false;
                         }
                         const maxBudget = <?= (float)$remainingParentBudget ?>;
-                        const budgetVal = parseFloat($el.querySelector('input[name=budget]')?.value || 0);
+                        const budgetVal = parseFloat(form.querySelector('input[name=budget]')?.value || 0);
                         if (budgetVal > maxBudget) {
                             window.notify.warning('งบประมาณกิจกรรมหลัก (' + budgetVal.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท) ต้องไม่เกินงบประมาณคงเหลือของโครงการหลักที่จัดสรรได้ (' + maxBudget.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท)');
-                            $event.preventDefault();
                             return false;
                         }
+                        const isOutsideBounds = (pStart && start < pStart) || (pEnd && end > pEnd);
+                        const confirmInput = form.querySelector('input[name=confirm_outside_dates]');
+                        if (isOutsideBounds && confirmInput && confirmInput.value !== '1') {
+                            let warnDetails = [];
+                            if (pStart && start < pStart) warnDetails.push('วันที่เริ่มต้นอยู่ก่อนกำหนดการของโครงการหลัก (' + pStartThai + ')');
+                            if (pEnd && end > pEnd) warnDetails.push('วันที่สิ้นสุดเกินกำหนดการของโครงการหลัก (' + pEndThai + ')');
+                            window.confirmModal({
+                                type: 'warning',
+                                title: 'ยืนยันกำหนดวันที่นอกกรอบเวลา',
+                                message: 'วันที่ของกิจกรรมหลักอยู่นอกกรอบเวลาของโครงการหลัก (' + pStartThai + ' ถึง ' + pEndThai + ')\n• ' + warnDetails.join('\n• ') + '\n\nคุณต้องการยืนยันการบันทึกกิจกรรมหลักนี้หรือไม่?',
+                                confirmText: 'ยืนยันบันทึก',
+                                cancelText: 'กลับไปแก้ไข'
+                            }).then((confirmed) => {
+                                if (confirmed) {
+                                    confirmInput.value = '1';
+                                    form.submit();
+                                }
+                            });
+                            return false;
+                        }
+                        form.submit();
                       "
                       class="p-6 space-y-4 overflow-y-auto flex-1">
                     <input type="hidden" name="_token" value="<?= $csrfToken ?>">
                     <input type="hidden" name="parent_id" value="<?= $project['id'] ?>">
+                    <input type="hidden" name="confirm_outside_dates" value="0">
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">ชื่อกิจกรรมหลัก <span class="text-rose-500">*</span></label>
@@ -792,10 +803,10 @@ window.projectShowPage = function projectShowPage() {
                         <div class="p-3 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/60 text-xs text-blue-800 dark:text-blue-300 flex items-start gap-2.5">
                             <i data-lucide="calendar" class="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5"></i>
                             <div>
-                                <strong class="font-semibold">กรอบเวลาโครงการหลัก:</strong> 
+                                <strong class="font-semibold">กรอบเวลาอ้างอิงโครงการหลัก:</strong> 
                                 <?= $parentStartThai ?> ถึง <?= $parentEndThai ?>
                                 <div class="text-[11px] text-blue-600 dark:text-blue-400 mt-0.5">
-                                    * กิจกรรมหลักต้องเริ่มต้นตั้งแต่วันที่ <?= $parentStartThai ?> เป็นต้นไป และต้องสิ้นสุดไม่เกินวันที่ <?= $parentEndThai ?>
+                                    * สามารถระบุวันที่สิ้นสุดเกินกรอบเวลาได้ตามความจำเป็น โดยระบบจะขอการยืนยันตาม Rule #18
                                 </div>
                             </div>
                         </div>
@@ -807,7 +818,7 @@ window.projectShowPage = function projectShowPage() {
                                 'name' => 'start_date',
                                 'label' => 'วันที่เริ่มต้น',
                                 'required' => true,
-                                'placement' => 'top',
+                                'placement' => 'auto',
                                 'align' => 'left',
                             ]); ?>
                         </div>
@@ -816,13 +827,13 @@ window.projectShowPage = function projectShowPage() {
                                 'name' => 'end_date',
                                 'label' => 'วันที่สิ้นสุด',
                                 'required' => true,
-                                'placement' => 'top',
+                                'placement' => 'auto',
                                 'align' => 'right',
                             ]); ?>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div x-data="{ subBudget: '', maxBudget: <?= (float)$remainingParentBudget ?> }" class="flex flex-col justify-between">
                             <div>
                                 <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 h-5 flex items-center truncate" title="งบประมาณ (บาท)">
@@ -858,66 +869,6 @@ window.projectShowPage = function projectShowPage() {
                             <div class="h-4 mt-1 flex items-center overflow-hidden">
                                 <p class="text-[11px] text-slate-400 dark:text-slate-500 truncate" title="ใช้คำนวณ Progress ตาม Rule #46">
                                     ใช้คำนวณ Progress ตาม Rule #46
-                                </p>
-                            </div>
-                        </div>
-                        <div class="flex flex-col justify-between">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 h-5 flex items-center truncate" title="โหมดการคำนวณความสำเร็จ">
-                                    โหมดการคำนวณความสำเร็จ
-                                </label>
-                                <div class="relative" x-data="{
-                                    open: false,
-                                    mode: 'auto',
-                                    modes: {
-                                        'auto': { label: 'คำนวณอัตโนมัติ (AUTO)', desc: 'คิด % ตามผลสำเร็จของกิจกรรมย่อย' },
-                                        'manual': { label: 'ระบุเอง (MANUAL)', desc: 'ผู้ดูแลระบุ % ตามดุลยพินิจ' }
-                                    },
-                                    select(val) {
-                                        this.mode = val;
-                                        this.open = false;
-                                    }
-                                }" @click.outside="open = false">
-                                    <input type="hidden" name="progress_mode" :value="mode">
-                                    <button type="button" 
-                                            @click="open = !open" 
-                                            class="w-full h-10 px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1f222e] text-slate-900 dark:text-white flex items-center justify-between focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all cursor-pointer text-left shadow-2xs">
-                                        <span class="truncate font-medium text-xs sm:text-sm" x-text="modes[mode]?.label || 'เลือกโหมด'"></span>
-                                        <svg class="w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 ml-1.5" :class="{ 'rotate-180 text-emerald-600 dark:text-emerald-400': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                        </svg>
-                                    </button>
-                                    <div x-show="open" 
-                                         x-cloak
-                                         x-transition:enter="transition ease-out duration-100"
-                                         x-transition:enter-start="opacity-0 scale-95"
-                                         x-transition:enter-end="opacity-100 scale-100"
-                                         x-transition:leave="transition ease-in duration-75"
-                                         x-transition:leave-start="opacity-100 scale-100"
-                                         x-transition:leave-end="opacity-0 scale-95"
-                                         class="absolute z-50 mt-1.5 w-full bg-white dark:bg-[#1f222e] rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 p-1.5" 
-                                         style="display: none;">
-                                        <div class="space-y-1">
-                                            <template x-for="(info, key) in modes" :key="key">
-                                                <div @click="select(key)" 
-                                                     class="px-3 py-2 rounded-xl text-xs cursor-pointer flex items-center justify-between transition-colors"
-                                                     :class="mode === key ? 'bg-emerald-50/80 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.04]'">
-                                                    <div>
-                                                        <div x-text="info.label"></div>
-                                                        <div class="text-[10px] text-slate-400 dark:text-slate-500 font-normal" x-text="info.desc"></div>
-                                                    </div>
-                                                    <svg x-show="mode === key" class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
-                                                    </svg>
-                                                </div>
-                                            </template>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="h-4 mt-1 flex items-center overflow-hidden">
-                                <p class="text-[11px] text-slate-400 dark:text-slate-500 truncate" title="ระบบคำนวณอัตโนมัติ หรือ ระบุเอง">
-                                    คำนวณอัตโนมัติ / ระบุเอง
                                 </p>
                             </div>
                         </div>
@@ -1138,7 +1089,7 @@ window.projectShowPage = function projectShowPage() {
                                 'label' => 'วันที่เริ่มต้นโครงการ',
                                 'value' => $project['start_date'] ?? '',
                                 'required' => true,
-                                'placement' => 'top',
+                                'placement' => 'auto',
                                 'align' => 'left',
                             ]); ?>
                         </div>
@@ -1148,7 +1099,7 @@ window.projectShowPage = function projectShowPage() {
                                 'label' => 'วันที่สิ้นสุดโครงการ',
                                 'value' => $project['end_date'] ?? '',
                                 'required' => true,
-                                'placement' => 'top',
+                                'placement' => 'auto',
                                 'align' => 'right',
                             ]); ?>
                         </div>

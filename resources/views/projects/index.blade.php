@@ -980,7 +980,7 @@ if (window.Alpine && typeof Alpine.data === 'function') {
                                 'label' => 'วันที่เริ่มต้น',
                                 'value' => $defaultStartDate,
                                 'required' => true,
-                                'placement' => 'top',
+                                'placement' => 'auto',
                                 'align' => 'left'
                             ]); ?>
                         </div>
@@ -990,7 +990,7 @@ if (window.Alpine && typeof Alpine.data === 'function') {
                                 'label' => 'วันที่สิ้นสุด',
                                 'value' => $defaultEndDate,
                                 'required' => true,
-                                'placement' => 'top',
+                                'placement' => 'auto',
                                 'align' => 'right'
                             ]); ?>
                         </div>

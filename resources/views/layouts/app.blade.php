@@ -161,13 +161,17 @@
                 value: config.value || '',
                 placeholder: config.placeholder || 'วว/ดด/ปปปป',
                 align: config.align || 'left',
-                placement: config.placement || 'bottom',
+                placement: config.placement || 'auto',
+                actualPlacement: (config.placement && config.placement !== 'auto') ? config.placement : 'bottom',
+                actualAlign: config.align || 'left',
                 open: false,
                 viewYear: viewDate.getFullYear(),
                 viewMonth: viewDate.getMonth(),
                 days: [],
 
                 init() {
+                    this.actualPlacement = (this.placement && this.placement !== 'auto') ? this.placement : 'bottom';
+                    this.actualAlign = this.align || 'left';
                     this.syncFromValue();
                     this.refreshDays();
 
@@ -297,7 +301,64 @@
                     if (this.open) {
                         this.syncFromValue();
                         this.refreshDays();
+                        this.updatePlacement();
                     }
+                },
+
+                updatePlacement() {
+                    this.$nextTick(() => {
+                        if (!this.$el) return;
+                        const trigger = this.$el.querySelector('button');
+                        if (!trigger) return;
+                        const rect = trigger.getBoundingClientRect();
+
+                        // Find scrollable container or viewport
+                        const scrollContainer = this.$el.closest('.overflow-y-auto, [data-teleport-modal], .modal-box-smooth');
+                        const containerRect = scrollContainer ? scrollContainer.getBoundingClientRect() : {
+                            top: 0,
+                            bottom: window.innerHeight,
+                            left: 0,
+                            right: window.innerWidth
+                        };
+
+                        const spaceAbove = rect.top - containerRect.top;
+                        const spaceBelow = containerRect.bottom - rect.bottom;
+                        const requiredHeight = 340; // Full calendar dropdown height
+
+                        if (this.placement === 'top') {
+                            // If forced 'top' but space above is insufficient and space below has more room, auto-flip to 'bottom'
+                            this.actualPlacement = (spaceAbove < requiredHeight && spaceBelow > spaceAbove) ? 'bottom' : 'top';
+                        } else if (this.placement === 'bottom') {
+                            // If forced 'bottom' but space below is insufficient and space above has more room, auto-flip to 'top'
+                            this.actualPlacement = (spaceBelow < requiredHeight && spaceAbove > spaceBelow) ? 'top' : 'bottom';
+                        } else {
+                            // 'auto': prioritize opening where there is sufficient room
+                            if (spaceBelow >= requiredHeight) {
+                                this.actualPlacement = 'bottom';
+                            } else if (spaceAbove >= requiredHeight) {
+                                this.actualPlacement = 'top';
+                            } else {
+                                this.actualPlacement = spaceBelow >= spaceAbove ? 'bottom' : 'top';
+                            }
+                        }
+
+                        // Horizontal alignment auto-adjustment
+                        if (rect.left + 288 > window.innerWidth - 16) {
+                            this.actualAlign = 'right';
+                        } else if (rect.right - 288 < 16) {
+                            this.actualAlign = 'left';
+                        } else {
+                            this.actualAlign = this.align || 'left';
+                        }
+
+                        // Smoothly scroll dropdown into view if partially obscured
+                        setTimeout(() => {
+                            const dropdown = this.$refs && this.$refs.calendarDropdown;
+                            if (dropdown && typeof dropdown.scrollIntoView === 'function') {
+                                dropdown.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                            }
+                        }, 50);
+                    });
                 },
 
                 prevYear() {
@@ -584,6 +645,98 @@
             color: #0f172a;
         }
         [x-cloak] { display: none !important; }
+
+        /* ========================================================= */
+        /* International Standard Accessible Toast Design System     */
+        /* (WCAG 2.1 AAA Contrast, Dual-Theme, Solid Surface)         */
+        /* ========================================================= */
+        .mpt-toast {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.16), 0 8px 10px -6px rgba(0, 0, 0, 0.08) !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 1rem !important;
+            overflow: hidden !important;
+            opacity: 1 !important;
+            transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+        html.dark .mpt-toast {
+            background-color: #181d27 !important;
+            color: #f8fafc !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+            box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .mpt-toast-title {
+            color: #0f172a !important;
+            font-family: 'Prompt', sans-serif !important;
+            font-weight: 700 !important;
+            font-size: 0.8125rem !important; /* 13px */
+            line-height: 1.25rem !important;
+        }
+        html.dark .mpt-toast-title {
+            color: #ffffff !important;
+        }
+
+        .mpt-toast-desc {
+            color: #334155 !important; /* Slate-700, 9.6:1 contrast against white */
+            font-family: 'Sarabun', sans-serif !important;
+            font-weight: 400 !important;
+            font-size: 0.75rem !important; /* 12px */
+            line-height: 1.25rem !important;
+        }
+        html.dark .mpt-toast-desc {
+            color: #cbd5e1 !important; /* Slate-300, 10.2:1 contrast against #181d27 */
+        }
+
+        .mpt-toast-close {
+            color: #64748b !important;
+            border-radius: 0.5rem !important;
+            padding: 0.375rem !important;
+            transition: color 150ms ease, background-color 150ms ease !important;
+            cursor: pointer !important;
+        }
+        .mpt-toast-close:hover {
+            color: #0f172a !important;
+            background-color: #f1f5f9 !important;
+        }
+        html.dark .mpt-toast-close {
+            color: #94a3b8 !important;
+        }
+        html.dark .mpt-toast-close:hover {
+            color: #ffffff !important;
+            background-color: rgba(255, 255, 255, 0.08) !important;
+        }
+
+        /* Semantic Left Accent Borders */
+        .mpt-toast-warning {
+            border-left: 4px solid #f59e0b !important;
+        }
+        html.dark .mpt-toast-warning {
+            border-left: 4px solid #fbbf24 !important;
+        }
+
+        .mpt-toast-success {
+            border-left: 4px solid #10b981 !important;
+        }
+        html.dark .mpt-toast-success {
+            border-left: 4px solid #34d399 !important;
+        }
+
+        .mpt-toast-error {
+            border-left: 4px solid #f43f5e !important;
+        }
+        html.dark .mpt-toast-error {
+            border-left: 4px solid #fb7185 !important;
+        }
+
+        .mpt-toast-info {
+            border-left: 4px solid #0284c7 !important;
+        }
+        html.dark .mpt-toast-info {
+            border-left: 4px solid #38bdf8 !important;
+        }
+
 
         /* Hardware Accelerated Smooth Modals & Overlays */
         .modal-backdrop-smooth {
@@ -875,7 +1028,7 @@
 
     <!-- Floating Toast Notifications Container (W3C WAI-ARIA Alert Region) -->
     <div id="toast-container" 
-         class="fixed top-4 right-4 sm:top-6 sm:right-6 z-[99999] pointer-events-none flex flex-col gap-2.5 max-w-sm w-full px-4 sm:px-0"
+         class="fixed top-4 right-4 sm:top-6 sm:right-6 z-[999999] pointer-events-none flex flex-col gap-3 max-w-md w-full px-4 sm:px-0"
          role="region" 
          aria-label="การแจ้งเตือนระบบ"></div>
 
@@ -1504,44 +1657,44 @@
                 }
 
                 const toast = document.createElement('div');
-                toast.className = 'pointer-events-auto relative overflow-hidden flex items-start gap-3 p-4 rounded-2xl shadow-xl backdrop-blur-md border transition-all duration-300 transform translate-y-[-10px] opacity-0';
+                toast.className = 'mpt-toast pointer-events-auto relative flex items-start gap-3 p-4 shadow-2xl transition-all duration-300 transform translate-y-[-10px] opacity-0';
                 
-                let colorClasses = '';
+                let typeClass = '';
                 let iconSvg = '';
                 let title = '';
                 let progressBg = '';
 
                 if (type === 'success') {
-                    colorClasses = 'bg-white/98 dark:bg-[#161a22]/98 border-emerald-500/30 dark:border-emerald-500/40 text-slate-800 dark:text-white shadow-emerald-500/10';
-                    iconSvg = '<div class="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-xs"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg></div>';
+                    typeClass = 'mpt-toast-success';
+                    iconSvg = '<div class="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-xs"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg></div>';
                     title = 'ดำเนินการสำเร็จ';
                     progressBg = 'bg-emerald-500';
                     toast.setAttribute('role', 'status');
                     toast.setAttribute('aria-live', 'polite');
                 } else if (type === 'error' || type === 'danger') {
-                    colorClasses = 'bg-white/98 dark:bg-[#161a22]/98 border-rose-500/30 dark:border-rose-500/40 text-slate-800 dark:text-white shadow-rose-500/10';
-                    iconSvg = '<div class="w-8 h-8 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 shadow-xs"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg></div>';
+                    typeClass = 'mpt-toast-error';
+                    iconSvg = '<div class="w-8 h-8 rounded-xl bg-rose-100 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 shadow-xs"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg></div>';
                     title = 'เกิดข้อผิดพลาด';
                     progressBg = 'bg-rose-500';
                     toast.setAttribute('role', 'alert');
                     toast.setAttribute('aria-live', 'assertive');
                 } else if (type === 'warning') {
-                    colorClasses = 'bg-white/98 dark:bg-[#161a22]/98 border-amber-500/30 dark:border-amber-500/40 text-slate-800 dark:text-white shadow-amber-500/10';
-                    iconSvg = '<div class="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-xs"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div>';
+                    typeClass = 'mpt-toast-warning';
+                    iconSvg = '<div class="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-xs"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div>';
                     title = 'แจ้งเตือนความเสี่ยง';
                     progressBg = 'bg-amber-500';
                     toast.setAttribute('role', 'alert');
                     toast.setAttribute('aria-live', 'assertive');
                 } else {
-                    colorClasses = 'bg-white/98 dark:bg-[#161a22]/98 border-sky-500/30 dark:border-sky-500/40 text-slate-800 dark:text-white shadow-sky-500/10';
-                    iconSvg = '<div class="w-8 h-8 rounded-xl bg-sky-500/15 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0 shadow-xs"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>';
+                    typeClass = 'mpt-toast-info';
+                    iconSvg = '<div class="w-8 h-8 rounded-xl bg-sky-100 dark:bg-sky-950/80 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0 shadow-xs"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>';
                     title = 'ข้อมูลระบบ';
                     progressBg = 'bg-sky-500';
                     toast.setAttribute('role', 'status');
                     toast.setAttribute('aria-live', 'polite');
                 }
 
-                toast.className += ' ' + colorClasses;
+                toast.classList.add(typeClass);
 
                 // DOM-safe sanitization to prevent XSS (OWASP A03)
                 const msgHolder = document.createElement('div');
@@ -1549,15 +1702,15 @@
 
                 toast.innerHTML = `
                     ${iconSvg}
-                    <div class="flex-1 min-w-0 pr-2">
-                        <h4 class="text-xs font-bold font-heading mb-0.5 tracking-tight">${title}</h4>
-                        <p class="text-xs text-slate-600 dark:text-slate-300 font-sans leading-relaxed break-words">${msgHolder.innerHTML}</p>
+                    <div class="flex-1 min-w-0 pr-1.5">
+                        <h4 class="mpt-toast-title tracking-tight">${title}</h4>
+                        <p class="mpt-toast-desc leading-relaxed break-words">${msgHolder.innerHTML}</p>
                     </div>
-                    <button type="button" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg transition-colors cursor-pointer shrink-0" aria-label="ปิดการแจ้งเตือน">
+                    <button type="button" class="mpt-toast-close shrink-0" aria-label="ปิดการแจ้งเตือน">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                     <!-- Animated Progress Countdown Bar -->
-                    <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-200/50 dark:bg-white/5 overflow-hidden">
+                    <div class="absolute bottom-0 left-0 right-0 h-1 bg-slate-100 dark:bg-white/5 overflow-hidden">
                         <div class="toast-progress h-full ${progressBg} transition-all" style="width: 100%;"></div>
                     </div>
                 `;

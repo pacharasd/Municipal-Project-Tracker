@@ -43,12 +43,18 @@ class UserController
 
         $name = trim($_POST['name'] ?? '');
         $email = !empty($_POST['email']) ? trim($_POST['email']) : null;
-        $password = $_POST['password'] ?? 'password';
+        $password = trim($_POST['password'] ?? '');
         $position = trim($_POST['position'] ?? '');
         $phone = !empty($_POST['phone']) ? trim($_POST['phone']) : null;
 
         if (empty($name)) {
             Session::flash('error', 'กรุณาระบุชื่อ - นามสกุล');
+            header('Location: ' . Router::url('/users'));
+            exit;
+        }
+
+        if (empty($password)) {
+            Session::flash('error', 'กรุณากำหนดรหัสผ่านสำหรับผู้ใช้งานใหม่');
             header('Location: ' . Router::url('/users'));
             exit;
         }
@@ -83,7 +89,7 @@ class UserController
         }
 
         $roleId = !empty($_POST['role_id']) ? (int)$_POST['role_id'] : 1; // Default to Admin
-        $hash = password_hash($password ?: 'password', PASSWORD_BCRYPT);
+        $hash = password_hash($password, PASSWORD_BCRYPT);
 
         try {
             $userId = Database::insert('users', [
