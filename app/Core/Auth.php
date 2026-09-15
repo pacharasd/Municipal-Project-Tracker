@@ -135,6 +135,28 @@ class Auth
         }
     }
 
+    public static function loginUsingId(int $userId): ?array
+    {
+        $sql = "SELECT u.*, r.name as role_name, r.display_name as role_label,
+                       d.name as department_name, d.code as department_code 
+                FROM users u 
+                LEFT JOIN roles r ON u.role_id = r.id 
+                LEFT JOIN departments d ON u.department_id = d.id 
+                WHERE u.id = ? LIMIT 1";
+        $user = Database::fetch($sql, [$userId]);
+        if ($user) {
+            self::setUser($user);
+            return $user;
+        }
+        return null;
+    }
+
+    public static function switchUser(int $userId): ?array
+    {
+        return self::loginUsingId($userId);
+    }
+
+
     public static function role(): string
     {
         $user = self::user();

@@ -111,6 +111,27 @@ class ProjectService
             }
         }
 
+        if (!empty($filters['start_date'])) {
+            $sql .= " AND p.start_date >= ?";
+            $params[] = $filters['start_date'];
+        }
+        if (!empty($filters['end_date'])) {
+            $sql .= " AND p.end_date <= ?";
+            $params[] = $filters['end_date'];
+        }
+        if (isset($filters['min_progress']) && is_numeric($filters['min_progress'])) {
+            $sql .= " AND p.progress >= ?";
+            $params[] = (float)$filters['min_progress'];
+        }
+        if (isset($filters['max_progress']) && is_numeric($filters['max_progress'])) {
+            $sql .= " AND p.progress <= ?";
+            $params[] = (float)$filters['max_progress'];
+        }
+        if (!empty($filters['responsible_user_id'])) {
+            $sql .= " AND p.responsible_user_id = ?";
+            $params[] = (int)$filters['responsible_user_id'];
+        }
+
         $sql .= " ORDER BY p.id DESC";
 
         $projects = Database::query($sql, $params);
@@ -309,16 +330,31 @@ class ProjectService
             ? "COALESCE(NULLIF(p.responsible_person, ''), u.name, d.name)"
             : "COALESCE(u.name, d.name)";
 
+        // Rule #14: ตรวจสอบ 5 เงื่อนไข (มีปัญหา, เลยกำหนด, ใกล้ถึงกำหนด, งบเบิกเกิน 80%, ไม่อัปเดตนานเกิน 30 วัน)
         $sql = "SELECT p.*, parent.name as parent_name, 
                        COALESCE(d.name, parent_dept.name) as department_name, 
-                       {$respExpr} as responsible_name
+                       {$respExpr} as responsible_name,
+                       CASE
+                           WHEN p.status = 'has_problem' THEN 'has_problem'
+                           WHEN p.end_date < CURDATE() AND p.status NOT IN ('completed', 'cancelled') THEN 'overdue'
+                           WHEN p.end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY) AND p.status NOT IN ('completed', 'cancelled') THEN 'ending_soon'
+                           WHEN p.budget > 0 AND (p.disbursed_amount / p.budget) >= 0.80 AND p.status != 'completed' THEN 'high_budget'
+                           WHEN p.updated_at < DATE_SUB(NOW(), INTERVAL 30 DAY) AND p.status = 'in_progress' THEN 'stale'
+                           ELSE 'has_problem'
+                       END as alert_type
                 FROM projects p
                 LEFT JOIN projects parent ON p.parent_id = parent.id
                 LEFT JOIN departments d ON p.department_id = d.id
                 LEFT JOIN departments parent_dept ON parent.department_id = parent_dept.id
                 LEFT JOIN users u ON p.responsible_user_id = u.id
                 WHERE p.parent_id IS NOT NULL 
-                  AND (p.status = 'has_problem' OR (p.end_date < CURDATE() AND p.status != 'completed'))";
+                  AND (
+                      p.status = 'has_problem'
+                      OR (p.end_date < CURDATE() AND p.status NOT IN ('completed', 'cancelled'))
+                      OR (p.end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY) AND p.status NOT IN ('completed', 'cancelled'))
+                      OR (p.budget > 0 AND (p.disbursed_amount / p.budget) >= 0.80 AND p.status != 'completed')
+                      OR (p.updated_at < DATE_SUB(NOW(), INTERVAL 30 DAY) AND p.status = 'in_progress')
+                  )";
         
         $params = [];
         if ($fiscalYearId !== null) {
@@ -326,8 +362,85 @@ class ProjectService
             $params = [$fiscalYearId, $fiscalYearId];
         }
 
-        $sql .= " ORDER BY p.status = 'has_problem' DESC, p.end_date ASC";
-        return Database::query($sql, $params);
+        $sql .= " ORDER BY 
+                    CASE 
+                        WHEN p.status = 'has_problem' THEN 1
+                        WHEN p.end_date < CURDATE() AND p.status NOT IN ('completed', 'cancelled') THEN 2
+                        WHEN p.end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY) THEN 3
+                        WHEN p.budget > 0 AND (p.disbursed_amount / p.budget) >= 0.80 THEN 4
+                        ELSE 5
+                    END ASC, p.end_date ASC";
+        
+        $rows = Database::query($sql, $params);
+
+        foreach ($rows as &$row) {
+            $alertType = $row['alert_type'] ?? 'has_problem';
+            $meta = match($alertType) {
+                'has_problem' => [
+                    'label' => 'มีปัญหา',
+                    'class' => 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60',
+                    'icon'  => 'alert-triangle',
+                    'note'  => $row['problem_description'] ?: 'พบปัญหาและอุปสรรคในการดำเนินงาน',
+                ],
+                'overdue' => [
+                    'label' => 'เกินกำหนด',
+                    'class' => 'bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/60',
+                    'icon'  => 'clock',
+                    'note'  => 'เลยกำหนดสิ้นสุดโครงการแล้ว แต่ยังไม่เสร็จสิ้น',
+                ],
+                'ending_soon' => [
+                    'label' => 'ใกล้ครบกำหนด',
+                    'class' => 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60',
+                    'icon'  => 'hourglass',
+                    'note'  => 'เหลือเวลาดำเนินการน้อยกว่า 30 วัน',
+                ],
+                'high_budget' => [
+                    'label' => 'เบิกจ่าย > 80%',
+                    'class' => 'bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60',
+                    'icon'  => 'wallet',
+                    'note'  => 'เบิกจ่ายงบประมาณไปแล้วเกิน 80% ของวงเงิน',
+                ],
+                'stale' => [
+                    'label' => 'ไม่อัปเดต > 30 วัน',
+                    'class' => 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10',
+                    'icon'  => 'history',
+                    'note'  => 'ไม่มีความเคลื่อนไหวหรือปรับปรุงสถานะนานเกิน 30 วัน',
+                ],
+                default => [
+                    'label' => 'ติดตามเป็นพิเศษ',
+                    'class' => 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60',
+                    'icon'  => 'info',
+                    'note'  => $row['problem_description'] ?: 'อยู่ในเกณฑ์ติดตามเฝ้าระวัง',
+                ]
+            };
+            $row['alert_label'] = $meta['label'];
+            $row['alert_class'] = $meta['class'];
+            $row['alert_icon']  = $meta['icon'];
+            $row['alert_note']  = $meta['note'];
+        }
+        unset($row);
+
+        return $rows;
+    }
+
+    public static function getWatchlistSummary(?int $fiscalYearId = null): array
+    {
+        $items = self::getWatchlist($fiscalYearId);
+        $summary = [
+            'total'       => count($items),
+            'has_problem' => 0,
+            'overdue'     => 0,
+            'ending_soon' => 0,
+            'high_budget' => 0,
+            'stale'       => 0,
+        ];
+        foreach ($items as $item) {
+            $t = $item['alert_type'] ?? 'has_problem';
+            if (isset($summary[$t])) {
+                $summary[$t]++;
+            }
+        }
+        return $summary;
     }
 
     public static function reportProblem(int $projectId, string $problemDescription): bool

@@ -103,8 +103,37 @@ class ProgressService
             throw new Exception("ไม่พบโครงการที่ระบุ");
         }
 
-        // สถานะโครงการถูกขับเคลื่อนด้วยกิจกรรมย่อย 100% (Pure Activity-Driven)
-        self::syncFromActivities($subProjectId);
+        $oldProgress = (float)$project['progress'];
+        $oldStatus = $project['status'];
+
+        if ($newProgress !== null || $newStatus !== null) {
+            $progress = $newProgress !== null ? round($newProgress, 2) : $oldProgress;
+            if ($progress < 0 || $progress > 100) {
+                throw new Exception("เปอร์เซ็นต์ความคืบหน้าต้องอยู่ระหว่าง 0 ถึง 100%");
+            }
+            $status = $newStatus ?? $oldStatus;
+            $mode = ($newProgress !== null) ? 'manual' : ($project['progress_mode'] ?? 'auto');
+
+            Database::update('projects', [
+                'status'        => $status,
+                'progress'      => $progress,
+                'progress_mode' => $mode,
+                'updated_at'    => date('Y-m-d H:i:s'),
+            ], 'id = ?', [$subProjectId]);
+
+            AuditLogService::log('UPDATE_STATUS', 'Project', $subProjectId,
+                ['status' => $oldStatus, 'progress' => $oldProgress],
+                ['status' => $status, 'progress' => $progress, 'note' => $note]
+            );
+
+            // ซิงค์ไปยังโครงการหลัก
+            if (!empty($project['parent_id'])) {
+                self::syncParentProjectProgress((int)$project['parent_id']);
+            }
+        } else {
+            // สถานะโครงการถูกขับเคลื่อนด้วยกิจกรรมย่อย (Pure Activity-Driven)
+            self::syncFromActivities($subProjectId);
+        }
 
         $updated = Database::fetch("SELECT * FROM projects WHERE id = ?", [$subProjectId]);
 

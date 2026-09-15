@@ -552,19 +552,48 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
 
     </div>
 
-    <!-- 5. Row 4: โครงการที่ต้องติดตาม (Watchlist Table with Soft Pills) -->
+    <!-- 5. Row 4: โครงการที่ต้องติดตาม (Watchlist Table with Soft Pills - Rule #14) -->
     <div class="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-shadow w-full max-w-full min-w-0 overflow-hidden">
         <!-- Table Title Header -->
-        <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-white/[0.06]">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 mb-4 border-b border-slate-100 dark:border-white/[0.06]">
             <div class="flex items-center gap-2">
                 <div class="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center">
                     <i data-lucide="alert-triangle" class="w-4 h-4"></i>
                 </div>
-                <h2 class="text-base font-bold text-slate-900 dark:text-white font-heading">โครงการที่ต้องติดตาม</h2>
+                <h2 class="text-base font-bold text-slate-900 dark:text-white font-heading">โครงการที่ต้องติดตาม (Watchlist)</h2>
             </div>
-            <span class="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20">
-                <?= count($watchlist) ?> รายการเฝ้าระวัง
-            </span>
+            
+            <!-- Summary Badges for Rule #14 Criteria -->
+            <div class="flex flex-wrap items-center gap-1.5 text-[11px] font-medium">
+                <?php if (($watchlistSummary['has_problem'] ?? 0) > 0): ?>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 font-semibold">
+                        <i data-lucide="alert-triangle" class="w-3 h-3"></i> มีปัญหา <?= $watchlistSummary['has_problem'] ?>
+                    </span>
+                <?php endif; ?>
+                <?php if (($watchlistSummary['overdue'] ?? 0) > 0): ?>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800/60 font-semibold">
+                        <i data-lucide="clock" class="w-3 h-3"></i> เกินกำหนด <?= $watchlistSummary['overdue'] ?>
+                    </span>
+                <?php endif; ?>
+                <?php if (($watchlistSummary['ending_soon'] ?? 0) > 0): ?>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 font-semibold">
+                        <i data-lucide="hourglass" class="w-3 h-3"></i> ใกล้ครบกำหนด <?= $watchlistSummary['ending_soon'] ?>
+                    </span>
+                <?php endif; ?>
+                <?php if (($watchlistSummary['high_budget'] ?? 0) > 0): ?>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 font-semibold">
+                        <i data-lucide="wallet" class="w-3 h-3"></i> เบิกจ่าย > 80% <?= $watchlistSummary['high_budget'] ?>
+                    </span>
+                <?php endif; ?>
+                <?php if (($watchlistSummary['stale'] ?? 0) > 0): ?>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 font-semibold">
+                        <i data-lucide="history" class="w-3 h-3"></i> ไม่อัปเดต > 30 วัน <?= $watchlistSummary['stale'] ?>
+                    </span>
+                <?php endif; ?>
+                <span class="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10">
+                    รวม <?= count($watchlist) ?> รายการ
+                </span>
+            </div>
         </div>
 
         <div class="overflow-x-auto w-full max-w-full">
@@ -574,22 +603,22 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                         <th class="py-3 px-3 w-12 text-center whitespace-nowrap">ลำดับ</th>
                         <th class="py-3 px-3 min-w-[200px]">โครงการ</th>
                         <th class="py-3 px-3 whitespace-nowrap min-w-[100px]">หน่วยงาน</th>
-                        <th class="py-3 px-3 text-center whitespace-nowrap min-w-[110px]">สถานะ</th>
+                        <th class="py-3 px-3 text-center whitespace-nowrap min-w-[130px]">สถานะแจ้งเตือน</th>
                         <th class="py-3 px-3 w-36 whitespace-nowrap">ความก้าวหน้า</th>
                         <th class="py-3 px-3 text-center whitespace-nowrap min-w-[110px]">กำหนดแล้วเสร็จ</th>
-                        <th class="py-3 px-3 min-w-[160px]">หมายเหตุ</th>
+                        <th class="py-3 px-3 min-w-[160px]">เหตุผลการเฝ้าระวัง</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-white/[0.04] text-slate-700 dark:text-slate-300">
                     <?php if (!empty($watchlist)): ?>
-                        <?php $idx = 1; foreach (array_slice($watchlist, 0, 5) as $w): ?>
+                        <?php $idx = 1; foreach (array_slice($watchlist, 0, 8) as $w): ?>
                             <?php
-                            $isProblem = ($w['status'] === 'has_problem');
                             $wProg = (float)($w['progress'] ?? 0);
                             $wTier = \App\Services\ProgressService::getProgressTier($wProg, $w['status'] ?? null);
-                            $statusBadge = $isProblem 
-                                ? ['label' => 'ล่าช้า', 'class' => 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60']
-                                : ['label' => 'ใกล้ครบกำหนด', 'class' => 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60'];
+                            $badgeClass = $w['alert_class'] ?? 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60';
+                            $badgeLabel = $w['alert_label'] ?? 'เฝ้าระวัง';
+                            $badgeIcon = $w['alert_icon'] ?? 'alert-triangle';
+                            $alertNote = $w['alert_note'] ?? ($w['problem_description'] ?? 'อยู่ในเกณฑ์ติดตามเฝ้าระวัง');
                             ?>
                             <tr class="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition">
                                 <td class="py-3.5 px-3 text-center font-mono text-slate-400"><?= $idx++ ?></td>
@@ -598,10 +627,11 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                                         <?= htmlspecialchars($w['name']) ?>
                                     </a>
                                 </td>
-                                <td class="py-3.5 px-3 text-slate-500 dark:text-slate-400 font-medium"><?= htmlspecialchars($w['department_name'] ?? 'สำนักช่าง') ?></td>
+                                <td class="py-3.5 px-3 text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap"><?= htmlspecialchars($w['department_name'] ?? 'สำนักช่าง') ?></td>
                                 <td class="py-3.5 px-3 text-center whitespace-nowrap">
-                                    <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-lg text-[11px] font-bold border whitespace-nowrap <?= $statusBadge['class'] ?>">
-                                        <?= $statusBadge['label'] ?>
+                                    <span class="inline-flex items-center justify-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold border whitespace-nowrap <?= $badgeClass ?>">
+                                        <i data-lucide="<?= $badgeIcon ?>" class="w-3 h-3"></i>
+                                        <?= $badgeLabel ?>
                                     </span>
                                 </td>
                                 <td class="py-3.5 px-3">
@@ -613,10 +643,10 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                                     </div>
                                 </td>
                                 <td class="py-3.5 px-3 text-center font-mono text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                                    <?= !empty($w['end_date']) ? date('j M Y', strtotime($w['end_date'])) : '30 ก.ย. 2568' ?>
+                                    <?= !empty($w['end_date']) ? date('j M Y', strtotime($w['end_date'])) : '-' ?>
                                 </td>
-                                <td class="py-3.5 px-3 text-slate-500 dark:text-slate-400">
-                                    <?= htmlspecialchars($w['problem_description'] ?? ($isProblem ? 'ล่าช้ากว่าแผนงาน' : 'ใกล้ถึงกำหนดสิ้นสุด')) ?>
+                                <td class="py-3.5 px-3 text-slate-500 dark:text-slate-400 text-xs">
+                                    <?= htmlspecialchars($alertNote) ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -634,7 +664,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
         <!-- ดูทั้งหมด Button -->
         <div class="mt-4 pt-3 border-t border-slate-100 dark:border-white/[0.06] text-center">
             <a href="<?= \App\Core\Router::url('/projects') ?>" class="inline-flex items-center gap-1 px-4 py-1.5 rounded-xl bg-slate-50 dark:bg-white/5 text-blue-600 dark:text-blue-400 font-semibold hover:bg-blue-50 dark:hover:bg-blue-500/10 transition border border-slate-200/60 dark:border-white/10 text-xs">
-                <span>ดูทั้งหมด</span>
+                <span>ดูโครงการทั้งหมด</span>
                 <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
             </a>
         </div>

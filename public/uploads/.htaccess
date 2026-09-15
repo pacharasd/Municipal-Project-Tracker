@@ -1,0 +1,34 @@
+# ==============================================================================
+# Security Policy for Uploaded Media & Documents
+# Municipal Project Tracker - Deny all direct script execution
+# ==============================================================================
+
+# Disable directory indexing
+Options -Indexes -ExecCGI
+
+# Turn off script engine if mod_php is loaded
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>
+
+# Deny direct access to executable script extensions
+<FilesMatch "(?i)\.(php|phtml|php3|php4|php5|php7|phar|pl|py|jsp|asp|htm|html|shtml|sh|cgi|exe|bat|cmd)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Enforce download / nosniff headers for safety
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>

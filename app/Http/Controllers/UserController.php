@@ -240,12 +240,34 @@ class UserController
             exit;
         }
 
-        $user = Database::fetch("SELECT * FROM users WHERE id = ?", [$userId]);
-        if (!$user) {
-            Session::flash('error', 'ไม่พบผู้ใช้งาน');
+        // ป้องกัน Data Integrity (Rule #18): ตรวจสอบว่าผู้ใช้มีภาระผูกพันเป็นผู้รับผิดชอบโครงการหรือกิจกรรมหรือไม่
+        $assignedProjects = (int)Database::fetchColumn(
+            "SELECT COUNT(*) FROM projects WHERE responsible_user_id = ?",
+            [$userId]
+        );
+        $assignedActivities = (int)Database::fetchColumn(
+            "SELECT COUNT(*) FROM activities WHERE responsible_user_id = ?",
+            [$userId]
+        );
+
+        if ($assignedProjects > 0 || $assignedActivities > 0) {
+            $details = [];
+            if ($assignedProjects > 0) {
+                $details[] = "โครงการ/กิจกรรมหลัก {$assignedProjects} รายการ";
+            }
+            if ($assignedActivities > 0) {
+                $details[] = "กิจกรรมย่อย {$assignedActivities} รายการ";
+            }
+            $detailStr = implode(' และ ', $details);
+            Session::flash('error', "ไม่สามารถลบผู้ใช้งาน '{$user['name']}' ได้ เนื่องจากมีชื่อเป็นผู้รับผิดชอบ{$detailStr} กรุณามอบหมายผู้รับผิดชอบใหม่ให้เรียบร้อยก่อนทำการลบ");
             header('Location: ' . Router::url('/users'));
             exit;
         }
+
+        // หากมีประวัติการประเมินโครงการ ให้เคลียร์ foreign key ป้องกันประวัติเสียหาย
+        try {
+            Database::execute("UPDATE projects SET evaluated_by = NULL WHERE evaluated_by = ?", [$userId]);
+        } catch (\Throwable $e) {}
 
         Database::execute("DELETE FROM users WHERE id = ?", [$userId]);
         \App\Services\AuditLogService::log('DELETE_USER', 'User', $userId, ['name' => $user['name'], 'email' => $user['email']]);

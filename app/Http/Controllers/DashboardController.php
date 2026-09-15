@@ -25,6 +25,7 @@ class DashboardController
 
         $stats = ProjectService::getDashboardStats($filterYearId);
         $watchlist = ProjectService::getWatchlist($filterYearId);
+        $watchlistSummary = ProjectService::getWatchlistSummary($filterYearId);
         $recentAudit = Database::query(
             "SELECT a.*, u.name as user_name, r.display_name as role_label 
              FROM audit_logs a 
@@ -80,16 +81,17 @@ class DashboardController
         }
 
         View::render('dashboard.index', [
-            'stats'          => $stats,
-            'watchlist'      => $watchlist,
-            'recentAudit'    => $recentAudit,
-            'fiscalYears'    => $fiscalYears,
-            'activeYear'     => $activeYear,
-            'selectedYearId' => $selectedYearId,
-            'departments'    => $departments,
-            'subProjects'    => $subProjects,
-            'latestProjects' => $latestProjects,
-            'suggestedYear'  => $suggestedYear,
+            'stats'            => $stats,
+            'watchlist'        => $watchlist,
+            'watchlistSummary' => $watchlistSummary,
+            'recentAudit'      => $recentAudit,
+            'fiscalYears'      => $fiscalYears,
+            'activeYear'       => $activeYear,
+            'selectedYearId'   => $selectedYearId,
+            'departments'      => $departments,
+            'subProjects'      => $subProjects,
+            'latestProjects'   => $latestProjects,
+            'suggestedYear'    => $suggestedYear,
         ]);
     }
 

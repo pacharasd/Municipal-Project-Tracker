@@ -101,12 +101,20 @@ class Router
                 // CSRF Validation for POST requests
                 if ($method === 'POST') {
                     $token = $_POST['_token'] ?? $_POST['_csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
-                    if (!Session::validateCsrf($token) && empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
-                        // Soft allow for ajax if header present, else reject
-                        if (!Session::validateCsrf($token)) {
-                            http_response_code(419);
-                            die("<h1>419 Page Expired - CSRF Token ไม่ถูกต้องหรือหมดอายุ</h1>");
+                    if (!Session::validateCsrf($token)) {
+                        $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+                            || (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json'));
+
+                        http_response_code(419);
+                        if ($isAjax) {
+                            header('Content-Type: application/json; charset=utf-8');
+                            echo json_encode([
+                                'status'   => 'error',
+                                'message'  => 'CSRF Token ไม่ถูกต้องหรือหมดอายุ กรุณารีเฟรชหน้าจอแล้วลองใหม่อีกครั้ง'
+                            ], JSON_UNESCAPED_UNICODE);
+                            exit;
                         }
+                        die("<!DOCTYPE html><html lang='th'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>419 Page Expired</title><link href='https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap' rel='stylesheet'><style>body{font-family:'Sarabun',sans-serif;background:#0f172a;color:#f8fafc;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;padding:1rem;box-sizing:border-box}.card{background:#1e293b;padding:2.5rem;border-radius:1.25rem;border:1px solid #334155;text-align:center;max-width:420px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.5)}h2{margin-top:0;color:#f43f5e;font-size:1.5rem}p{color:#94a3b8;font-size:0.95rem;line-height:1.6}a{display:inline-block;margin-top:1.5rem;padding:0.6rem 1.5rem;background:#10b981;color:#ffffff;border-radius:0.75rem;text-decoration:none;font-weight:600;transition:opacity 0.2s}a:hover{opacity:0.9}</style></head><body><div class='card'><h2>419 Page Expired</h2><p>CSRF Token ไม่ถูกต้องหรือหมดอายุ เพื่อความปลอดภัยของระบบ โปรดกลับไปรีเฟรชหน้าจอแล้วดำเนินการใหม่อีกครั้ง</p><a href='javascript:history.back()'>&larr; ย้อนกลับไปทำรายการ</a></div></body></html>");
                     }
                 }
 

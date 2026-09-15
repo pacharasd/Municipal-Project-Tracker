@@ -83,13 +83,31 @@ class BudgetController
                 $ext = strtolower(pathinfo($_FILES['evidence_file']['name'], PATHINFO_EXTENSION));
                 $allowed = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'];
                 if (in_array($ext, $allowed)) {
-                    $newFilename = 'disb_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
-                    $destPath = dirname(__DIR__, 2) . '/public/uploads/' . $newFilename;
-                    if (!is_dir(dirname($destPath))) {
-                        mkdir(dirname($destPath), 0777, true);
+                    $isSafeMime = true;
+                    if (function_exists('finfo_open') && !empty($_FILES['evidence_file']['tmp_name'])) {
+                        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                        $mimeType = strtolower((string)finfo_file($finfo, $_FILES['evidence_file']['tmp_name']));
+                        finfo_close($finfo);
+
+                        $safeMimes = [
+                            'application/pdf', 'application/msword',
+                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                            'image/jpeg', 'image/png', 'application/zip', 'application/octet-stream'
+                        ];
+                        if (!in_array($mimeType, $safeMimes, true) && !str_starts_with($mimeType, 'image/')) {
+                            $isSafeMime = false;
+                        }
                     }
-                    if (move_uploaded_file($_FILES['evidence_file']['tmp_name'], $destPath)) {
-                        $evidenceFile = $newFilename;
+
+                    if ($isSafeMime) {
+                        $newFilename = 'disb_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+                        $destPath = dirname(__DIR__, 2) . '/public/uploads/' . $newFilename;
+                        if (!is_dir(dirname($destPath))) {
+                            mkdir(dirname($destPath), 0777, true);
+                        }
+                        if (move_uploaded_file($_FILES['evidence_file']['tmp_name'], $destPath)) {
+                            $evidenceFile = $newFilename;
+                        }
                     }
                 }
             }

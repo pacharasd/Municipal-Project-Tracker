@@ -123,12 +123,20 @@ class Database
             // Check and auto-import schema if tables do not exist yet
             self::ensureSchemaImported(self::$instance);
 
-            // Handle manual action trigger from setup screen
-            if (isset($_GET['action']) && in_array($_GET['action'], ['install_db', 'repair_db'])) {
-                self::importSchema(self::$instance);
-                $cleanUrl = strtok($_SERVER["REQUEST_URI"] ?? '/dashboard', '?');
-                header("Location: " . ($cleanUrl ?: '/dashboard'));
-                exit;
+            // Handle manual action trigger from setup screen (Restricted to uninitialized DB or Administrator)
+            if (isset($_GET['action']) && in_array($_GET['action'], ['install_db', 'repair_db'], true)) {
+                $hasUsersTable = false;
+                try {
+                    $hasUsersTable = !empty(self::$instance->query("SHOW TABLES LIKE 'users'")->fetch());
+                } catch (\Throwable $e) {}
+
+                $isAllowed = (!$hasUsersTable) || (class_exists('App\Core\Auth') && \App\Core\Auth::isAdmin());
+                if ($isAllowed) {
+                    self::importSchema(self::$instance);
+                    $cleanUrl = strtok($_SERVER["REQUEST_URI"] ?? '/dashboard', '?');
+                    header("Location: " . ($cleanUrl ?: '/dashboard'));
+                    exit;
+                }
             }
         }
 
