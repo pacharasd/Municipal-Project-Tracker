@@ -252,8 +252,8 @@ window.categoriesPage = function categoriesPage() {
         </div>
     </div>
 
-    <!-- 4 Summary Metrics Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- 3 Summary Metrics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
         <!-- 1. จำนวนหมวดหมู่ทั้งหมด -->
         <div class="p-5 rounded-2xl bg-white dark:bg-[#181a20] border border-slate-200/80 dark:border-white/10 shadow-sm relative overflow-hidden group hover:border-emerald-500/40 transition-all">
             <div class="flex items-center justify-between">
@@ -271,25 +271,7 @@ window.categoriesPage = function categoriesPage() {
             </p>
         </div>
 
-        <!-- 2. หมวดหมู่ที่มีโครงการมากที่สุด -->
-        <div class="p-5 rounded-2xl bg-white dark:bg-[#181a20] border border-slate-200/80 dark:border-white/10 shadow-sm relative overflow-hidden group hover:border-amber-500/40 transition-all">
-            <div class="flex items-center justify-between">
-                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 font-heading">หมวดหมู่โครงการสูงสุด</span>
-                <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
-                    <i data-lucide="award" class="w-5 h-5"></i>
-                </div>
-            </div>
-            <div class="mt-3 flex items-baseline gap-2">
-                <span class="text-lg sm:text-xl font-bold font-heading text-slate-900 dark:text-white truncate max-w-[170px]" title="<?= htmlspecialchars($metrics['top_category']['name'] ?? '-') ?>">
-                    <?= htmlspecialchars($metrics['top_category']['name'] ?? '-') ?>
-                </span>
-            </div>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                มี <span class="font-bold text-amber-600 dark:text-amber-400"><?= $metrics['top_category']['project_count'] ?? 0 ?></span> โครงการ (งบ <?= \App\Core\Helper::moneyDisplay((float)($metrics['top_category']['total_budget'] ?? 0), 'inline') ?>)
-            </p>
-        </div>
-
-        <!-- 3. งบประมาณรวมทุกหมวดหมู่ -->
+        <!-- 2. งบประมาณรวมทุกหมวดหมู่ -->
         <div class="p-5 rounded-2xl bg-white dark:bg-[#181a20] border border-slate-200/80 dark:border-white/10 shadow-sm relative overflow-hidden group hover:border-blue-500/40 transition-all">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 font-heading">งบประมาณรวมทุกหมวด</span>
@@ -311,7 +293,7 @@ window.categoriesPage = function categoriesPage() {
             </div>
         </div>
 
-        <!-- 4. ความคืบหน้าเฉลี่ยรวม -->
+        <!-- 3. ความคืบหน้าเฉลี่ยรวม -->
         <div class="p-5 rounded-2xl bg-white dark:bg-[#181a20] border border-slate-200/80 dark:border-white/10 shadow-sm relative overflow-hidden group hover:border-purple-500/40 transition-all">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 font-heading">ความคืบหน้าเฉลี่ยรวม</span>

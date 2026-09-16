@@ -53,7 +53,6 @@ class CategoryController
         $grandTotalDisbursed = 0.0;
         $totalProjectsAll = 0;
         $weightedProgressSum = 0.0;
-        $topCategory = null;
 
         foreach ($categories as $cat) {
             $pCount = (int)$cat['project_count'];
@@ -65,17 +64,12 @@ class CategoryController
             $grandTotalDisbursed += $dAmount;
             $totalProjectsAll += $pCount;
             $weightedProgressSum += ($prog * $pCount);
-
-            if (!$topCategory || $pCount > (int)$topCategory['project_count']) {
-                $topCategory = $cat;
-            }
         }
 
         $overallProgress = $totalProjectsAll > 0 ? ($weightedProgressSum / $totalProjectsAll) : 0.0;
 
         $metrics = [
             'total_categories'     => $totalCategories,
-            'top_category'         => $topCategory,
             'grand_total_budget'   => $grandTotalBudget,
             'grand_total_disbursed'=> $grandTotalDisbursed,
             'overall_progress'     => $overallProgress,

@@ -187,7 +187,6 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Card 1: Total Budget -->
         <div class="bg-white dark:bg-[#181a20] rounded-2xl p-5 border border-slate-200/80 dark:border-white/[0.08] shadow-sm relative overflow-hidden group">
-            <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-blue-500/10 rounded-full blur-xl group-hover:scale-125 transition-transform duration-500"></div>
             <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider font-heading">งบประมาณรวมทั้งหมด</span>
                 <span class="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl">
@@ -205,7 +204,6 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
 
         <!-- Card 2: Accumulated Disbursed -->
         <div class="bg-white dark:bg-[#181a20] rounded-2xl p-5 border border-slate-200/80 dark:border-white/[0.08] shadow-sm relative overflow-hidden group">
-            <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-purple-500/10 rounded-full blur-xl group-hover:scale-125 transition-transform duration-500"></div>
             <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider font-heading">ยอดเบิกจ่ายสะสม</span>
                 <span class="p-2 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl">
@@ -223,7 +221,6 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
 
         <!-- Card 3: Remaining Budget -->
         <div class="bg-white dark:bg-[#181a20] rounded-2xl p-5 border border-slate-200/80 dark:border-white/[0.08] shadow-sm relative overflow-hidden group">
-            <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl group-hover:scale-125 transition-transform duration-500"></div>
             <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider font-heading">งบประมาณคงเหลือ</span>
                 <span class="p-2 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl">
@@ -239,21 +236,35 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
             </div>
         </div>
 
-        <!-- Card 4: Overall Percentage -->
+        <!-- Card 4: Overall Percentage (Redesigned) -->
         <div class="bg-white dark:bg-[#181a20] rounded-2xl p-5 border border-slate-200/80 dark:border-white/[0.08] shadow-sm relative overflow-hidden group">
-            <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-amber-500/10 rounded-full blur-xl group-hover:scale-125 transition-transform duration-500"></div>
             <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider font-heading">ภาพรวมอัตราการเบิกจ่าย</span>
-                <span class="p-2 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-xl">
+                <span class="p-2 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl">
                     <i data-lucide="percent" class="w-5 h-5"></i>
                 </span>
             </div>
             <div class="mt-3">
-                <div class="text-2xl font-extrabold text-amber-600 dark:text-amber-400 tracking-tight font-mono">
-                    <?= $overallPercentage ?>%
+                <div class="flex items-baseline justify-between">
+                    <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight font-heading">
+                        <?= number_format($overallPercentage, 2) ?>%
+                    </div>
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold <?= $overallPercentage >= 50 ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60' : 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60' ?>">
+                        <span class="w-1.5 h-1.5 rounded-full <?= $overallPercentage >= 50 ? 'bg-emerald-500' : 'bg-amber-500' ?>"></span>
+                        <?= $overallPercentage >= 50 ? 'ตามเป้าหมาย' : 'ต้องเร่งรัด' ?>
+                    </span>
                 </div>
-                <div class="w-full bg-slate-100 dark:bg-white/10 h-2 rounded-full mt-2.5 overflow-hidden">
-                    <div class="bg-gradient-to-r from-amber-500 to-emerald-500 h-full rounded-full transition-all duration-500" style="width: <?= min(100, $overallPercentage) ?>%"></div>
+
+                <!-- Progress Bar Track -->
+                <div class="w-full bg-slate-100 dark:bg-slate-800/90 h-2.5 rounded-full mt-2.5 overflow-hidden shadow-inner p-0.5">
+                    <div class="bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-400 h-full rounded-full transition-all duration-700 shadow-xs" 
+                         style="width: <?= min(100, $overallPercentage) ?>%"></div>
+                </div>
+
+                <!-- Footer Metric Note (Aligned with Cards 1-3) -->
+                <div class="flex items-center gap-1.5 mt-2 text-xs text-slate-500 dark:text-slate-400">
+                    <i data-lucide="pie-chart" class="w-3.5 h-3.5 text-emerald-500 shrink-0"></i>
+                    <span class="truncate">เบิกจ่าย <?= \App\Core\Helper::compactMoney($totalDisbursed)['value'] ?> ล. / เหลือ <?= \App\Core\Helper::compactMoney($totalRemaining)['value'] ?> ล.</span>
                 </div>
             </div>
         </div>

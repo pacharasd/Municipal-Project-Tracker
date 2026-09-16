@@ -930,6 +930,10 @@
             outline: none !important;
             outline-offset: 0 !important;
         }
+        button:focus, button:focus-visible, button:active {
+            outline: none !important;
+            box-shadow: none !important;
+        }
 
         /* Light table rows hover */
         tr:hover {
@@ -937,7 +941,7 @@
         }
 
         /* Form Inputs & Selects (Light) - Instant crisp border, smooth glow */
-        input:not([type="checkbox"]):not([type="radio"]):not(:focus):not(:focus-visible),
+        input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(:focus):not(:focus-visible),
         select:not(:focus):not(:focus-visible),
         textarea:not(:focus):not(:focus-visible) {
             background-color: #ffffff;
@@ -952,17 +956,28 @@
             color: #0f172a;
             color-scheme: light;
         }
-        input:not([type="checkbox"]):not([type="radio"]):focus,
-        input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+        input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+        input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus-visible,
         select:focus, select:focus-visible,
         textarea:focus, textarea:focus-visible,
-        button.cursor-pointer:focus, button.cursor-pointer:focus-visible,
         .focus\:border-emerald-500:focus, .focus\:border-emerald-500:focus-visible {
             border: 1px solid #10b981 !important;
             border-color: #10b981 !important;
             box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
             outline: none !important;
             outline-offset: 0 !important;
+        }
+
+        /* Range sliders: Clean tactile interaction without rectangular focus rings */
+        input[type="range"],
+        input[type="range"]:focus,
+        input[type="range"]:focus-visible,
+        input[type="range"]:active {
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-box-shadow: none !important;
+            background-color: transparent;
         }
 
         /* Universal Smooth Scrollbar Styling (Transparent Track - Zero White Lines) */
@@ -1092,7 +1107,7 @@
         }
 
         /* Form Inputs & Selects Dark - Sleek resting border, Vibrant Emerald focus ring matching Light Mode */
-        html.dark input:not([type="checkbox"]):not([type="radio"]):not(:focus):not(:focus-visible),
+        html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(:focus):not(:focus-visible),
         html.dark select:not(:focus):not(:focus-visible),
         html.dark textarea:not(:focus):not(:focus-visible) {
             background-color: #12141a !important;
@@ -1107,18 +1122,27 @@
             color: #ffffff !important;
             color-scheme: dark;
         }
-        html.dark input:not([type="checkbox"]):not([type="radio"]):focus,
-        html.dark input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+        html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+        html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus-visible,
         html.dark select:focus, html.dark select:focus-visible,
         html.dark textarea:focus, html.dark textarea:focus-visible,
-        html.dark button.cursor-pointer:focus, html.dark button.cursor-pointer:focus-visible,
-        html.dark .focus\:border-emerald-500:focus, html.dark .focus\:border-emerald-500:focus-visible,
-        html.dark .dark\:border-white\/10:focus, html.dark .dark\:border-white\/10:focus-visible {
+        html.dark .focus\:border-emerald-500:focus, html.dark .focus\:border-emerald-500:focus-visible {
             border: 1px solid #10b981 !important;
             border-color: #10b981 !important;
             box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.35) !important;
             outline: none !important;
             outline-offset: 0 !important;
+        }
+
+        html.dark input[type="range"],
+        html.dark input[type="range"]:focus,
+        html.dark input[type="range"]:focus-visible,
+        html.dark input[type="range"]:active {
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-box-shadow: none !important;
+            background-color: transparent !important;
         }
 
         /* Dark Scrollbar Styling */
@@ -1611,8 +1635,8 @@
                     </a>
                 </div>
 
-                <div id="sidebar-nav-items" class="p-4 space-y-2 overflow-y-auto flex-1">
-                    <div class="px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 font-heading">
+                <div id="sidebar-nav-items" class="px-3 py-3 space-y-1 overflow-y-auto flex-1">
+                    <div class="px-3 pt-1 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 font-heading select-none">
                         MENU
                     </div>
                     
@@ -1623,52 +1647,40 @@
                     ?>
                     <a href="<?= \App\Core\Router::url('/dashboard') ?>" 
                        @click="sidebarOpen = false"
-                       class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isDashboard ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="layout-dashboard" class="w-5 h-5 <?= $isDashboard ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
-                            <span>แดชบอร์ดภาพรวม</span>
-                        </div>
-                        <i data-lucide="chevron-right" class="w-4 h-4 <?= $isDashboard ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
+                       class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-all group select-none <?= $isDashboard ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold shadow-2xs before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:bg-emerald-600 dark:before:bg-emerald-400 before:rounded-r-full' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.05]' ?>">
+                        <i data-lucide="layout-dashboard" class="w-5 h-5 shrink-0 transition-colors <?= $isDashboard ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300' ?>"></i>
+                        <span class="truncate">แดชบอร์ดภาพรวม</span>
                     </a>
 
                     <!-- โครงการหลัก & กิจกรรมหลัก -->
                     <?php $isProjects = (str_contains($currentReqUri, '/projects') || str_contains($currentReqUri, '/sub-projects')); ?>
                     <a href="<?= \App\Core\Router::url('/projects') ?>" 
                        @click="sidebarOpen = false"
-                       class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isProjects ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="folder-kanban" class="w-5 h-5 <?= $isProjects ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
-                            <span>โครงการหลัก & กิจกรรมหลัก</span>
-                        </div>
-                        <i data-lucide="chevron-right" class="w-4 h-4 <?= $isProjects ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
+                       class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-all group select-none <?= $isProjects ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold shadow-2xs before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:bg-emerald-600 dark:before:bg-emerald-400 before:rounded-r-full' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.05]' ?>">
+                        <i data-lucide="folder-kanban" class="w-5 h-5 shrink-0 transition-colors <?= $isProjects ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300' ?>"></i>
+                        <span class="whitespace-nowrap">โครงการหลัก & กิจกรรมหลัก</span>
                     </a>
 
                     <!-- งบประมาณ & เบิกจ่าย -->
                     <?php $isBudgets = str_contains($currentReqUri, '/budgets'); ?>
                     <a href="<?= \App\Core\Router::url('/budgets') ?>" 
                        @click="sidebarOpen = false"
-                       class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isBudgets ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="wallet" class="w-5 h-5 <?= $isBudgets ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
-                            <span>งบประมาณ & เบิกจ่าย</span>
-                        </div>
-                        <i data-lucide="chevron-right" class="w-4 h-4 <?= $isBudgets ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
+                       class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-all group select-none <?= $isBudgets ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold shadow-2xs before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:bg-emerald-600 dark:before:bg-emerald-400 before:rounded-r-full' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.05]' ?>">
+                        <i data-lucide="wallet" class="w-5 h-5 shrink-0 transition-colors <?= $isBudgets ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300' ?>"></i>
+                        <span class="truncate">งบประมาณ & เบิกจ่าย</span>
                     </a>
 
                     <!-- รายงาน & ส่งออกข้อมูล -->
                     <?php $isReports = str_contains($currentReqUri, '/reports'); ?>
                     <a href="<?= \App\Core\Router::url('/reports') ?>" 
                        @click="sidebarOpen = false"
-                       class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isReports ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="file-spreadsheet" class="w-5 h-5 <?= $isReports ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
-                            <span>รายงาน & ส่งออกข้อมูล</span>
-                        </div>
-                        <i data-lucide="chevron-right" class="w-4 h-4 <?= $isReports ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
+                       class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-all group select-none <?= $isReports ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold shadow-2xs before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:bg-emerald-600 dark:before:bg-emerald-400 before:rounded-r-full' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.05]' ?>">
+                        <i data-lucide="file-spreadsheet" class="w-5 h-5 shrink-0 transition-colors <?= $isReports ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300' ?>"></i>
+                        <span class="truncate">รายงาน & ส่งออกข้อมูล</span>
                     </a>
 
                     <?php if (\App\Core\Auth::isAdmin()): ?>
-                    <div class="pt-4 px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 font-heading">
+                    <div class="pt-4 mt-3 border-t border-slate-200/60 dark:border-white/[0.06] px-3 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 font-heading select-none">
                         ADMINISTRATION
                     </div>
 
@@ -1676,51 +1688,40 @@
                     <?php $isUsers = str_contains($currentReqUri, '/users'); ?>
                     <a href="<?= \App\Core\Router::url('/users') ?>" 
                        @click="sidebarOpen = false"
-                       class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isUsers ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="users" class="w-5 h-5 <?= $isUsers ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
-                            <span>ผู้ใช้งาน & บทบาท</span>
-                        </div>
-                        <i data-lucide="chevron-right" class="w-4 h-4 <?= $isUsers ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
+                       class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-all group select-none <?= $isUsers ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold shadow-2xs before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:bg-emerald-600 dark:before:bg-emerald-400 before:rounded-r-full' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.05]' ?>">
+                        <i data-lucide="users" class="w-5 h-5 shrink-0 transition-colors <?= $isUsers ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300' ?>"></i>
+                        <span class="truncate">ผู้ใช้งาน & บทบาท</span>
                     </a>
 
                     <!-- ประเภทโครงการ -->
                     <?php $isCategories = str_contains($currentReqUri, '/categories'); ?>
                     <a href="<?= \App\Core\Router::url('/categories') ?>" 
                        @click="sidebarOpen = false"
-                       class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isCategories ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="tags" class="w-5 h-5 <?= $isCategories ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
-                            <span>ประเภทโครงการ</span>
-                        </div>
-                        <i data-lucide="chevron-right" class="w-4 h-4 <?= $isCategories ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
+                       class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-all group select-none <?= $isCategories ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold shadow-2xs before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:bg-emerald-600 dark:before:bg-emerald-400 before:rounded-r-full' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.05]' ?>">
+                        <i data-lucide="tags" class="w-5 h-5 shrink-0 transition-colors <?= $isCategories ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300' ?>"></i>
+                        <span class="truncate">ประเภทโครงการ</span>
                     </a>
 
                     <!-- Audit Log -->
                     <?php $isAudit = str_contains($currentReqUri, '/audit-logs'); ?>
                     <a href="<?= \App\Core\Router::url('/audit-logs') ?>" 
                        @click="sidebarOpen = false"
-                       class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all <?= $isAudit ? 'bg-emerald-50 dark:bg-[#181c26] text-emerald-900 dark:text-white font-semibold border border-emerald-500/30 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-transparent' ?>">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="history" class="w-5 h-5 <?= $isAudit ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' ?>"></i>
-                            <span>ประวัติการทำงาน</span>
-                        </div>
-                        <i data-lucide="chevron-right" class="w-4 h-4 <?= $isAudit ? 'text-emerald-600 dark:text-emerald-400' : 'opacity-40 text-slate-400 dark:text-slate-500' ?>"></i>
+                       class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-all group select-none <?= $isAudit ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold shadow-2xs before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:bg-emerald-600 dark:before:bg-emerald-400 before:rounded-r-full' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.05]' ?>">
+                        <i data-lucide="history" class="w-5 h-5 shrink-0 transition-colors <?= $isAudit ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300' ?>"></i>
+                        <span class="truncate">ประวัติการทำงาน</span>
                     </a>
                     <?php endif; ?>
                 </div>
 
-                <!-- Bottom Icons -->
-                <div class="p-4 border-t border-slate-200 dark:border-white/[0.08] flex items-center justify-between text-slate-500 dark:text-slate-400 shrink-0">
-                    <div class="flex items-center gap-2">
-                        <button type="button" @click="toggleSidebar()" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#181a20] border border-slate-200 dark:border-white/[0.08] flex items-center justify-center hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer" title="ซ่อน/ย่อแถบเมนู">
-                            <i data-lucide="panel-left-close" class="w-4 h-4"></i>
-                        </button>
-                        <button type="button" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#181a20] border border-slate-200 dark:border-white/[0.08] flex items-center justify-center hover:text-emerald-600 dark:hover:text-emerald-400 transition" title="ช่วยเหลือ">
-                            <i data-lucide="help-circle" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                    <span class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400/80 font-mono">MPT V2.0</span>
+                <!-- Bottom Collapse Bar -->
+                <div class="p-2.5 border-t border-slate-200/80 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.01] shrink-0 select-none">
+                    <button type="button" 
+                            @click="toggleSidebar()" 
+                            class="w-full inline-flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-white/10 transition cursor-pointer" 
+                            title="ซ่อนแถบเมนู">
+                        <i data-lucide="panel-left-close" class="w-4 h-4 text-slate-400"></i>
+                        <span>ย่อเมนู</span>
+                    </button>
                 </div>
             </div>
         </aside>

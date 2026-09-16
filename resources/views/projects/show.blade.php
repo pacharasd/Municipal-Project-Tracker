@@ -49,6 +49,15 @@ window.projectShowPage = function projectShowPage() {
             this.evalScore = parseFloat(e.target.value);
         },
 
+        stepScore(amount) {
+            let current = parseFloat(this.evalScore);
+            if (isNaN(current)) current = 0;
+            let next = Math.round((current + amount) * 10) / 10;
+            if (next < 0) next = 0;
+            if (next > 100) next = 100;
+            this.evalScore = next;
+        },
+
         onScoreInput(e) {
             const val = e.target.value;
             if (val === '') {
@@ -63,6 +72,14 @@ window.projectShowPage = function projectShowPage() {
             }
         },
 
+        get sliderTrackStyle() {
+            const pct = this.sliderValue;
+            const color = this.currentGrade.hex || '#6366f1';
+            const isDark = document.documentElement.classList.contains('dark');
+            const unfilled = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(226, 232, 240, 0.9)';
+            return `background: linear-gradient(to right, ${color} 0%, ${color} ${pct}%, ${unfilled} ${pct}%, ${unfilled} 100%) !important; --slider-thumb-color: ${color};`;
+        },
+
         get currentGrade() {
             const s = parseFloat(this.evalScore);
             if (isNaN(s) || this.evalScore === '' || this.evalScore === null) {
@@ -73,7 +90,8 @@ window.projectShowPage = function projectShowPage() {
                     cardBorder: 'border-slate-200 dark:border-white/10', 
                     dividerBorder: 'border-slate-200 dark:border-white/10',
                     text: 'text-slate-600 dark:text-slate-400', 
-                    bar: 'bg-slate-400' 
+                    bar: 'bg-slate-400',
+                    hex: '#94a3b8'
                 };
             }
             if (s >= 90) return { 
@@ -83,7 +101,8 @@ window.projectShowPage = function projectShowPage() {
                 cardBorder: 'border-emerald-500/40 dark:border-emerald-500/40', 
                 dividerBorder: 'border-emerald-500/20 dark:border-emerald-500/25',
                 text: 'text-emerald-700 dark:text-emerald-400', 
-                bar: 'bg-emerald-600 dark:bg-emerald-500' 
+                bar: 'bg-emerald-600 dark:bg-emerald-500',
+                hex: '#10b981'
             };
             if (s >= 80) return { 
                 grade: 'A', 
@@ -92,7 +111,8 @@ window.projectShowPage = function projectShowPage() {
                 cardBorder: 'border-sky-500/40 dark:border-sky-500/40', 
                 dividerBorder: 'border-sky-500/20 dark:border-sky-500/25',
                 text: 'text-sky-700 dark:text-sky-400', 
-                bar: 'bg-sky-600 dark:bg-sky-500' 
+                bar: 'bg-sky-600 dark:bg-sky-500',
+                hex: '#0ea5e9'
             };
             if (s >= 70) return { 
                 grade: 'B', 
@@ -101,7 +121,8 @@ window.projectShowPage = function projectShowPage() {
                 cardBorder: 'border-indigo-500/40 dark:border-indigo-500/40', 
                 dividerBorder: 'border-indigo-500/20 dark:border-indigo-500/25',
                 text: 'text-indigo-700 dark:text-indigo-400', 
-                bar: 'bg-indigo-600 dark:bg-indigo-500' 
+                bar: 'bg-indigo-600 dark:bg-indigo-500',
+                hex: '#6366f1'
             };
             if (s >= 60) return { 
                 grade: 'C', 
@@ -110,7 +131,8 @@ window.projectShowPage = function projectShowPage() {
                 cardBorder: 'border-amber-500/40 dark:border-amber-500/40', 
                 dividerBorder: 'border-amber-500/20 dark:border-amber-500/25',
                 text: 'text-amber-700 dark:text-amber-400', 
-                bar: 'bg-amber-600 dark:bg-amber-500' 
+                bar: 'bg-amber-600 dark:bg-amber-500',
+                hex: '#f59e0b'
             };
             return { 
                 grade: 'D', 
@@ -119,7 +141,8 @@ window.projectShowPage = function projectShowPage() {
                 cardBorder: 'border-rose-500/40 dark:border-rose-500/40', 
                 dividerBorder: 'border-rose-500/20 dark:border-rose-500/25',
                 text: 'text-rose-700 dark:text-rose-400', 
-                bar: 'bg-rose-600 dark:bg-rose-500' 
+                bar: 'bg-rose-600 dark:bg-rose-500',
+                hex: '#f43f5e'
             };
         },
 
@@ -1147,7 +1170,7 @@ window.projectShowPage = function projectShowPage() {
     <template x-teleport="body">
         <div x-show="evalModal" x-cloak data-teleport-modal="true" style="display: none;" @click.self="evalModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-smooth">
             <div class="bg-white dark:bg-[#161922] w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden flex flex-col modal-box-smooth transform-gpu">
-                <div class="p-6 border-b border-slate-100 dark:border-white/[0.08] flex items-center justify-between flex-shrink-0">
+                <div class="p-4 sm:p-6 border-b border-slate-100 dark:border-white/[0.08] flex items-center justify-between flex-shrink-0">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                             <i data-lucide="award" class="w-5 h-5"></i>
@@ -1162,59 +1185,79 @@ window.projectShowPage = function projectShowPage() {
                     </button>
                 </div>
 
-                <form action="<?= \App\Core\Router::url("/projects/{$project['id']}/evaluate") ?>" method="POST" class="p-6 space-y-5">
+                <form action="<?= \App\Core\Router::url("/projects/{$project['id']}/evaluate") ?>" method="POST" class="p-4 sm:p-6 space-y-4">
                     <input type="hidden" name="_token" value="<?= $csrfToken ?>">
 
-                    <!-- Unified Assessment Card (Grade Badge, Centered Score Input, Full-Width Slider & Presets) -->
-                    <div class="p-5 rounded-2xl border-2 transition-all duration-300 space-y-4" :class="currentGrade.cardBorder + ' ' + currentGrade.cardBg">
+                    <!-- Unified Assessment Card (Grade Badge, Centered Score Input, Full-Width Slider & Segmented Presets) -->
+                    <div class="p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02] shadow-2xs transition-all duration-300 space-y-3">
                         
-                        <!-- Header Row: Grade Letter + Criteria (Left) & Prominent Score Input (Right) -->
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b transition-colors" :class="currentGrade.dividerBorder">
-                            <div class="flex items-center gap-3.5 min-w-0">
-                                <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-black text-white shadow-md transition-all shrink-0" :class="currentGrade.bar">
+                        <!-- Header Row: Grade Letter + Criteria (Left) & Sleek Capsule Stepper (Right) -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/80 dark:border-white/[0.08] transition-colors">
+                            <!-- Grade Letter & Criteria -->
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="w-12 h-12 sm:w-13 sm:h-13 rounded-2xl flex items-center justify-center text-xl sm:text-2xl font-black text-white shadow-md transition-all shrink-0" :class="currentGrade.bar">
                                     <span x-text="currentGrade.grade"></span>
                                 </div>
                                 <div class="min-w-0">
-                                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">ผลการประเมินโครงการ</span>
-                                    <div class="text-base sm:text-lg font-bold truncate" :class="currentGrade.text" x-text="currentGrade.label"></div>
-                                    <span class="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
+                                    <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">ผลการประเมินโครงการ</span>
+                                    <div class="text-sm sm:text-base font-bold truncate" :class="currentGrade.text" x-text="currentGrade.label"></div>
+                                    <span class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
                                         เกณฑ์: 90-100 <strong class="text-emerald-600 dark:text-emerald-400">A+</strong> | 80-89 <strong class="text-sky-600 dark:text-sky-400">A</strong> | 70-79 <strong class="text-indigo-600 dark:text-indigo-400">B</strong> | 60-69 <strong class="text-amber-600 dark:text-amber-400">C</strong> | &lt;60 <strong class="text-rose-600 dark:text-rose-400">D</strong>
                                     </span>
                                 </div>
                             </div>
 
-                            <!-- Standard & Clean Score Input Box -->
-                            <div class="shrink-0">
-                                <label for="evaluation-score-input" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 sm:text-right cursor-pointer">
-                                    คะแนนที่ได้รับ (0 – 100) <span class="text-rose-500">*</span>
+                            <!-- Sleek Unified Capsule Stepper (Neutral Border) -->
+                            <div class="flex items-center justify-between sm:justify-end gap-2.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/50 dark:border-white/5">
+                                <label for="evaluation-score-input" class="text-xs font-bold text-slate-700 dark:text-slate-300 sm:sr-only cursor-pointer">
+                                    คะแนน (0–100) <span class="text-rose-500">*</span>:
                                 </label>
-                                <div class="flex items-center rounded-xl border-2 border-slate-300 dark:border-white/20 bg-white dark:bg-[#1a1d26] shadow-xs overflow-hidden focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all h-11">
-                                    <input type="number" 
-                                           id="evaluation-score-input"
-                                           name="evaluation_score" 
-                                           min="0" 
-                                           max="100" 
-                                           step="0.01" 
-                                           x-model="evalScore" 
-                                           @input="onScoreInput($event)"
-                                           placeholder="0.00"
-                                           required 
-                                           class="w-24 sm:w-28 h-full px-3 text-lg sm:text-xl font-bold font-mono text-center text-slate-900 dark:text-white bg-transparent border-0 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-                                    <span class="h-full inline-flex items-center px-3 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-white/10 border-l border-slate-200 dark:border-white/10 select-none">
-                                        คะแนน
-                                    </span>
+                                <div class="inline-flex items-center p-1 rounded-xl bg-white dark:bg-[#191c26] border border-slate-200 dark:border-white/10 shadow-xs transition-all w-38 sm:w-40 focus-within:border-emerald-500 dark:focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20">
+                                    <!-- Decrement Button -->
+                                    <button type="button" 
+                                            @click="stepScore(-1)" 
+                                            class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 active:scale-90 text-slate-600 dark:text-slate-300 flex items-center justify-center transition cursor-pointer shrink-0 focus:outline-none"
+                                            title="ลด 1 คะแนน">
+                                        <i data-lucide="minus" class="w-3.5 h-3.5 pointer-events-none"></i>
+                                    </button>
+
+                                    <!-- Score Input Container -->
+                                    <div class="flex-1 flex items-center justify-center px-1 min-w-0">
+                                        <input type="number" 
+                                               id="evaluation-score-input"
+                                               name="evaluation_score" 
+                                               min="0" 
+                                               max="100" 
+                                               step="0.1" 
+                                               x-model="evalScore" 
+                                               @input="onScoreInput($event)"
+                                               placeholder="0.0"
+                                               required 
+                                               class="w-12 text-center text-base sm:text-lg font-black font-mono tracking-tight text-slate-900 dark:text-white bg-transparent border-0 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none p-0">
+                                        <span class="text-[11px] font-bold text-slate-400 dark:text-slate-500 font-mono select-none ml-0.5 shrink-0">
+                                            / 100
+                                        </span>
+                                    </div>
+
+                                    <!-- Increment Button -->
+                                    <button type="button" 
+                                            @click="stepScore(1)" 
+                                            class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 active:scale-90 text-slate-600 dark:text-slate-300 flex items-center justify-center transition cursor-pointer shrink-0 focus:outline-none"
+                                            title="เพิ่ม 1 คะแนน">
+                                        <i data-lucide="plus" class="w-3.5 h-3.5 pointer-events-none"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Full-Width Range Slider Bar -->
-                        <div class="space-y-1.5">
-                            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                                <span class="font-medium flex items-center gap-1.5">
-                                    <i data-lucide="sliders" class="w-3.5 h-3.5 text-emerald-600"></i>
+                        <!-- Compact Range Slider Bar (Neutral Track & Accent) -->
+                        <div class="space-y-1">
+                            <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                                <span class="font-medium flex items-center gap-1">
+                                    <i data-lucide="sliders" class="w-3 h-3 text-slate-500 dark:text-slate-400"></i>
                                     <span>เลื่อนสเกลปรับคะแนน</span>
                                 </span>
-                                <span class="font-mono text-xs font-bold" :class="currentGrade.text">
+                                <span class="font-mono font-bold" :class="currentGrade.text">
                                     <span x-text="(parseFloat(evalScore) || 0).toFixed(1)"></span> / 100 คะแนน
                                 </span>
                             </div>
@@ -1226,49 +1269,123 @@ window.projectShowPage = function projectShowPage() {
                                        step="0.5" 
                                        :value="sliderValue" 
                                        @input="onSliderChange($event)"
-                                       class="w-full h-2.5 bg-slate-200 dark:bg-[#1a1d26] rounded-lg appearance-none cursor-pointer accent-emerald-600 focus:outline-none transition-all">
+                                       :style="sliderTrackStyle"
+                                       class="eval-range-slider w-full h-2.5 rounded-full appearance-none cursor-pointer outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 border-0 ring-0 transition-all">
                             </div>
 
                             <!-- Clickable Tick Marks -->
-                            <div class="flex justify-between text-[11px] font-mono text-slate-400 dark:text-slate-500 px-0.5 select-none">
-                                <button type="button" @click="evalScore = 0" class="hover:text-slate-700 dark:hover:text-white cursor-pointer font-semibold transition">0</button>
-                                <button type="button" @click="evalScore = 25" class="hover:text-slate-700 dark:hover:text-white cursor-pointer font-semibold transition">25</button>
-                                <button type="button" @click="evalScore = 50" class="hover:text-slate-700 dark:hover:text-white cursor-pointer font-semibold transition">50</button>
-                                <button type="button" @click="evalScore = 75" class="hover:text-slate-700 dark:hover:text-white cursor-pointer font-semibold transition">75</button>
-                                <button type="button" @click="evalScore = 100" class="hover:text-slate-700 dark:hover:text-white cursor-pointer font-semibold transition">100</button>
+                            <div class="flex justify-between text-[10px] font-mono text-slate-400 dark:text-slate-500 px-0.5 select-none">
+                                <button type="button" @click="evalScore = 0" class="hover:text-slate-700 dark:hover:text-white cursor-pointer font-semibold transition focus:outline-none">0</button>
+                                <button type="button" @click="evalScore = 25" class="hover:text-slate-700 dark:hover:text-white cursor-pointer font-semibold transition focus:outline-none">25</button>
+                                <button type="button" @click="evalScore = 50" class="hover:text-slate-700 dark:hover:text-white cursor-pointer font-semibold transition focus:outline-none">50</button>
+                                <button type="button" @click="evalScore = 75" class="hover:text-slate-700 dark:hover:text-white cursor-pointer font-semibold transition focus:outline-none">75</button>
+                                <button type="button" @click="evalScore = 100" class="hover:text-slate-700 dark:hover:text-white cursor-pointer font-semibold transition focus:outline-none">100</button>
                             </div>
                         </div>
 
-                        <!-- Presets and Progress Sync Buttons -->
-                        <div class="flex items-center justify-between gap-2 pt-3 flex-wrap border-t transition-colors" :class="currentGrade.dividerBorder">
-                            <div class="flex items-center gap-1.5 flex-wrap text-xs">
-                                <span class="text-[11px] font-medium text-slate-400 mr-0.5">เลือกด่วน:</span>
-                                <button type="button" @click="evalScore = 95" class="px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all cursor-pointer" :class="evalScore == 95 ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' : 'bg-white dark:bg-white/5 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-emerald-500'">
+                        <!-- International Standard Segmented Presets -->
+                        <div class="flex items-center gap-2 pt-2.5 border-t border-slate-200/80 dark:border-white/[0.08]">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 select-none">เลือกด่วน:</span>
+                            <div class="inline-flex items-center p-0.5 bg-slate-200/60 dark:bg-white/[0.06] rounded-xl border border-slate-200/80 dark:border-white/10 shadow-2xs">
+                                <button type="button" 
+                                        @click="evalScore = 95" 
+                                        style="outline: none !important;"
+                                        class="eval-no-outline px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 select-none" 
+                                        :class="evalScore == 95 ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'">
                                     95 (A+)
                                 </button>
-                                <button type="button" @click="evalScore = 85" class="px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all cursor-pointer" :class="evalScore == 85 ? 'bg-sky-600 text-white border-sky-600 shadow-xs' : 'bg-white dark:bg-white/5 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-sky-500'">
+                                <button type="button" 
+                                        @click="evalScore = 85" 
+                                        style="outline: none !important;"
+                                        class="eval-no-outline px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 select-none" 
+                                        :class="evalScore == 85 ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'">
                                     85 (A)
                                 </button>
-                                <button type="button" @click="evalScore = 75" class="px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all cursor-pointer" :class="evalScore == 75 ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' : 'bg-white dark:bg-white/5 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-indigo-500'">
+                                <button type="button" 
+                                        @click="evalScore = 75" 
+                                        style="outline: none !important;"
+                                        class="eval-no-outline px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 select-none" 
+                                        :class="evalScore == 75 ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'">
                                     75 (B)
                                 </button>
-                                <button type="button" @click="evalScore = 65" class="px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all cursor-pointer" :class="evalScore == 65 ? 'bg-amber-600 text-white border-amber-600 shadow-xs' : 'bg-white dark:bg-white/5 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-amber-500'">
+                                <button type="button" 
+                                        @click="evalScore = 65" 
+                                        style="outline: none !important;"
+                                        class="eval-no-outline px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 select-none" 
+                                        :class="evalScore == 65 ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'">
                                     65 (C)
                                 </button>
-                                <button type="button" @click="evalScore = 55" class="px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all cursor-pointer" :class="evalScore == 55 ? 'bg-rose-600 text-white border-rose-600 shadow-xs' : 'bg-white dark:bg-white/5 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-rose-500'">
+                                <button type="button" 
+                                        @click="evalScore = 55" 
+                                        style="outline: none !important;"
+                                        class="eval-no-outline px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 select-none" 
+                                        :class="evalScore == 55 ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'">
                                     55 (D)
                                 </button>
                             </div>
-
-                            <button type="button" 
-                                    @click="evalScore = <?= round((float)$project['progress'], 2) ?>" 
-                                    class="px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
-                                    :class="evalScore == <?= round((float)$project['progress'], 2) ?> ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-500/30 hover:bg-emerald-100'">
-                                <i data-lucide="sparkles" class="w-3 h-3"></i>
-                                <span>ตามความก้าวหน้าโครงการ (<?= number_format((float)$project['progress'], 1) ?>%)</span>
-                            </button>
                         </div>
                     </div>
+
+                    <style>
+                        .eval-no-outline,
+                        .eval-no-outline:focus,
+                        .eval-no-outline:focus-visible,
+                        .eval-no-outline:active {
+                            outline: none !important;
+                            -webkit-focus-ring-color: transparent !important;
+                            -webkit-tap-highlight-color: transparent !important;
+                        }
+                        .eval-range-slider,
+                        .eval-range-slider:focus,
+                        .eval-range-slider:focus-visible,
+                        .eval-range-slider:active {
+                            outline: none !important;
+                            border: none !important;
+                            box-shadow: none !important;
+                            -webkit-box-shadow: none !important;
+                            -webkit-appearance: none;
+                            appearance: none;
+                            background-color: transparent;
+                        }
+                        .eval-range-slider::-webkit-slider-runnable-track {
+                            height: 10px;
+                            border-radius: 9999px;
+                            background: transparent !important;
+                        }
+                        .eval-range-slider::-moz-range-track {
+                            height: 10px;
+                            border-radius: 9999px;
+                            background: transparent !important;
+                        }
+                        .eval-range-slider::-webkit-slider-thumb {
+                            -webkit-appearance: none;
+                            appearance: none;
+                            width: 20px;
+                            height: 20px;
+                            margin-top: -5px;
+                            border-radius: 50%;
+                            background: #ffffff;
+                            border: 3px solid var(--slider-thumb-color, #6366f1);
+                            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+                            cursor: pointer;
+                            transition: transform 0.1s ease, border-color 0.2s ease;
+                        }
+                        .eval-range-slider::-webkit-slider-thumb:hover {
+                            transform: scale(1.15);
+                        }
+                        .eval-range-slider::-webkit-slider-thumb:active {
+                            transform: scale(0.95);
+                        }
+                        .eval-range-slider::-moz-range-thumb {
+                            width: 20px;
+                            height: 20px;
+                            border-radius: 50%;
+                            background: #ffffff;
+                            border: 3px solid var(--slider-thumb-color, #6366f1);
+                            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+                            cursor: pointer;
+                        }
+                    </style>
 
                     <!-- Notes / Comments -->
                     <div>
