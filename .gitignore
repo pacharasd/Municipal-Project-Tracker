@@ -6,31 +6,21 @@ desktop.ini
 # Environment
 .env
 
-# Temporary files
+# Temporary & Editor Backup files
 *.tmp
 *.bak
 *~
+*.swp
 
-# Node.js & Vendor
-node_modules/
-npm-debug.log*
-vendor/
-package.json
-
-# Storage
+# Storage & Logs
 storage/logs/*
 !storage/logs/.gitkeep
 
-# Temporary & debug artifacts
+# Temporary & Debug artifacts
 scratch/
 dashboard_rendered.html
 
-# Obsidian & Wiki
-.obsidian/
-wiki/
-raw/
-
-# Development & Testing tools
+# Development & Testing tools (Local only)
 scripts/
 tests/
 database/
@@ -38,14 +28,9 @@ database/
 # AI Assistant local metadata
 .agents/
 
-# Duplicate assets & dumps
-municipal_project_tracker.sql
-/mobile-logo.webp
-public/mobile-logo.webp
-
-# User uploads
-app/public/uploads/*
-!app/public/uploads/.gitkeep
+# User Uploads (Preserve directory structure and security rules)
 public/uploads/*
 !public/uploads/.gitkeep
 !public/uploads/.htaccess
+
+
