@@ -166,7 +166,12 @@ $selectedStatusValue = match($status ?? '') {
     },
 
     getExportUrl(type) {
-        const base = type === 'excel' ? '<?= Router::url('/reports/export-excel') ?>' : '<?= Router::url('/reports/export-pdf') ?>';
+        let base = '<?= Router::url('/reports/export-excel') ?>';
+        if (type === 'pdf') {
+            base = '<?= Router::url('/reports/export-pdf') ?>';
+        } else if (type === 'print') {
+            base = '<?= Router::url('/reports/print') ?>';
+        }
         const params = new URLSearchParams();
         if (this.selectedFiscalYear) params.set('fiscal_year_id', this.selectedFiscalYear);
         if (this.selectedDepartment) params.set('department_id', this.selectedDepartment);

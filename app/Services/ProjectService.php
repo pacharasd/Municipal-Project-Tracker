@@ -580,7 +580,12 @@ class ProjectService
             "SELECT COUNT(*) as main_total,
                     COALESCE(SUM(budget), 0) as total_budget,
                     COALESCE(SUM(disbursed_amount), 0) as total_disbursed,
-                    COALESCE(AVG(progress), 0) as avg_progress
+                    COALESCE(AVG(progress), 0) as avg_progress,
+                    COALESCE(SUM(CASE WHEN status = 'not_started' THEN 1 ELSE 0 END), 0) as main_not_started,
+                    COALESCE(SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END), 0) as main_in_progress,
+                    COALESCE(SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END), 0) as main_completed,
+                    COALESCE(SUM(CASE WHEN status = 'has_problem' THEN 1 ELSE 0 END), 0) as main_has_problem,
+                    COALESCE(SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END), 0) as main_cancelled
              FROM projects {$mainCond}",
             $mainParams
         ) ?: [];
@@ -591,6 +596,11 @@ class ProjectService
         $totalRemaining = $totalBudget - $totalDisbursed;
         $disbursementPct = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) * 100, 2) : 0.0;
         $avgProgress = (float)($mainStats['avg_progress'] ?? 0);
+        $mainNotStarted = (int)($mainStats['main_not_started'] ?? 0);
+        $mainInProgress = (int)($mainStats['main_in_progress'] ?? 0);
+        $mainCompleted  = (int)($mainStats['main_completed'] ?? 0);
+        $mainHasProblem = (int)($mainStats['main_has_problem'] ?? 0);
+        $mainCancelled  = (int)($mainStats['main_cancelled'] ?? 0);
 
         // Sub-projects status breakdown in 1 single conditional aggregation query
         $subStats = Database::fetch(
@@ -772,6 +782,11 @@ class ProjectService
 
         return [
             'main_total'            => $mainTotal,
+            'main_not_started'      => $mainNotStarted,
+            'main_in_progress'      => $mainInProgress,
+            'main_completed'        => $mainCompleted,
+            'main_has_problem'      => $mainHasProblem,
+            'main_cancelled'        => $mainCancelled,
             'sub_total'             => $subTotal,
             'not_started'           => $notStarted,
             'in_progress'           => $inProgress,

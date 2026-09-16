@@ -10,6 +10,13 @@ $thaiMonths = [
 $currentDateThai = date('j') . ' ' . $thaiMonths[(int)date('n')] . ' ' . (date('Y') + 543);
 
 // Calculations for Status Breakdown (AGENTS.md Rule #10.1: 5 Statuses)
+$totalMain = max(1, (int)$stats['main_total']);
+$mainInProgPct = round(((int)($stats['main_in_progress'] ?? 0) / $totalMain) * 100, 1);
+$mainNotStartPct = round(((int)($stats['main_not_started'] ?? 0) / $totalMain) * 100, 1);
+$mainCompPct = round(((int)($stats['main_completed'] ?? 0) / $totalMain) * 100, 1);
+$mainProbPct = round(((int)($stats['main_has_problem'] ?? 0) / $totalMain) * 100, 1);
+$mainCancPct = round(((int)($stats['main_cancelled'] ?? 0) / $totalMain) * 100, 1);
+
 $totalSub = max(1, (int)$stats['sub_total']);
 $inProgPct = round(((int)$stats['in_progress'] / $totalSub) * 100, 1);
 $notStartPct = round(((int)$stats['not_started'] / $totalSub) * 100, 1);
@@ -181,24 +188,24 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
 
     <!-- 2. 5 Primary KPI Metric Cards (Single Clean Row / 2-Col Grid on Mobile) -->
     <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2.5 sm:gap-4 w-full max-w-full">
-        <!-- 1. กิจกรรมหลักทั้งหมด (Full width on mobile) -->
+        <!-- 1. โครงการหลักทั้งหมด (Full width on mobile) -->
         <div class="col-span-2 sm:col-span-1 group relative p-3 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-blue-400/60 dark:hover:border-blue-500/40 transition-all overflow-hidden flex flex-col justify-between">
             <div class="absolute top-0 left-0 right-0 h-1 bg-blue-500"></div>
             <div class="flex items-center justify-between gap-1.5">
-                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">กิจกรรมหลักทั้งหมด</span>
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading truncate">โครงการหลักทั้งหมด</span>
                 <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                     <i data-lucide="folder-kanban" class="w-4 h-4"></i>
                 </div>
             </div>
             <div class="my-1.5 sm:my-2">
                 <div class="text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400 font-heading tracking-tight leading-tight">
-                    <?= number_format($stats['sub_total']) ?>
+                    <?= number_format($stats['main_total']) ?>
                 </div>
-                <div class="text-[10px] sm:text-[10.5px] text-slate-400 mt-0.5 truncate">กิจกรรมหลักในระบบ</div>
+                <div class="text-[10px] sm:text-[10.5px] text-slate-400 mt-0.5 truncate">โครงการหลักในระบบ</div>
             </div>
             <div class="pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[10px] sm:text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                <span>โครงการหลัก</span>
-                <span class="font-bold text-slate-800 dark:text-slate-200 font-mono"><?= number_format($stats['main_total']) ?></span>
+                <span>กิจกรรมหลัก</span>
+                <span class="font-bold text-slate-800 dark:text-slate-200 font-mono"><?= number_format($stats['sub_total']) ?></span>
             </div>
         </div>
 
@@ -302,10 +309,19 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 w-full max-w-full">
 
         <!-- กราฟที่ 1: จำนวนโครงการตามสถานะ (Rule #10.1: 5 Statuses) -->
-        <div class="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between w-full max-w-full min-w-0 overflow-hidden">
+        <div class="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between w-full max-w-full min-w-0 overflow-hidden"
+             x-data="{
+                 statusMode: 'main',
+                 switchMode(mode) {
+                     this.statusMode = mode;
+                     if (window.updateStatusDonutMode) {
+                         window.updateStatusDonutMode(mode);
+                     }
+                 }
+             }">
             <div>
-                <!-- Title Header -->
-                <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-white/[0.06]">
+                <!-- Title Header & View Mode Switcher -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-white/[0.06] gap-2.5">
                     <div class="flex items-center gap-2 min-w-0">
                         <div class="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                             <i data-lucide="pie-chart" class="w-4 h-4"></i>
@@ -315,9 +331,25 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                             <p class="text-[11px] text-slate-400 truncate">5 สถานะตามเกณฑ์มาตรฐานเทศบาล</p>
                         </div>
                     </div>
-                    <span class="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 shrink-0">
-                        สัดส่วน 100%
-                    </span>
+                    <!-- Interactive Toggle: โครงการหลัก (25) vs กิจกรรมหลัก (78) -->
+                    <div class="flex items-center p-0.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 shrink-0 self-start sm:self-auto select-none">
+                        <button type="button" 
+                                @click="switchMode('main')" 
+                                class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5"
+                                :class="statusMode === 'main' ? 'bg-white dark:bg-[#1f222e] text-blue-600 dark:text-blue-400 shadow-xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'">
+                            <span>โครงการหลัก</span>
+                            <span class="px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold"
+                                  :class="statusMode === 'main' ? 'bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400' : 'bg-slate-200/60 dark:bg-white/10 text-slate-500 dark:text-slate-400'"><?= $stats['main_total'] ?></span>
+                        </button>
+                        <button type="button" 
+                                @click="switchMode('sub')" 
+                                class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5"
+                                :class="statusMode === 'sub' ? 'bg-white dark:bg-[#1f222e] text-blue-600 dark:text-blue-400 shadow-xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'">
+                            <span>กิจกรรมหลัก</span>
+                            <span class="px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold"
+                                  :class="statusMode === 'sub' ? 'bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400' : 'bg-slate-200/60 dark:bg-white/10 text-slate-500 dark:text-slate-400'"><?= $stats['sub_total'] ?></span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Donut Chart & 5-Item Legend -->
@@ -327,16 +359,24 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                         <div class="w-40 h-40 sm:w-48 sm:h-48 relative max-w-full aspect-square mx-auto flex items-center justify-center touch-pan-y" style="touch-action: pan-y;">
                             <canvas id="statusDonutChart"
                                     style="touch-action: pan-y;"
-                                    data-not-started="<?= (int)$stats['not_started'] ?>"
-                                    data-in-progress="<?= (int)$stats['in_progress'] ?>"
-                                    data-completed="<?= (int)$stats['completed'] ?>"
-                                    data-has-problem="<?= (int)$stats['has_problem'] ?>"
-                                    data-cancelled="<?= (int)($stats['cancelled'] ?? 0) ?>"
+                                    data-main-not-started="<?= (int)($stats['main_not_started'] ?? 0) ?>"
+                                    data-main-in-progress="<?= (int)($stats['main_in_progress'] ?? 0) ?>"
+                                    data-main-completed="<?= (int)($stats['main_completed'] ?? 0) ?>"
+                                    data-main-has-problem="<?= (int)($stats['main_has_problem'] ?? 0) ?>"
+                                    data-main-cancelled="<?= (int)($stats['main_cancelled'] ?? 0) ?>"
+                                    data-main-total="<?= (int)$stats['main_total'] ?>"
+                                    data-sub-not-started="<?= (int)$stats['not_started'] ?>"
+                                    data-sub-in-progress="<?= (int)$stats['in_progress'] ?>"
+                                    data-sub-completed="<?= (int)$stats['completed'] ?>"
+                                    data-sub-has-problem="<?= (int)$stats['has_problem'] ?>"
+                                    data-sub-cancelled="<?= (int)($stats['cancelled'] ?? 0) ?>"
                                     data-sub-total="<?= (int)$stats['sub_total'] ?>"></canvas>
                             <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center select-none">
                                 <span class="text-[10px] sm:text-[11px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest font-sans">รวมทั้งหมด</span>
-                                <span class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white font-heading tracking-tight my-0.5 leading-none"><?= $stats['sub_total'] ?></span>
-                                <span class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium">กิจกรรมหลัก</span>
+                                <span class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white font-heading tracking-tight my-0.5 leading-none"
+                                      x-text="statusMode === 'main' ? '<?= $stats['main_total'] ?>' : '<?= $stats['sub_total'] ?>'"><?= $stats['main_total'] ?></span>
+                                <span class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium"
+                                      x-text="statusMode === 'main' ? 'โครงการหลัก' : 'กิจกรรมหลัก'">โครงการหลัก</span>
                             </div>
                         </div>
                     </div>
@@ -344,62 +384,72 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                     <!-- 5-Item Legend (7 cols) -->
                     <div class="sm:col-span-7 space-y-2 text-xs">
                         <!-- 1. ยังไม่เริ่ม (Modern Tech Indigo) -->
-                        <div class="p-2.5 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-indigo-400/60 dark:hover:border-indigo-500/40 flex items-center justify-between transition-all group <?= (int)$stats['not_started'] === 0 ? 'opacity-60 hover:opacity-100' : '' ?>">
+                        <div class="p-2.5 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-indigo-400/60 dark:hover:border-indigo-500/40 flex items-center justify-between transition-all group">
                             <div class="flex items-center gap-2.5 min-w-0">
                                 <span class="w-3 h-3 rounded-full bg-[#6366f1] shrink-0 shadow-[0_0_8px_rgba(99,102,241,0.5)]"></span>
                                 <span class="font-bold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">ยังไม่เริ่ม</span>
                             </div>
                             <div class="flex items-center gap-2.5 shrink-0">
-                                <span class="font-extrabold text-sm text-slate-900 dark:text-white font-mono"><?= $stats['not_started'] ?></span>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-500/30"><?= $notStartPct ?>%</span>
+                                <span class="font-extrabold text-sm text-slate-900 dark:text-white font-mono"
+                                      x-text="statusMode === 'main' ? '<?= (int)($stats['main_not_started'] ?? 0) ?>' : '<?= (int)$stats['not_started'] ?>'"><?= (int)($stats['main_not_started'] ?? 0) ?></span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-500/30"
+                                      x-text="statusMode === 'main' ? '<?= $mainNotStartPct ?>%' : '<?= $notStartPct ?>%'"><?= $mainNotStartPct ?>%</span>
                             </div>
                         </div>
 
                         <!-- 2. กำลังดำเนินการ (Electric Sky Blue) -->
-                        <div class="p-2.5 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-sky-400/60 dark:hover:border-sky-500/40 flex items-center justify-between transition-all group <?= (int)$stats['in_progress'] === 0 ? 'opacity-60 hover:opacity-100' : '' ?>">
+                        <div class="p-2.5 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-sky-400/60 dark:hover:border-sky-500/40 flex items-center justify-between transition-all group">
                             <div class="flex items-center gap-2.5 min-w-0">
                                 <span class="w-3 h-3 rounded-full bg-[#0ea5e9] shrink-0 shadow-[0_0_8px_rgba(14,165,233,0.5)]"></span>
                                 <span class="font-bold text-slate-800 dark:text-slate-200 group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors truncate">กำลังดำเนินการ</span>
                             </div>
                             <div class="flex items-center gap-2.5 shrink-0">
-                                <span class="font-extrabold text-sm text-slate-900 dark:text-white font-mono"><?= $stats['in_progress'] ?></span>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono bg-sky-500/10 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-500/30"><?= $inProgPct ?>%</span>
+                                <span class="font-extrabold text-sm text-slate-900 dark:text-white font-mono"
+                                      x-text="statusMode === 'main' ? '<?= (int)($stats['main_in_progress'] ?? 0) ?>' : '<?= (int)$stats['in_progress'] ?>'"><?= (int)($stats['main_in_progress'] ?? 0) ?></span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono bg-sky-500/10 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-500/30"
+                                      x-text="statusMode === 'main' ? '<?= $mainInProgPct ?>%' : '<?= $inProgPct ?>%'"><?= $mainInProgPct ?>%</span>
                             </div>
                         </div>
 
                         <!-- 3. เสร็จสิ้น (Luminous Jade Mint) -->
-                        <div class="p-2.5 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-emerald-400/60 dark:hover:border-emerald-500/40 flex items-center justify-between transition-all group <?= (int)$stats['completed'] === 0 ? 'opacity-60 hover:opacity-100' : '' ?>">
+                        <div class="p-2.5 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-emerald-400/60 dark:hover:border-emerald-500/40 flex items-center justify-between transition-all group">
                             <div class="flex items-center gap-2.5 min-w-0">
                                 <span class="w-3 h-3 rounded-full bg-[#10b981] shrink-0 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
                                 <span class="font-bold text-slate-800 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate">เสร็จสิ้น</span>
                             </div>
                             <div class="flex items-center gap-2.5 shrink-0">
-                                <span class="font-extrabold text-sm text-slate-900 dark:text-white font-mono"><?= $stats['completed'] ?></span>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30"><?= $compPct ?>%</span>
+                                <span class="font-extrabold text-sm text-slate-900 dark:text-white font-mono"
+                                      x-text="statusMode === 'main' ? '<?= (int)($stats['main_completed'] ?? 0) ?>' : '<?= (int)$stats['completed'] ?>'"><?= (int)($stats['main_completed'] ?? 0) ?></span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30"
+                                      x-text="statusMode === 'main' ? '<?= $mainCompPct ?>%' : '<?= $compPct ?>%'"><?= $mainCompPct ?>%</span>
                             </div>
                         </div>
 
                         <!-- 4. มีปัญหา (Radiant Coral Crimson) -->
-                        <div class="p-2.5 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-rose-400/60 dark:hover:border-rose-500/40 flex items-center justify-between transition-all group <?= (int)$stats['has_problem'] === 0 ? 'opacity-60 hover:opacity-100' : '' ?>">
+                        <div class="p-2.5 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-rose-400/60 dark:hover:border-rose-500/40 flex items-center justify-between transition-all group">
                             <div class="flex items-center gap-2.5 min-w-0">
                                 <span class="w-3 h-3 rounded-full bg-[#f43f5e] shrink-0 shadow-[0_0_8px_rgba(244,63,94,0.5)]"></span>
                                 <span class="font-bold text-slate-800 dark:text-slate-200 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors truncate">มีปัญหา/ล่าช้า</span>
                             </div>
                             <div class="flex items-center gap-2.5 shrink-0">
-                                <span class="font-extrabold text-sm text-slate-900 dark:text-white font-mono"><?= $stats['has_problem'] ?></span>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono bg-rose-500/10 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/30"><?= $probPct ?>%</span>
+                                <span class="font-extrabold text-sm text-slate-900 dark:text-white font-mono"
+                                      x-text="statusMode === 'main' ? '<?= (int)($stats['main_has_problem'] ?? 0) ?>' : '<?= (int)$stats['has_problem'] ?>'"><?= (int)($stats['main_has_problem'] ?? 0) ?></span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono bg-rose-500/10 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/30"
+                                      x-text="statusMode === 'main' ? '<?= $mainProbPct ?>%' : '<?= $probPct ?>%'"><?= $mainProbPct ?>%</span>
                             </div>
                         </div>
 
                         <!-- 5. ยกเลิก (Deep Graphite Slate) -->
-                        <div class="p-2.5 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-slate-400/60 dark:hover:border-slate-500/40 flex items-center justify-between transition-all group <?= (int)($stats['cancelled'] ?? 0) === 0 ? 'opacity-60 hover:opacity-100' : '' ?>">
+                        <div class="p-2.5 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-slate-400/60 dark:hover:border-slate-500/40 flex items-center justify-between transition-all group">
                             <div class="flex items-center gap-2.5 min-w-0">
                                 <span class="w-3 h-3 rounded-full bg-[#64748b] shrink-0 shadow-[0_0_8px_rgba(100,116,139,0.3)]"></span>
                                 <span class="font-bold text-slate-800 dark:text-slate-200 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors truncate">ยกเลิก</span>
                             </div>
                             <div class="flex items-center gap-2.5 shrink-0">
-                                <span class="font-extrabold text-sm text-slate-900 dark:text-white font-mono"><?= $stats['cancelled'] ?? 0 ?></span>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono bg-slate-500/10 dark:bg-slate-500/20 text-slate-700 dark:text-slate-300 border border-slate-500/30"><?= $cancPct ?>%</span>
+                                <span class="font-extrabold text-sm text-slate-900 dark:text-white font-mono"
+                                      x-text="statusMode === 'main' ? '<?= (int)($stats['main_cancelled'] ?? 0) ?>' : '<?= (int)($stats['cancelled'] ?? 0) ?>'"><?= (int)($stats['main_cancelled'] ?? 0) ?></span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono bg-slate-500/10 dark:bg-slate-500/20 text-slate-700 dark:text-slate-300 border border-slate-500/30"
+                                      x-text="statusMode === 'main' ? '<?= $mainCancPct ?>%' : '<?= $cancPct ?>%'"><?= $mainCancPct ?>%</span>
                             </div>
                         </div>
                     </div>
@@ -825,27 +875,35 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
         // -------------------------------------------------------------
         // กราฟที่ 1: สถานะโครงการ (Rule #10.1: 5 Statuses Donut Chart - Data Driven)
         // -------------------------------------------------------------
+        let statusDonutChartInstance = null;
         try {
             const statusCanvas = document.getElementById('statusDonutChart');
             if (statusCanvas) {
-                const notStarted = parseInt(statusCanvas.dataset.notStarted || '0', 10);
-                const inProgress = parseInt(statusCanvas.dataset.inProgress || '0', 10);
-                const completed  = parseInt(statusCanvas.dataset.completed || '0', 10);
-                const hasProblem = parseInt(statusCanvas.dataset.hasProblem || '0', 10);
-                const cancelled  = parseInt(statusCanvas.dataset.cancelled || '0', 10);
+                function getStatusData(mode) {
+                    const isMain = (mode === 'main');
+                    const notStarted = isMain ? parseInt(statusCanvas.dataset.mainNotStarted || '0', 10) : parseInt(statusCanvas.dataset.subNotStarted || '0', 10);
+                    const inProgress = isMain ? parseInt(statusCanvas.dataset.mainInProgress || '0', 10) : parseInt(statusCanvas.dataset.subInProgress || '0', 10);
+                    const completed  = isMain ? parseInt(statusCanvas.dataset.mainCompleted || '0', 10) : parseInt(statusCanvas.dataset.subCompleted || '0', 10);
+                    const hasProblem = isMain ? parseInt(statusCanvas.dataset.mainHasProblem || '0', 10) : parseInt(statusCanvas.dataset.subHasProblem || '0', 10);
+                    const cancelled  = isMain ? parseInt(statusCanvas.dataset.mainCancelled || '0', 10) : parseInt(statusCanvas.dataset.subCancelled || '0', 10);
 
-                const rawStatuses = [
-                    { key: 'not_started', label: 'ยังไม่เริ่ม', count: notStarted, color: '#6366f1', hover: '#4f46e5' },
-                    { key: 'in_progress', label: 'กำลังดำเนินการ', count: inProgress, color: '#0ea5e9', hover: '#0284c7' },
-                    { key: 'completed',  label: 'เสร็จสิ้น',      count: completed,  color: '#10b981', hover: '#059669' },
-                    { key: 'has_problem',label: 'มีปัญหา/ล่าช้า', count: hasProblem, color: '#f43f5e', hover: '#e11d48' },
-                    { key: 'cancelled',  label: 'ยกเลิก',         count: cancelled,  color: '#64748b', hover: '#475569' }
-                ];
-                const totalCount = rawStatuses.reduce((acc, s) => acc + s.count, 0);
-                const activeStatuses = rawStatuses.filter(s => s.count > 0);
+                    const rawStatuses = [
+                        { key: 'not_started', label: 'ยังไม่เริ่ม', count: notStarted, color: '#6366f1', hover: '#4f46e5' },
+                        { key: 'in_progress', label: 'กำลังดำเนินการ', count: inProgress, color: '#0ea5e9', hover: '#0284c7' },
+                        { key: 'completed',  label: 'เสร็จสิ้น',      count: completed,  color: '#10b981', hover: '#059669' },
+                        { key: 'has_problem',label: 'มีปัญหา/ล่าช้า', count: hasProblem, color: '#f43f5e', hover: '#e11d48' },
+                        { key: 'cancelled',  label: 'ยกเลิก',         count: cancelled,  color: '#64748b', hover: '#475569' }
+                    ];
+                    const totalCount = rawStatuses.reduce((acc, s) => acc + s.count, 0);
+                    const activeStatuses = rawStatuses.filter(s => s.count > 0);
+                    return { rawStatuses, totalCount, activeStatuses, isMain };
+                }
 
-                if (totalCount === 0) {
-                    new Chart(statusCanvas, {
+                let currentStatusMode = 'main';
+                const initial = getStatusData(currentStatusMode);
+
+                if (initial.totalCount === 0) {
+                    statusDonutChartInstance = new Chart(statusCanvas, {
                         type: 'doughnut',
                         data: {
                             labels: ['ไม่มีข้อมูลโครงการ'],
@@ -880,18 +938,18 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                         }
                     });
                 } else {
-                    new Chart(statusCanvas, {
+                    statusDonutChartInstance = new Chart(statusCanvas, {
                         type: 'doughnut',
                         data: {
-                            labels: activeStatuses.map(s => s.label),
+                            labels: initial.activeStatuses.map(s => s.label),
                             datasets: [{
-                                data: activeStatuses.map(s => s.count),
-                                backgroundColor: activeStatuses.map(s => s.color),
-                                hoverBackgroundColor: activeStatuses.map(s => s.hover),
+                                data: initial.activeStatuses.map(s => s.count),
+                                backgroundColor: initial.activeStatuses.map(s => s.color),
+                                hoverBackgroundColor: initial.activeStatuses.map(s => s.hover),
                                 borderWidth: 0,
-                                borderRadius: activeStatuses.length > 1 ? 6 : 0,
-                                spacing: activeStatuses.length > 1 ? 4 : 0,
-                                hoverOffset: activeStatuses.length > 1 ? 6 : 0
+                                borderRadius: initial.activeStatuses.length > 1 ? 6 : 0,
+                                spacing: initial.activeStatuses.length > 1 ? 4 : 0,
+                                hoverOffset: initial.activeStatuses.length > 1 ? 6 : 0
                             }]
                         },
                         options: {
@@ -913,9 +971,11 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                                     callbacks: {
                                         label: function(context) {
                                             const val = context.raw;
-                                            const denom = totalCount > 0 ? totalCount : 1;
+                                            const currentInfo = getStatusData(currentStatusMode);
+                                            const denom = currentInfo.totalCount > 0 ? currentInfo.totalCount : 1;
                                             const pct = ((val / denom) * 100).toFixed(1);
-                                            return ` ${context.label}: ${val} โครงการ (${pct}%)`;
+                                            const unitName = currentInfo.isMain ? 'โครงการ' : 'กิจกรรม';
+                                            return ` ${context.label}: ${val} ${unitName} (${pct}%)`;
                                         }
                                     }
                                 }
@@ -923,6 +983,28 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                         }
                     });
                 }
+
+                window.updateStatusDonutMode = function(mode) {
+                    currentStatusMode = mode;
+                    if (!statusDonutChartInstance) return;
+                    const data = getStatusData(mode);
+                    if (data.totalCount === 0) {
+                        statusDonutChartInstance.data.labels = ['ไม่มีข้อมูลโครงการ'];
+                        statusDonutChartInstance.data.datasets[0].data = [1];
+                        statusDonutChartInstance.data.datasets[0].backgroundColor = [emptyChartColor];
+                        statusDonutChartInstance.data.datasets[0].hoverBackgroundColor = [emptyChartColor];
+                        statusDonutChartInstance.data.datasets[0].borderRadius = 0;
+                        statusDonutChartInstance.data.datasets[0].spacing = 0;
+                    } else {
+                        statusDonutChartInstance.data.labels = data.activeStatuses.map(s => s.label);
+                        statusDonutChartInstance.data.datasets[0].data = data.activeStatuses.map(s => s.count);
+                        statusDonutChartInstance.data.datasets[0].backgroundColor = data.activeStatuses.map(s => s.color);
+                        statusDonutChartInstance.data.datasets[0].hoverBackgroundColor = data.activeStatuses.map(s => s.hover);
+                        statusDonutChartInstance.data.datasets[0].borderRadius = data.activeStatuses.length > 1 ? 6 : 0;
+                        statusDonutChartInstance.data.datasets[0].spacing = data.activeStatuses.length > 1 ? 4 : 0;
+                    }
+                    statusDonutChartInstance.update();
+                };
             }
         } catch (err) {
             console.error('Error creating Status Donut Chart:', err);

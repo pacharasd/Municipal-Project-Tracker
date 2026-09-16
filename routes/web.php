@@ -78,6 +78,8 @@ Router::post('/attachments/{id}/delete', [AttachmentController::class, 'delete']
 // Reports Routes (Authenticated)
 Router::get('/reports', [ReportController::class, 'index'], ['auth']);
 Router::get('/reports/print', [ReportController::class, 'printReport'], ['auth']);
+Router::get('/reports/export-pdf', [ReportController::class, 'exportPdf'], ['auth']);
+Router::get('/reports/export-excel', [ReportController::class, 'exportExcel'], ['auth']);
 Router::get('/reports/export-csv', [ReportController::class, 'exportCsv'], ['auth']);
 
 // Audit Log Routes (Administrator Only)
