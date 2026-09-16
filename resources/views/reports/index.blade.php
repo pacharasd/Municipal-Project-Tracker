@@ -14,6 +14,15 @@ $avgProgress = count($projects) > 0 ? round(array_sum(array_column($projects, 'p
 $initPage = max(1, (int)($_GET['page'] ?? $page ?? 1));
 $initPerPageRaw = $_GET['per_page'] ?? $perPage ?? '15';
 $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw);
+
+$selectedStatusValue = match($status ?? '') {
+    'ยังไม่เริ่มดำเนินการ', 'ยังไม่เริ่ม', 'not_started' => 'not_started',
+    'กำลังดำเนินการ', 'in_progress' => 'in_progress',
+    'เสร็จสิ้น', 'completed' => 'completed',
+    'มีปัญหา', 'has_problem' => 'has_problem',
+    'ยกเลิก', 'cancelled' => 'cancelled',
+    default => (string)($status ?? '')
+};
 ?>
 
 <style>
@@ -58,8 +67,11 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
 </style>
 
 <div class="space-y-6" x-data="{
-    allProjects: <?= htmlspecialchars(json_encode($projects, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8') ?>,
+    allProjects: <?= htmlspecialchars(json_encode($allProjects ?? $projects, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8') ?>,
     searchKeyword: '',
+    selectedFiscalYear: '<?= htmlspecialchars((string)$fiscalYearId, ENT_QUOTES, 'UTF-8') ?>',
+    selectedDepartment: '<?= htmlspecialchars((string)$departmentId, ENT_QUOTES, 'UTF-8') ?>',
+    selectedStatus: '<?= htmlspecialchars((string)$selectedStatusValue, ENT_QUOTES, 'UTF-8') ?>',
     currentPage: <?= (int)$initPage ?>,
     perPage: <?= ($initPerPage === 'all') ? "'all'" : (int)$initPerPage ?>,
 
@@ -70,20 +82,110 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
             const pp = url.searchParams.get('per_page') || '15';
             this.currentPage = p;
             this.perPage = (pp === 'all') ? 'all' : (parseInt(pp) || 15);
+            this.selectedFiscalYear = url.searchParams.get('fiscal_year_id') || '';
+            this.selectedDepartment = url.searchParams.get('department_id') || '';
+            this.selectedStatus = url.searchParams.get('status') || '';
         });
     },
 
+    handleSelectChanged(detail) {
+        if (!detail || !detail.name) return;
+        if (detail.name === 'fiscal_year_id') {
+            this.selectedFiscalYear = String(detail.value || '');
+        } else if (detail.name === 'department_id') {
+            this.selectedDepartment = String(detail.value || '');
+        } else if (detail.name === 'status') {
+            this.selectedStatus = String(detail.value || '');
+        }
+        this.currentPage = 1;
+        this.syncUrl();
+    },
+
     get filteredProjects() {
-        const q = this.searchKeyword.trim().toLowerCase();
-        if (!q) return this.allProjects;
+        const q = (this.searchKeyword || '').trim().toLowerCase();
+        const fy = String(this.selectedFiscalYear || '');
+        const dept = String(this.selectedDepartment || '');
+        const st = String(this.selectedStatus || '');
+
         return this.allProjects.filter(p => {
-            const name = (p.name || '').toLowerCase();
-            const code = (p.project_code || '').toLowerCase();
-            const dept = (p.department_name || '').toLowerCase();
-            const parent = (p.parent_name || '').toLowerCase();
-            const resp = (p.responsible_person || p.responsible_name || '').toLowerCase();
-            return name.includes(q) || code.includes(q) || dept.includes(q) || parent.includes(q) || resp.includes(q);
+            // Keyword Search
+            if (q) {
+                const name = (p.name || '').toLowerCase();
+                const code = (p.project_code || '').toLowerCase();
+                const deptName = (p.department_name || '').toLowerCase();
+                const parent = (p.parent_name || '').toLowerCase();
+                const resp = (p.responsible_person || p.responsible_name || '').toLowerCase();
+                if (!name.includes(q) && !code.includes(q) && !deptName.includes(q) && !parent.includes(q) && !resp.includes(q)) {
+                    return false;
+                }
+            }
+            // Fiscal Year Filter
+            if (fy && String(p.fiscal_year_id || '') !== fy) {
+                return false;
+            }
+            // Department Filter
+            if (dept && String(p.department_id || '') !== dept) {
+                return false;
+            }
+            // Status Filter
+            if (st) {
+                const pStatus = String(p.status || '');
+                const matchStatus = (pStatus === st) ||
+                    (st === 'not_started' && (pStatus === 'not_started' || pStatus === 'ยังไม่เริ่ม' || pStatus === 'ยังไม่เริ่มดำเนินการ')) ||
+                    (st === 'in_progress' && (pStatus === 'in_progress' || pStatus === 'กำลังดำเนินการ')) ||
+                    (st === 'completed' && (pStatus === 'completed' || pStatus === 'เสร็จสิ้น')) ||
+                    (st === 'has_problem' && (pStatus === 'has_problem' || pStatus === 'มีปัญหา')) ||
+                    (st === 'cancelled' && (pStatus === 'cancelled' || pStatus === 'ยกเลิก'));
+                if (!matchStatus) return false;
+            }
+            return true;
         });
+    },
+
+    get totalFilteredBudget() {
+        return this.filteredProjects.reduce((sum, p) => sum + (parseFloat(p.budget) || 0), 0);
+    },
+
+    get totalFilteredDisbursed() {
+        return this.filteredProjects.reduce((sum, p) => sum + (parseFloat(p.disbursed_amount) || 0), 0);
+    },
+
+    get totalFilteredRemaining() {
+        return this.totalFilteredBudget - this.totalFilteredDisbursed;
+    },
+
+    get avgFilteredProgress() {
+        if (this.filteredProjects.length === 0) return 0;
+        const sum = this.filteredProjects.reduce((s, p) => s + (parseFloat(p.progress) || 0), 0);
+        return Math.round((sum / this.filteredProjects.length) * 10) / 10;
+    },
+
+    formatMillion(num) {
+        const val = (num || 0) / 1000000;
+        return val.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ล้าน';
+    },
+
+    getExportUrl(type) {
+        const base = type === 'excel' ? '<?= Router::url('/reports/export-excel') ?>' : '<?= Router::url('/reports/export-pdf') ?>';
+        const params = new URLSearchParams();
+        if (this.selectedFiscalYear) params.set('fiscal_year_id', this.selectedFiscalYear);
+        if (this.selectedDepartment) params.set('department_id', this.selectedDepartment);
+        if (this.selectedStatus) params.set('status', this.selectedStatus);
+        if (this.searchKeyword) params.set('search', this.searchKeyword);
+        const qs = params.toString();
+        return qs ? base + '?' + qs : base;
+    },
+
+    resetAllFilters() {
+        this.searchKeyword = '';
+        this.selectedFiscalYear = '';
+        this.selectedDepartment = '';
+        this.selectedStatus = '';
+        this.currentPage = 1;
+        window.dispatchEvent(new CustomEvent('set-select-fiscal_year_id', { detail: '' }));
+        window.dispatchEvent(new CustomEvent('set-select-department_id', { detail: '' }));
+        window.dispatchEvent(new CustomEvent('set-select-status', { detail: '' }));
+        this.syncUrl();
     },
 
     get totalPages() {
@@ -182,6 +284,21 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
             } else {
                 url.searchParams.delete('per_page');
             }
+            if (this.selectedFiscalYear) {
+                url.searchParams.set('fiscal_year_id', this.selectedFiscalYear);
+            } else {
+                url.searchParams.delete('fiscal_year_id');
+            }
+            if (this.selectedDepartment) {
+                url.searchParams.set('department_id', this.selectedDepartment);
+            } else {
+                url.searchParams.delete('department_id');
+            }
+            if (this.selectedStatus) {
+                url.searchParams.set('status', this.selectedStatus);
+            } else {
+                url.searchParams.delete('status');
+            }
             window.history.replaceState({}, '', url.toString());
         } catch (e) {}
     },
@@ -233,14 +350,14 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
         <!-- Export Actions (Excel, PDF, Print) -->
         <div class="grid grid-cols-3 sm:flex items-center gap-2 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-white/[0.06] w-full sm:w-auto shrink-0">
             <!-- Export Excel (Filtered) -->
-            <a href="<?= Router::url('/reports/export-excel?' . http_build_query($_GET)) ?>" target="_blank"
+            <a :href="getExportUrl('excel')" href="<?= Router::url('/reports/export-excel?' . http_build_query($_GET)) ?>" target="_blank"
                class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-all text-center cursor-pointer">
                 <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0"></i>
                 <span class="truncate">Excel</span>
             </a>
 
             <!-- Export PDF (Filtered) -->
-            <a href="<?= Router::url('/reports/export-pdf?' . http_build_query($_GET)) ?>" target="_blank"
+            <a :href="getExportUrl('pdf')" href="<?= Router::url('/reports/export-pdf?' . http_build_query($_GET)) ?>" target="_blank"
                class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-all text-center cursor-pointer">
                 <i data-lucide="file-text" class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0"></i>
                 <span class="truncate">PDF</span>
@@ -257,48 +374,79 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
 
     <!-- Filter Card (No Print) -->
     <div class="bg-white dark:bg-[#181a20] rounded-2xl p-5 border border-slate-200/80 dark:border-white/[0.08] shadow-sm no-print">
-        <form action="<?= Router::url('/reports') ?>" method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+        <?php
+        $fySelectOptions = [
+            ['value' => '', 'label' => '-- ทุกปีงบประมาณ --']
+        ];
+        foreach ($fiscalYears as $fy) {
+            $fySelectOptions[] = [
+                'value' => (string)$fy['id'],
+                'label' => 'ปี ' . $fy['year'],
+                'badge' => !empty($fy['is_active']) ? 'ปัจจุบัน' : '',
+            ];
+        }
+
+        $deptSelectOptions = [
+            ['value' => '', 'label' => '-- ทุกหน่วยงาน --']
+        ];
+        foreach ($departments as $dept) {
+            $deptSelectOptions[] = [
+                'value' => (string)$dept['id'],
+                'label' => $dept['name'],
+            ];
+        }
+
+        $statusSelectOptions = [
+            ['value' => '', 'label' => '-- ทุกสถานะ --', 'dot' => ''],
+            ['value' => 'not_started', 'label' => 'ยังไม่เริ่ม', 'dot' => 'bg-indigo-500'],
+            ['value' => 'in_progress', 'label' => 'กำลังดำเนินการ', 'dot' => 'bg-sky-500'],
+            ['value' => 'completed', 'label' => 'เสร็จสิ้น', 'dot' => 'bg-emerald-500'],
+            ['value' => 'has_problem', 'label' => 'มีปัญหา', 'dot' => 'bg-rose-500'],
+            ['value' => 'cancelled', 'label' => 'ยกเลิก', 'dot' => 'bg-slate-400'],
+        ];
+        ?>
+        <form action="<?= Router::url('/reports') ?>" method="GET" @submit.prevent="currentPage = 1; syncUrl()" @select-changed="handleSelectChanged($event.detail)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
             
             <!-- Fiscal Year -->
             <div>
-                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">ปีงบประมาณ</label>
-                <select name="fiscal_year_id" 
-                        class="w-full px-3.5 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none dark:text-white transition">
-                    <option value="">-- ทุกปีงบประมาณ --</option>
-                    <?php foreach ($fiscalYears as $fy): ?>
-                        <option value="<?= $fy['id'] ?>" <?= $fiscalYearId == $fy['id'] ? 'selected' : '' ?>>
-                            ปี <?= $fy['year'] ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <?php \App\Core\View::component('custom-select', [
+                    'name' => 'fiscal_year_id',
+                    'label' => 'ปีงบประมาณ',
+                    'value' => (string)$fiscalYearId,
+                    'placeholder' => '-- ทุกปีงบประมาณ --',
+                    'options' => $fySelectOptions,
+                    'searchable' => true,
+                    'searchPlaceholder' => 'ค้นหาปีงบประมาณ...',
+                    'icon' => 'calendar',
+                ]); ?>
             </div>
 
             <!-- Department -->
             <div>
-                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">หน่วยงาน / สำนัก / กอง</label>
-                <select name="department_id" 
-                        class="w-full px-3.5 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none dark:text-white transition">
-                    <option value="">-- ทุกหน่วยงาน --</option>
-                    <?php foreach ($departments as $dept): ?>
-                        <option value="<?= $dept['id'] ?>" <?= $departmentId == $dept['id'] ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($dept['name']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <?php \App\Core\View::component('custom-select', [
+                    'name' => 'department_id',
+                    'label' => 'หน่วยงาน / สำนัก / กอง',
+                    'value' => (string)$departmentId,
+                    'placeholder' => '-- ทุกหน่วยงาน --',
+                    'options' => $deptSelectOptions,
+                    'searchable' => true,
+                    'searchPlaceholder' => 'ค้นหาหน่วยงาน / สำนัก / กอง...',
+                    'icon' => 'building-2',
+                ]); ?>
             </div>
 
             <!-- Status -->
             <div>
-                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">สถานะโครงการ</label>
-                <select name="status" 
-                        class="w-full px-3.5 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none dark:text-white transition">
-                    <option value="">-- ทุกสถานะ --</option>
-                    <option value="not_started" <?= in_array($status, ['not_started', 'ยังไม่เริ่ม', 'ยังไม่เริ่มดำเนินการ']) ? 'selected' : '' ?>>ยังไม่เริ่ม</option>
-                    <option value="in_progress" <?= in_array($status, ['in_progress', 'กำลังดำเนินการ']) ? 'selected' : '' ?>>กำลังดำเนินการ</option>
-                    <option value="completed" <?= in_array($status, ['completed', 'เสร็จสิ้น']) ? 'selected' : '' ?>>เสร็จสิ้น</option>
-                    <option value="has_problem" <?= in_array($status, ['has_problem', 'มีปัญหา']) ? 'selected' : '' ?>>มีปัญหา</option>
-                    <option value="cancelled" <?= in_array($status, ['cancelled', 'ยกเลิก']) ? 'selected' : '' ?>>ยกเลิก</option>
-                </select>
+                <?php \App\Core\View::component('custom-select', [
+                    'name' => 'status',
+                    'label' => 'สถานะโครงการ',
+                    'value' => $selectedStatusValue,
+                    'placeholder' => '-- ทุกสถานะ --',
+                    'options' => $statusSelectOptions,
+                    'searchable' => true,
+                    'searchPlaceholder' => 'ค้นหาสถานะ...',
+                    'icon' => 'activity',
+                ]); ?>
             </div>
 
             <!-- Buttons -->
@@ -308,11 +456,12 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
                     <i data-lucide="filter" class="w-4 h-4"></i>
                     <span>กรองข้อมูล</span>
                 </button>
-                <a href="<?= Router::url('/reports') ?>" 
+                <button type="button" 
+                   @click="resetAllFilters()"
                    class="px-3 py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400 rounded-xl text-sm transition-colors text-center cursor-pointer"
                    title="ล้างตัวกรอง">
                     รีเซ็ต
-                </a>
+                </button>
             </div>
         </form>
     </div>
@@ -321,23 +470,31 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-white dark:bg-[#181a20] rounded-2xl p-4 border border-slate-200/80 dark:border-white/[0.08] shadow-sm">
             <span class="text-xs font-medium text-slate-500 dark:text-slate-400">จำนวนโครงการที่รายงาน</span>
-            <div class="text-xl font-bold text-slate-900 dark:text-white mt-1"><?= number_format(count($projects)) ?> โครงการ</div>
+            <div class="text-xl font-bold text-slate-900 dark:text-white mt-1">
+                <span x-text="filteredProjects.length.toLocaleString('th-TH')"><?= number_format(count($projects)) ?></span> โครงการ
+            </div>
         </div>
         <div class="bg-white dark:bg-[#181a20] rounded-2xl p-4 border border-slate-200/80 dark:border-white/[0.08] shadow-sm">
             <span class="text-xs font-medium text-slate-500 dark:text-slate-400">งบประมาณรวมตามเกณฑ์</span>
-            <div class="mt-1">
-                <?= \App\Core\Helper::moneyDisplay($totalBudget, 'card', 'left', 'text-blue-600 dark:text-blue-400') ?>
+            <div class="mt-1 flex items-baseline gap-1.5">
+                <span class="text-xl font-bold text-blue-600 dark:text-blue-400" x-text="formatMillion(totalFilteredBudget)">
+                    <?= \App\Core\Helper::moneyDisplay($totalBudget, 'card', 'left', 'text-blue-600 dark:text-blue-400') ?>
+                </span>
             </div>
         </div>
         <div class="bg-white dark:bg-[#181a20] rounded-2xl p-4 border border-slate-200/80 dark:border-white/[0.08] shadow-sm">
             <span class="text-xs font-medium text-slate-500 dark:text-slate-400">ยอดเบิกจ่ายสะสม</span>
-            <div class="mt-1">
-                <?= \App\Core\Helper::moneyDisplay($totalDisbursed, 'card', 'left', 'text-purple-600 dark:text-purple-400') ?>
+            <div class="mt-1 flex items-baseline gap-1.5">
+                <span class="text-xl font-bold text-purple-600 dark:text-purple-400" x-text="formatMillion(totalFilteredDisbursed)">
+                    <?= \App\Core\Helper::moneyDisplay($totalDisbursed, 'card', 'left', 'text-purple-600 dark:text-purple-400') ?>
+                </span>
             </div>
         </div>
         <div class="bg-white dark:bg-[#181a20] rounded-2xl p-4 border border-slate-200/80 dark:border-white/[0.08] shadow-sm">
             <span class="text-xs font-medium text-slate-500 dark:text-slate-400">ความคืบหน้าเฉลี่ย</span>
-            <div class="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1"><?= $avgProgress ?>%</div>
+            <div class="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                <span x-text="avgFilteredProgress"><?= $avgProgress ?></span>%
+            </div>
         </div>
     </div>
 

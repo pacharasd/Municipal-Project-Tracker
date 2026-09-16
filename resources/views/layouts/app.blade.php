@@ -444,6 +444,171 @@
         window.thaiDatePicker = thaiDatePicker;
 
         /**
+         * Global Unified Custom Select Component for Alpine.js
+         * Follows Emerald-Obsidian Design System (Theme-matching, Dark Mode, ARIA, Keyboard support)
+         */
+        function customSelect(config = {}) {
+            return {
+                name: config.name || '',
+                id: config.id || config.name || '',
+                value: String(config.value !== undefined && config.value !== null ? config.value : ''),
+                placeholder: config.placeholder || '-- เลือก --',
+                options: Array.isArray(config.options) ? config.options : [],
+                searchable: !!config.searchable,
+                searchPlaceholder: config.searchPlaceholder || 'ค้นหาตัวเลือก...',
+                required: !!config.required,
+                disabled: !!config.disabled,
+                open: false,
+                search: '',
+                highlightedIndex: -1,
+                selectedLabel: '',
+                selectedDot: '',
+                selectedBadge: '',
+
+                init() {
+                    this.syncFromValue();
+
+                    // Two-way watch if parent model is passed
+                    if (config.model && typeof this.$watch === 'function') {
+                        this.$watch(config.model, (newVal) => {
+                            if (String(newVal || '') !== String(this.value)) {
+                                this.value = String(newVal || '');
+                                this.syncFromValue();
+                            }
+                        });
+                    }
+
+                    // Listen for programmatic value updates
+                    if (this.name) {
+                        window.addEventListener('set-select-' + this.name, (e) => {
+                            this.setValue(e.detail);
+                        });
+                    }
+                    if (this.id && this.id !== this.name) {
+                        window.addEventListener('set-select-' + this.id, (e) => {
+                            this.setValue(e.detail);
+                        });
+                    }
+
+                    this.$nextTick(() => {
+                        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                            window.lucide.createIcons();
+                        }
+                    });
+                },
+
+                syncFromValue() {
+                    const match = this.options.find(opt => String(opt.value) === String(this.value));
+                    if (match) {
+                        this.selectedLabel = match.label || '';
+                        this.selectedDot = match.dot || '';
+                        this.selectedBadge = match.badge || '';
+                    } else {
+                        const emptyOpt = this.options.find(opt => String(opt.value) === '');
+                        if (emptyOpt) {
+                            this.selectedLabel = emptyOpt.label || this.placeholder;
+                            this.selectedDot = emptyOpt.dot || '';
+                            this.selectedBadge = emptyOpt.badge || '';
+                        } else {
+                            this.selectedLabel = this.placeholder;
+                            this.selectedDot = '';
+                            this.selectedBadge = '';
+                        }
+                    }
+                },
+
+                get filteredOptions() {
+                    const q = (this.search || '').trim().toLowerCase();
+                    if (!q) return this.options;
+                    return this.options.filter(opt => {
+                        const l = String(opt.label || '').toLowerCase();
+                        const sub = String(opt.subtext || '').toLowerCase();
+                        return l.includes(q) || sub.includes(q);
+                    });
+                },
+
+                toggle() {
+                    if (this.disabled) return;
+                    this.open = !this.open;
+                    if (this.open) {
+                        this.search = '';
+                        this.highlightedIndex = -1;
+                        this.$nextTick(() => {
+                            if (this.searchable) {
+                                const input = this.$refs && this.$refs.searchInput;
+                                if (input) input.focus();
+                            }
+                            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                                window.lucide.createIcons();
+                            }
+                        });
+                    }
+                },
+
+                close() {
+                    this.open = false;
+                    this.search = '';
+                    this.highlightedIndex = -1;
+                },
+
+                select(opt) {
+                    if (!opt) return;
+                    this.value = String(opt.value !== undefined && opt.value !== null ? opt.value : '');
+                    this.selectedLabel = opt.label || '';
+                    this.selectedDot = opt.dot || '';
+                    this.selectedBadge = opt.badge || '';
+                    this.close();
+                    this.dispatchChange();
+                },
+
+                setValue(val) {
+                    this.value = String(val !== undefined && val !== null ? val : '');
+                    this.syncFromValue();
+                    this.dispatchChange();
+                },
+
+                dispatchChange() {
+                    this.$nextTick(() => {
+                        if (this.$el) {
+                            const hiddenInput = this.$el.querySelector('input[type="hidden"]');
+                            if (hiddenInput) {
+                                hiddenInput.value = this.value;
+                                hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+                                hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+                            this.$el.dispatchEvent(new CustomEvent('select-changed', {
+                                bubbles: true,
+                                detail: { name: this.name, value: this.value }
+                            }));
+                        }
+                        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                            window.lucide.createIcons();
+                        }
+                    });
+                },
+
+                navigateOptions(dir) {
+                    const opts = this.filteredOptions;
+                    if (!opts || opts.length === 0) return;
+                    if (dir === 'down') {
+                        this.highlightedIndex = (this.highlightedIndex + 1) % opts.length;
+                    } else if (dir === 'up') {
+                        this.highlightedIndex = (this.highlightedIndex - 1 + opts.length) % opts.length;
+                    }
+                },
+
+                selectHighlighted() {
+                    const opts = this.filteredOptions;
+                    if (this.highlightedIndex >= 0 && this.highlightedIndex < opts.length) {
+                        this.select(opts[this.highlightedIndex]);
+                    }
+                }
+            };
+        }
+        window.customSelect = customSelect;
+
+
+        /**
          * Global Thai Million Compact Currency Formatter for Alpine.js & Client Scripts
          * e.g. 1000000 -> short: "1 ล้าน", full: "1,000,000.00 บาท"
          *      40700000 -> short: "40.7 ล้าน", full: "40,700,000.00 บาท"
@@ -1086,29 +1251,28 @@
                     <i data-lucide="menu" class="w-4.5 h-4.5 sm:w-5 sm:h-5"></i>
                 </button>
                 <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="shrink-0 flex items-center gap-1.5 sm:gap-2 group" title="ระบบติดตามและบริหารโครงการเทศบาล">
-                    <!-- โลโก้เทศบาล (พื้นหลังขาวคมชัดทุกธีม) -->
-                    <div data-keep-white class="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl bg-white p-1 shadow-xs border border-slate-200/80 dark:border-white/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <!-- ตราสัญลักษณ์ร่วม (เทศบาล x กปท.) พื้นหลังขาวคมชัดทุกธีม ขนาดกะทัดรัดได้สัดส่วน -->
+                    <div data-keep-white 
+                         style="background-color: #ffffff !important;" 
+                         class="h-7.5 sm:h-8 px-1.5 sm:px-2 py-0.5 rounded-xl bg-white shadow-xs border border-slate-200/90 dark:border-white/30 flex items-center gap-1.5 sm:gap-2 shrink-0 group-hover:scale-[1.02] transition-transform">
                         <img src="<?= \App\Core\Router::url('/images/mobile-logo.webp') ?>" 
                              alt="โลโก้เทศบาล" 
-                             class="w-full h-full object-contain"
+                             class="h-5 w-5 sm:h-5.5 sm:w-5.5 object-contain shrink-0"
                              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <div style="display:none;" class="w-full h-full rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-400 items-center justify-center text-slate-950 font-bold shadow-neon-green">
-                            <i data-lucide="activity" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
+                        <div style="display:none;" class="w-5 h-5 rounded-md bg-gradient-to-tr from-emerald-500 to-teal-400 items-center justify-center text-slate-950 font-bold">
+                            <i data-lucide="activity" class="w-3 h-3"></i>
                         </div>
-                    </div>
-
-                    <!-- โลโก้ กปท. (กองทุนหลักประกันสุขภาพท้องถิ่น - พื้นหลังขาวคมชัดทุกธีม) -->
-                    <div data-keep-white class="h-8 sm:h-8.5 px-2 py-0.5 rounded-xl border border-slate-200/80 dark:border-white/20 bg-white shadow-xs flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                        <div class="h-3.5 w-px bg-slate-200 shrink-0"></div>
                         <img src="<?= \App\Core\Router::url('/images/kpth-logo.png') ?>" 
                              alt="โลโก้ กปท. กองทุนหลักประกันสุขภาพท้องถิ่น" 
-                             class="h-4.5 sm:h-5 w-auto max-w-[65px] sm:max-w-[75px] object-contain shrink-0">
+                             class="h-3.5 sm:h-4 w-auto max-w-[52px] sm:max-w-[64px] object-contain shrink-0">
                     </div>
                 </a>
                 <div class="min-w-0 hidden md:block">
-                    <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="font-bold font-heading text-slate-900 dark:text-white tracking-tight flex items-center gap-1.5 leading-tight">
+                    <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="font-bold font-heading text-slate-900 dark:text-white tracking-tight flex items-center gap-1.5 leading-tight hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
                         <span class="text-xs sm:text-sm font-bold whitespace-nowrap">ระบบติดตามและบริหารโครงการเทศบาล</span>
                     </a>
-                    <p class="text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-medium truncate leading-tight">คณะอนุกรรมการฝ่ายติดตามและการประเมินผล</p>
+                    <p class="text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-medium truncate leading-tight mt-0.5">คณะอนุกรรมการฝ่ายติดตามและการประเมินผล</p>
                 </div>
             </div>
 
@@ -1405,44 +1569,46 @@
                class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-[#0b0c0f] border-r border-slate-200 dark:border-white/[0.08] pt-0 transform -translate-x-full lg:translate-x-0 lg:ml-0 lg:static transition-[margin-left,transform] duration-200 ease-out flex flex-col justify-between shadow-lg dark:shadow-2xl lg:shadow-none overflow-hidden shrink-0 will-change-[margin-left,transform]">
             <div class="w-64 h-full flex flex-col justify-between overflow-hidden">
                 
-                <!-- Mobile Sidebar Brand Header with Municipal Logo (Replaces empty top space) -->
-                <div class="lg:hidden h-13 sm:h-14 px-3.5 flex items-center justify-between border-b border-slate-200/80 dark:border-white/[0.08] shrink-0 bg-slate-50/70 dark:bg-white/[0.02]">
-                    <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="flex items-center gap-2 min-w-0 group" title="ระบบติดตามและบริหารโครงการเทศบาล">
-                        <!-- โลโก้เทศบาล (พื้นหลังขาวคมชัดทุกธีม) -->
-                        <div data-keep-white class="w-8 h-8 rounded-xl bg-white p-1 shadow-sm border border-slate-200/80 dark:border-white/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <!-- Mobile Sidebar Brand Header with Municipal & KPTH Logo -->
+                <div class="lg:hidden px-4 py-3.5 border-b border-slate-200/80 dark:border-white/[0.08] shrink-0 bg-slate-50/80 dark:bg-white/[0.02]">
+                    <div class="flex items-center justify-between gap-2 mb-2.5">
+                        <!-- Unified Emblem Pill (Compact & Crisp White) -->
+                        <a href="<?= \App\Core\Router::url('/dashboard') ?>" 
+                           data-keep-white 
+                           style="background-color: #ffffff !important;" 
+                           class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-xl bg-white shadow-xs border border-slate-200/90 dark:border-white/30 group hover:scale-[1.02] transition-transform" 
+                           title="ระบบติดตามและบริหารโครงการเทศบาล">
                             <img src="<?= \App\Core\Router::url('/images/mobile-logo.webp') ?>" 
                                  alt="โลโก้เทศบาล" 
-                                 class="w-full h-full object-contain"
+                                 class="h-5 w-5 object-contain shrink-0"
                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                            <div style="display:none;" class="w-full h-full rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-400 items-center justify-center text-slate-950 font-bold">
-                                <i data-lucide="activity" class="w-4 h-4"></i>
+                            <div style="display:none;" class="w-5 h-5 rounded-md bg-gradient-to-tr from-emerald-500 to-teal-400 items-center justify-center text-slate-950 font-bold">
+                                <i data-lucide="activity" class="w-3 h-3"></i>
                             </div>
-                        </div>
-
-                        <!-- โลโก้ กปท. -->
-                        <div data-keep-white class="h-8 px-1.5 py-0.5 rounded-xl border border-slate-200/80 dark:border-white/20 bg-white shadow-sm flex items-center justify-center shrink-0">
+                            <div class="h-3.5 w-px bg-slate-200 shrink-0"></div>
                             <img src="<?= \App\Core\Router::url('/images/kpth-logo.png') ?>" 
                                  alt="กปท." 
-                                 class="h-5 w-auto max-w-[60px] object-contain shrink-0">
-                        </div>
+                                 class="h-3.5 w-auto max-w-[54px] object-contain shrink-0">
+                        </a>
 
-                        <div class="min-w-0 flex-1">
-                            <div class="font-bold text-xs font-heading text-slate-900 dark:text-white truncate">
-                                ติดตามโครงการ
-                            </div>
-                            <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold truncate" title="คณะอนุกรรมการฝ่ายติดตามและการประเมินผล">
-                                คณะอนุกรรมการฝ่ายติดตามและการประเมินผล
-                            </div>
+                        <!-- Close Drawer Button on Mobile -->
+                        <button type="button" 
+                                @click="sidebarOpen = false" 
+                                class="w-8 h-8 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-white/10 transition shrink-0 cursor-pointer flex items-center justify-center"
+                                aria-label="ปิดเมนู">
+                            <i data-lucide="x" class="w-4.5 h-4.5"></i>
+                        </button>
+                    </div>
+
+                    <!-- Brand Title & Subtitle (Full-width, Beautifully Typeset, No Truncation) -->
+                    <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="block group">
+                        <div class="font-bold text-xs sm:text-sm font-heading text-slate-900 dark:text-white leading-tight group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                            ระบบติดตามและบริหารโครงการเทศบาล
                         </div>
+                        <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold leading-tight mt-0.5 truncate">
+                            คณะอนุกรรมการฝ่ายติดตามและการประเมินผล
+                        </p>
                     </a>
-
-                    <!-- Close Drawer Button on Mobile -->
-                    <button type="button" 
-                            @click="sidebarOpen = false" 
-                            class="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-white/10 transition shrink-0 cursor-pointer ml-1"
-                            aria-label="ปิดเมนู">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
                 </div>
 
                 <div id="sidebar-nav-items" class="p-4 space-y-2 overflow-y-auto flex-1">

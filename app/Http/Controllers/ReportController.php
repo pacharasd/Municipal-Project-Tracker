@@ -53,12 +53,27 @@ class ReportController
         $fiscalYears = \App\Services\FiscalYearService::getFilterableYears();
         $departments = \App\Services\DepartmentService::getAll();
 
+        // Always provide full dataset for fluid real-time client-side Alpine filtering
+        $allProjectsSql = "SELECT p.*, 
+                       parent.name as parent_name,
+                       d.name as department_name,
+                       f.year as fiscal_year,
+                       u.name as responsible_name
+                FROM projects p
+                LEFT JOIN projects parent ON p.parent_id = parent.id
+                LEFT JOIN departments d ON p.department_id = d.id
+                LEFT JOIN fiscal_years f ON p.fiscal_year_id = f.id
+                LEFT JOIN users u ON p.responsible_user_id = u.id
+                ORDER BY p.parent_id IS NULL DESC, p.id DESC";
+        $allProjects = Database::query($allProjectsSql);
+
         $page = max(1, (int)($_GET['page'] ?? 1));
         $perPageRaw = $_GET['per_page'] ?? '15';
         $perPage = ($perPageRaw === 'all') ? 'all' : max(1, (int)$perPageRaw);
 
         View::render('reports.index', [
             'projects'     => $projects,
+            'allProjects'  => $allProjects,
             'fiscalYears'  => $fiscalYears,
             'departments'  => $departments,
             'fiscalYearId' => $fiscalYearId,

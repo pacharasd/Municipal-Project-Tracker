@@ -150,18 +150,17 @@ $lockoutSeconds = (int)(Session::flash('lockout_seconds') ?: 0);
         <div class="max-w-7xl mx-auto flex items-center justify-between h-11 sm:h-12">
             <!-- Left Branding -->
             <div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
-                <!-- โลโก้เทศบาล (พื้นหลังขาวคมชัดทุกธีม) -->
-                <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white p-1 shadow-xs border border-slate-200/80 dark:border-white/20 flex items-center justify-center shrink-0">
+                <!-- ตราสัญลักษณ์ร่วม (เทศบาล x กปท.) ในตลับแคปซูลแบรนด์เดียว พื้นหลังขาวคมชัดทุกธีม -->
+                <div data-keep-white 
+                     style="background-color: #ffffff !important;" 
+                     class="h-7.5 sm:h-8 px-1.5 sm:px-2 py-0.5 rounded-xl bg-white shadow-xs border border-slate-200/90 dark:border-white/30 flex items-center gap-1.5 sm:gap-2 shrink-0">
                     <img src="<?= Router::url('/images/mobile-logo.webp') ?>" 
                          alt="โลโก้เทศบาล" 
-                         class="w-full h-full object-contain">
-                </div>
-
-                <!-- โลโก้ กปท. (กองทุนหลักประกันสุขภาพท้องถิ่น - พื้นหลังขาวคมชัดทุกธีม) -->
-                <div class="h-8 sm:h-9 px-2 py-0.5 rounded-xl border border-slate-200/80 dark:border-white/20 bg-white shadow-xs flex items-center justify-center shrink-0">
+                         class="h-5 w-5 sm:h-5.5 sm:w-5.5 object-contain shrink-0">
+                    <div class="h-3.5 w-px bg-slate-200 shrink-0"></div>
                     <img src="<?= Router::url('/images/kpth-logo.png') ?>" 
                          alt="โลโก้ กปท. กองทุนหลักประกันสุขภาพท้องถิ่น" 
-                         class="h-5 sm:h-5.5 w-auto max-w-[75px] object-contain shrink-0">
+                         class="h-3.5 sm:h-4 w-auto max-w-[52px] sm:max-w-[64px] object-contain shrink-0">
                 </div>
 
                 <div class="min-w-0 hidden sm:block">
@@ -269,15 +268,17 @@ $lockoutSeconds = (int)(Session::flash('lockout_seconds') ?: 0);
             
             <!-- Card Header: Official Seal & Titles -->
             <div class="text-center mb-6">
-                <!-- Dual Emblem Badges -->
-                <div class="inline-flex items-center gap-2.5 p-2 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.06] mb-4 shadow-xs">
+                <!-- Dual Emblem Badge (Pure White Background) -->
+                <div data-keep-white 
+                     style="background-color: #ffffff !important;" 
+                     class="inline-flex items-center gap-2 px-2.5 py-1 rounded-2xl bg-white shadow-xs border border-slate-200/90 dark:border-white/30 mb-4">
                     <img src="<?= Router::url('/images/mobile-logo.webp') ?>" 
                          alt="ตราสัญลักษณ์เทศบาล" 
-                         class="w-10 h-10 object-contain">
-                    <div class="h-6 w-px bg-slate-200 dark:bg-white/10"></div>
+                         class="w-8 h-8 object-contain shrink-0">
+                    <div class="h-4.5 w-px bg-slate-200 shrink-0"></div>
                     <img src="<?= Router::url('/images/kpth-logo.png') ?>" 
                          alt="กปท." 
-                         class="h-7 w-auto object-contain">
+                         class="h-5 sm:h-5.5 w-auto max-w-[72px] object-contain shrink-0">
                 </div>
 
                 <h1 class="font-heading text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
