@@ -1254,18 +1254,18 @@
                     <!-- ตราสัญลักษณ์ร่วม (เทศบาล x กปท.) พื้นหลังขาวคมชัดทุกธีม ขนาดกะทัดรัดได้สัดส่วน -->
                     <div data-keep-white 
                          style="background-color: #ffffff !important;" 
-                         class="h-7.5 sm:h-8 px-1.5 sm:px-2 py-0.5 rounded-xl bg-white shadow-xs border border-slate-200/90 dark:border-white/30 flex items-center gap-1.5 sm:gap-2 shrink-0 group-hover:scale-[1.02] transition-transform">
+                         class="h-8 px-2.5 py-1 rounded-xl bg-white shadow-xs border border-slate-200/90 dark:border-white/30 flex items-center gap-2 shrink-0 group-hover:scale-[1.02] transition-transform">
                         <img src="<?= \App\Core\Router::url('/images/mobile-logo.webp') ?>" 
                              alt="โลโก้เทศบาล" 
-                             class="h-5 w-5 sm:h-5.5 sm:w-5.5 object-contain shrink-0"
+                             class="h-6 w-6 object-contain shrink-0"
                              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <div style="display:none;" class="w-5 h-5 rounded-md bg-gradient-to-tr from-emerald-500 to-teal-400 items-center justify-center text-slate-950 font-bold">
-                            <i data-lucide="activity" class="w-3 h-3"></i>
+                        <div style="display:none;" class="w-6 h-6 rounded-md bg-gradient-to-tr from-emerald-500 to-teal-400 items-center justify-center text-slate-950 font-bold">
+                            <i data-lucide="activity" class="w-3.5 h-3.5"></i>
                         </div>
-                        <div class="h-3.5 w-px bg-slate-200 shrink-0"></div>
+                        <div class="h-4 w-px bg-slate-200 shrink-0"></div>
                         <img src="<?= \App\Core\Router::url('/images/kpth-logo.png') ?>" 
                              alt="โลโก้ กปท. กองทุนหลักประกันสุขภาพท้องถิ่น" 
-                             class="h-3.5 sm:h-4 w-auto max-w-[52px] sm:max-w-[64px] object-contain shrink-0">
+                             class="h-5 w-auto max-w-[65px] object-contain shrink-0">
                     </div>
                 </a>
                 <div class="min-w-0 hidden md:block">
@@ -1576,19 +1576,19 @@
                         <a href="<?= \App\Core\Router::url('/dashboard') ?>" 
                            data-keep-white 
                            style="background-color: #ffffff !important;" 
-                           class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-xl bg-white shadow-xs border border-slate-200/90 dark:border-white/30 group hover:scale-[1.02] transition-transform" 
+                           class="inline-flex items-center gap-2 px-2.5 py-1 rounded-xl bg-white shadow-xs border border-slate-200/90 dark:border-white/30 group hover:scale-[1.02] transition-transform" 
                            title="ระบบติดตามและบริหารโครงการเทศบาล">
                             <img src="<?= \App\Core\Router::url('/images/mobile-logo.webp') ?>" 
                                  alt="โลโก้เทศบาล" 
-                                 class="h-5 w-5 object-contain shrink-0"
+                                 class="h-6 w-6 object-contain shrink-0"
                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                            <div style="display:none;" class="w-5 h-5 rounded-md bg-gradient-to-tr from-emerald-500 to-teal-400 items-center justify-center text-slate-950 font-bold">
-                                <i data-lucide="activity" class="w-3 h-3"></i>
+                            <div style="display:none;" class="w-6 h-6 rounded-md bg-gradient-to-tr from-emerald-500 to-teal-400 items-center justify-center text-slate-950 font-bold">
+                                <i data-lucide="activity" class="w-3.5 h-3.5"></i>
                             </div>
-                            <div class="h-3.5 w-px bg-slate-200 shrink-0"></div>
+                            <div class="h-4 w-px bg-slate-200 shrink-0"></div>
                             <img src="<?= \App\Core\Router::url('/images/kpth-logo.png') ?>" 
                                  alt="กปท." 
-                                 class="h-3.5 w-auto max-w-[54px] object-contain shrink-0">
+                                 class="h-5 w-auto max-w-[65px] object-contain shrink-0">
                         </a>
 
                         <!-- Close Drawer Button on Mobile -->

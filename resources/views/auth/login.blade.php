@@ -153,14 +153,14 @@ $lockoutSeconds = (int)(Session::flash('lockout_seconds') ?: 0);
                 <!-- ตราสัญลักษณ์ร่วม (เทศบาล x กปท.) ในตลับแคปซูลแบรนด์เดียว พื้นหลังขาวคมชัดทุกธีม -->
                 <div data-keep-white 
                      style="background-color: #ffffff !important;" 
-                     class="h-7.5 sm:h-8 px-1.5 sm:px-2 py-0.5 rounded-xl bg-white shadow-xs border border-slate-200/90 dark:border-white/30 flex items-center gap-1.5 sm:gap-2 shrink-0">
+                     class="h-8 px-2.5 py-1 rounded-xl bg-white shadow-xs border border-slate-200/90 dark:border-white/30 flex items-center gap-2 shrink-0">
                     <img src="<?= Router::url('/images/mobile-logo.webp') ?>" 
                          alt="โลโก้เทศบาล" 
-                         class="h-5 w-5 sm:h-5.5 sm:w-5.5 object-contain shrink-0">
-                    <div class="h-3.5 w-px bg-slate-200 shrink-0"></div>
+                         class="h-6 w-6 object-contain shrink-0">
+                    <div class="h-4 w-px bg-slate-200 shrink-0"></div>
                     <img src="<?= Router::url('/images/kpth-logo.png') ?>" 
                          alt="โลโก้ กปท. กองทุนหลักประกันสุขภาพท้องถิ่น" 
-                         class="h-3.5 sm:h-4 w-auto max-w-[52px] sm:max-w-[64px] object-contain shrink-0">
+                         class="h-5 w-auto max-w-[65px] object-contain shrink-0">
                 </div>
 
                 <div class="min-w-0 hidden sm:block">
@@ -271,14 +271,14 @@ $lockoutSeconds = (int)(Session::flash('lockout_seconds') ?: 0);
                 <!-- Dual Emblem Badge (Pure White Background) -->
                 <div data-keep-white 
                      style="background-color: #ffffff !important;" 
-                     class="inline-flex items-center gap-2 px-2.5 py-1 rounded-2xl bg-white shadow-xs border border-slate-200/90 dark:border-white/30 mb-4">
+                     class="inline-flex items-center gap-2.5 px-3.5 sm:px-4 py-1.5 rounded-2xl bg-white shadow-xs border border-slate-200/90 dark:border-white/30 mb-4">
                     <img src="<?= Router::url('/images/mobile-logo.webp') ?>" 
                          alt="ตราสัญลักษณ์เทศบาล" 
-                         class="w-8 h-8 object-contain shrink-0">
-                    <div class="h-4.5 w-px bg-slate-200 shrink-0"></div>
+                         class="w-10 h-10 sm:w-11 sm:h-11 object-contain shrink-0">
+                    <div class="h-7 w-px bg-slate-200 shrink-0"></div>
                     <img src="<?= Router::url('/images/kpth-logo.png') ?>" 
                          alt="กปท." 
-                         class="h-5 sm:h-5.5 w-auto max-w-[72px] object-contain shrink-0">
+                         class="h-7 sm:h-8 w-auto max-w-[90px] sm:max-w-[100px] object-contain shrink-0">
                 </div>
 
                 <h1 class="font-heading text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
