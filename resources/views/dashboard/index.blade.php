@@ -353,10 +353,10 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                 </div>
 
                 <!-- Donut Chart & 5-Item Legend -->
-                <div class="grid grid-cols-1 sm:grid-cols-12 items-center gap-4 sm:gap-6 py-2">
-                    <!-- Donut Canvas with Center Text (5 cols) -->
-                    <div class="sm:col-span-5 flex justify-center">
-                        <div class="w-40 h-40 sm:w-48 sm:h-48 relative max-w-full aspect-square mx-auto flex items-center justify-center touch-pan-y" style="touch-action: pan-y;">
+                <div class="grid grid-cols-1 sm:grid-cols-12 items-center gap-6 py-2">
+                    <!-- Donut Canvas with Center Text (6 cols) -->
+                    <div class="sm:col-span-6 flex justify-center items-center">
+                        <div class="w-52 h-52 sm:w-60 sm:h-60 lg:w-64 lg:h-64 xl:w-72 xl:h-72 relative max-w-full aspect-square mx-auto flex items-center justify-center touch-pan-y" style="touch-action: pan-y;">
                             <canvas id="statusDonutChart"
                                     style="touch-action: pan-y;"
                                     data-main-not-started="<?= (int)($stats['main_not_started'] ?? 0) ?>"
@@ -372,83 +372,83 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                                     data-sub-cancelled="<?= (int)($stats['cancelled'] ?? 0) ?>"
                                     data-sub-total="<?= (int)$stats['sub_total'] ?>"></canvas>
                             <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center select-none">
-                                <span class="text-[10px] sm:text-[11px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest font-sans">รวมทั้งหมด</span>
-                                <span class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white font-heading tracking-tight my-0.5 leading-none"
+                                <span class="text-[11px] sm:text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider font-sans">รวมทั้งหมด</span>
+                                <span class="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white font-heading tracking-tight my-1 leading-none"
                                       x-text="statusMode === 'main' ? '<?= $stats['main_total'] ?>' : '<?= $stats['sub_total'] ?>'"><?= $stats['main_total'] ?></span>
-                                <span class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium"
+                                <span class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-semibold"
                                       x-text="statusMode === 'main' ? 'โครงการหลัก' : 'กิจกรรมหลัก'">โครงการหลัก</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 5-Item Legend (7 cols) -->
-                    <div class="sm:col-span-7 space-y-2 text-xs">
+                    <!-- 5-Item Legend (6 cols) -->
+                    <div class="sm:col-span-6 space-y-2 sm:space-y-2.5 text-xs sm:text-sm">
                         <!-- 1. ยังไม่เริ่ม (Modern Tech Indigo) -->
-                        <div class="p-2.5 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-indigo-400/60 dark:hover:border-indigo-500/40 flex items-center justify-between transition-all group">
+                        <div class="p-2.5 sm:p-3 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-indigo-400/60 dark:hover:border-indigo-500/40 flex items-center justify-between transition-all group">
                             <div class="flex items-center gap-2.5 min-w-0">
-                                <span class="w-3 h-3 rounded-full bg-[#6366f1] shrink-0 shadow-[0_0_8px_rgba(99,102,241,0.5)]"></span>
+                                <span class="w-3.5 h-3.5 rounded-full bg-[#6366f1] shrink-0 shadow-[0_0_8px_rgba(99,102,241,0.5)]"></span>
                                 <span class="font-bold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">ยังไม่เริ่ม</span>
                             </div>
                             <div class="flex items-center gap-2.5 shrink-0">
-                                <span class="font-extrabold text-sm text-slate-900 dark:text-white font-mono"
+                                <span class="font-black text-sm sm:text-base text-slate-900 dark:text-white font-mono"
                                       x-text="statusMode === 'main' ? '<?= (int)($stats['main_not_started'] ?? 0) ?>' : '<?= (int)$stats['not_started'] ?>'"><?= (int)($stats['main_not_started'] ?? 0) ?></span>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-500/30"
+                                <span class="px-2 py-0.5 rounded-full text-[10.5px] sm:text-xs font-extrabold font-mono bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-500/30"
                                       x-text="statusMode === 'main' ? '<?= $mainNotStartPct ?>%' : '<?= $notStartPct ?>%'"><?= $mainNotStartPct ?>%</span>
                             </div>
                         </div>
 
                         <!-- 2. กำลังดำเนินการ (Electric Sky Blue) -->
-                        <div class="p-2.5 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-sky-400/60 dark:hover:border-sky-500/40 flex items-center justify-between transition-all group">
+                        <div class="p-2.5 sm:p-3 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-sky-400/60 dark:hover:border-sky-500/40 flex items-center justify-between transition-all group">
                             <div class="flex items-center gap-2.5 min-w-0">
-                                <span class="w-3 h-3 rounded-full bg-[#0ea5e9] shrink-0 shadow-[0_0_8px_rgba(14,165,233,0.5)]"></span>
+                                <span class="w-3.5 h-3.5 rounded-full bg-[#0ea5e9] shrink-0 shadow-[0_0_8px_rgba(14,165,233,0.5)]"></span>
                                 <span class="font-bold text-slate-800 dark:text-slate-200 group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors truncate">กำลังดำเนินการ</span>
                             </div>
                             <div class="flex items-center gap-2.5 shrink-0">
-                                <span class="font-extrabold text-sm text-slate-900 dark:text-white font-mono"
+                                <span class="font-black text-sm sm:text-base text-slate-900 dark:text-white font-mono"
                                       x-text="statusMode === 'main' ? '<?= (int)($stats['main_in_progress'] ?? 0) ?>' : '<?= (int)$stats['in_progress'] ?>'"><?= (int)($stats['main_in_progress'] ?? 0) ?></span>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono bg-sky-500/10 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-500/30"
+                                <span class="px-2 py-0.5 rounded-full text-[10.5px] sm:text-xs font-extrabold font-mono bg-sky-500/10 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-500/30"
                                       x-text="statusMode === 'main' ? '<?= $mainInProgPct ?>%' : '<?= $inProgPct ?>%'"><?= $mainInProgPct ?>%</span>
                             </div>
                         </div>
 
                         <!-- 3. เสร็จสิ้น (Luminous Jade Mint) -->
-                        <div class="p-2.5 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-emerald-400/60 dark:hover:border-emerald-500/40 flex items-center justify-between transition-all group">
+                        <div class="p-2.5 sm:p-3 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-emerald-400/60 dark:hover:border-emerald-500/40 flex items-center justify-between transition-all group">
                             <div class="flex items-center gap-2.5 min-w-0">
-                                <span class="w-3 h-3 rounded-full bg-[#10b981] shrink-0 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+                                <span class="w-3.5 h-3.5 rounded-full bg-[#10b981] shrink-0 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
                                 <span class="font-bold text-slate-800 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate">เสร็จสิ้น</span>
                             </div>
                             <div class="flex items-center gap-2.5 shrink-0">
-                                <span class="font-extrabold text-sm text-slate-900 dark:text-white font-mono"
+                                <span class="font-black text-sm sm:text-base text-slate-900 dark:text-white font-mono"
                                       x-text="statusMode === 'main' ? '<?= (int)($stats['main_completed'] ?? 0) ?>' : '<?= (int)$stats['completed'] ?>'"><?= (int)($stats['main_completed'] ?? 0) ?></span>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30"
+                                <span class="px-2 py-0.5 rounded-full text-[10.5px] sm:text-xs font-extrabold font-mono bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30"
                                       x-text="statusMode === 'main' ? '<?= $mainCompPct ?>%' : '<?= $compPct ?>%'"><?= $mainCompPct ?>%</span>
                             </div>
                         </div>
 
                         <!-- 4. มีปัญหา (Radiant Coral Crimson) -->
-                        <div class="p-2.5 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-rose-400/60 dark:hover:border-rose-500/40 flex items-center justify-between transition-all group">
+                        <div class="p-2.5 sm:p-3 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-rose-400/60 dark:hover:border-rose-500/40 flex items-center justify-between transition-all group">
                             <div class="flex items-center gap-2.5 min-w-0">
-                                <span class="w-3 h-3 rounded-full bg-[#f43f5e] shrink-0 shadow-[0_0_8px_rgba(244,63,94,0.5)]"></span>
+                                <span class="w-3.5 h-3.5 rounded-full bg-[#f43f5e] shrink-0 shadow-[0_0_8px_rgba(244,63,94,0.5)]"></span>
                                 <span class="font-bold text-slate-800 dark:text-slate-200 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors truncate">มีปัญหา/ล่าช้า</span>
                             </div>
                             <div class="flex items-center gap-2.5 shrink-0">
-                                <span class="font-extrabold text-sm text-slate-900 dark:text-white font-mono"
+                                <span class="font-black text-sm sm:text-base text-slate-900 dark:text-white font-mono"
                                       x-text="statusMode === 'main' ? '<?= (int)($stats['main_has_problem'] ?? 0) ?>' : '<?= (int)$stats['has_problem'] ?>'"><?= (int)($stats['main_has_problem'] ?? 0) ?></span>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono bg-rose-500/10 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/30"
+                                <span class="px-2 py-0.5 rounded-full text-[10.5px] sm:text-xs font-extrabold font-mono bg-rose-500/10 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/30"
                                       x-text="statusMode === 'main' ? '<?= $mainProbPct ?>%' : '<?= $probPct ?>%'"><?= $mainProbPct ?>%</span>
                             </div>
                         </div>
 
                         <!-- 5. ยกเลิก (Deep Graphite Slate) -->
-                        <div class="p-2.5 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-slate-400/60 dark:hover:border-slate-500/40 flex items-center justify-between transition-all group">
+                        <div class="p-2.5 sm:p-3 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-slate-400/60 dark:hover:border-slate-500/40 flex items-center justify-between transition-all group">
                             <div class="flex items-center gap-2.5 min-w-0">
-                                <span class="w-3 h-3 rounded-full bg-[#64748b] shrink-0 shadow-[0_0_8px_rgba(100,116,139,0.3)]"></span>
+                                <span class="w-3.5 h-3.5 rounded-full bg-[#64748b] shrink-0 shadow-[0_0_8px_rgba(100,116,139,0.3)]"></span>
                                 <span class="font-bold text-slate-800 dark:text-slate-200 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors truncate">ยกเลิก</span>
                             </div>
                             <div class="flex items-center gap-2.5 shrink-0">
-                                <span class="font-extrabold text-sm text-slate-900 dark:text-white font-mono"
+                                <span class="font-black text-sm sm:text-base text-slate-900 dark:text-white font-mono"
                                       x-text="statusMode === 'main' ? '<?= (int)($stats['main_cancelled'] ?? 0) ?>' : '<?= (int)($stats['cancelled'] ?? 0) ?>'"><?= (int)($stats['main_cancelled'] ?? 0) ?></span>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono bg-slate-500/10 dark:bg-slate-500/20 text-slate-700 dark:text-slate-300 border border-slate-500/30"
+                                <span class="px-2 py-0.5 rounded-full text-[10.5px] sm:text-xs font-extrabold font-mono bg-slate-500/10 dark:bg-slate-500/20 text-slate-700 dark:text-slate-300 border border-slate-500/30"
                                       x-text="statusMode === 'main' ? '<?= $mainCancPct ?>%' : '<?= $cancPct ?>%'"><?= $mainCancPct ?>%</span>
                             </div>
                         </div>
@@ -918,7 +918,10 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                         options: {
                             responsive: true,
                             maintainAspectRatio: true,
-                            cutout: '74%',
+                            layout: {
+                                padding: 4
+                            },
+                            cutout: '70%',
                             animation: isThemeChange ? false : { duration: 350, easing: 'easeOutQuad' },
                             plugins: {
                                 legend: { display: false },
@@ -949,13 +952,16 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                                 borderWidth: 0,
                                 borderRadius: initial.activeStatuses.length > 1 ? 6 : 0,
                                 spacing: initial.activeStatuses.length > 1 ? 4 : 0,
-                                hoverOffset: initial.activeStatuses.length > 1 ? 6 : 0
+                                hoverOffset: 0
                             }]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: true,
-                            cutout: '74%',
+                            layout: {
+                                padding: 4
+                            },
+                            cutout: '70%',
                             animation: isThemeChange ? false : { duration: 350, easing: 'easeOutQuad' },
                             plugins: {
                                 legend: { display: false },
@@ -995,6 +1001,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                         statusDonutChartInstance.data.datasets[0].hoverBackgroundColor = [emptyChartColor];
                         statusDonutChartInstance.data.datasets[0].borderRadius = 0;
                         statusDonutChartInstance.data.datasets[0].spacing = 0;
+                        statusDonutChartInstance.data.datasets[0].hoverOffset = 0;
                     } else {
                         statusDonutChartInstance.data.labels = data.activeStatuses.map(s => s.label);
                         statusDonutChartInstance.data.datasets[0].data = data.activeStatuses.map(s => s.count);
@@ -1002,6 +1009,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                         statusDonutChartInstance.data.datasets[0].hoverBackgroundColor = data.activeStatuses.map(s => s.hover);
                         statusDonutChartInstance.data.datasets[0].borderRadius = data.activeStatuses.length > 1 ? 6 : 0;
                         statusDonutChartInstance.data.datasets[0].spacing = data.activeStatuses.length > 1 ? 4 : 0;
+                        statusDonutChartInstance.data.datasets[0].hoverOffset = 0;
                     }
                     statusDonutChartInstance.update();
                 };
