@@ -80,7 +80,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 w-full max-w-full">
         <div>
             <h1 class="text-xl sm:text-2xl font-bold font-heading text-slate-900 dark:text-white tracking-tight">Dashboard</h1>
-            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">ภาพรวมโครงการของเทศบาล</p>
+            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">ภาพรวมโครงการที่ได้รับการสนับสนุนโดยเงินกองทุนหลักประกันสุขภาพเทศบาล</p>
         </div>
 
         <!-- Fiscal Year Custom Dropdown (Right) -->
@@ -860,6 +860,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
         });
 
         const emptyChartColor = isDark ? 'rgba(255, 255, 255, 0.1)' : '#e2e8f0';
+        const cardBg = isDark ? '#161922' : '#ffffff';
 
         // Helper Currency Formatter
         const formatCurrency = (val) => {
@@ -912,6 +913,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                                 backgroundColor: [emptyChartColor],
                                 hoverBackgroundColor: [emptyChartColor],
                                 borderWidth: 0,
+                                borderColor: 'transparent',
                                 borderRadius: 0
                             }]
                         },
@@ -949,9 +951,10 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                                 data: initial.activeStatuses.map(s => s.count),
                                 backgroundColor: initial.activeStatuses.map(s => s.color),
                                 hoverBackgroundColor: initial.activeStatuses.map(s => s.hover),
-                                borderWidth: 0,
-                                borderRadius: initial.activeStatuses.length > 1 ? 6 : 0,
-                                spacing: initial.activeStatuses.length > 1 ? 4 : 0,
+                                borderWidth: initial.activeStatuses.length > 1 ? 2.5 : 0,
+                                borderColor: cardBg,
+                                borderRadius: 0,
+                                spacing: 0,
                                 hoverOffset: 0
                             }]
                         },
@@ -999,6 +1002,8 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                         statusDonutChartInstance.data.datasets[0].data = [1];
                         statusDonutChartInstance.data.datasets[0].backgroundColor = [emptyChartColor];
                         statusDonutChartInstance.data.datasets[0].hoverBackgroundColor = [emptyChartColor];
+                        statusDonutChartInstance.data.datasets[0].borderWidth = 0;
+                        statusDonutChartInstance.data.datasets[0].borderColor = 'transparent';
                         statusDonutChartInstance.data.datasets[0].borderRadius = 0;
                         statusDonutChartInstance.data.datasets[0].spacing = 0;
                         statusDonutChartInstance.data.datasets[0].hoverOffset = 0;
@@ -1007,8 +1012,10 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                         statusDonutChartInstance.data.datasets[0].data = data.activeStatuses.map(s => s.count);
                         statusDonutChartInstance.data.datasets[0].backgroundColor = data.activeStatuses.map(s => s.color);
                         statusDonutChartInstance.data.datasets[0].hoverBackgroundColor = data.activeStatuses.map(s => s.hover);
-                        statusDonutChartInstance.data.datasets[0].borderRadius = data.activeStatuses.length > 1 ? 6 : 0;
-                        statusDonutChartInstance.data.datasets[0].spacing = data.activeStatuses.length > 1 ? 4 : 0;
+                        statusDonutChartInstance.data.datasets[0].borderWidth = data.activeStatuses.length > 1 ? 2.5 : 0;
+                        statusDonutChartInstance.data.datasets[0].borderColor = cardBg;
+                        statusDonutChartInstance.data.datasets[0].borderRadius = 0;
+                        statusDonutChartInstance.data.datasets[0].spacing = 0;
                         statusDonutChartInstance.data.datasets[0].hoverOffset = 0;
                     }
                     statusDonutChartInstance.update();
