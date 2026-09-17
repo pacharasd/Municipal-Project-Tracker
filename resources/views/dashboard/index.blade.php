@@ -816,6 +816,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
     'use strict';
 
     let chartInitRetries = 0;
+    let statusDonutChartInstance = null;
     let projectSuccessChartInstance = null;
     let dashboardChartsTimer = null;
 
@@ -876,7 +877,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
         // -------------------------------------------------------------
         // กราฟที่ 1: สถานะโครงการ (Rule #10.1: 5 Statuses Donut Chart - Data Driven)
         // -------------------------------------------------------------
-        let statusDonutChartInstance = null;
+        statusDonutChartInstance = null;
         try {
             const statusCanvas = document.getElementById('statusDonutChart');
             if (statusCanvas) {
@@ -995,30 +996,34 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
 
                 window.updateStatusDonutMode = function(mode) {
                     currentStatusMode = mode;
-                    if (!statusDonutChartInstance) return;
+                    const chart = statusDonutChartInstance || Chart.getChart('statusDonutChart');
+                    if (!chart) return;
+                    const isDarkCurrent = document.documentElement.classList.contains('dark');
+                    const currentCardBg = isDarkCurrent ? '#161922' : '#ffffff';
+                    const currentEmptyColor = isDarkCurrent ? 'rgba(255, 255, 255, 0.1)' : '#e2e8f0';
                     const data = getStatusData(mode);
                     if (data.totalCount === 0) {
-                        statusDonutChartInstance.data.labels = ['ไม่มีข้อมูลโครงการ'];
-                        statusDonutChartInstance.data.datasets[0].data = [1];
-                        statusDonutChartInstance.data.datasets[0].backgroundColor = [emptyChartColor];
-                        statusDonutChartInstance.data.datasets[0].hoverBackgroundColor = [emptyChartColor];
-                        statusDonutChartInstance.data.datasets[0].borderWidth = 0;
-                        statusDonutChartInstance.data.datasets[0].borderColor = 'transparent';
-                        statusDonutChartInstance.data.datasets[0].borderRadius = 0;
-                        statusDonutChartInstance.data.datasets[0].spacing = 0;
-                        statusDonutChartInstance.data.datasets[0].hoverOffset = 0;
+                        chart.data.labels = ['ไม่มีข้อมูลโครงการ'];
+                        chart.data.datasets[0].data = [1];
+                        chart.data.datasets[0].backgroundColor = [currentEmptyColor];
+                        chart.data.datasets[0].hoverBackgroundColor = [currentEmptyColor];
+                        chart.data.datasets[0].borderWidth = 0;
+                        chart.data.datasets[0].borderColor = 'transparent';
+                        chart.data.datasets[0].borderRadius = 0;
+                        chart.data.datasets[0].spacing = 0;
+                        chart.data.datasets[0].hoverOffset = 0;
                     } else {
-                        statusDonutChartInstance.data.labels = data.activeStatuses.map(s => s.label);
-                        statusDonutChartInstance.data.datasets[0].data = data.activeStatuses.map(s => s.count);
-                        statusDonutChartInstance.data.datasets[0].backgroundColor = data.activeStatuses.map(s => s.color);
-                        statusDonutChartInstance.data.datasets[0].hoverBackgroundColor = data.activeStatuses.map(s => s.hover);
-                        statusDonutChartInstance.data.datasets[0].borderWidth = data.activeStatuses.length > 1 ? 2.5 : 0;
-                        statusDonutChartInstance.data.datasets[0].borderColor = cardBg;
-                        statusDonutChartInstance.data.datasets[0].borderRadius = 0;
-                        statusDonutChartInstance.data.datasets[0].spacing = 0;
-                        statusDonutChartInstance.data.datasets[0].hoverOffset = 0;
+                        chart.data.labels = data.activeStatuses.map(s => s.label);
+                        chart.data.datasets[0].data = data.activeStatuses.map(s => s.count);
+                        chart.data.datasets[0].backgroundColor = data.activeStatuses.map(s => s.color);
+                        chart.data.datasets[0].hoverBackgroundColor = data.activeStatuses.map(s => s.hover);
+                        chart.data.datasets[0].borderWidth = data.activeStatuses.length > 1 ? 2.5 : 0;
+                        chart.data.datasets[0].borderColor = currentCardBg;
+                        chart.data.datasets[0].borderRadius = 0;
+                        chart.data.datasets[0].spacing = 0;
+                        chart.data.datasets[0].hoverOffset = 0;
                     }
-                    statusDonutChartInstance.update();
+                    chart.update();
                 };
             }
         } catch (err) {
@@ -1342,6 +1347,124 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
         }
     }
 
+    // In-Place Reactive Theme Synchronization (Zero-Latency Standard Pattern)
+    function updateChartsThemeSynchronously() {
+        if (typeof Chart === 'undefined') return;
+
+        const isDark = document.documentElement.classList.contains('dark');
+        const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)';
+        const tickColor = isDark ? '#94a3b8' : '#64748b';
+        const labelColor = isDark ? '#cbd5e1' : '#334155';
+        const tooltipBg = isDark ? '#181b24' : '#ffffff';
+        const tooltipTitle = isDark ? '#ffffff' : '#0f172a';
+        const tooltipBody = isDark ? '#e2e8f0' : '#334155';
+        const tooltipBorder = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
+        const cardBg = isDark ? '#161922' : '#ffffff';
+        const emptyChartColor = isDark ? 'rgba(255, 255, 255, 0.1)' : '#e2e8f0';
+
+        Chart.defaults.color = tickColor;
+        Chart.defaults.borderColor = 'transparent';
+
+        let hasUpdatedAny = false;
+
+        // 1. Status Donut Chart (Zero-delay radial seam sync)
+        const donutChart = statusDonutChartInstance || Chart.getChart('statusDonutChart');
+        if (donutChart && donutChart.data && donutChart.data.datasets && donutChart.data.datasets.length > 0) {
+            const ds = donutChart.data.datasets[0];
+            if (ds.borderColor !== 'transparent') {
+                ds.borderColor = cardBg;
+            }
+            if (donutChart.options && donutChart.options.plugins && donutChart.options.plugins.tooltip) {
+                donutChart.options.plugins.tooltip.backgroundColor = tooltipBg;
+                donutChart.options.plugins.tooltip.titleColor = tooltipTitle;
+                donutChart.options.plugins.tooltip.bodyColor = tooltipBody;
+                donutChart.options.plugins.tooltip.borderColor = tooltipBorder;
+            }
+            donutChart.update('none');
+            hasUpdatedAny = true;
+        }
+
+        // 2. Budget Comparison Bar Chart
+        const budgetChart = Chart.getChart('budgetComparisonChart');
+        if (budgetChart && budgetChart.options) {
+            if (budgetChart.options.scales) {
+                if (budgetChart.options.scales.y) {
+                    if (budgetChart.options.scales.y.ticks) budgetChart.options.scales.y.ticks.color = tickColor;
+                    if (budgetChart.options.scales.y.grid) budgetChart.options.scales.y.grid.color = gridColor;
+                }
+                if (budgetChart.options.scales.x && budgetChart.options.scales.x.ticks) {
+                    budgetChart.options.scales.x.ticks.color = labelColor;
+                }
+            }
+            if (budgetChart.options.plugins && budgetChart.options.plugins.tooltip) {
+                budgetChart.options.plugins.tooltip.backgroundColor = tooltipBg;
+                budgetChart.options.plugins.tooltip.titleColor = tooltipTitle;
+                budgetChart.options.plugins.tooltip.bodyColor = tooltipBody;
+                budgetChart.options.plugins.tooltip.borderColor = tooltipBorder;
+            }
+            budgetChart.update('none');
+            hasUpdatedAny = true;
+        }
+
+        // 3. Project Success Horizontal Bar Chart
+        const successChart = projectSuccessChartInstance || Chart.getChart('projectSuccessChart');
+        if (successChart && successChart.options) {
+            if (successChart.options.scales) {
+                if (successChart.options.scales.x) {
+                    if (successChart.options.scales.x.ticks) successChart.options.scales.x.ticks.color = tickColor;
+                    if (successChart.options.scales.x.grid) successChart.options.scales.x.grid.color = gridColor;
+                }
+                if (successChart.options.scales.y && successChart.options.scales.y.ticks) {
+                    successChart.options.scales.y.ticks.color = labelColor;
+                }
+            }
+            if (successChart.options.plugins && successChart.options.plugins.tooltip) {
+                successChart.options.plugins.tooltip.backgroundColor = tooltipBg;
+                successChart.options.plugins.tooltip.titleColor = tooltipTitle;
+                successChart.options.plugins.tooltip.bodyColor = tooltipBody;
+                successChart.options.plugins.tooltip.borderColor = tooltipBorder;
+            }
+            successChart.update('none');
+            hasUpdatedAny = true;
+        }
+
+        // 4. Category Bar Chart
+        const catChart = Chart.getChart('categoryBarChart');
+        if (catChart && catChart.options) {
+            const catCanvas = document.getElementById('categoryBarChart');
+            if (catCanvas && catChart.data && catChart.data.datasets && catChart.data.datasets[0]) {
+                const catCtx = catCanvas.getContext('2d');
+                const catGrad = catCtx.createLinearGradient(0, 0, 0, 220);
+                catGrad.addColorStop(0, isDark ? 'rgba(139, 92, 246, 0.85)' : '#8b5cf6');
+                catGrad.addColorStop(1, isDark ? 'rgba(124, 58, 237, 0.4)' : '#6d28d9');
+                catChart.data.datasets[0].backgroundColor = catGrad;
+                catChart.data.datasets[0].borderColor = isDark ? '#a78bfa' : '#7c3aed';
+            }
+            if (catChart.options.scales) {
+                if (catChart.options.scales.y) {
+                    if (catChart.options.scales.y.ticks) catChart.options.scales.y.ticks.color = tickColor;
+                    if (catChart.options.scales.y.grid) catChart.options.scales.y.grid.color = gridColor;
+                }
+                if (catChart.options.scales.x && catChart.options.scales.x.ticks) {
+                    catChart.options.scales.x.ticks.color = labelColor;
+                }
+            }
+            if (catChart.options.plugins && catChart.options.plugins.tooltip) {
+                catChart.options.plugins.tooltip.backgroundColor = tooltipBg;
+                catChart.options.plugins.tooltip.titleColor = tooltipTitle;
+                catChart.options.plugins.tooltip.bodyColor = tooltipBody;
+                catChart.options.plugins.tooltip.borderColor = tooltipBorder;
+            }
+            catChart.update('none');
+            hasUpdatedAny = true;
+        }
+
+        // Fallback: ถ้ายังไม่มี chart ตัวใดเรนเดอร์ ให้เรียก scheduleDashboardChartsInit
+        if (!hasUpdatedAny) {
+            scheduleDashboardChartsInit(true);
+        }
+    }
+
     function scheduleDashboardChartsInit(isThemeChange = false) {
         clearTimeout(dashboardChartsTimer);
         dashboardChartsTimer = setTimeout(() => {
@@ -1352,6 +1475,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
     // Expose global functions safely
     window.initDashboardCharts = scheduleDashboardChartsInit;
     window.renderDashboardCharts = renderDashboardCharts;
+    window.updateChartsThemeSynchronously = updateChartsThemeSynchronously;
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => scheduleDashboardChartsInit(false));
@@ -1365,7 +1489,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
         window._dashboardThemeListenerAttached = true;
         window.addEventListener('theme-changed', function() {
             if (document.getElementById('statusDonutChart') || document.getElementById('budgetComparisonChart') || document.getElementById('projectSuccessChart') || document.getElementById('categoryBarChart')) {
-                scheduleDashboardChartsInit(true);
+                updateChartsThemeSynchronously();
             }
         });
     }
