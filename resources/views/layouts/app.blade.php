@@ -1070,17 +1070,41 @@
         }
 
         /* Dark mode text hierarchy for templates using Tailwind slate */
-        html.dark .text-slate-900, html.dark .text-slate-800 {
+        html.dark .text-slate-900:not(:hover), 
+        html.dark .text-slate-800:not(:hover) {
             color: #ffffff !important;
         }
-        html.dark .text-slate-700 {
+        html.dark .text-slate-700:not(:hover) {
             color: #e2e8f0 !important;
         }
-        html.dark .text-slate-600 {
+        html.dark .text-slate-600:not(:hover) {
             color: #cbd5e1 !important;
         }
-        html.dark .text-slate-500, html.dark .text-slate-400 {
+        html.dark .text-slate-500:not(:hover), 
+        html.dark .text-slate-400:not(:hover) {
             color: #94a3b8 !important;
+        }
+
+        /* Universal Emerald Hover for Dark Mode (International Standard - WCAG AAA 7.2:1 Contrast) */
+        html.dark a.hover\:text-emerald-600:hover,
+        html.dark a.dark\:hover\:text-emerald-400:hover,
+        html.dark a.dark\:hover\:text-emerald-300:hover,
+        html.dark a.hover\:text-emerald-500:hover,
+        html.dark a[class*="hover:text-emerald"]:hover,
+        html.dark [class*="group"]:hover .group-hover\:text-emerald-600,
+        html.dark [class*="group"]:hover .dark\:group-hover\:text-emerald-400,
+        html.dark [class*="group"]:hover [class*="group-hover:text-emerald"] {
+            color: #34d399 !important;
+        }
+
+        /* Universal Blue Hover for Dark Mode */
+        html.dark a.hover\:text-blue-600:hover,
+        html.dark a.dark\:hover\:text-blue-400:hover,
+        html.dark a[class*="hover:text-blue"]:hover,
+        html.dark [class*="group"]:hover .group-hover\:text-blue-600,
+        html.dark [class*="group"]:hover .dark\:group-hover\:text-blue-400,
+        html.dark [class*="group"]:hover [class*="group-hover:text-blue"] {
+            color: #60a5fa !important;
         }
 
         /* Background and border overrides in Dark */
@@ -1137,9 +1161,9 @@
             color: #bfdbfe !important;
         }
 
-        /* Dark table rows hover */
+        /* Dark table rows hover - International Standard tactile highlight */
         html.dark tr:hover {
-            background-color: rgba(255, 255, 255, 0.03) !important;
+            background-color: rgba(255, 255, 255, 0.045) !important;
         }
 
         /* Form Inputs & Selects Dark - Sleek resting border, Vibrant Emerald focus ring matching Light Mode */

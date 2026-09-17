@@ -375,10 +375,10 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
                     </template>
 
                     <template x-for="b in paginatedBudgets" :key="b.id">
-                        <tr class="hover:bg-slate-50/75 dark:hover:bg-white/[0.02] transition-colors">
+                        <tr class="hover:bg-slate-50/80 dark:hover:bg-white/[0.045] transition-colors duration-150 group">
                             <td class="py-3.5 px-4 min-w-[220px]">
                                 <a :href="'<?= Router::url('/projects/') ?>' + b.id" 
-                                   class="font-semibold text-slate-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors leading-relaxed block" 
+                                   class="font-semibold text-slate-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors duration-150 leading-relaxed block" 
                                    x-text="b.name"></a>
                             </td>
                             <td class="py-3.5 px-4 whitespace-nowrap">
@@ -627,13 +627,13 @@ $overallPercentage = $totalBudget > 0 ? round(($totalDisbursed / $totalBudget) *
                     </template>
 
                     <template x-for="d in paginatedDisbursements" :key="d.id">
-                        <tr class="hover:bg-slate-50/75 dark:hover:bg-white/[0.02] transition-colors">
+                        <tr class="hover:bg-slate-50/80 dark:hover:bg-white/[0.045] transition-colors duration-150 group">
                             <td class="py-3.5 px-4 whitespace-nowrap">
                                 <div class="font-mono text-xs font-medium text-slate-800 dark:text-slate-200" x-text="formatDate(d.disbursement_date)"></div>
                             </td>
                             <td class="py-3.5 px-4 min-w-[220px]">
                                 <a :href="'<?= Router::url('/sub-projects/') ?>' + d.project_id" 
-                                   class="font-medium text-emerald-600 dark:text-emerald-400 hover:underline leading-relaxed block"
+                                   class="font-semibold text-slate-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors duration-150 leading-relaxed block"
                                    x-text="d.project_name"></a>
                             </td>
                             <td class="py-3.5 px-4 min-w-[180px] max-w-xs text-slate-700 dark:text-slate-300 leading-relaxed" x-text="d.description"></td>
