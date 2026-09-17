@@ -417,9 +417,18 @@ class SubProjectController
             $userRoleCheck = Database::fetch("SELECT r.name as role_name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = ?", [$responsibleUserId]);
             if ($userRoleCheck && $userRoleCheck['role_name'] === 'executive') {
                 Session::flash('error', 'ไม่สามารถมอบหมายโครงการให้ผู้ใช้งานในบทบาท "ผู้บริหาร" ได้ (ผู้บริหารมีหน้าที่กำกับดูแลภาพรวม)');
-                header('Location: ' . Router::url("/sub-projects/{$projectId}"));
+                header('Location: ' . Router::url("/sub-projects/{$subId}"));
                 exit;
             }
+        }
+
+        // Data Integrity: จำนวนครั้งกิจกรรมย่อยที่วางแผนไว้ต้องไม่น้อยกว่าจำนวนกิจกรรมย่อยที่มีอยู่จริง
+        $newPlannedCount = !empty($_POST['planned_activity_count']) ? (int)$_POST['planned_activity_count'] : (int)$project['planned_activity_count'];
+        $existingActivityCount = (int)Database::fetchColumn("SELECT COUNT(*) FROM activities WHERE project_id = ?", [$subId]);
+        if ($newPlannedCount < $existingActivityCount) {
+            Session::flash('error', "จำนวนครั้งกิจกรรมย่อยที่วางแผนไว้ ({$newPlannedCount} ครั้ง) ต้องไม่น้อยกว่าจำนวนกิจกรรมย่อยที่มีอยู่แล้วจริงในระบบ ({$existingActivityCount} รายการ)");
+            header('Location: ' . Router::url("/sub-projects/{$subId}"));
+            exit;
         }
 
         Database::update('projects', [
@@ -436,7 +445,7 @@ class SubProjectController
             'start_date'             => $_POST['start_date'],
             'end_date'               => $_POST['end_date'],
             'budget'                 => $newBudget,
-            'planned_activity_count' => !empty($_POST['planned_activity_count']) ? (int)$_POST['planned_activity_count'] : $project['planned_activity_count'],
+            'planned_activity_count' => $newPlannedCount,
             'notes'                  => trim($_POST['notes'] ?? ''),
         ], "id = ?", [$subId]);
 

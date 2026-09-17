@@ -30,6 +30,15 @@ class ActivityController
             exit;
         }
 
+        // Defense-in-Depth: ตรวจสอบโควตากิจกรรมย่อย ต้องไม่เกินจำนวนครั้งที่วางแผนไว้
+        $currentCount = (int)Database::fetchColumn("SELECT COUNT(*) FROM activities WHERE project_id = ?", [$projectId]);
+        $plannedCount = max(1, (int)($project['planned_activity_count'] ?? 1));
+        if ($currentCount >= $plannedCount) {
+            Session::flash('error', "ไม่สามารถเพิ่มกิจกรรมย่อยได้ เนื่องจากมีกิจกรรมครบตามจำนวนครั้งที่วางแผนไว้แล้ว ({$currentCount}/{$plannedCount} ครั้ง) หากต้องการเพิ่มกิจกรรม กรุณาแก้ไขจำนวนครั้งที่วางแผนไว้ในข้อมูลโครงการ");
+            header('Location: ' . Router::url("/sub-projects/{$projectId}"));
+            exit;
+        }
+
         $v = Validator::make($_POST, [
             'name'          => 'required|min:3|max:255',
             'activity_date' => 'required|date',

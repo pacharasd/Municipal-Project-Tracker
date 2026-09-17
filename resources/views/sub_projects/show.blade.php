@@ -505,15 +505,28 @@ window.subProjectShowPage = function subProjectShowPage() {
     <!-- Activities & Budget Two Columns -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Activities Column -->
+        <?php 
+            $plannedActs = max(1, (int)($project['planned_activity_count'] ?? 1));
+            $currentActsCount = count($project['activities'] ?? []);
+            $isActivityLimitReached = ($currentActsCount >= $plannedActs);
+        ?>
         <div id="activities-section" class="bg-white dark:bg-[#181a20] p-4 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div class="min-w-0 flex-1">
-                    <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <i data-lucide="calendar-check" class="w-5 h-5 text-blue-600 shrink-0"></i>
-                        <span class="truncate">กิจกรรมย่อย</span>
-                    </h2>
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <i data-lucide="calendar-check" class="w-5 h-5 text-blue-600 shrink-0"></i>
+                            <span class="truncate">กิจกรรมย่อย</span>
+                        </h2>
+                        <?php if ($isActivityLimitReached): ?>
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[10.5px] font-bold rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 shadow-2xs">
+                                <i data-lucide="check-circle" class="w-3 h-3 text-amber-600 dark:text-amber-400"></i>
+                                ครบตามแผนแล้ว (<?= $currentActsCount ?>/<?= $plannedActs ?> ครั้ง)
+                            </span>
+                        <?php endif; ?>
+                    </div>
                     <p class="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5 ml-7">
-                        (<?= count($project['activities'] ?? []) ?> รายการ)
+                        (<?= $currentActsCount ?> / <?= $plannedActs ?> รายการตามแผน)
                     </p>
                 </div>
 
@@ -530,10 +543,20 @@ window.subProjectShowPage = function subProjectShowPage() {
                     <?php endif; ?>
 
                     <?php if (\App\Core\Auth::canManageProjects()): ?>
-                        <button type="button" @click="activityModal = true" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors shadow-sm shrink-0 whitespace-nowrap cursor-pointer">
-                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                            <span>เพิ่มกิจกรรมย่อย</span>
-                        </button>
+                        <?php if ($isActivityLimitReached): ?>
+                            <button type="button" 
+                                    @click="window.notify.warning('มีกิจกรรมย่อยครบตามจำนวนครั้งที่วางแผนไว้แล้ว (<?= $currentActsCount ?>/<?= $plannedActs ?> ครั้ง) หากต้องการเพิ่มกิจกรรม กรุณาแก้ไขจำนวนครั้งที่วางแผนไว้ในข้อมูลโครงการ')"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl transition-all shadow-2xs shrink-0 whitespace-nowrap cursor-not-allowed"
+                                    title="ครบตามจำนวนครั้งที่วางแผนแล้ว (<?= $currentActsCount ?>/<?= $plannedActs ?> ครั้ง)">
+                                <i data-lucide="lock" class="w-3.5 h-3.5 opacity-70"></i>
+                                <span>เพิ่มกิจกรรมย่อย</span>
+                            </button>
+                        <?php else: ?>
+                            <button type="button" @click="activityModal = true" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors shadow-sm shrink-0 whitespace-nowrap cursor-pointer">
+                                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                <span>เพิ่มกิจกรรมย่อย</span>
+                            </button>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </div>
             </div>
@@ -1104,6 +1127,24 @@ window.subProjectShowPage = function subProjectShowPage() {
                     </button>
                 </div>
 
+                <?php if ($isActivityLimitReached): ?>
+                    <div class="p-6 space-y-4">
+                        <div class="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-800 dark:text-amber-200 flex items-start gap-3">
+                            <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"></i>
+                            <div>
+                                <h4 class="font-bold text-sm text-amber-900 dark:text-amber-100">มีกิจกรรมย่อยครบตามจำนวนครั้งที่วางแผนไว้แล้ว (<?= $currentActsCount ?> / <?= $plannedActs ?> ครั้ง)</h4>
+                                <p class="mt-1 text-amber-700 dark:text-amber-300 leading-relaxed">
+                                    โครงการนี้กำหนดจำนวนครั้งกิจกรรมไว้ <?= $plannedActs ?> ครั้ง และได้บันทึกกิจกรรมย่อยครบถ้วนแล้ว ไม่สามารถเพิ่มกิจกรรมย่อยใหม่ได้ หากต้องการเพิ่มกิจกรรม กรุณาแก้ไขจำนวนครั้งที่วางแผนไว้ในข้อมูลโครงการย่อยก่อน
+                                </p>
+                            </div>
+                        </div>
+                        <div class="pt-2 flex justify-end">
+                            <button type="button" @click="activityModal = false" class="px-5 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/15 rounded-xl cursor-pointer">
+                                ปิดหน้าต่าง
+                            </button>
+                        </div>
+                    </div>
+                <?php else: ?>
                 <form action="<?= \App\Core\Router::url('/activities') ?>" method="POST" 
                       @submit="
                         const actDate = $el.querySelector('input[name=activity_date]')?.value;
@@ -1164,6 +1205,7 @@ window.subProjectShowPage = function subProjectShowPage() {
                         <button type="submit" class="px-5 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm shadow-blue-600/30 cursor-pointer">บันทึกกิจกรรมย่อย</button>
                     </div>
                 </form>
+                <?php endif; ?>
             </div>
         </div>
     </template>

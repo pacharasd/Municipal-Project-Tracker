@@ -1223,13 +1223,14 @@
 
     <!-- Global Accessible Confirmation Modal Container (W3C WAI-ARIA alertdialog) -->
     <div id="mpt-confirm-modal" 
-         class="fixed inset-0 z-[100000] hidden items-center justify-center p-4 sm:p-6 bg-slate-950/65 backdrop-blur-sm transition-opacity duration-200 opacity-0 pointer-events-auto"
+         data-persistent-modal="true"
+         class="fixed inset-0 z-[100000] hidden items-center justify-center p-4 sm:p-6 modal-backdrop-smooth transition-opacity duration-200 opacity-0 pointer-events-auto"
          role="alertdialog" 
          aria-modal="true" 
          aria-labelledby="mpt-confirm-title" 
          aria-describedby="mpt-confirm-message">
         <div id="mpt-confirm-box" 
-             class="relative w-full max-w-md bg-white dark:bg-[#181a20] rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 p-6 sm:p-7 transform scale-95 transition-all duration-200 flex flex-col gap-5">
+             class="relative w-full max-w-md bg-white dark:bg-[#181a20] rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 p-6 sm:p-7 transform scale-95 transition-all duration-200 flex flex-col gap-5 modal-box-smooth">
             
             <div class="flex items-start gap-4">
                 <div id="mpt-confirm-icon-wrap" class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-xs"></div>
