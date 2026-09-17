@@ -25,6 +25,8 @@ $placement = $placement ?? 'bottom';
 $xModel = $xModel ?? '';
 $helpText = $helpText ?? null;
 $disabled = !empty($disabled);
+$minDate = $minDate ?? '';
+$maxDate = $maxDate ?? '';
 
 // Safe JSON encoding for config
 $configJson = json_encode([
@@ -35,6 +37,8 @@ $configJson = json_encode([
     'align' => $align,
     'placement' => $placement,
     'model' => $xModel,
+    'minDate' => (string)$minDate,
+    'maxDate' => (string)$maxDate,
 ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
 ?>
 
@@ -134,7 +138,7 @@ $configJson = json_encode([
                 <template x-for="(item, index) in days" :key="item.dateStr || (item.day + '-' + index)">
                     <div>
                         <button type="button" 
-                                x-show="item.isCurrent"
+                                x-show="item.isCurrent && !item.isDisabled"
                                 @click.stop="selectDate(item)"
                                 class="w-8 h-8 mx-auto text-xs flex items-center justify-center rounded-xl transition-all cursor-pointer"
                                 :class="{
@@ -144,6 +148,11 @@ $configJson = json_encode([
                                 }"
                                 x-text="item.day">
                         </button>
+                        <div x-show="item.isCurrent && item.isDisabled" 
+                             class="w-8 h-8 mx-auto text-xs flex items-center justify-center rounded-xl text-slate-300 dark:text-slate-600 cursor-not-allowed line-through opacity-40 select-none" 
+                             title="อยู่นอกช่วงเวลาที่อนุญาต" 
+                             x-text="item.day">
+                        </div>
                         <div x-show="!item.isCurrent" class="w-8 h-8 mx-auto text-xs flex items-center justify-center text-slate-300 dark:text-slate-600 pointer-events-none" x-text="item.day"></div>
                     </div>
                 </template>

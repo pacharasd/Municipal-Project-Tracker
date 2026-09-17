@@ -561,8 +561,48 @@ if (window.Alpine && typeof Alpine.data === 'function') {
                         </div>
                     </div>
 
-                    <!-- Right KPIs for Main Project (Clean 2-Col Grid on Mobile) -->
-                    <div class="pt-3 border-t border-slate-100 dark:border-white/[0.06] lg:border-t-0 lg:pt-0 grid grid-cols-2 sm:flex sm:items-center gap-2.5 sm:gap-6 lg:justify-end w-full lg:w-auto">
+                    <!-- Right KPIs for Main Project (Clean Responsive Grid & Alignment) -->
+                    <?php
+                        $cardStatus = $p['status'] ?? 'not_started';
+                        $cardStBadge = match($cardStatus) {
+                            'completed' => [
+                                'label' => 'เสร็จสิ้น',
+                                'class' => 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30',
+                                'dot' => 'bg-emerald-500',
+                            ],
+                            'in_progress' => [
+                                'label' => 'กำลังดำเนินการ',
+                                'class' => 'bg-sky-50 text-sky-700 border-sky-300 dark:bg-sky-500/15 dark:text-sky-300 dark:border-sky-500/30',
+                                'dot' => 'bg-sky-500',
+                            ],
+                            'has_problem' => [
+                                'label' => 'มีปัญหา / ล่าช้า',
+                                'class' => 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-500/15 dark:text-rose-300 dark:border-rose-500/30',
+                                'dot' => 'bg-rose-500',
+                            ],
+                            'cancelled' => [
+                                'label' => 'ยกเลิก',
+                                'class' => 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-white/10 dark:text-slate-300 dark:border-white/10',
+                                'dot' => 'bg-slate-400',
+                            ],
+                            default => [
+                                'label' => 'ยังไม่เริ่ม',
+                                'class' => 'bg-indigo-50 text-indigo-700 border-indigo-300 dark:bg-indigo-500/15 dark:text-indigo-300 dark:border-indigo-500/30',
+                                'dot' => 'bg-indigo-500',
+                            ]
+                        };
+                    ?>
+                    <div class="pt-3 border-t border-slate-100 dark:border-white/[0.06] lg:border-t-0 lg:pt-0 grid grid-cols-2 sm:flex sm:items-center gap-2.5 sm:gap-6 lg:justify-end w-full lg:w-auto lg:shrink-0">
+                        <!-- สถานะโครงการหลัก (Right Section) -->
+                        <div class="p-2.5 sm:p-0 rounded-xl sm:rounded-none bg-slate-50/70 dark:bg-white/[0.02] sm:bg-transparent sm:dark:bg-transparent border border-slate-200/60 dark:border-white/[0.05] sm:border-0 flex flex-col justify-center sm:items-end shrink-0 min-w-fit">
+                            <div class="text-[11px] sm:text-xs text-slate-400 dark:text-slate-400 mb-1 whitespace-nowrap">สถานะ</div>
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full border shadow-2xs shrink-0 whitespace-nowrap <?= $cardStBadge['class'] ?>" title="สถานะภาพรวมโครงการหลัก">
+                                <span class="w-1.5 h-1.5 rounded-full shrink-0 <?= $cardStBadge['dot'] ?> <?= $cardStatus === 'in_progress' ? 'animate-pulse' : '' ?>"></span>
+                                <span class="whitespace-nowrap"><?= $cardStBadge['label'] ?></span>
+                            </span>
+                        </div>
+
+                        <!-- งบประมาณรวม -->
                         <div class="text-left sm:text-right p-2.5 sm:p-0 rounded-xl sm:rounded-none bg-slate-50/70 dark:bg-white/[0.02] sm:bg-transparent sm:dark:bg-transparent border border-slate-200/60 dark:border-white/[0.05] sm:border-0">
                             <div class="text-[11px] sm:text-xs text-slate-400 dark:text-slate-400 mb-0.5">งบประมาณรวม</div>
                             <?= \App\Core\Helper::moneyDisplay($p['budget'], 'table', 'right') ?>
@@ -570,7 +610,7 @@ if (window.Alpine && typeof Alpine.data === 'function') {
 
                         <!-- Progress indicator -->
                         <?php $pTier = \App\Services\ProgressService::getProgressTier((float)$p['progress'], $p['status'] ?? null); ?>
-                        <div class="p-2.5 sm:p-0 rounded-xl sm:rounded-none bg-slate-50/70 dark:bg-white/[0.02] sm:bg-transparent sm:dark:bg-transparent border border-slate-200/60 dark:border-white/[0.05] sm:border-0 flex flex-col justify-center sm:w-36">
+                        <div class="col-span-2 sm:col-span-1 p-2.5 sm:p-0 rounded-xl sm:rounded-none bg-slate-50/70 dark:bg-white/[0.02] sm:bg-transparent sm:dark:bg-transparent border border-slate-200/60 dark:border-white/[0.05] sm:border-0 flex flex-col justify-center sm:w-36">
                             <div class="flex items-center justify-between text-[11px] sm:text-xs mb-1">
                                 <span class="text-slate-500 dark:text-slate-400">ความก้าวหน้า</span>
                                 <span class="font-bold <?= $pTier['textClass'] ?>"><?= number_format($p['progress'], 1) ?>%</span>

@@ -117,25 +117,43 @@ class SubProjectController
         try {
             $responsiblePerson = trim($_POST['responsible_person'] ?? '');
             $responsibleUserId = null;
+            $explicitlySelected = false;
+
             if (!empty($_POST['responsible_user_id'])) {
                 $responsibleUserId = (int)$_POST['responsible_user_id'];
+                $explicitlySelected = true;
             } elseif (!empty($responsiblePerson)) {
                 $matchedUser = Database::fetch("SELECT id FROM users WHERE name LIKE ? LIMIT 1", ["%{$responsiblePerson}%"]);
                 if ($matchedUser) {
                     $responsibleUserId = (int)$matchedUser['id'];
+                    $explicitlySelected = true;
                 }
             }
+
+            // Fallback: หากไม่ได้เจาะจงเลือกบัญชีผู้ใช้ ให้ใช้บัญชีผู้ใช้งานปัจจุบัน (ถ้าไม่ใช่ผู้บริหาร) หรือ Admin คนแรก
             if (!$responsibleUserId) {
-                $responsibleUserId = Auth::id() ?: 1;
+                $currentUserId = Auth::id();
+                $currentUserRole = Auth::role();
+                if ($currentUserId && $currentUserRole !== 'executive') {
+                    $responsibleUserId = $currentUserId;
+                } else {
+                    $firstAdmin = Database::fetch("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.name = 'admin' LIMIT 1");
+                    $responsibleUserId = $firstAdmin ? (int)$firstAdmin['id'] : null;
+                }
             }
 
             // ป้องกันการมอบหมายโครงการให้ผู้บริหาร (Role Segregation & Least Privilege)
             if ($responsibleUserId) {
                 $userRoleCheck = Database::fetch("SELECT r.name as role_name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = ?", [$responsibleUserId]);
                 if ($userRoleCheck && $userRoleCheck['role_name'] === 'executive') {
-                    Session::flash('error', 'ไม่สามารถมอบหมายโครงการให้ผู้ใช้งานในบทบาท "ผู้บริหาร" ได้ (ผู้บริหารมีหน้าที่กำกับดูแลภาพรวม)');
-                    header('Location: ' . Router::url("/projects/{$parentId}"));
-                    exit;
+                    if ($explicitlySelected) {
+                        Session::flash('error', 'ไม่สามารถมอบหมายโครงการให้ผู้ใช้งานในบทบาท "ผู้บริหาร" ได้ (ผู้บริหารมีหน้าที่กำกับดูแลภาพรวม)');
+                        header('Location: ' . Router::url("/projects/{$parentId}"));
+                        exit;
+                    }
+                    // หากไม่ได้เจาะจงเลือก ให้สลับไปเป็น Admin หลักเพื่อความปลอดภัย
+                    $firstAdmin = Database::fetch("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.name = 'admin' LIMIT 1");
+                    $responsibleUserId = $firstAdmin ? (int)$firstAdmin['id'] : null;
                 }
             }
 
@@ -403,12 +421,16 @@ class SubProjectController
         }
         $responsiblePerson = isset($_POST['responsible_person']) ? trim($_POST['responsible_person']) : ($project['responsible_person'] ?? '');
         $responsibleUserId = $project['responsible_user_id'];
+        $explicitlySelected = false;
+
         if (!empty($_POST['responsible_user_id'])) {
             $responsibleUserId = (int)$_POST['responsible_user_id'];
+            $explicitlySelected = true;
         } elseif (!empty($responsiblePerson)) {
             $matchedUser = Database::fetch("SELECT id FROM users WHERE name LIKE ? LIMIT 1", ["%{$responsiblePerson}%"]);
             if ($matchedUser) {
                 $responsibleUserId = (int)$matchedUser['id'];
+                $explicitlySelected = true;
             }
         }
 
@@ -416,9 +438,21 @@ class SubProjectController
         if ($responsibleUserId) {
             $userRoleCheck = Database::fetch("SELECT r.name as role_name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = ?", [$responsibleUserId]);
             if ($userRoleCheck && $userRoleCheck['role_name'] === 'executive') {
-                Session::flash('error', 'ไม่สามารถมอบหมายโครงการให้ผู้ใช้งานในบทบาท "ผู้บริหาร" ได้ (ผู้บริหารมีหน้าที่กำกับดูแลภาพรวม)');
-                header('Location: ' . Router::url("/sub-projects/{$subId}"));
-                exit;
+                if ($explicitlySelected) {
+                    Session::flash('error', 'ไม่สามารถมอบหมายโครงการให้ผู้ใช้งานในบทบาท "ผู้บริหาร" ได้ (ผู้บริหารมีหน้าที่กำกับดูแลภาพรวม)');
+                    header('Location: ' . Router::url("/sub-projects/{$subId}"));
+                    exit;
+                }
+                // หากไม่ได้เจาะจงเลือก (เช่น ข้อมูลเดิมเป็นผู้บริหาร หรือระบุชื่อหน่วยงาน/คณะทำงานที่ไม่ใช่ User)
+                // ให้ปรับปรุงไปเป็นบัญชีปัจจุบันของผู้แก้ไข (Admin/Staff) หรือ Admin คนแรกอัตโนมัติ (Self-Healing)
+                $currentUserId = Auth::id();
+                $currentUserRole = Auth::role();
+                if ($currentUserId && $currentUserRole !== 'executive') {
+                    $responsibleUserId = $currentUserId;
+                } else {
+                    $firstAdmin = Database::fetch("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.name = 'admin' LIMIT 1");
+                    $responsibleUserId = $firstAdmin ? (int)$firstAdmin['id'] : null;
+                }
             }
         }
 

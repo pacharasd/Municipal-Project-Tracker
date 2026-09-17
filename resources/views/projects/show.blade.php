@@ -268,24 +268,91 @@ window.projectShowPage = function projectShowPage() {
         $evalScore = $project['evaluation_score'] !== null ? (float)$project['evaluation_score'] : null;
         $evalGrade = $evalScore !== null ? \App\Services\ProjectService::calculateEvaluationGrade($evalScore) : null;
         $evalDateThai = !empty($project['evaluated_at']) ? \App\Core\Helper::thaiDate($project['evaluated_at'], true) : null;
+
+        // สถานะภาพรวมโครงการหลักตามมาตรฐานกลาง
+        $mainStatus = $project['status'] ?? 'not_started';
+        $mainStBadge = match($mainStatus) {
+            'completed' => [
+                'label' => 'เสร็จสิ้น',
+                'class' => 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30',
+                'dot' => 'bg-emerald-500',
+            ],
+            'in_progress' => [
+                'label' => 'กำลังดำเนินการ',
+                'class' => 'bg-sky-50 text-sky-700 border-sky-300 dark:bg-sky-500/15 dark:text-sky-300 dark:border-sky-500/30',
+                'dot' => 'bg-sky-500',
+            ],
+            'has_problem' => [
+                'label' => 'มีปัญหา / ล่าช้า',
+                'class' => 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-500/15 dark:text-rose-300 dark:border-rose-500/30',
+                'dot' => 'bg-rose-500',
+            ],
+            'cancelled' => [
+                'label' => 'ยกเลิก',
+                'class' => 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-white/10 dark:text-slate-300 dark:border-white/10',
+                'dot' => 'bg-slate-400',
+            ],
+            default => [
+                'label' => 'ยังไม่เริ่ม',
+                'class' => 'bg-indigo-50 text-indigo-700 border-indigo-300 dark:bg-indigo-500/15 dark:text-indigo-300 dark:border-indigo-500/30',
+                'dot' => 'bg-indigo-500',
+            ]
+        };
+
+        // นับจำนวนโครงการย่อย/กิจกรรมหลักที่มีปัญหา
+        $problemSubs = array_filter($project['sub_projects'] ?? [], fn($s) => ($s['status'] ?? '') === 'has_problem');
+        $problemSubCount = count($problemSubs);
     ?>
+
+    <!-- Problem Alert Banner หากโครงการหลักติดสถานะมีปัญหา/ล่าช้า -->
+    <?php if ($mainStatus === 'has_problem' || $problemSubCount > 0): ?>
+        <div class="p-4 sm:p-5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-900 dark:text-rose-200 shadow-2xs flex items-start gap-3.5">
+            <div class="p-2 rounded-xl bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5">
+                <i data-lucide="alert-octagon" class="w-5 h-5"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+                <h3 class="text-sm font-bold text-rose-900 dark:text-rose-100 font-heading">
+                    โครงการหลักนี้ติดสถานะ "มีปัญหา / ล่าช้า"
+                    <?php if ($problemSubCount > 0): ?>
+                        (พบ <?= $problemSubCount ?> กิจกรรมหลัก/โครงการย่อยที่รายงานปัญหา)
+                    <?php endif; ?>
+                </h3>
+                <p class="text-xs text-rose-700 dark:text-rose-300 mt-1 leading-relaxed">
+                    มีกิจกรรมหลักหรือโครงการย่อยรายงานอุปสรรคในการดำเนินงาน กรุณาตรวจสอบรายละเอียดโครงการย่อยด้านล่างเพื่อเร่งประสานงานและดำเนินการแก้ไข
+                </p>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <div class="bg-white dark:bg-[#161922] p-6 sm:p-8 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm">
-        <div class="flex flex-wrap items-center gap-2">
-            <?php if (!empty($project['project_code'])): ?>
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-mono font-bold rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-300/80 dark:border-emerald-500/30">
-                    <i data-lucide="tag" class="w-3.5 h-3.5"></i>
-                    <span><?= htmlspecialchars($project['project_code']) ?></span>
+        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div class="flex flex-wrap items-center gap-2">
+                <?php if (!empty($project['project_code'])): ?>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-mono font-bold rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-300/80 dark:border-emerald-500/30">
+                        <i data-lucide="tag" class="w-3.5 h-3.5"></i>
+                        <span><?= htmlspecialchars($project['project_code']) ?></span>
+                    </span>
+                <?php endif; ?>
+
+                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30"><?= htmlspecialchars(!empty($project['responsible_person']) ? $project['responsible_person'] : ($project['department_name'] ?? 'ไม่ระบุหน่วยงาน')) ?></span>
+                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-white/10">ปีงบประมาณ <?= htmlspecialchars((string)($project['fiscal_year'] ?? '-')) ?></span>
+                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-purple-50 dark:bg-purple-500/15 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/30"><?= htmlspecialchars($project['category_name'] ?? 'ทั่วไป') ?></span>
+                <?php if ($evalGrade): ?>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full border <?= $evalGrade['bgClass'] ?>">
+                        <i data-lucide="award" class="w-3.5 h-3.5"></i>
+                        <span>ผลประเมิน: เกรด <?= $evalGrade['grade'] ?> (<?= number_format($evalScore, 1) ?>)</span>
+                    </span>
+                <?php endif; ?>
+            </div>
+
+            <!-- Status Badge ของโครงการหลัก (มุมขวาบน) -->
+            <div class="shrink-0">
+                <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-full border shadow-2xs shrink-0 whitespace-nowrap <?= $mainStBadge['class'] ?>"
+                      title="สถานะภาพรวมโครงการหลัก (คำนวณอัตโนมัติตามความคืบหน้าและกิจกรรมหลัก)">
+                    <span class="w-2 h-2 rounded-full shrink-0 <?= $mainStBadge['dot'] ?> <?= $mainStatus === 'in_progress' ? 'animate-pulse' : '' ?>"></span>
+                    <span class="whitespace-nowrap"><?= $mainStBadge['label'] ?></span>
                 </span>
-            <?php endif; ?>
-            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30"><?= htmlspecialchars(!empty($project['responsible_person']) ? $project['responsible_person'] : ($project['department_name'] ?? 'ไม่ระบุหน่วยงาน')) ?></span>
-            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-white/10">ปีงบประมาณ <?= htmlspecialchars((string)($project['fiscal_year'] ?? '-')) ?></span>
-            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-purple-50 dark:bg-purple-500/15 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/30"><?= htmlspecialchars($project['category_name'] ?? 'ทั่วไป') ?></span>
-            <?php if ($evalGrade): ?>
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full border <?= $evalGrade['bgClass'] ?>">
-                    <i data-lucide="award" class="w-3.5 h-3.5"></i>
-                    <span>ผลประเมิน: เกรด <?= $evalGrade['grade'] ?> (<?= number_format($evalScore, 1) ?>)</span>
-                </span>
-            <?php endif; ?>
+            </div>
         </div>
 
         <h1 class="text-xl sm:text-2xl font-bold font-heading text-slate-900 dark:text-white leading-snug tracking-tight mt-3">

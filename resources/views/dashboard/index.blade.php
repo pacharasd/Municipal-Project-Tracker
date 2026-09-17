@@ -841,10 +841,11 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
         const tooltipBody = isDark ? '#e2e8f0' : '#334155';
         const tooltipBorder = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
 
-        // กำหนด Default Border และ Color ให้โปร่งใส ป้องกันเส้นขอบดำในโหมดมืด
+        // กำหนด Default Border, Color และ Resize Delay เพื่อความ Smooth สูงสุด
         if (typeof Chart !== 'undefined') {
             Chart.defaults.color = tickColor;
             Chart.defaults.borderColor = 'transparent';
+            Chart.defaults.resizeDelay = 150;
         }
 
         // ทำลายกราฟเดิมเพื่อป้องกันทับซ้อนเมื่อมีการรีเฟรช SPA หรือเปลี่ยนธีม

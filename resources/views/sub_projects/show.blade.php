@@ -1145,11 +1145,34 @@ window.subProjectShowPage = function subProjectShowPage() {
                         </div>
                     </div>
                 <?php else: ?>
+                <?php
+                    $subStartDate = $project['start_date'] ?? '';
+                    $subEndDate = $project['end_date'] ?? '';
+                    $subStartThai = !empty($subStartDate) ? \App\Core\Helper::thaiDate($subStartDate, false) : '';
+                    $subEndThai = !empty($subEndDate) ? \App\Core\Helper::thaiDate($subEndDate, false) : '';
+                    $subDateHelpText = (!empty($subStartThai) && !empty($subEndThai)) 
+                        ? "* ต้องอยู่ระหว่าง {$subStartThai} ถึง {$subEndThai} (กรอบเวลากิจกรรมหลัก)" 
+                        : null;
+                ?>
                 <form action="<?= \App\Core\Router::url('/activities') ?>" method="POST" 
                       @submit="
                         const actDate = $el.querySelector('input[name=activity_date]')?.value;
                         if (!actDate) {
                             window.notify.warning('กรุณาเลือกวันที่จัดกิจกรรมย่อย');
+                            $event.preventDefault();
+                            return false;
+                        }
+                        const pStart = '<?= $subStartDate ?>';
+                        const pEnd = '<?= $subEndDate ?>';
+                        const pStartThai = '<?= $subStartThai ?>';
+                        const pEndThai = '<?= $subEndThai ?>';
+                        if (pStart && actDate < pStart) {
+                            window.notify.warning('วันที่จัดกิจกรรมย่อยต้องไม่น้อยกว่าวันเริ่มกิจกรรมหลัก (' + pStartThai + ')');
+                            $event.preventDefault();
+                            return false;
+                        }
+                        if (pEnd && actDate > pEnd) {
+                            window.notify.warning('วันที่จัดกิจกรรมย่อยต้องไม่มากกว่าวันสิ้นสุดกิจกรรมหลัก (' + pEndThai + ')');
                             $event.preventDefault();
                             return false;
                         }
@@ -1174,6 +1197,9 @@ window.subProjectShowPage = function subProjectShowPage() {
                                 'name' => 'activity_date',
                                 'label' => 'วันที่จัดกิจกรรมย่อย',
                                 'required' => true,
+                                'minDate' => $subStartDate,
+                                'maxDate' => $subEndDate,
+                                'helpText' => $subDateHelpText,
                                 'placement' => 'auto',
                                 'align' => 'left',
                             ]); ?>
@@ -1541,7 +1567,30 @@ window.subProjectShowPage = function subProjectShowPage() {
                 </button>
             </div>
 
-            <form :action="'<?= \App\Core\Router::url('/activities') ?>/' + (selectedAct.id || '') + '/update'" method="POST" class="p-6 space-y-4">
+            <form :action="'<?= \App\Core\Router::url('/activities') ?>/' + (selectedAct.id || '') + '/update'" method="POST" 
+                  @submit="
+                    const actDate = $el.querySelector('input[name=activity_date]')?.value;
+                    if (!actDate) {
+                        window.notify.warning('กรุณาเลือกวันที่จัดกิจกรรมย่อย');
+                        $event.preventDefault();
+                        return false;
+                    }
+                    const pStart = '<?= $subStartDate ?>';
+                    const pEnd = '<?= $subEndDate ?>';
+                    const pStartThai = '<?= $subStartThai ?>';
+                    const pEndThai = '<?= $subEndThai ?>';
+                    if (pStart && actDate < pStart) {
+                        window.notify.warning('วันที่จัดกิจกรรมย่อยต้องไม่น้อยกว่าวันเริ่มกิจกรรมหลัก (' + pStartThai + ')');
+                        $event.preventDefault();
+                        return false;
+                    }
+                    if (pEnd && actDate > pEnd) {
+                        window.notify.warning('วันที่จัดกิจกรรมย่อยต้องไม่มากกว่าวันสิ้นสุดกิจกรรมหลัก (' + pEndThai + ')');
+                        $event.preventDefault();
+                        return false;
+                    }
+                  "
+                  class="p-6 space-y-4">
                 <input type="hidden" name="_token" value="<?= $csrfToken ?>">
 
                 <div>
@@ -1560,6 +1609,9 @@ window.subProjectShowPage = function subProjectShowPage() {
                             'label' => 'วันที่จัดกิจกรรมย่อย',
                             'required' => true,
                             'xModel' => 'selectedAct.activity_date',
+                            'minDate' => $subStartDate,
+                            'maxDate' => $subEndDate,
+                            'helpText' => $subDateHelpText,
                             'placement' => 'auto',
                             'align' => 'left',
                         ]); ?>

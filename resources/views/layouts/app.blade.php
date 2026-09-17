@@ -164,6 +164,8 @@
                 placement: config.placement || 'auto',
                 actualPlacement: (config.placement && config.placement !== 'auto') ? config.placement : 'bottom',
                 actualAlign: config.align || 'left',
+                minDate: config.minDate || '',
+                maxDate: config.maxDate || '',
                 open: false,
                 viewYear: viewDate.getFullYear(),
                 viewMonth: viewDate.getMonth(),
@@ -269,6 +271,9 @@
                         const mStr = String(this.viewMonth + 1).padStart(2, '0');
                         const dStr = String(i).padStart(2, '0');
                         const dateStr = `${this.viewYear}-${mStr}-${dStr}`;
+                        const isBeforeMin = Boolean(this.minDate && dateStr < this.minDate);
+                        const isAfterMax = Boolean(this.maxDate && dateStr > this.maxDate);
+                        const isDisabled = isBeforeMin || isAfterMax;
                         list.push({
                             day: i,
                             isCurrent: true,
@@ -276,7 +281,8 @@
                             date: dateStr,
                             dateStr: dateStr,
                             isToday: dateStr === todayStr,
-                            isSelected: this.value === dateStr
+                            isSelected: this.value === dateStr,
+                            isDisabled: isDisabled
                         });
                     }
 
@@ -416,7 +422,7 @@
                 },
 
                 selectDate(item) {
-                    if (!item.isCurrent || !item.date) return;
+                    if (!item.isCurrent || !item.date || item.isDisabled) return;
                     this.value = item.date;
                     this.open = false;
                     this.dispatchChange();
@@ -426,7 +432,14 @@
                     const ty = today.getFullYear();
                     const tm = String(today.getMonth() + 1).padStart(2, '0');
                     const td = String(today.getDate()).padStart(2, '0');
-                    this.value = `${ty}-${tm}-${td}`;
+                    const todayStr = `${ty}-${tm}-${td}`;
+                    if ((this.minDate && todayStr < this.minDate) || (this.maxDate && todayStr > this.maxDate)) {
+                        if (window.notify && typeof window.notify.warning === 'function') {
+                            window.notify.warning('วันนี้อยู่นอกช่วงเวลาที่อนุญาต');
+                        }
+                        return;
+                    }
+                    this.value = todayStr;
                     this.viewYear = ty;
                     this.viewMonth = today.getMonth();
                     this.refreshDays();
@@ -647,6 +660,9 @@
             s.src = 'https://cdn.jsdelivr.net/npm/chart.js';
             s.nonce = '<?= \App\Core\SecurityHeaders::nonce() ?>';
             document.head.appendChild(s);
+        } else {
+            // Enterprise standard: Debounce chart resize during layout transitions to maintain locked 60-120fps
+            Chart.defaults.resizeDelay = 150;
         }
     </script>
     <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>" src="<?= \App\Core\Router::url('/js/lucide.min.js') ?>"></script>
@@ -670,6 +686,24 @@
                     sidebarOpen: false,
                     desktopSidebarOpen: (localStorage.getItem('mpt_desktop_sidebar') !== 'false'),
                     resizeTimer: null,
+                    init() {
+                        // Global Keyboard Shortcut: Ctrl+B or Cmd+B to toggle sidebar (Enterprise Productivity Standard)
+                        window.addEventListener('keydown', (e) => {
+                            if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) {
+                                const target = e.target;
+                                const isFormInput = target && (
+                                    target.tagName === 'INPUT' || 
+                                    target.tagName === 'TEXTAREA' || 
+                                    target.tagName === 'SELECT' || 
+                                    target.isContentEditable
+                                );
+                                if (!isFormInput) {
+                                    e.preventDefault();
+                                    this.toggleSidebar();
+                                }
+                            }
+                        });
+                    },
                     closeSidebar() {
                         this.sidebarOpen = false;
                     },
@@ -684,8 +718,10 @@
                         }
                         clearTimeout(this.resizeTimer);
                         this.resizeTimer = setTimeout(() => {
-                            window.dispatchEvent(new Event('resize'));
-                        }, 220);
+                            requestAnimationFrame(() => {
+                                window.dispatchEvent(new Event('resize'));
+                            });
+                        }, 320);
                     }
                 }));
 
@@ -1270,10 +1306,13 @@
             <div class="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 sm:flex-initial">
                 <button type="button" 
                         @click="toggleSidebar()" 
-                        class="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition shrink-0 cursor-pointer flex items-center justify-center" 
-                        :title="(window.innerWidth >= 1024 && !desktopSidebarOpen) ? 'แสดงแถบเมนู' : 'เปิด/ปิดแถบเมนู'"
-                        aria-label="เปิด/ปิดแถบเมนู">
-                    <i data-lucide="menu" class="w-4.5 h-4.5 sm:w-5 sm:h-5"></i>
+                        id="sidebar-toggle-btn"
+                        aria-controls="main-sidebar"
+                        :aria-expanded="(window.innerWidth >= 1024 ? desktopSidebarOpen : sidebarOpen).toString()"
+                        :aria-label="(window.innerWidth >= 1024 ? (desktopSidebarOpen ? 'ยุบแถบเมนูนำทาง (Ctrl+B)' : 'ขยายแถบเมนูนำทาง (Ctrl+B)') : (sidebarOpen ? 'ปิดแถบเมนู' : 'เปิดแถบเมนู'))"
+                        :title="(window.innerWidth >= 1024 ? (desktopSidebarOpen ? 'ยุบแถบเมนู (Ctrl+B)' : 'ขยายแถบเมนู (Ctrl+B)') : (sidebarOpen ? 'ปิดแถบเมนู' : 'เปิดแถบเมนู'))"
+                        class="w-9 h-9 sm:w-9.5 sm:h-9.5 rounded-xl bg-slate-100/90 dark:bg-[#181a20] border border-slate-200/90 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/20 text-slate-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-200/70 dark:hover:bg-white/10 active:scale-95 transition-all duration-150 shrink-0 cursor-pointer flex items-center justify-center shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
+                    <i data-lucide="menu" class="w-5 h-5"></i>
                 </button>
                 <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="shrink-0 flex items-center gap-1.5 sm:gap-2 group" title="ระบบติดตามและบริหารโครงการเทศบาล">
                     <!-- ตราสัญลักษณ์ร่วม (เทศบาล x กปท.) พื้นหลังขาวคมชัดทุกธีม ขนาดกะทัดรัดได้สัดส่วน -->
@@ -1591,8 +1630,8 @@
                    'lg:ml-0': desktopSidebarOpen,
                    'lg:-ml-64 lg:pointer-events-none': !desktopSidebarOpen
                }" 
-               class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-[#0b0c0f] border-r border-slate-200 dark:border-white/[0.08] pt-0 transform -translate-x-full lg:translate-x-0 lg:ml-0 lg:static transition-[margin-left,transform] duration-200 ease-out flex flex-col justify-between shadow-lg dark:shadow-2xl lg:shadow-none overflow-hidden shrink-0 will-change-[margin-left,transform]">
-            <div class="w-64 h-full flex flex-col justify-between overflow-hidden">
+               class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-[#0b0c0f] border-r border-slate-200 dark:border-white/[0.08] pt-0 transform -translate-x-full lg:translate-x-0 lg:ml-0 lg:static transition-[margin-left,transform] duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] flex flex-col justify-between shadow-lg dark:shadow-2xl lg:shadow-none overflow-hidden shrink-0 will-change-[margin-left,transform] transform-gpu">
+            <div class="w-64 h-full flex flex-col justify-between overflow-hidden" style="contain: paint layout;">
                 
                 <!-- Mobile Sidebar Brand Header with Municipal & KPTH Logo -->
                 <div class="lg:hidden px-4 py-3.5 border-b border-slate-200/80 dark:border-white/[0.08] shrink-0 bg-slate-50/80 dark:bg-white/[0.02]">
@@ -1718,8 +1757,10 @@
                 <div class="p-2.5 border-t border-slate-200/80 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.01] shrink-0 select-none">
                     <button type="button" 
                             @click="toggleSidebar()" 
+                            aria-controls="main-sidebar"
+                            aria-label="ย่อแถบเมนูนำทาง (Ctrl+B)"
                             class="w-full inline-flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-white/10 transition cursor-pointer" 
-                            title="ซ่อนแถบเมนู">
+                            title="ย่อแถบเมนู (Ctrl+B)">
                         <i data-lucide="panel-left-close" class="w-4 h-4 text-slate-400"></i>
                         <span>ย่อเมนู</span>
                     </button>
@@ -1731,12 +1772,18 @@
         <div x-show="sidebarOpen" 
              @click="sidebarOpen = false" 
              x-cloak 
+             x-transition:enter="transition-opacity duration-300 ease-out"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition-opacity duration-200 ease-in"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
              style="display: none;"
              class="fixed inset-0 z-40 modal-backdrop-smooth lg:hidden w-screen h-screen"
              :class="{ 'pointer-events-none': !sidebarOpen }"></div>
 
         <!-- Main Content Area -->
-        <main id="main-content" class="flex-1 min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden p-3.5 sm:p-6 lg:p-8 bg-[#f8fafc] dark:bg-[#0f1014]">
+        <main id="main-content" class="flex-1 min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden p-3.5 sm:p-6 lg:p-8 bg-[#f8fafc] dark:bg-[#0f1014] transform-gpu">
             <!-- View Specific Content -->
             <?= $content ?? '' ?>
         </main>

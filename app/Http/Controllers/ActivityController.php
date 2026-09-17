@@ -51,6 +51,27 @@ class ActivityController
             exit;
         }
 
+        // Rule #18 Data Integrity: วันที่จัดกิจกรรมย่อย ห้ามมากกว่าวันสิ้นสุดกิจกรรมหลัก และห้ามน้อยกว่าวันเริ่มกิจกรรมหลัก
+        $actDate = trim($_POST['activity_date'] ?? '');
+        $subStartDate = $project['start_date'] ?? null;
+        $subEndDate = $project['end_date'] ?? null;
+
+        if (!empty($subStartDate) && $actDate < $subStartDate) {
+            $thaiStart = \App\Core\Helper::thaiDate($subStartDate, false);
+            $thaiAct = \App\Core\Helper::thaiDate($actDate, false);
+            Session::flash('error', "วันที่จัดกิจกรรมย่อย ({$thaiAct}) ต้องไม่น้อยกว่าวันเริ่มกิจกรรมหลัก ({$thaiStart})");
+            header('Location: ' . Router::url("/sub-projects/{$projectId}"));
+            exit;
+        }
+
+        if (!empty($subEndDate) && $actDate > $subEndDate) {
+            $thaiEnd = \App\Core\Helper::thaiDate($subEndDate, false);
+            $thaiAct = \App\Core\Helper::thaiDate($actDate, false);
+            Session::flash('error', "วันที่จัดกิจกรรมย่อย ({$thaiAct}) ต้องไม่มากกว่าวันสิ้นสุดกิจกรรมหลัก ({$thaiEnd})");
+            header('Location: ' . Router::url("/sub-projects/{$projectId}"));
+            exit;
+        }
+
         try {
             $targetParticipants = (int)($_POST['target_participant_count'] ?? $_POST['participant_count'] ?? 0);
             $actualParticipants = (int)($_POST['actual_participant_count'] ?? 0);
@@ -176,6 +197,29 @@ class ActivityController
         if ($v->fails()) {
             Session::flash('error', $v->firstError());
             header('Location: ' . Router::url("/sub-projects/{$act['project_id']}"));
+            exit;
+        }
+
+        // Rule #18 Data Integrity: วันที่จัดกิจกรรมย่อย ห้ามมากกว่าวันสิ้นสุดกิจกรรมหลัก และห้ามน้อยกว่าวันเริ่มกิจกรรมหลัก
+        $projectId = (int)$act['project_id'];
+        $project = Database::fetch("SELECT * FROM projects WHERE id = ?", [$projectId]);
+        $actDate = trim($_POST['activity_date'] ?? '');
+        $subStartDate = $project['start_date'] ?? null;
+        $subEndDate = $project['end_date'] ?? null;
+
+        if (!empty($subStartDate) && $actDate < $subStartDate) {
+            $thaiStart = \App\Core\Helper::thaiDate($subStartDate, false);
+            $thaiAct = \App\Core\Helper::thaiDate($actDate, false);
+            Session::flash('error', "วันที่จัดกิจกรรมย่อย ({$thaiAct}) ต้องไม่น้อยกว่าวันเริ่มกิจกรรมหลัก ({$thaiStart})");
+            header('Location: ' . Router::url("/sub-projects/{$projectId}"));
+            exit;
+        }
+
+        if (!empty($subEndDate) && $actDate > $subEndDate) {
+            $thaiEnd = \App\Core\Helper::thaiDate($subEndDate, false);
+            $thaiAct = \App\Core\Helper::thaiDate($actDate, false);
+            Session::flash('error', "วันที่จัดกิจกรรมย่อย ({$thaiAct}) ต้องไม่มากกว่าวันสิ้นสุดกิจกรรมหลัก ({$thaiEnd})");
+            header('Location: ' . Router::url("/sub-projects/{$projectId}"));
             exit;
         }
 

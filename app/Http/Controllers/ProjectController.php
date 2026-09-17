@@ -93,24 +93,37 @@ class ProjectController
         $responsiblePerson = trim($_POST['responsible_person'] ?? '');
         $deptId = !empty($_POST['department_id']) ? (int)$_POST['department_id'] : 1;
         $responsibleUserId = !empty($_POST['responsible_user_id']) ? (int)$_POST['responsible_user_id'] : null;
+        $explicitlySelected = !empty($_POST['responsible_user_id']);
 
         if (!$responsibleUserId && $responsiblePerson) {
             $matchedUser = Database::fetch("SELECT id FROM users WHERE name LIKE ? LIMIT 1", ["%{$responsiblePerson}%"]);
             if ($matchedUser) {
                 $responsibleUserId = (int)$matchedUser['id'];
+                $explicitlySelected = true;
             }
         }
         if (!$responsibleUserId) {
-            $responsibleUserId = Auth::id() ?: 1;
+            $currentUserId = Auth::id();
+            $currentUserRole = Auth::role();
+            if ($currentUserId && $currentUserRole !== 'executive') {
+                $responsibleUserId = $currentUserId;
+            } else {
+                $firstAdmin = Database::fetch("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.name = 'admin' LIMIT 1");
+                $responsibleUserId = $firstAdmin ? (int)$firstAdmin['id'] : null;
+            }
         }
 
         // ป้องกันการมอบหมายโครงการให้ผู้บริหาร (Role Segregation & Least Privilege)
         if ($responsibleUserId) {
             $userRoleCheck = Database::fetch("SELECT r.name as role_name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = ?", [$responsibleUserId]);
             if ($userRoleCheck && $userRoleCheck['role_name'] === 'executive') {
-                Session::flash('error', 'ไม่สามารถมอบหมายโครงการให้ผู้ใช้งานในบทบาท "ผู้บริหาร" ได้ (ผู้บริหารมีหน้าที่กำกับดูแลภาพรวม)');
-                header('Location: ' . Router::url('/projects'));
-                exit;
+                if ($explicitlySelected) {
+                    Session::flash('error', 'ไม่สามารถมอบหมายโครงการให้ผู้ใช้งานในบทบาท "ผู้บริหาร" ได้ (ผู้บริหารมีหน้าที่กำกับดูแลภาพรวม)');
+                    header('Location: ' . Router::url('/projects'));
+                    exit;
+                }
+                $firstAdmin = Database::fetch("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.name = 'admin' LIMIT 1");
+                $responsibleUserId = $firstAdmin ? (int)$firstAdmin['id'] : null;
             }
         }
 
@@ -233,10 +246,13 @@ class ProjectController
         }
 
         $responsibleUserId = !empty($_POST['responsible_user_id']) ? (int)$_POST['responsible_user_id'] : $project['responsible_user_id'];
+        $explicitlySelected = !empty($_POST['responsible_user_id']);
+
         if ($responsiblePerson !== '') {
             $matchedUser = Database::fetch("SELECT id FROM users WHERE name LIKE ? LIMIT 1", ["%{$responsiblePerson}%"]);
             if ($matchedUser) {
                 $responsibleUserId = (int)$matchedUser['id'];
+                $explicitlySelected = true;
             }
         }
 
@@ -244,9 +260,21 @@ class ProjectController
         if ($responsibleUserId) {
             $userRoleCheck = Database::fetch("SELECT r.name as role_name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = ?", [$responsibleUserId]);
             if ($userRoleCheck && $userRoleCheck['role_name'] === 'executive') {
-                Session::flash('error', 'ไม่สามารถมอบหมายโครงการให้ผู้ใช้งานในบทบาท "ผู้บริหาร" ได้ (ผู้บริหารมีหน้าที่กำกับดูแลภาพรวม)');
-                header('Location: ' . Router::url("/projects/{$projectId}"));
-                exit;
+                if ($explicitlySelected) {
+                    Session::flash('error', 'ไม่สามารถมอบหมายโครงการให้ผู้ใช้งานในบทบาท "ผู้บริหาร" ได้ (ผู้บริหารมีหน้าที่กำกับดูแลภาพรวม)');
+                    header('Location: ' . Router::url("/projects/{$projectId}"));
+                    exit;
+                }
+                // หากไม่ได้เจาะจงเลือก (เช่น ข้อมูลเดิมเป็นผู้บริหาร หรือระบุชื่อหน่วยงาน/คณะทำงานที่ไม่ใช่ User)
+                // ให้ปรับปรุงไปเป็นบัญชีปัจจุบันของผู้แก้ไข (Admin/Staff) หรือ Admin คนแรกอัตโนมัติ (Self-Healing)
+                $currentUserId = Auth::id();
+                $currentUserRole = Auth::role();
+                if ($currentUserId && $currentUserRole !== 'executive') {
+                    $responsibleUserId = $currentUserId;
+                } else {
+                    $firstAdmin = Database::fetch("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.name = 'admin' LIMIT 1");
+                    $responsibleUserId = $firstAdmin ? (int)$firstAdmin['id'] : null;
+                }
             }
         }
 
