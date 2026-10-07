@@ -23,6 +23,11 @@ dashboard_rendered.html
 # Development & Testing tools (Local only)
 scripts/
 tests/
+!tests/
+tests/*
+!tests/test_dashboard_grade_distribution.php
+!tests/test_dashboard_grade_stats.php
+!tests/test_dashboard_grade_chart.js
 database/
 
 # AI Assistant local metadata
@@ -32,5 +37,3 @@ database/
 public/uploads/*
 !public/uploads/.gitkeep
 !public/uploads/.htaccess
-
-

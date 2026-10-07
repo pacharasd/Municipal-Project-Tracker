@@ -240,6 +240,18 @@ class ProjectService
         }
     }
 
+    /** @param array<int, float|int|string|null> $scores */
+    public static function countEvaluationGrades(array $scores): array
+    {
+        $distribution = array_fill_keys(['A+', 'A', 'B', 'C', 'D', 'ungraded'], 0);
+        foreach ($scores as $score) {
+            $grade = $score === null ? 'ungraded' : self::calculateEvaluationGrade((float)$score)['grade'];
+            $distribution[$grade]++;
+        }
+
+        return $distribution;
+    }
+
     public static function getProjectById(int $id): ?array
     {
         $respExpr = self::hasResponsiblePersonColumn()
@@ -703,7 +715,7 @@ class ProjectService
         unset($bp);
 
         // 5. Main Projects Progress Data for Dashboard Chart
-        $mainProjectsSql = "SELECT p.id, p.name, p.progress, p.budget, p.disbursed_amount, p.status,
+        $mainProjectsSql = "SELECT p.id, p.name, p.progress, p.budget, p.disbursed_amount, p.status, p.evaluation_score,
                                    d.name as department_name,
                                    COUNT(s.id) as sub_project_count
                             FROM projects p
@@ -715,8 +727,17 @@ class ProjectService
             $mainProjectsSql .= " AND p.fiscal_year_id = ?";
             $mainProjParams[] = $fiscalYearId;
         }
-        $mainProjectsSql .= " GROUP BY p.id, p.name, p.progress, p.budget, p.disbursed_amount, p.status, d.name ORDER BY p.id ASC";
+        $mainProjectsSql .= " GROUP BY p.id, p.name, p.progress, p.budget, p.disbursed_amount, p.status, p.evaluation_score, d.name ORDER BY p.id ASC";
         $mainProjectsData = Database::query($mainProjectsSql, $mainProjParams);
+
+        // Count each main project once using the same score-to-grade rule as its detail page.
+        $gradeDistribution = self::countEvaluationGrades(
+            array_map(static fn(array $project) => $project['evaluation_score'], $mainProjectsData)
+        );
+        foreach ($mainProjectsData as &$mainProject) {
+            unset($mainProject['evaluation_score']);
+        }
+        unset($mainProject);
 
         // 6. Fiscal Year Budget Data (for Yearly Budget Comparison Chart)
         $fiscalYearData = Database::query(
@@ -787,6 +808,7 @@ class ProjectService
             'main_completed'        => $mainCompleted,
             'main_has_problem'      => $mainHasProblem,
             'main_cancelled'        => $mainCancelled,
+            'grade_distribution'    => $gradeDistribution,
             'sub_total'             => $subTotal,
             'not_started'           => $notStarted,
             'in_progress'           => $inProgress,

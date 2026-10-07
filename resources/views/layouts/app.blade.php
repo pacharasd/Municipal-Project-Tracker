@@ -2334,7 +2334,7 @@
                     safeCreateIcons();
 
                     // 10. Re-initialize charts if on dashboard
-                    if (typeof window.initDashboardCharts === 'function' && (document.getElementById('statusDonutChart') || document.getElementById('budgetComparisonChart') || document.getElementById('projectSuccessChart') || document.getElementById('categoryBarChart'))) {
+                    if (typeof window.initDashboardCharts === 'function' && (document.getElementById('statusDonutChart') || document.getElementById('gradeDonutChart') || document.getElementById('budgetComparisonChart') || document.getElementById('projectSuccessChart') || document.getElementById('categoryBarChart'))) {
                         window.initDashboardCharts();
                     }
 
@@ -2554,7 +2554,7 @@
                     safeCreateIcons();
 
                     // 10. Re-initialize charts if on dashboard
-                    if (typeof window.initDashboardCharts === 'function' && (document.getElementById('statusDonutChart') || document.getElementById('budgetComparisonChart') || document.getElementById('projectSuccessChart') || document.getElementById('categoryBarChart'))) {
+                    if (typeof window.initDashboardCharts === 'function' && (document.getElementById('statusDonutChart') || document.getElementById('gradeDonutChart') || document.getElementById('budgetComparisonChart') || document.getElementById('projectSuccessChart') || document.getElementById('categoryBarChart'))) {
                         window.initDashboardCharts();
                     }
 

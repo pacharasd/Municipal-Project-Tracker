@@ -28,6 +28,15 @@ $cancPct = round(((int)($stats['cancelled'] ?? 0) / $totalSub) * 100, 1);
 $topProjects = $stats['top_projects'] ?? [];
 $bottomProjects = $stats['bottom_projects'] ?? [];
 $categoryData = $stats['category_data'] ?? [];
+$gradeDistribution = $stats['grade_distribution'] ?? [];
+$gradeMeta = [
+    'A+' => ['label' => 'ดีเยี่ยมมาก', 'color' => '#10b981'],
+    'A' => ['label' => 'ดีเยี่ยม', 'color' => '#0ea5e9'],
+    'B' => ['label' => 'ดี', 'color' => '#6366f1'],
+    'C' => ['label' => 'พอใช้', 'color' => '#f59e0b'],
+    'D' => ['label' => 'ต้องปรับปรุง', 'color' => '#f43f5e'],
+    'ungraded' => ['label' => 'ยังไม่ประเมิน', 'color' => '#94a3b8'],
+];
 
 
 // Calculations for Progress Tiers
@@ -305,7 +314,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
         </div>
     </div>
 
-    <!-- 3. 4 Core Dashboard Charts (AGENTS.md Rule #10: 2x2 Responsive Grid) -->
+    <!-- 3. Dashboard Charts: status and grade first, then budget and progress -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 w-full max-w-full">
 
         <!-- กราฟที่ 1: จำนวนโครงการตามสถานะ (Rule #10.1: 5 Statuses) -->
@@ -353,10 +362,10 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                 </div>
 
                 <!-- Donut Chart & 5-Item Legend -->
-                <div class="grid grid-cols-1 sm:grid-cols-12 items-center gap-6 py-2">
+                <div class="grid grid-cols-1 2xl:grid-cols-12 items-center gap-6 py-2">
                     <!-- Donut Canvas with Center Text (6 cols) -->
-                    <div class="sm:col-span-6 flex justify-center items-center">
-                        <div class="w-52 h-52 sm:w-60 sm:h-60 lg:w-64 lg:h-64 xl:w-72 xl:h-72 relative max-w-full aspect-square mx-auto flex items-center justify-center touch-pan-y" style="touch-action: pan-y;">
+                    <div class="2xl:col-span-6 flex justify-center items-center">
+                        <div class="w-52 h-52 sm:w-60 sm:h-60 2xl:w-64 2xl:h-64 relative max-w-full aspect-square mx-auto flex items-center justify-center touch-pan-y" style="touch-action: pan-y;">
                             <canvas id="statusDonutChart"
                                     style="touch-action: pan-y;"
                                     data-main-not-started="<?= (int)($stats['main_not_started'] ?? 0) ?>"
@@ -382,7 +391,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                     </div>
 
                     <!-- 5-Item Legend (6 cols) -->
-                    <div class="sm:col-span-6 space-y-2 sm:space-y-2.5 text-xs sm:text-sm">
+                    <div class="2xl:col-span-6 space-y-2 sm:space-y-2.5 text-xs sm:text-sm">
                         <!-- 1. ยังไม่เริ่ม (Modern Tech Indigo) -->
                         <div class="p-2.5 sm:p-3 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:border-indigo-400/60 dark:hover:border-indigo-500/40 flex items-center justify-between transition-all group">
                             <div class="flex items-center gap-2.5 min-w-0">
@@ -459,6 +468,63 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
             <!-- Footer Timestamp -->
             <div class="pt-3 mt-4 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
                 <span>Rule #10.1: สถานะ 5 กลุ่ม</span>
+                <span>ข้อมูล ณ วันที่ <?= $currentDateThai ?></span>
+            </div>
+        </div>
+
+        <!-- สัดส่วนเกรดของโครงการหลัก (รวมโครงการที่ยังไม่ประเมิน) -->
+        <div class="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between w-full max-w-full min-w-0 overflow-hidden">
+            <div>
+                <div class="flex items-center gap-2 pb-3 mb-4 border-b border-slate-100 dark:border-white/[0.06]">
+                    <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                        <i data-lucide="award" class="w-4 h-4"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h2 class="text-base font-bold text-slate-900 dark:text-white font-heading">เกรดโครงการหลัก</h2>
+                        <p class="text-[11px] text-slate-400">สัดส่วนจำนวนโครงการตามผลประเมิน</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 2xl:grid-cols-12 items-center gap-5 py-2">
+                    <div class="2xl:col-span-6 flex justify-center items-center">
+                        <div class="w-52 h-52 sm:w-60 sm:h-60 2xl:w-64 2xl:h-64 relative max-w-full aspect-square mx-auto flex items-center justify-center touch-pan-y" style="touch-action: pan-y;">
+                            <canvas id="gradeDonutChart"
+                                    data-grade-distribution='<?= htmlspecialchars(json_encode($gradeDistribution, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>'
+                                    data-grade-meta='<?= htmlspecialchars(json_encode($gradeMeta, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>'
+                                    role="img"
+                                    aria-label="สัดส่วนเกรดของโครงการหลัก ดูจำนวนและเปอร์เซ็นต์แต่ละเกรดในรายการข้างกราฟ"
+                                    style="touch-action: pan-y;"></canvas>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center select-none">
+                                <span class="text-[11px] sm:text-xs font-bold text-slate-400 dark:text-slate-400">โครงการหลักทั้งหมด</span>
+                                <span class="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white font-heading tracking-tight my-1 leading-none"><?= number_format((int)$stats['main_total']) ?></span>
+                                <?php if ((int)$stats['main_total'] === 0): ?>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">ไม่มีข้อมูลโครงการ</span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="2xl:col-span-6 grid gap-1.5 text-xs" role="list" aria-label="จำนวนโครงการหลักแยกตามเกรด">
+                        <?php foreach ($gradeMeta as $gradeKey => $meta): ?>
+                            <?php
+                            $gradeCount = (int)($gradeDistribution[$gradeKey] ?? 0);
+                            $gradePct = (int)$stats['main_total'] > 0 ? round($gradeCount / (int)$stats['main_total'] * 100, 1) : 0.0;
+                            ?>
+                            <div role="listitem" class="flex items-center justify-between gap-2 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] px-2.5 py-2">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <span class="w-3 h-3 rounded-full shrink-0" style="background-color: <?= $meta['color'] ?>;"></span>
+                                    <span class="font-semibold text-slate-800 dark:text-slate-200 truncate"><?= $gradeKey === 'ungraded' ? $meta['label'] : 'เกรด ' . $gradeKey . ' · ' . $meta['label'] ?></span>
+                                </div>
+                                <div class="flex items-center gap-2 shrink-0 font-mono">
+                                    <span class="font-bold text-slate-900 dark:text-white"><?= number_format($gradeCount) ?></span>
+                                    <span class="text-slate-500 dark:text-slate-400 w-11 text-right"><?= number_format($gradePct, 1) ?>%</span>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+            <div class="pt-3 mt-4 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+                <span>โครงการหลัก 1 โครงการนับ 1 ครั้ง</span>
                 <span>ข้อมูล ณ วันที่ <?= $currentDateThai ?></span>
             </div>
         </div>
@@ -566,7 +632,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
         </div>
 
         <!-- กราฟที่ 4: โครงการตามประเภท/หมวดหมู่ (Rule #10.4: Projects by Category Chart) -->
-        <div class="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between w-full max-w-full min-w-0 overflow-hidden">
+        <div class="lg:col-span-2 p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between w-full max-w-full min-w-0 overflow-hidden">
             <div>
                 <!-- Title Header -->
                 <div class="flex items-center justify-between pb-3 mb-2 border-b border-slate-100 dark:border-white/[0.06]">
@@ -810,13 +876,14 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
 
 </div>
 
-<!-- สคริปต์ Chart.js ตามมาตรฐาน AGENTS.md Rule #10: 4 Core Charts (Data-Driven + IIFE Scoped) -->
+<!-- สคริปต์ Chart.js สำหรับกราฟ Dashboard (Data-Driven + IIFE Scoped) -->
 <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
 (function() {
     'use strict';
 
     let chartInitRetries = 0;
     let statusDonutChartInstance = null;
+    let gradeDonutChartInstance = null;
     let projectSuccessChartInstance = null;
     let dashboardChartsTimer = null;
 
@@ -848,8 +915,19 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
             Chart.defaults.resizeDelay = 150;
         }
 
+        // A previous SPA visit may have left a chart attached to a detached canvas.
+        if (window._gradeDonutChartInstance) {
+            try {
+                window._gradeDonutChartInstance.destroy();
+            } catch (error) {
+                console.warn('Destroy previous grade chart error:', error);
+            } finally {
+                window._gradeDonutChartInstance = null;
+            }
+        }
+
         // ทำลายกราฟเดิมเพื่อป้องกันทับซ้อนเมื่อมีการรีเฟรช SPA หรือเปลี่ยนธีม
-        ['statusDonutChart', 'budgetComparisonChart', 'projectSuccessChart', 'categoryBarChart'].forEach(id => {
+        ['statusDonutChart', 'gradeDonutChart', 'budgetComparisonChart', 'projectSuccessChart', 'categoryBarChart'].forEach(id => {
             try {
                 const canvasEl = document.getElementById(id);
                 if (canvasEl) {
@@ -1029,6 +1107,67 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
             }
         } catch (err) {
             console.error('Error creating Status Donut Chart:', err);
+        }
+
+        // สัดส่วนเกรดของโครงการหลัก (A+ ถึง D และยังไม่ประเมิน)
+        gradeDonutChartInstance = null;
+        try {
+            const gradeCanvas = document.getElementById('gradeDonutChart');
+            if (gradeCanvas) {
+                const distribution = JSON.parse(gradeCanvas.dataset.gradeDistribution || '{}');
+                const gradeMeta = JSON.parse(gradeCanvas.dataset.gradeMeta || '{}');
+                const grades = Object.entries(gradeMeta).map(([key, meta]) => ({
+                    key,
+                    label: key === 'ungraded' ? meta.label : `เกรด ${key} · ${meta.label}`,
+                    color: meta.color,
+                    count: Number(distribution[key] || 0)
+                }));
+                const total = grades.reduce((sum, grade) => sum + grade.count, 0);
+                const activeGrades = grades.filter(grade => grade.count > 0);
+                const isEmpty = total === 0;
+
+                gradeDonutChartInstance = new Chart(gradeCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: isEmpty ? ['ไม่มีข้อมูลโครงการ'] : activeGrades.map(grade => grade.label),
+                        datasets: [{
+                            data: isEmpty ? [1] : activeGrades.map(grade => grade.count),
+                            backgroundColor: isEmpty ? [emptyChartColor] : activeGrades.map(grade => grade.color),
+                            borderColor: isEmpty ? 'transparent' : cardBg,
+                            borderWidth: isEmpty || activeGrades.length === 1 ? 0 : 2.5,
+                            hoverOffset: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        cutout: '70%',
+                        animation: isThemeChange ? false : { duration: 350, easing: 'easeOutQuad' },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                enabled: !isEmpty,
+                                backgroundColor: tooltipBg,
+                                titleColor: tooltipTitle,
+                                bodyColor: tooltipBody,
+                                borderColor: tooltipBorder,
+                                borderWidth: 1,
+                                padding: 10,
+                                cornerRadius: 10,
+                                callbacks: {
+                                    label: function(context) {
+                                        const count = Number(context.raw || 0);
+                                        return ` ${context.label}: ${count.toLocaleString('th-TH')} โครงการ (${(count / total * 100).toFixed(1)}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                window._gradeDonutChartInstance = gradeDonutChartInstance;
+            }
+        } catch (err) {
+            console.error('Error creating Grade Donut Chart:', err);
         }
 
         // -------------------------------------------------------------
@@ -1385,6 +1524,25 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
             hasUpdatedAny = true;
         }
 
+        const gradeCanvas = document.getElementById('gradeDonutChart');
+        const gradeChart = gradeCanvas ? Chart.getChart(gradeCanvas) : null;
+        if (gradeChart && gradeChart.data && gradeChart.data.datasets && gradeChart.data.datasets[0]) {
+            const gradeDataset = gradeChart.data.datasets[0];
+            if (gradeDataset.borderColor !== 'transparent') {
+                gradeDataset.borderColor = cardBg;
+            } else {
+                gradeDataset.backgroundColor = [emptyChartColor];
+            }
+            if (gradeChart.options && gradeChart.options.plugins && gradeChart.options.plugins.tooltip) {
+                gradeChart.options.plugins.tooltip.backgroundColor = tooltipBg;
+                gradeChart.options.plugins.tooltip.titleColor = tooltipTitle;
+                gradeChart.options.plugins.tooltip.bodyColor = tooltipBody;
+                gradeChart.options.plugins.tooltip.borderColor = tooltipBorder;
+            }
+            gradeChart.update('none');
+            hasUpdatedAny = true;
+        }
+
         // 2. Budget Comparison Bar Chart
         const budgetChart = Chart.getChart('budgetComparisonChart');
         if (budgetChart && budgetChart.options) {
@@ -1489,7 +1647,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
     if (!window._dashboardThemeListenerAttached) {
         window._dashboardThemeListenerAttached = true;
         window.addEventListener('theme-changed', function() {
-            if (document.getElementById('statusDonutChart') || document.getElementById('budgetComparisonChart') || document.getElementById('projectSuccessChart') || document.getElementById('categoryBarChart')) {
+            if (document.getElementById('statusDonutChart') || document.getElementById('gradeDonutChart') || document.getElementById('budgetComparisonChart') || document.getElementById('projectSuccessChart') || document.getElementById('categoryBarChart')) {
                 updateChartsThemeSynchronously();
             }
         });
