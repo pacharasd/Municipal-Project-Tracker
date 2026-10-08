@@ -22,12 +22,18 @@ dashboard_rendered.html
 
 # Development & Testing tools (Local only)
 scripts/
+!scripts/
+scripts/*
+!scripts/backfill_evaluated_main_project_status.php
 tests/
 !tests/
 tests/*
 !tests/test_dashboard_grade_distribution.php
 !tests/test_dashboard_grade_stats.php
 !tests/test_dashboard_grade_chart.js
+!tests/test_project_evaluation_filter.php
+!tests/test_project_evaluation_filter.js
+!tests/test_project_evaluation_status.php
 database/
 
 # AI Assistant local metadata

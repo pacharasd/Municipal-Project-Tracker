@@ -9,6 +9,7 @@ use App\Core\View;
 use App\Core\Router;
 use App\Core\Validator;
 use App\Services\ProjectService;
+use App\Services\ProjectEvaluationService;
 use App\Services\AuditLogService;
 use Exception;
 
@@ -16,15 +17,23 @@ class ProjectController
 {
     public function index(): void
     {
+        $rawEvaluation = $_GET['evaluation'] ?? '';
         $filters = [
             'fiscal_year_id' => $_GET['fiscal_year_id'] ?? '',
             'department_id'  => $_GET['department_id'] ?? '',
             'category_id'    => $_GET['category_id'] ?? '',
             'status'         => $_GET['status'] ?? '',
-            'search'         => trim($_GET['search'] ?? ''),
+            'search'         => is_string($_GET['search'] ?? '') ? trim($_GET['search'] ?? '') : '',
+            'evaluation'     => is_string($rawEvaluation) && in_array($rawEvaluation, ['evaluated', 'ungraded'], true) ? $rawEvaluation : '',
         ];
 
-        $projects = ProjectService::getMainProjects($filters);
+        // These scopes determine the loaded project set. Search, status and evaluation
+        // share that same set in Alpine so changing or clearing one never hides rows permanently.
+        $projects = ProjectService::getMainProjects([
+            'fiscal_year_id' => $filters['fiscal_year_id'],
+            'department_id'  => $filters['department_id'],
+            'category_id'    => $filters['category_id'],
+        ]);
         $fiscalYears = \App\Services\FiscalYearService::getAll();
         $departments = Database::query("SELECT * FROM departments ORDER BY id ASC");
         $categories = Database::query("SELECT * FROM project_categories ORDER BY id ASC");
@@ -351,6 +360,10 @@ class ProjectController
             'name'               => $updateData['name'],
             'responsible_person' => $responsiblePerson,
         ];
+        if (isset($updateData['status']) && $updateData['status'] !== $project['status']) {
+            $oldAudit['status'] = $project['status'];
+            $newAudit['status'] = $updateData['status'];
+        }
         if ($newCategoryRow !== null) {
             $oldAudit['category'] = $oldCategoryRow['name'] ?? "ID: {$project['category_id']}";
             $newAudit['category'] = $newCategoryRow['name'];
@@ -371,54 +384,24 @@ class ProjectController
         }
 
         $projectId = (int)$id;
-        $project = Database::fetch("SELECT * FROM projects WHERE id = ? AND parent_id IS NULL", [$projectId]);
-        if (!$project) {
-            Session::flash('error', 'ไม่พบโครงการหลักที่ต้องการประเมิน');
-            header('Location: ' . Router::url('/projects'));
-            exit;
-        }
-
-        // Validate score
-        if (!isset($_POST['evaluation_score']) || !is_numeric($_POST['evaluation_score'])) {
+        $rawScore = $_POST['evaluation_score'] ?? null;
+        if (!is_scalar($rawScore) || !is_numeric($rawScore)) {
             Session::flash('error', 'กรุณาระบุคะแนนการประเมินเป็นตัวเลข');
             header('Location: ' . Router::url("/projects/{$projectId}"));
             exit;
         }
 
-        $score = (float)$_POST['evaluation_score'];
-        if ($score < 0 || $score > 100) {
-            Session::flash('error', 'คะแนนการประเมินต้องอยู่ระหว่าง 0 ถึง 100');
-            header('Location: ' . Router::url("/projects/{$projectId}"));
-            exit;
+        try {
+            $result = ProjectEvaluationService::evaluate(
+                $projectId,
+                (float)$rawScore,
+                is_string($_POST['evaluation_notes'] ?? null) ? $_POST['evaluation_notes'] : null,
+                (int)Auth::id()
+            );
+            Session::flash('success', "บันทึกผลการประเมินโครงการสำเร็จ: {$result['score']} คะแนน (เกรด {$result['grade']})");
+        } catch (Exception $e) {
+            Session::flash('error', $e->getMessage());
         }
-
-        $gradeInfo = ProjectService::calculateEvaluationGrade($score);
-        $grade = $gradeInfo['grade'];
-        $notes = trim($_POST['evaluation_notes'] ?? '');
-        $userId = Auth::id() ?: 1;
-
-        $oldData = [
-            'score' => $project['evaluation_score'],
-            'grade' => $project['evaluation_grade'],
-        ];
-
-        $updateData = [
-            'evaluation_score' => $score,
-            'evaluation_grade' => $grade,
-            'evaluated_at'     => date('Y-m-d H:i:s'),
-            'evaluated_by'     => $userId,
-            'evaluation_notes' => $notes ?: null,
-        ];
-
-        Database::update('projects', $updateData, "id = ?", [$projectId]);
-
-        AuditLogService::log('EVALUATE', 'Project', $projectId, $oldData, [
-            'score' => $score,
-            'grade' => $grade,
-            'notes' => $notes,
-        ]);
-
-        Session::flash('success', "บันทึกผลการประเมินโครงการสำเร็จ: {$score} คะแนน (เกรด {$grade})");
         header('Location: ' . Router::url("/projects/{$projectId}"));
         exit;
     }

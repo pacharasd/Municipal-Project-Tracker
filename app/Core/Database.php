@@ -116,6 +116,9 @@ class Database
 
             if (!$connected) {
                 error_log("Database connection failed: " . ($lastException ? $lastException->getMessage() : 'Unknown error'));
+                if (PHP_SAPI === 'cli') {
+                    throw $lastException ?? new PDOException('ไม่สามารถเชื่อมต่อฐานข้อมูลได้');
+                }
                 self::renderConnectionError($lastException ?? new PDOException("ไม่สามารถเชื่อมต่อฐานข้อมูลได้"), $host, $port, $db, $user);
                 exit;
             }
@@ -754,7 +757,7 @@ DB_PASSWORD=รหัสผ่านที่ตั้งไว้</code></pre>
             $result = $callback($pdo);
             $pdo->commit();
             return $result;
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }

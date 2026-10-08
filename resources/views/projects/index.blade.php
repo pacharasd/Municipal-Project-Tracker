@@ -11,27 +11,14 @@ $hasProblemCount = 0;
 
 foreach ($projects as $p) {
     $subKeywords = [];
-    $subCompletedCount = 0;
-    $hasProblem = false;
     foreach ($p['sub_projects'] as $sub) {
         $subResp = !empty($sub['responsible_person']) ? $sub['responsible_person'] : ($sub['responsible_name'] ?? '');
         $subKeywords[] = ($sub['name'] ?? '') . ' ' . $subResp;
-        if (($sub['status'] ?? '') === 'completed') $subCompletedCount++;
-        if (($sub['status'] ?? '') === 'has_problem') $hasProblem = true;
     }
 
     $totalInitialSubCount += count($p['sub_projects']);
 
-    $calcStatus = 'in_progress';
-    if (!empty($p['sub_projects'])) {
-        if ($hasProblem) {
-            $calcStatus = 'has_problem';
-        } elseif ($subCompletedCount === count($p['sub_projects'])) {
-            $calcStatus = 'completed';
-        }
-    } elseif (($p['progress'] ?? 0) >= 100) {
-        $calcStatus = 'completed';
-    }
+    $calcStatus = $p['status'] ?? 'not_started';
 
     if ($calcStatus === 'in_progress') $inProgressCount++;
     elseif ($calcStatus === 'completed') $completedCount++;
@@ -46,6 +33,7 @@ foreach ($projects as $p) {
         'budget' => (float)$p['budget'],
         'sub_count' => count($p['sub_projects']),
         'status' => $calcStatus,
+        'evaluated' => $p['evaluation_score'] !== null,
         'search_text' => mb_strtolower(
             ($p['project_code'] ?? '') . ' ' . 
             ($p['name'] ?? '') . ' ' . 
@@ -84,6 +72,7 @@ window.mainProjectsPage = function mainProjectsPage() {
         fiscalYearFilter: <?= json_encode($filters['fiscal_year_id'], JSON_UNESCAPED_UNICODE) ?> || '',
         departmentFilter: <?= json_encode($filters['department_id'], JSON_UNESCAPED_UNICODE) ?> || '',
         statusFilter: 'all',
+        evaluationFilter: <?= json_encode($filters['evaluation'] ?: 'all', JSON_UNESCAPED_UNICODE) ?>,
         currentPage: 1,
         perPage: 5,
         fiscalYearOptions: Object.freeze(<?= json_encode($fiscalYears, JSON_UNESCAPED_UNICODE) ?>),
@@ -95,15 +84,15 @@ window.mainProjectsPage = function mainProjectsPage() {
         },
 
         get inProgressCount() {
-            return this.allProjects.filter(p => p.status === 'in_progress').length;
+            return this.projectsMatchingOtherFilters.filter(p => p.status === 'in_progress').length;
         },
 
         get completedCount() {
-            return this.allProjects.filter(p => p.status === 'completed').length;
+            return this.projectsMatchingOtherFilters.filter(p => p.status === 'completed').length;
         },
 
         get hasProblemCount() {
-            return this.allProjects.filter(p => p.status === 'has_problem').length;
+            return this.projectsMatchingOtherFilters.filter(p => p.status === 'has_problem').length;
         },
 
         init() {
@@ -119,21 +108,33 @@ window.mainProjectsPage = function mainProjectsPage() {
             if (params.get('status')) {
                 this.statusFilter = params.get('status');
             }
+            let normalizeUrl = params.has('evaluation') && this.evaluationFilter === 'all';
+            if (this.currentPage > this.totalPages) {
+                this.currentPage = this.totalPages;
+                normalizeUrl = true;
+            }
+            if (normalizeUrl) this.syncUrl();
         },
 
-        get filteredProjects() {
+        get projectsMatchingOtherFilters() {
             const q = (this.search || '').trim().toLowerCase();
             const fy = this.fiscalYearFilter;
             const dept = this.departmentFilter;
-            const status = this.statusFilter;
+            const evaluation = this.evaluationFilter;
 
             return this.allProjects.filter(p => {
                 const matchSearch = !q || (p.search_text && p.search_text.includes(q));
                 const matchFy = !fy || String(p.fiscal_year_id) === String(fy);
                 const matchDept = !dept || String(p.department_id) === String(dept);
-                const matchStatus = status === 'all' || p.status === status;
-                return matchSearch && matchFy && matchDept && matchStatus;
+                const matchEvaluation = evaluation === 'all'
+                    || (evaluation === 'evaluated' && p.evaluated)
+                    || (evaluation === 'ungraded' && !p.evaluated);
+                return matchSearch && matchFy && matchDept && matchEvaluation;
             });
+        },
+
+        get filteredProjects() {
+            return this.projectsMatchingOtherFilters.filter(p => this.statusFilter === 'all' || p.status === this.statusFilter);
         },
 
         get totalPages() {
@@ -146,7 +147,7 @@ window.mainProjectsPage = function mainProjectsPage() {
         _lastFilterKey: '',
 
         get paginatedIds() {
-            const currentKey = `${this.search}|${this.fiscalYearFilter}|${this.departmentFilter}|${this.statusFilter}|${this.currentPage}|${this.perPage}`;
+            const currentKey = `${this.search}|${this.fiscalYearFilter}|${this.departmentFilter}|${this.statusFilter}|${this.evaluationFilter}|${this.currentPage}|${this.perPage}`;
             if (this._lastFilterKey === currentKey && this._cachedPaginatedIds) {
                 return this._cachedPaginatedIds;
             }
@@ -245,11 +246,8 @@ window.mainProjectsPage = function mainProjectsPage() {
             });
         },
 
-        resetFilters() {
-            this.search = '';
-            this.fiscalYearFilter = '';
-            this.departmentFilter = '';
-            this.statusFilter = 'all';
+        setEvaluationFilter(val) {
+            this.evaluationFilter = ['evaluated', 'ungraded'].includes(val) ? val : 'all';
             this.currentPage = 1;
             this.syncUrl();
             this.$nextTick(() => {
@@ -257,8 +255,29 @@ window.mainProjectsPage = function mainProjectsPage() {
             });
         },
 
-        syncUrl() {
+        setFiscalYearFilter(val) {
+            this.fiscalYearFilter = val;
+            this.currentPage = 1;
+            window.location.assign(this.filterUrl().toString());
+        },
+
+        resetFilters() {
+            window.location.assign(<?= json_encode(\App\Core\Router::url('/projects'), JSON_UNESCAPED_UNICODE) ?>);
+        },
+
+        filterUrl() {
             const url = new URL(window.location.href);
+            const search = (this.search || '').trim();
+            if (search) {
+                url.searchParams.set('search', search);
+            } else {
+                url.searchParams.delete('search');
+            }
+            if (this.fiscalYearFilter) {
+                url.searchParams.set('fiscal_year_id', this.fiscalYearFilter);
+            } else {
+                url.searchParams.delete('fiscal_year_id');
+            }
             if (this.currentPage > 1) {
                 url.searchParams.set('page', this.currentPage);
             } else {
@@ -274,6 +293,16 @@ window.mainProjectsPage = function mainProjectsPage() {
             } else {
                 url.searchParams.delete('status');
             }
+            if (this.evaluationFilter !== 'all') {
+                url.searchParams.set('evaluation', this.evaluationFilter);
+            } else {
+                url.searchParams.delete('evaluation');
+            }
+            return url;
+        },
+
+        syncUrl() {
+            const url = this.filterUrl();
             window.history.replaceState({}, '', url.toString());
         },
 
@@ -332,7 +361,7 @@ if (window.Alpine && typeof Alpine.data === 'function') {
     <!-- Filters Section -->
     <form action="<?= \App\Core\Router::url('/projects') ?>" method="GET" @submit.prevent="currentPage = 1; scrollToTop(); syncUrl()" class="bg-white dark:bg-[#181a20] p-3.5 sm:p-4 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-3">
         <!-- Search Keyword -->
-        <div class="sm:col-span-6 lg:col-span-6 relative">
+        <div class="sm:col-span-6 lg:col-span-4 relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                 <i data-lucide="search" class="w-4 h-4"></i>
             </div>
@@ -340,7 +369,7 @@ if (window.Alpine && typeof Alpine.data === 'function') {
         </div>
 
         <!-- Fiscal Year Filter (Custom Dropdown) -->
-        <div class="sm:col-span-4 lg:col-span-4 relative" x-data="{ openFy: false }" @click.outside="openFy = false">
+        <div class="sm:col-span-6 lg:col-span-3 relative" x-data="{ openFy: false }" @click.outside="openFy = false">
             <input type="hidden" name="fiscal_year_id" :value="fiscalYearFilter">
             <button type="button" 
                     @click="openFy = !openFy" 
@@ -359,7 +388,7 @@ if (window.Alpine && typeof Alpine.data === 'function') {
                  x-transition:leave-end="transform opacity-0 scale-95"
                  class="absolute z-40 mt-1.5 w-full bg-white dark:bg-[#1f222e] rounded-xl shadow-xl border border-slate-200 dark:border-white/10 py-1 max-h-56 overflow-y-auto" 
                  style="display: none;">
-                <div @click="fiscalYearFilter = ''; currentPage = 1; syncUrl(); openFy = false" 
+                <div @click="setFiscalYearFilter(''); openFy = false"
                      class="px-3 py-2 text-xs sm:text-sm text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 cursor-pointer flex items-center justify-between"
                      :class="{ 'bg-emerald-50/70 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-semibold': !fiscalYearFilter }">
                     <span>-- ทุกปีงบประมาณ --</span>
@@ -368,7 +397,7 @@ if (window.Alpine && typeof Alpine.data === 'function') {
                     </svg>
                 </div>
                 <template x-for="fy in fiscalYearOptions" :key="fy.id">
-                    <div @click="fiscalYearFilter = fy.id; currentPage = 1; syncUrl(); openFy = false" 
+                    <div @click="setFiscalYearFilter(fy.id); openFy = false"
                          class="px-3 py-2 text-xs sm:text-sm text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 cursor-pointer flex items-center justify-between transition-colors"
                          :class="{ 'bg-emerald-50/70 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-semibold': String(fiscalYearFilter) === String(fy.id) }">
                         <span x-text="'ปี ' + fy.year + (fy.is_active ? ' (ปัจจุบัน)' : '')"></span>
@@ -380,8 +409,24 @@ if (window.Alpine && typeof Alpine.data === 'function') {
             </div>
         </div>
 
+        <!-- Evaluation Filter -->
+        <div class="sm:col-span-8 lg:col-span-3" @select-changed="if ($event.detail.name === 'evaluation') setEvaluationFilter($event.detail.value)">
+            <?php \App\Core\View::component('custom-select', [
+                'name' => 'evaluation',
+                'id' => 'project-evaluation-filter',
+                'value' => $filters['evaluation'] ?: 'all',
+                'ariaLabel' => 'ผลประเมินโครงการหลัก',
+                'searchable' => false,
+                'options' => [
+                    ['value' => 'all', 'label' => 'ผลประเมินทั้งหมด'],
+                    ['value' => 'evaluated', 'label' => 'ประเมินแล้ว'],
+                    ['value' => 'ungraded', 'label' => 'ยังไม่ประเมิน'],
+                ],
+            ]); ?>
+        </div>
+
         <!-- Submit & Clear Buttons -->
-        <div class="sm:col-span-2 lg:col-span-2 flex items-center gap-2">
+        <div class="sm:col-span-4 lg:col-span-2 flex items-center gap-2">
             <button type="submit" class="flex-1 py-2 px-4 text-xs sm:text-sm font-medium text-white bg-slate-800 dark:bg-slate-700 rounded-xl hover:bg-slate-900 dark:hover:bg-slate-600 transition-colors cursor-pointer text-center">
                 ค้นหา
             </button>
@@ -473,7 +518,7 @@ if (window.Alpine && typeof Alpine.data === 'function') {
             <button type="button" @click="setStatusFilter('all')" 
                     :class="statusFilter === 'all' ? 'bg-slate-800 dark:bg-slate-700 text-white font-semibold shadow-sm' : 'bg-slate-50 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08]'"
                     class="px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition cursor-pointer shrink-0">
-                ทั้งหมด (<span x-text="allProjects.length"><?= count($projects) ?></span>)
+                ทั้งหมด (<span x-text="projectsMatchingOtherFilters.length"><?= count($projects) ?></span>)
             </button>
             <button type="button" @click="setStatusFilter('in_progress')" 
                     :class="statusFilter === 'in_progress' ? 'bg-blue-600 text-white font-semibold shadow-sm' : 'bg-blue-50/60 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100/60 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800/40'"

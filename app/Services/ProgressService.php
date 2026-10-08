@@ -148,7 +148,7 @@ class ProgressService
 
     /**
      * Rule #47: ความสำเร็จรวมของโครงการหลัก = ค่าเฉลี่ยของเปอร์เซ็นต์กิจกรรมหลักทั้งหมด
-     * และสถานะของโครงการหลักคำนวณจากสถานะของกิจกรรมหลักทั้งหมด
+     * สถานะคำนวณจากกิจกรรมหลักเฉพาะก่อนมีผลประเมิน
      */
     public static function syncParentProjectProgress(int $parentId): void
     {
@@ -195,10 +195,12 @@ class ProgressService
             $parentStatus = 'not_started';
         }
 
-        Database::update('projects', [
-            'progress' => $avgProgress,
-            'status'   => $parentStatus,
-        ], "id = ?", [$parentId]);
+        // Keep the average current, but preserve an evaluated project's status,
+        // including an explicit status change made later by an administrator.
+        Database::execute(
+            'UPDATE projects SET progress = ?, status = CASE WHEN evaluation_score IS NULL THEN ? ELSE status END WHERE id = ? AND parent_id IS NULL',
+            [$avgProgress, $parentStatus, $parentId]
+        );
     }
 
     /**
