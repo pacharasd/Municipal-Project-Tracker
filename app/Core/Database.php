@@ -442,7 +442,7 @@ class Database
     <div class="max-w-3xl w-full bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl">
         <!-- Header -->
         <div class="bg-gradient-to-r from-emerald-700 via-teal-800 to-slate-900 p-6 sm:p-8 flex items-center gap-4 sm:gap-6 border-b border-slate-700/50">
-            <img src="/images/mobile-logo.webp" onerror="this.src='/mobile-logo.webp'; this.onerror=null;" alt="Logo" class="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-md bg-white/10 rounded-2xl p-2 border border-white/20">
+            <img src="/images/mobile-logo.webp" data-db-logo="true" alt="Logo" class="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-md bg-white/10 rounded-2xl p-2 border border-white/20">
             <div>
                 <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 mb-2">
                     <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
@@ -517,13 +517,24 @@ class Database
                 <div class="text-xs text-slate-400">
                     เมื่อติดตั้งเรียบร้อยแล้ว ระบบจะเปิดหน้าแดชบอร์ดโครงการให้ทันที
                 </div>
-                <button onclick="window.location.reload()" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 transition duration-150 flex items-center justify-center gap-2 cursor-pointer">
+                <button type="button" data-db-reload="true" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 transition duration-150 flex items-center justify-center gap-2 cursor-pointer">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                     รีเฟรชตรวจสอบอีกครั้ง (Refresh)
                 </button>
             </div>
         </div>
     </div>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
+        document.querySelector('[data-db-logo]')?.addEventListener('error', function() {
+            if (!this.dataset.retried) {
+                this.dataset.retried = '1';
+                this.src = '/mobile-logo.webp';
+            }
+        });
+        document.querySelector('[data-db-reload]')?.addEventListener('click', function() {
+            window.location.reload();
+        });
+    </script>
 </body>
 </html>
         <?php
@@ -575,7 +586,7 @@ class Database
     <div class="max-w-3xl w-full bg-slate-800/95 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl">
         <!-- Header -->
         <div class="bg-gradient-to-r from-emerald-700 via-teal-800 to-slate-900 p-6 sm:p-8 flex items-center gap-4 sm:gap-6 border-b border-slate-700/50">
-            <img src="/images/mobile-logo.webp" onerror="this.src='/mobile-logo.webp'; this.onerror=null;" alt="Logo" class="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-md bg-white/10 rounded-2xl p-2 border border-white/20">
+            <img src="/images/mobile-logo.webp" data-db-logo="true" alt="Logo" class="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-md bg-white/10 rounded-2xl p-2 border border-white/20">
             <div>
                 <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 mb-2">
                     <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
@@ -678,13 +689,24 @@ DB_PASSWORD=รหัสผ่านที่ตั้งไว้</code></pre>
                 <div class="text-xs text-slate-400 text-center sm:text-left">
                     เมื่อตั้งค่าเรียบร้อยแล้ว กดปุ่มเพื่อตรวจสอบการเชื่อมต่อทันที
                 </div>
-                <button onclick="window.location.reload()" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-500/25 transition duration-150 flex items-center justify-center gap-2 cursor-pointer">
+                <button type="button" data-db-reload="true" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-500/25 transition duration-150 flex items-center justify-center gap-2 cursor-pointer">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                     ลองเชื่อมต่อใหม่อีกครั้ง (Retry)
                 </button>
             </div>
         </div>
     </div>
+    <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
+        document.querySelector('[data-db-logo]')?.addEventListener('error', function() {
+            if (!this.dataset.retried) {
+                this.dataset.retried = '1';
+                this.src = '/mobile-logo.webp';
+            }
+        });
+        document.querySelector('[data-db-reload]')?.addEventListener('click', function() {
+            window.location.reload();
+        });
+    </script>
 </body>
 </html>
         <?php

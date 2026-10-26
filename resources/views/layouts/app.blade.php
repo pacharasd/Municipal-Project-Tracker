@@ -20,6 +20,14 @@
             }
 
             window.addEventListener('error', function(event) {
+                const target = event && event.target;
+                if (target && target.tagName === 'IMG' && target.hasAttribute('data-logo-fallback')) {
+                    target.style.display = 'none';
+                    if (target.nextElementSibling) {
+                        target.nextElementSibling.style.display = 'flex';
+                    }
+                    return;
+                }
                 if (isDevToolsError(event.message) || isDevToolsError(event.error)) {
                     event.preventDefault();
                     event.stopImmediatePropagation();
@@ -71,6 +79,9 @@
                 }
                 const metaScheme = document.getElementById('meta-color-scheme');
                 if (metaScheme) metaScheme.content = isDark ? 'dark' : 'light';
+                if (localStorage.getItem('mpt_desktop_sidebar') === 'false') {
+                    document.documentElement.classList.add('sidebar-collapsed-init');
+                }
             } catch (e) {
                 if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
                     document.documentElement.classList.add('dark');
@@ -687,6 +698,7 @@
                     desktopSidebarOpen: (localStorage.getItem('mpt_desktop_sidebar') !== 'false'),
                     resizeTimer: null,
                     init() {
+                        document.documentElement.classList.remove('sidebar-collapsed-init');
                         // Global Keyboard Shortcut: Ctrl+B or Cmd+B to toggle sidebar (Enterprise Productivity Standard)
                         window.addEventListener('keydown', (e) => {
                             if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) {
@@ -1258,6 +1270,13 @@
                 transform: translateX(-100%) !important;
             }
         }
+        /* Desktop Sidebar Anti-FOUC when collapsed in localStorage */
+        @media (min-width: 1024px) {
+            html.sidebar-collapsed-init #main-sidebar {
+                margin-left: -16rem !important;
+                pointer-events: none !important;
+            }
+        }
     </style>
 </head>
 <body class="h-full antialiased font-sans text-slate-800 dark:text-slate-100 bg-[#f8fafc] dark:bg-[#0f1014] flex flex-col transition-colors duration-150 w-full max-w-full overflow-x-hidden" 
@@ -1336,7 +1355,7 @@
                         :aria-label="(window.innerWidth >= 1024 ? (desktopSidebarOpen ? 'ยุบแถบเมนูนำทาง (Ctrl+B)' : 'ขยายแถบเมนูนำทาง (Ctrl+B)') : (sidebarOpen ? 'ปิดแถบเมนู' : 'เปิดแถบเมนู'))"
                         :title="(window.innerWidth >= 1024 ? (desktopSidebarOpen ? 'ยุบแถบเมนู (Ctrl+B)' : 'ขยายแถบเมนู (Ctrl+B)') : (sidebarOpen ? 'ปิดแถบเมนู' : 'เปิดแถบเมนู'))"
                         class="w-9 h-9 sm:w-9.5 sm:h-9.5 rounded-xl bg-slate-100/90 dark:bg-[#181a20] border border-slate-200/90 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/20 text-slate-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-200/70 dark:hover:bg-white/10 active:scale-95 transition-all duration-150 shrink-0 cursor-pointer flex items-center justify-center shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
-                    <i data-lucide="menu" class="w-5 h-5"></i>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-menu w-5 h-5"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg>
                 </button>
                 <a href="<?= \App\Core\Router::url('/dashboard') ?>" class="shrink-0 flex items-center gap-1.5 sm:gap-2 group" title="ระบบติดตามและบริหารโครงการเทศบาล">
                     <!-- ตราสัญลักษณ์ร่วม (เทศบาล x กปท.) พื้นหลังขาวคมชัดทุกธีม ขนาดกะทัดรัดได้สัดส่วน -->
@@ -1346,7 +1365,7 @@
                         <img src="<?= \App\Core\Router::url('/images/mobile-logo.webp') ?>" 
                              alt="โลโก้เทศบาล" 
                              class="h-6 w-6 object-contain shrink-0"
-                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                             data-logo-fallback="true">
                         <div style="display:none;" class="w-6 h-6 rounded-md bg-gradient-to-tr from-emerald-500 to-teal-400 items-center justify-center text-slate-950 font-bold">
                             <i data-lucide="activity" class="w-3.5 h-3.5"></i>
                         </div>
@@ -1669,7 +1688,7 @@
                             <img src="<?= \App\Core\Router::url('/images/mobile-logo.webp') ?>" 
                                  alt="โลโก้เทศบาล" 
                                  class="h-6 w-6 object-contain shrink-0"
-                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                 data-logo-fallback="true">
                             <div style="display:none;" class="w-6 h-6 rounded-md bg-gradient-to-tr from-emerald-500 to-teal-400 items-center justify-center text-slate-950 font-bold">
                                 <i data-lucide="activity" class="w-3.5 h-3.5"></i>
                             </div>
@@ -1711,8 +1730,8 @@
                     ?>
                     <a href="<?= \App\Core\Router::url('/dashboard') ?>" 
                        @click="sidebarOpen = false"
-                       class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-all group select-none <?= $isDashboard ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold shadow-2xs before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:bg-emerald-600 dark:before:bg-emerald-400 before:rounded-r-full' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.05]' ?>">
-                        <i data-lucide="layout-dashboard" class="w-5 h-5 shrink-0 transition-colors <?= $isDashboard ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300' ?>"></i>
+                       class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-colors group select-none <?= $isDashboard ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold shadow-2xs before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:bg-emerald-600 dark:before:bg-emerald-400 before:rounded-r-full' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.05]' ?>">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-layout-dashboard w-5 h-5 shrink-0 transition-colors <?= $isDashboard ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300' ?>"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
                         <span class="truncate">แดชบอร์ดภาพรวม</span>
                     </a>
 
@@ -1720,8 +1739,8 @@
                     <?php $isProjects = (str_contains($currentReqUri, '/projects') || str_contains($currentReqUri, '/sub-projects')); ?>
                     <a href="<?= \App\Core\Router::url('/projects') ?>" 
                        @click="sidebarOpen = false"
-                       class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-all group select-none <?= $isProjects ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold shadow-2xs before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:bg-emerald-600 dark:before:bg-emerald-400 before:rounded-r-full' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.05]' ?>">
-                        <i data-lucide="folder-kanban" class="w-5 h-5 shrink-0 transition-colors <?= $isProjects ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300' ?>"></i>
+                       class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-colors group select-none <?= $isProjects ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold shadow-2xs before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:bg-emerald-600 dark:before:bg-emerald-400 before:rounded-r-full' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.05]' ?>">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-folder-kanban w-5 h-5 shrink-0 transition-colors <?= $isProjects ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300' ?>"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/><path d="M8 10v4"/><path d="M12 10v2"/><path d="M16 10v6"/></svg>
                         <span class="whitespace-nowrap">โครงการหลัก & กิจกรรมหลัก</span>
                     </a>
 
@@ -1729,8 +1748,8 @@
                     <?php $isBudgets = str_contains($currentReqUri, '/budgets'); ?>
                     <a href="<?= \App\Core\Router::url('/budgets') ?>" 
                        @click="sidebarOpen = false"
-                       class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-all group select-none <?= $isBudgets ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold shadow-2xs before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:bg-emerald-600 dark:before:bg-emerald-400 before:rounded-r-full' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.05]' ?>">
-                        <i data-lucide="wallet" class="w-5 h-5 shrink-0 transition-colors <?= $isBudgets ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300' ?>"></i>
+                       class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-colors group select-none <?= $isBudgets ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold shadow-2xs before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:bg-emerald-600 dark:before:bg-emerald-400 before:rounded-r-full' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.05]' ?>">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-wallet w-5 h-5 shrink-0 transition-colors <?= $isBudgets ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300' ?>"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>
                         <span class="truncate">งบประมาณ & เบิกจ่าย</span>
                     </a>
 
@@ -1738,8 +1757,8 @@
                     <?php $isReports = str_contains($currentReqUri, '/reports'); ?>
                     <a href="<?= \App\Core\Router::url('/reports') ?>" 
                        @click="sidebarOpen = false"
-                       class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-all group select-none <?= $isReports ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold shadow-2xs before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:bg-emerald-600 dark:before:bg-emerald-400 before:rounded-r-full' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.05]' ?>">
-                        <i data-lucide="file-spreadsheet" class="w-5 h-5 shrink-0 transition-colors <?= $isReports ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300' ?>"></i>
+                       class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-colors group select-none <?= $isReports ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold shadow-2xs before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:bg-emerald-600 dark:before:bg-emerald-400 before:rounded-r-full' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.05]' ?>">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-file-spreadsheet w-5 h-5 shrink-0 transition-colors <?= $isReports ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300' ?>"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M8 13h2"/><path d="M14 13h2"/><path d="M8 17h2"/><path d="M14 17h2"/></svg>
                         <span class="truncate">รายงาน & ส่งออกข้อมูล</span>
                     </a>
 
@@ -1752,8 +1771,8 @@
                     <?php $isUsers = str_contains($currentReqUri, '/users'); ?>
                     <a href="<?= \App\Core\Router::url('/users') ?>" 
                        @click="sidebarOpen = false"
-                       class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-all group select-none <?= $isUsers ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold shadow-2xs before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:bg-emerald-600 dark:before:bg-emerald-400 before:rounded-r-full' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.05]' ?>">
-                        <i data-lucide="users" class="w-5 h-5 shrink-0 transition-colors <?= $isUsers ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300' ?>"></i>
+                       class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-colors group select-none <?= $isUsers ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold shadow-2xs before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:bg-emerald-600 dark:before:bg-emerald-400 before:rounded-r-full' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.05]' ?>">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-users w-5 h-5 shrink-0 transition-colors <?= $isUsers ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300' ?>"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></svg>
                         <span class="truncate">ผู้ใช้งาน & บทบาท</span>
                     </a>
 
@@ -1761,8 +1780,8 @@
                     <?php $isCategories = str_contains($currentReqUri, '/categories'); ?>
                     <a href="<?= \App\Core\Router::url('/categories') ?>" 
                        @click="sidebarOpen = false"
-                       class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-all group select-none <?= $isCategories ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold shadow-2xs before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:bg-emerald-600 dark:before:bg-emerald-400 before:rounded-r-full' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.05]' ?>">
-                        <i data-lucide="tags" class="w-5 h-5 shrink-0 transition-colors <?= $isCategories ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300' ?>"></i>
+                       class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-colors group select-none <?= $isCategories ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold shadow-2xs before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:bg-emerald-600 dark:before:bg-emerald-400 before:rounded-r-full' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.05]' ?>">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-tags w-5 h-5 shrink-0 transition-colors <?= $isCategories ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300' ?>"><path d="M13.172 2a2 2 0 0 1 1.414.586l6.71 6.71a2.4 2.4 0 0 1 0 3.408l-4.592 4.592a2.4 2.4 0 0 1-3.408 0l-6.71-6.71A2 2 0 0 1 6 9.172V3a1 1 0 0 1 1-1z"/><path d="M2 7v6.172a2 2 0 0 0 .586 1.414l6.71 6.71a2.4 2.4 0 0 0 3.191.193"/><circle cx="10.5" cy="6.5" r=".5" fill="currentColor"/></svg>
                         <span class="truncate">ประเภทโครงการ</span>
                     </a>
 
@@ -1770,8 +1789,8 @@
                     <?php $isAudit = str_contains($currentReqUri, '/audit-logs'); ?>
                     <a href="<?= \App\Core\Router::url('/audit-logs') ?>" 
                        @click="sidebarOpen = false"
-                       class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-all group select-none <?= $isAudit ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold shadow-2xs before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:bg-emerald-600 dark:before:bg-emerald-400 before:rounded-r-full' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.05]' ?>">
-                        <i data-lucide="history" class="w-5 h-5 shrink-0 transition-colors <?= $isAudit ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300' ?>"></i>
+                       class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-colors group select-none <?= $isAudit ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold shadow-2xs before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:bg-emerald-600 dark:before:bg-emerald-400 before:rounded-r-full' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.05]' ?>">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-history w-5 h-5 shrink-0 transition-colors <?= $isAudit ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300' ?>"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
                         <span class="truncate">ประวัติการทำงาน</span>
                     </a>
                     <?php endif; ?>
@@ -1785,7 +1804,7 @@
                             aria-label="ย่อแถบเมนูนำทาง (Ctrl+B)"
                             class="w-full inline-flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-white/10 transition cursor-pointer" 
                             title="ย่อแถบเมนู (Ctrl+B)">
-                        <i data-lucide="panel-left-close" class="w-4 h-4 text-slate-400"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="lucide lucide-panel-left-close w-4 h-4 text-slate-400"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/><path d="m16 15-3-3 3-3"/></svg>
                         <span>ย่อเมนู</span>
                     </button>
                 </div>
@@ -1819,13 +1838,18 @@
             if (window.lucide && typeof lucide.createIcons === 'function') {
                 try {
                     const targetRoot = (root instanceof Element || root instanceof Document) ? root : document;
+                    if (!targetRoot.querySelector('[data-lucide]')) return;
                     lucide.createIcons({ root: targetRoot });
+                    targetRoot.querySelectorAll('svg[data-lucide]').forEach(svg => {
+                        svg.removeAttribute('data-lucide');
+                    });
                 } catch (e) {
                     try { lucide.createIcons(); } catch (err) {}
                 }
             }
         }
 
+        safeCreateIcons();
         document.addEventListener('DOMContentLoaded', () => safeCreateIcons());
         document.addEventListener('alpine:initialized', () => safeCreateIcons());
         window.addEventListener('load', () => safeCreateIcons());

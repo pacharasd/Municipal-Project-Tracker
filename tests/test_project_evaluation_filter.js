@@ -6,6 +6,17 @@ const vm = require('node:vm');
 const source = fs.readFileSync(path.join(__dirname, '../resources/views/projects/index.blade.php'), 'utf8');
 const template = source.match(/^<script[^\r\n]*\r?\n([\s\S]*?)^<\/script>/m)?.[1];
 assert.ok(template, 'Main projects Alpine script was not found');
+assert.match(source, /@click="setStatusFilter\('not_started'\)"/);
+for (const statusValue of ['all', 'not_started', 'in_progress', 'completed', 'has_problem', 'cancelled']) {
+    assert.ok(
+        source.includes(`statusFilter === '${statusValue}'`) && source.includes(`statusFilter !== '${statusValue}'`),
+        `Status button ${statusValue} must use object-syntax :class for clean SSR class toggling`
+    );
+    assert.ok(
+        source.includes(`$initStatus === '${statusValue}'`),
+        `Status button ${statusValue} must render initial SSR classes via $initStatus`
+    );
+}
 assert.match(source, /@select-changed="if \(\$event\.detail\.name === 'evaluation'\) setEvaluationFilter\(\$event\.detail\.value\)"/);
 assert.match(source, /'ariaLabel' => 'ผลประเมินโครงการหลัก'/);
 for (const value of ['all', 'evaluated', 'ungraded']) {
@@ -147,5 +158,25 @@ assert.equal(page.filteredProjects.length, 7);
 assert.equal(page.filteredProjects.length, 0);
 assert.equal(page.totalPages, 1);
 assert.equal(page.totalFilteredSubCount, 0);
+
+const statusProjects = [
+    ...projects,
+    { ...projects[0], id: 8, status: 'not_started' },
+    { ...projects[0], id: 9, status: 'cancelled' },
+];
+({ page, location } = mount({ dataset: statusProjects }));
+assert.equal(page.notStartedCount + page.inProgressCount + page.completedCount + page.hasProblemCount + page.cancelledCount, page.projectsMatchingOtherFilters.length);
+page.setStatusFilter('not_started');
+assert.deepEqual(Array.from(page.filteredProjects, project => project.id), [8]);
+assert.equal(new URL(location.href).searchParams.get('status'), 'not_started');
+
+({ page, location } = mount({ url: 'http://localhost/projects?status=not_started', dataset: statusProjects }));
+assert.equal(page.statusFilter, 'not_started');
+assert.deepEqual(Array.from(page.filteredProjects, project => project.id), [8]);
+
+({ page, location } = mount({ url: 'http://localhost/projects?status=invalid_status', dataset: statusProjects }));
+assert.equal(page.statusFilter, 'all');
+assert.equal(new URL(location.href).searchParams.has('status'), false);
+assert.equal(page.filteredProjects.length, statusProjects.length);
 
 console.log('Project evaluation Alpine checks passed');

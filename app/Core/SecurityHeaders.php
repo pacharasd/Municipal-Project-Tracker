@@ -115,6 +115,10 @@ class SecurityHeaders
             "form-action 'self'",
         ];
 
+        if ($includeEval) {
+            $directives[] = "script-src-attr 'unsafe-inline'";
+        }
+
         return implode('; ', $directives);
     }
 

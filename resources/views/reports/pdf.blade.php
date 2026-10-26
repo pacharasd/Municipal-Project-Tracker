@@ -59,7 +59,8 @@
     <!-- Action Bar (Hidden when printing) -->
     <div class="no-print max-w-7xl mx-auto mb-6 bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-3">
-            <a href="javascript:window.close(); if(!window.closed){ history.back(); }" 
+            <a href="<?= \App\Core\Router::url('/reports') ?>" 
+               id="btnBackPdfReport"
                class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i>
                 <span>ย้อนกลับ</span>
@@ -76,7 +77,7 @@
                 <span>ดาวน์โหลด Excel</span>
             </a>
             <button type="button" 
-                    onclick="window.print()" 
+                    id="btnPrintPdfReport" 
                     class="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-md transition cursor-pointer">
                 <i data-lucide="printer" class="w-4 h-4"></i>
                 <span>บันทึกเป็น PDF / พิมพ์รายงาน</span>
@@ -93,7 +94,7 @@
                 <img src="<?= \App\Core\Router::url('/images/mobile-logo.webp') ?>" 
                      alt="ตราสัญลักษณ์เทศบาล" 
                      class="w-16 h-16 object-contain"
-                     onerror="this.style.display='none';">
+                     id="pdfReportLogo">
                 <div>
                     <h1 class="text-xl font-bold font-heading text-slate-900 leading-tight">
                         ระบบติดตามและบริหารโครงการเทศบาล
@@ -232,6 +233,19 @@
 
     <!-- Auto-Print / Lucide Icons Initializer -->
     <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
+        document.getElementById('pdfReportLogo')?.addEventListener('error', function() {
+            this.style.display = 'none';
+        });
+        document.getElementById('btnBackPdfReport')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.close();
+            if (!window.closed) {
+                history.back();
+            }
+        });
+        document.getElementById('btnPrintPdfReport')?.addEventListener('click', function() {
+            window.print();
+        });
         document.addEventListener('DOMContentLoaded', function() {
             if (window.lucide) {
                 lucide.createIcons();

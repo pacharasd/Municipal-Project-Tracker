@@ -5,6 +5,7 @@ $title = "จัดการโครงการหลักและกิจ�
 // Prepare JSON summary for reactive Alpine.js pagination & live search
 $projectsSummary = [];
 $totalInitialSubCount = 0;
+$notStartedCount = 0;
 $inProgressCount = 0;
 $completedCount = 0;
 $hasProblemCount = 0;
@@ -19,9 +20,17 @@ foreach ($projects as $p) {
 
     $totalInitialSubCount += count($p['sub_projects']);
 
-    $calcStatus = $p['status'] ?? 'not_started';
+    $rawStatus = trim((string)($p['status'] ?? ''));
+    $calcStatus = match($rawStatus) {
+        'in_progress', 'กำลังดำเนินการ' => 'in_progress',
+        'completed', 'เสร็จสิ้น' => 'completed',
+        'has_problem', 'มีปัญหา' => 'has_problem',
+        'cancelled', 'ยกเลิก' => 'cancelled',
+        default => 'not_started',
+    };
 
-    if ($calcStatus === 'in_progress') $inProgressCount++;
+    if ($calcStatus === 'not_started') $notStartedCount++;
+    elseif ($calcStatus === 'in_progress') $inProgressCount++;
     elseif ($calcStatus === 'completed') $completedCount++;
     elseif ($calcStatus === 'has_problem') $hasProblemCount++;
     elseif ($calcStatus === 'cancelled') $cancelledCount++;
@@ -53,6 +62,9 @@ $projectsJson = json_encode($projectsSummary, JSON_HEX_TAG | JSON_HEX_APOS | JSO
 $initPage = max(1, (int)($_GET['page'] ?? 1));
 $initPerPageRaw = $_GET['per_page'] ?? '20';
 $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw);
+$validInitStatuses = ['not_started', 'in_progress', 'completed', 'has_problem', 'cancelled'];
+$rawInitStatus = $_GET['status'] ?? ($filters['status'] ?? '');
+$initStatus = is_string($rawInitStatus) && in_array($rawInitStatus, $validInitStatuses, true) ? $rawInitStatus : 'all';
 
 $currentFyLabel = '-- ทุกปีงบประมาณ --';
 if (!empty($filters['fiscal_year_id'])) {
@@ -85,6 +97,10 @@ window.mainProjectsPage = function mainProjectsPage() {
             return found ? 'ปี ' + found.year : '-- ทุกปีงบประมาณ --';
         },
 
+        get notStartedCount() {
+            return this.projectsMatchingOtherFilters.filter(p => p.status === 'not_started').length;
+        },
+
         get inProgressCount() {
             return this.projectsMatchingOtherFilters.filter(p => p.status === 'in_progress').length;
         },
@@ -111,10 +127,17 @@ window.mainProjectsPage = function mainProjectsPage() {
             if (perPageParam) {
                 this.perPage = perPageParam === 'all' ? 'all' : parseInt(perPageParam);
             }
-            if (params.get('status')) {
-                this.statusFilter = params.get('status');
-            }
+            const validStatuses = ['not_started', 'in_progress', 'completed', 'has_problem', 'cancelled'];
+            const statusParam = params.get('status');
             let normalizeUrl = params.has('evaluation') && this.evaluationFilter === 'all';
+            if (statusParam) {
+                if (validStatuses.includes(statusParam)) {
+                    this.statusFilter = statusParam;
+                } else {
+                    this.statusFilter = 'all';
+                    normalizeUrl = true;
+                }
+            }
             if (this.currentPage > this.totalPages) {
                 this.currentPage = this.totalPages;
                 normalizeUrl = true;
@@ -522,28 +545,33 @@ if (window.Alpine && typeof Alpine.data === 'function') {
         <!-- Right: Status Filter Pills (Scrollable on mobile) -->
         <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 -mx-1 px-1 w-full md:w-auto shrink-0 no-scrollbar touch-pan-y overscroll-x-contain">
             <button type="button" @click="setStatusFilter('all')" 
-                    :class="statusFilter === 'all' ? 'bg-slate-800 dark:bg-slate-700 text-white font-semibold shadow-sm' : 'bg-slate-50 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08]'"
-                    class="px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition cursor-pointer shrink-0">
+                    :class="{ 'bg-slate-800 dark:bg-slate-700 text-white font-semibold shadow-sm': statusFilter === 'all', 'bg-slate-50 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08]': statusFilter !== 'all' }"
+                    class="px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition-colors duration-150 cursor-pointer shrink-0 <?= $initStatus === 'all' ? 'bg-slate-800 dark:bg-slate-700 text-white font-semibold shadow-sm' : 'bg-slate-50 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08]' ?>">
                 ทั้งหมด (<span x-text="projectsMatchingOtherFilters.length"><?= count($projects) ?></span>)
             </button>
+            <button type="button" @click="setStatusFilter('not_started')"
+                    :class="{ 'bg-indigo-600 text-white font-semibold shadow-sm': statusFilter === 'not_started', 'bg-indigo-50/60 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 border border-indigo-200 dark:border-indigo-800/40': statusFilter !== 'not_started' }"
+                    class="px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition-colors duration-150 cursor-pointer shrink-0 <?= $initStatus === 'not_started' ? 'bg-indigo-600 text-white font-semibold shadow-sm' : 'bg-indigo-50/60 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 border border-indigo-200 dark:border-indigo-800/40' ?>">
+                ยังไม่เริ่ม (<span x-text="notStartedCount"><?= $notStartedCount ?></span>)
+            </button>
             <button type="button" @click="setStatusFilter('in_progress')" 
-                    :class="statusFilter === 'in_progress' ? 'bg-blue-600 text-white font-semibold shadow-sm' : 'bg-blue-50/60 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100/60 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800/40'"
-                    class="px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition cursor-pointer shrink-0">
+                    :class="{ 'bg-blue-600 text-white font-semibold shadow-sm': statusFilter === 'in_progress', 'bg-blue-50/60 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100/60 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800/40': statusFilter !== 'in_progress' }"
+                    class="px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition-colors duration-150 cursor-pointer shrink-0 <?= $initStatus === 'in_progress' ? 'bg-blue-600 text-white font-semibold shadow-sm' : 'bg-blue-50/60 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100/60 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800/40' ?>">
                 กำลังดำเนินการ (<span x-text="inProgressCount"><?= $inProgressCount ?></span>)
             </button>
             <button type="button" @click="setStatusFilter('completed')" 
-                    :class="statusFilter === 'completed' ? 'bg-emerald-600 text-white font-semibold shadow-sm' : 'bg-emerald-50/60 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800/40'"
-                    class="px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition cursor-pointer shrink-0">
+                    :class="{ 'bg-emerald-600 text-white font-semibold shadow-sm': statusFilter === 'completed', 'bg-emerald-50/60 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800/40': statusFilter !== 'completed' }"
+                    class="px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition-colors duration-150 cursor-pointer shrink-0 <?= $initStatus === 'completed' ? 'bg-emerald-600 text-white font-semibold shadow-sm' : 'bg-emerald-50/60 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800/40' ?>">
                 เสร็จสิ้น (<span x-text="completedCount"><?= $completedCount ?></span>)
             </button>
             <button type="button" @click="setStatusFilter('has_problem')" 
-                    :class="statusFilter === 'has_problem' ? 'bg-rose-600 text-white font-semibold shadow-sm' : 'bg-rose-50/60 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100/60 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-800/40'"
-                    class="px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition cursor-pointer shrink-0">
+                    :class="{ 'bg-rose-600 text-white font-semibold shadow-sm': statusFilter === 'has_problem', 'bg-rose-50/60 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100/60 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-800/40': statusFilter !== 'has_problem' }"
+                    class="px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition-colors duration-150 cursor-pointer shrink-0 <?= $initStatus === 'has_problem' ? 'bg-rose-600 text-white font-semibold shadow-sm' : 'bg-rose-50/60 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100/60 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-800/40' ?>">
                 มีปัญหา (<span x-text="hasProblemCount"><?= $hasProblemCount ?></span>)
             </button>
             <button type="button" @click="setStatusFilter('cancelled')"
-                    :class="statusFilter === 'cancelled' ? 'bg-slate-600 text-white font-semibold shadow-sm' : 'bg-slate-100 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08]'"
-                    class="px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition cursor-pointer shrink-0">
+                    :class="{ 'bg-slate-600 text-white font-semibold shadow-sm': statusFilter === 'cancelled', 'bg-slate-100 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08]': statusFilter !== 'cancelled' }"
+                    class="px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition-colors duration-150 cursor-pointer shrink-0 <?= $initStatus === 'cancelled' ? 'bg-slate-600 text-white font-semibold shadow-sm' : 'bg-slate-100 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08]' ?>">
                 ยกเลิก (<span x-text="cancelledCount"><?= $cancelledCount ?></span>)
             </button>
         </div>

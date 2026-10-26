@@ -99,8 +99,25 @@ namespace {
     if (count($projectsSummary) !== 2
         || $projectsSummary[0]['evaluated'] !== true
         || $projectsSummary[1]['evaluated'] !== false
-        || $projectsSummary[0]['sub_count'] !== 1) {
-        throw new \RuntimeException('A score of zero must count as evaluated, NULL as ungraded, and children must not count as main projects');
+        || $projectsSummary[0]['sub_count'] !== 1
+        || $notStartedCount !== 2
+        || $initStatus !== 'all'
+        || ($notStartedCount + $inProgressCount + $completedCount + $hasProblemCount + $cancelledCount) !== count($projects)) {
+        throw new \RuntimeException('A score of zero must count as evaluated, NULL as ungraded, children must not count as main projects, and status counts must sum to total');
+    }
+
+    $_GET = ['status' => 'not_started'];
+    eval($viewPrologue);
+    ob_end_clean();
+    if ($initStatus !== 'not_started') {
+        throw new \RuntimeException('Expected $initStatus to accept valid status parameter');
+    }
+
+    $_GET = ['status' => 'unknown_status'];
+    eval($viewPrologue);
+    ob_end_clean();
+    if ($initStatus !== 'all') {
+        throw new \RuntimeException('Expected $initStatus to fallback to all on invalid status parameter');
     }
 
     $name = 'evaluation';

@@ -49,7 +49,7 @@
     <!-- Action Bar (Hidden when printing) -->
     <div class="no-print max-w-6xl mx-auto mb-6 bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
         <div class="flex items-center gap-2">
-            <a href="javascript:history.back()" class="px-3 py-1.5 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">
+            <a href="<?= \App\Core\Router::url('/reports') ?>" id="btnBackPrintReport" class="px-3 py-1.5 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">
                 ← กลับ
             </a>
             <span class="text-xs text-slate-500">ดูตัวอย่างก่อนพิมพ์รายงานราชการ</span>
@@ -151,6 +151,10 @@
         </div>
     </div>
     <script nonce="<?= \App\Core\SecurityHeaders::nonce() ?>">
+        document.getElementById('btnBackPrintReport')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            history.back();
+        });
         document.getElementById('btnPrintReport')?.addEventListener('click', function() {
             window.print();
         });
