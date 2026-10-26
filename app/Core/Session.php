@@ -8,21 +8,31 @@ class Session
     {
         if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
             $isSecure = SecurityHeaders::isHttps();
+            $lifetimeMinutes = max(1, (int)(getenv('SESSION_LIFETIME') ?: 120));
+            $lifetimeSeconds = $lifetimeMinutes * 60;
+            $savePath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'sessions';
+
+            if (!is_dir($savePath) && !mkdir($savePath, 0700, true) && !is_dir($savePath)) {
+                throw new \RuntimeException('Unable to create the application session directory');
+            }
+
+            // Isolate this application's files and cookie from other PHP sites on localhost.
+            session_save_path($savePath);
+            session_name('MPTSESSID');
 
             // Enforce hardened session settings
             ini_set('session.use_strict_mode', '1');
             ini_set('session.use_only_cookies', '1');
             ini_set('session.cookie_httponly', '1');
             ini_set('session.cookie_samesite', 'Lax');
+            ini_set('session.gc_maxlifetime', (string)$lifetimeSeconds);
 
             if ($isSecure) {
                 ini_set('session.cookie_secure', '1');
             }
 
-            $lifetimeMinutes = (int)(getenv('SESSION_LIFETIME') ?: 120);
-
             session_set_cookie_params([
-                'lifetime' => $lifetimeMinutes * 60,
+                'lifetime' => $lifetimeSeconds,
                 'path'     => '/',
                 'domain'   => '',
                 'secure'   => $isSecure,
@@ -30,7 +40,26 @@ class Session
                 'samesite' => 'Lax',
             ]);
 
-            @session_start();
+            if (!session_start()) {
+                throw new \RuntimeException('Unable to start the application session');
+            }
+
+            $now = time();
+            if (isset($_SESSION['_last_activity']) && $now - (int)$_SESSION['_last_activity'] > $lifetimeSeconds) {
+                $_SESSION = [];
+                session_regenerate_id(true);
+            }
+            $_SESSION['_last_activity'] = $now;
+
+            // PHP does not extend a persistent session cookie on every request.
+            // Refresh it when the user is active so it matches the server-side idle window.
+            setcookie(session_name(), session_id(), [
+                'expires'  => $now + $lifetimeSeconds,
+                'path'     => '/',
+                'secure'   => $isSecure,
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
         }
     }
 

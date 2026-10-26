@@ -8,6 +8,7 @@ $totalInitialSubCount = 0;
 $inProgressCount = 0;
 $completedCount = 0;
 $hasProblemCount = 0;
+$cancelledCount = 0;
 
 foreach ($projects as $p) {
     $subKeywords = [];
@@ -23,6 +24,7 @@ foreach ($projects as $p) {
     if ($calcStatus === 'in_progress') $inProgressCount++;
     elseif ($calcStatus === 'completed') $completedCount++;
     elseif ($calcStatus === 'has_problem') $hasProblemCount++;
+    elseif ($calcStatus === 'cancelled') $cancelledCount++;
 
     $projectsSummary[] = [
         'id' => (int)$p['id'],
@@ -49,7 +51,7 @@ foreach ($projects as $p) {
 $projectsJson = json_encode($projectsSummary, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
 
 $initPage = max(1, (int)($_GET['page'] ?? 1));
-$initPerPageRaw = $_GET['per_page'] ?? '5';
+$initPerPageRaw = $_GET['per_page'] ?? '20';
 $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw);
 
 $currentFyLabel = '-- ทุกปีงบประมาณ --';
@@ -74,7 +76,7 @@ window.mainProjectsPage = function mainProjectsPage() {
         statusFilter: 'all',
         evaluationFilter: <?= json_encode($filters['evaluation'] ?: 'all', JSON_UNESCAPED_UNICODE) ?>,
         currentPage: 1,
-        perPage: 5,
+        perPage: 20,
         fiscalYearOptions: Object.freeze(<?= json_encode($fiscalYears, JSON_UNESCAPED_UNICODE) ?>),
 
         get currentFiscalYearLabel() {
@@ -93,6 +95,10 @@ window.mainProjectsPage = function mainProjectsPage() {
 
         get hasProblemCount() {
             return this.projectsMatchingOtherFilters.filter(p => p.status === 'has_problem').length;
+        },
+
+        get cancelledCount() {
+            return this.projectsMatchingOtherFilters.filter(p => p.status === 'cancelled').length;
         },
 
         init() {
@@ -139,7 +145,7 @@ window.mainProjectsPage = function mainProjectsPage() {
 
         get totalPages() {
             if (this.perPage === 'all') return 1;
-            const per = parseInt(this.perPage) || 5;
+            const per = parseInt(this.perPage) || 20;
             return Math.max(1, Math.ceil(this.filteredProjects.length / per));
         },
 
@@ -155,7 +161,7 @@ window.mainProjectsPage = function mainProjectsPage() {
             if (this.perPage === 'all') {
                 this._cachedPaginatedIds = new Set(this.filteredProjects.map(p => p.id));
             } else {
-                const per = parseInt(this.perPage) || 5;
+                const per = parseInt(this.perPage) || 20;
                 const start = (this.currentPage - 1) * per;
                 const slice = this.filteredProjects.slice(start, start + per);
                 this._cachedPaginatedIds = new Set(slice.map(p => p.id));
@@ -170,14 +176,14 @@ window.mainProjectsPage = function mainProjectsPage() {
         get startIndex() {
             if (this.filteredProjects.length === 0) return 0;
             if (this.perPage === 'all') return 1;
-            const per = parseInt(this.perPage) || 5;
+            const per = parseInt(this.perPage) || 20;
             return (this.currentPage - 1) * per + 1;
         },
 
         get endIndex() {
             if (this.filteredProjects.length === 0) return 0;
             if (this.perPage === 'all') return this.filteredProjects.length;
-            const per = parseInt(this.perPage) || 5;
+            const per = parseInt(this.perPage) || 20;
             return Math.min(this.currentPage * per, this.filteredProjects.length);
         },
 
@@ -283,7 +289,7 @@ window.mainProjectsPage = function mainProjectsPage() {
             } else {
                 url.searchParams.delete('page');
             }
-            if (this.perPage !== 5) {
+            if (this.perPage !== 20) {
                 url.searchParams.set('per_page', this.perPage);
             } else {
                 url.searchParams.delete('per_page');
@@ -534,6 +540,11 @@ if (window.Alpine && typeof Alpine.data === 'function') {
                     :class="statusFilter === 'has_problem' ? 'bg-rose-600 text-white font-semibold shadow-sm' : 'bg-rose-50/60 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100/60 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-800/40'"
                     class="px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition cursor-pointer shrink-0">
                 มีปัญหา (<span x-text="hasProblemCount"><?= $hasProblemCount ?></span>)
+            </button>
+            <button type="button" @click="setStatusFilter('cancelled')"
+                    :class="statusFilter === 'cancelled' ? 'bg-slate-600 text-white font-semibold shadow-sm' : 'bg-slate-100 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08]'"
+                    class="px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition cursor-pointer shrink-0">
+                ยกเลิก (<span x-text="cancelledCount"><?= $cancelledCount ?></span>)
             </button>
         </div>
     </div>

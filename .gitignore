@@ -15,6 +15,8 @@ desktop.ini
 # Storage & Logs
 storage/logs/*
 !storage/logs/.gitkeep
+storage/sessions/*
+!storage/sessions/.htaccess
 
 # Temporary & Debug artifacts
 scratch/
@@ -34,6 +36,7 @@ tests/*
 !tests/test_project_evaluation_filter.php
 !tests/test_project_evaluation_filter.js
 !tests/test_project_evaluation_status.php
+!tests/test_session_lifetime.php
 database/
 
 # AI Assistant local metadata

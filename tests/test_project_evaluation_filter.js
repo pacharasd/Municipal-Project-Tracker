@@ -67,7 +67,13 @@ function mount({ url = 'http://localhost/projects', evaluation = 'all', search =
 
 let { page, location } = mount();
 assert.equal(page.filteredProjects.length, 7);
+assert.equal(page.perPage, 20);
+assert.equal(page.totalPages, 1);
+assert.equal(page.paginatedIds.has(7), true);
+assert.equal(new URL(location.href).searchParams.has('per_page'), false);
+page.setPerPage(5);
 assert.equal(page.totalPages, 2);
+assert.equal(new URL(location.href).searchParams.get('per_page'), '5');
 page.setPage(2);
 assert.equal(page.currentPage, 2);
 page.setEvaluationFilter('evaluated');
@@ -89,6 +95,8 @@ assert.equal(page.paginatedIds.has(2), true);
 page.setEvaluationFilter('all');
 assert.equal(page.filteredProjects.length, 7);
 assert.equal(new URL(location.href).searchParams.has('evaluation'), false);
+page.setPerPage(20);
+assert.equal(new URL(location.href).searchParams.has('per_page'), false);
 
 ({ page, location } = mount({
     url: 'http://localhost/projects?search=road&status=completed&evaluation=ungraded',
