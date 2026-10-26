@@ -315,14 +315,25 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                     </div>
                 </div>
 
+                <?php
+                $gradeBaseParams = [];
+                if (isset($selectedYearId) && $selectedYearId !== 'all' && $selectedYearId !== '') {
+                    $gradeBaseParams['fiscal_year_id'] = (string)$selectedYearId;
+                }
+                $gradeLinks = [];
+                foreach (array_keys($gradeMeta) as $gKey) {
+                    $gradeLinks[$gKey] = \App\Core\Router::url('/projects') . '?' . http_build_query(array_merge($gradeBaseParams, ['evaluation' => $gKey]));
+                }
+                ?>
                 <div class="grid grid-cols-1 xl:grid-cols-12 items-center gap-8 xl:gap-10 py-4 w-full max-w-6xl mx-auto">
                     <div class="xl:col-span-6 flex justify-center items-center min-w-0">
                         <div class="w-64 sm:w-80 xl:w-96 2xl:w-[26rem] relative max-w-full aspect-square mx-auto flex items-center justify-center touch-pan-y" style="touch-action: pan-y;">
                             <canvas id="gradeDonutChart"
                                     data-grade-distribution='<?= htmlspecialchars(json_encode($gradeDistribution, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>'
                                     data-grade-meta='<?= htmlspecialchars(json_encode($gradeMeta, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>'
+                                    data-grade-links='<?= htmlspecialchars(json_encode($gradeLinks, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>'
                                     role="img"
-                                    aria-label="สัดส่วนเกรดของโครงการหลัก ดูจำนวนและเปอร์เซ็นต์แต่ละเกรดในรายการข้างกราฟ"
+                                    aria-label="สัดส่วนเกรดของโครงการหลัก คลิกที่ชิ้นกราฟหรือรายการด้านขวาเพื่อดูรายละเอียดโครงการในแต่ละเกรด"
                                     style="touch-action: pan-y;"></canvas>
                             <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center select-none">
                                 <span class="text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400">โครงการหลักทั้งหมด</span>
@@ -338,17 +349,23 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                             <?php
                             $gradeCount = (int)($gradeDistribution[$gradeKey] ?? 0);
                             $gradePct = (int)$stats['main_total'] > 0 ? round($gradeCount / (int)$stats['main_total'] * 100, 1) : 0.0;
+                            $gradeDisplayLabel = $gradeKey === 'ungraded' ? $meta['label'] : 'เกรด ' . $gradeKey . ' · ' . $meta['label'];
+                            $gradeHref = $gradeLinks[$gradeKey];
                             ?>
-                            <div role="listitem" class="flex items-center justify-between gap-3 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] px-3 sm:px-4 py-3 sm:py-3.5">
+                            <a href="<?= htmlspecialchars($gradeHref, ENT_QUOTES, 'UTF-8') ?>"
+                               role="listitem"
+                               aria-label="ดูรายละเอียดโครงการหลัก <?= htmlspecialchars($gradeDisplayLabel, ENT_QUOTES, 'UTF-8') ?> จำนวน <?= number_format($gradeCount) ?> โครงการ (<?= number_format($gradePct, 1) ?>%)"
+                               class="group flex items-center justify-between gap-3 rounded-xl bg-slate-50/90 dark:bg-[#12141c] border border-slate-200/80 dark:border-white/[0.08] hover:bg-white dark:hover:bg-[#1a1d28] hover:border-emerald-400/70 dark:hover:border-emerald-500/40 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 px-3 sm:px-4 py-3 sm:py-3.5 transition-all cursor-pointer">
                                 <div class="flex items-center gap-3 min-w-0">
-                                    <span class="w-4 h-4 rounded-full shrink-0" style="background-color: <?= $meta['color'] ?>;"></span>
-                                    <span class="font-semibold text-slate-800 dark:text-slate-200 truncate"><?= $gradeKey === 'ungraded' ? $meta['label'] : 'เกรด ' . $gradeKey . ' · ' . $meta['label'] ?></span>
+                                    <span class="w-4 h-4 rounded-full shrink-0 ring-2 ring-transparent group-hover:scale-110 transition-transform" style="background-color: <?= $meta['color'] ?>;"></span>
+                                    <span class="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate"><?= htmlspecialchars($gradeDisplayLabel) ?></span>
                                 </div>
-                                <div class="flex items-center gap-3 shrink-0 font-mono">
+                                <div class="flex items-center gap-2.5 sm:gap-3 shrink-0 font-mono">
                                     <span class="font-extrabold text-slate-900 dark:text-white"><?= number_format($gradeCount) ?></span>
                                     <span class="text-slate-600 dark:text-slate-400 w-14 text-right"><?= number_format($gradePct, 1) ?>%</span>
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all shrink-0"></i>
                                 </div>
-                            </div>
+                            </a>
                         <?php endforeach; ?>
                     </div>
                 </div>
@@ -790,11 +807,13 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
             if (gradeCanvas) {
                 const distribution = JSON.parse(gradeCanvas.dataset.gradeDistribution || '{}');
                 const gradeMeta = JSON.parse(gradeCanvas.dataset.gradeMeta || '{}');
+                const gradeLinks = JSON.parse(gradeCanvas.dataset.gradeLinks || '{}');
                 const grades = Object.entries(gradeMeta).map(([key, meta]) => ({
                     key,
                     label: key === 'ungraded' ? meta.label : `เกรด ${key} · ${meta.label}`,
                     color: meta.color,
-                    count: Number(distribution[key] || 0)
+                    count: Number(distribution[key] || 0),
+                    href: gradeLinks[key] || ''
                 }));
                 const total = grades.reduce((sum, grade) => sum + grade.count, 0);
                 const activeGrades = grades.filter(grade => grade.count > 0);
@@ -817,6 +836,24 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                         maintainAspectRatio: true,
                         cutout: '64%',
                         animation: isThemeChange ? false : { duration: 350, easing: 'easeOutQuad' },
+                        onHover: function(event, elements) {
+                            const target = event?.native?.target || gradeCanvas;
+                            if (target && target.style) {
+                                target.style.cursor = !isEmpty && elements && elements.length > 0 ? 'pointer' : 'default';
+                            }
+                        },
+                        onClick: function(_event, elements) {
+                            if (isEmpty || !elements || elements.length === 0) return;
+                            const idx = elements[0].index;
+                            const selectedGrade = activeGrades[idx];
+                            if (selectedGrade && selectedGrade.href && window.location) {
+                                if (typeof window.location.assign === 'function') {
+                                    window.location.assign(selectedGrade.href);
+                                } else {
+                                    window.location.href = selectedGrade.href;
+                                }
+                            }
+                        },
                         plugins: {
                             legend: { display: false },
                             tooltip: {

@@ -35,6 +35,12 @@ foreach ($projects as $p) {
     elseif ($calcStatus === 'has_problem') $hasProblemCount++;
     elseif ($calcStatus === 'cancelled') $cancelledCount++;
 
+    $evalScore = $p['evaluation_score'] ?? null;
+    $isEvaluated = $evalScore !== null;
+    $projectGrade = $isEvaluated
+        ? (\App\Services\ProjectService::calculateEvaluationGrade((float)$evalScore)['grade'] ?? 'D')
+        : 'ungraded';
+
     $projectsSummary[] = [
         'id' => (int)$p['id'],
         'name' => (string)$p['name'],
@@ -44,7 +50,8 @@ foreach ($projects as $p) {
         'budget' => (float)$p['budget'],
         'sub_count' => count($p['sub_projects']),
         'status' => $calcStatus,
-        'evaluated' => $p['evaluation_score'] !== null,
+        'evaluated' => $isEvaluated,
+        'grade' => $projectGrade,
         'search_text' => mb_strtolower(
             ($p['project_code'] ?? '') . ' ' . 
             ($p['name'] ?? '') . ' ' . 
@@ -65,6 +72,32 @@ $initPerPage = ($initPerPageRaw === 'all') ? 'all' : max(1, (int)$initPerPageRaw
 $validInitStatuses = ['not_started', 'in_progress', 'completed', 'has_problem', 'cancelled'];
 $rawInitStatus = $_GET['status'] ?? ($filters['status'] ?? '');
 $initStatus = is_string($rawInitStatus) && in_array($rawInitStatus, $validInitStatuses, true) ? $rawInitStatus : 'all';
+
+$validInitEvaluations = ['evaluated', 'ungraded', 'A+', 'A', 'B', 'C', 'D'];
+$rawInitEvaluation = $filters['evaluation'] ?? ($_GET['evaluation'] ?? '');
+$initEvaluation = is_string($rawInitEvaluation) && in_array($rawInitEvaluation, $validInitEvaluations, true) ? $rawInitEvaluation : 'all';
+$initSearch = mb_strtolower(trim((string)($filters['search'] ?? '')), 'UTF-8');
+
+$initialMatchingIds = [];
+foreach ($projectsSummary as $ps) {
+    $matchSearch = $initSearch === '' || str_contains($ps['search_text'], $initSearch);
+    $matchEval = $initEvaluation === 'all'
+        || ($initEvaluation === 'evaluated' && $ps['evaluated'])
+        || ($initEvaluation === 'ungraded' && !$ps['evaluated'])
+        || (in_array($initEvaluation, ['A+', 'A', 'B', 'C', 'D'], true) && $ps['grade'] === $initEvaluation);
+    $matchStatus = $initStatus === 'all' || $ps['status'] === $initStatus;
+    if ($matchSearch && $matchEval && $matchStatus) {
+        $initialMatchingIds[] = $ps['id'];
+    }
+}
+if ($initPerPage === 'all') {
+    $initialVisibleIdMap = array_fill_keys($initialMatchingIds, true);
+} else {
+    $totalInitPages = max(1, (int)ceil(count($initialMatchingIds) / (int)$initPerPage));
+    $clampedInitPage = min($initPage, $totalInitPages);
+    $initSlice = array_slice($initialMatchingIds, ($clampedInitPage - 1) * (int)$initPerPage, (int)$initPerPage);
+    $initialVisibleIdMap = array_fill_keys($initSlice, true);
+}
 
 $currentFyLabel = '-- ทุกปีงบประมาณ --';
 if (!empty($filters['fiscal_year_id'])) {
@@ -157,7 +190,8 @@ window.mainProjectsPage = function mainProjectsPage() {
                 const matchDept = !dept || String(p.department_id) === String(dept);
                 const matchEvaluation = evaluation === 'all'
                     || (evaluation === 'evaluated' && p.evaluated)
-                    || (evaluation === 'ungraded' && !p.evaluated);
+                    || (evaluation === 'ungraded' && !p.evaluated)
+                    || (['A+', 'A', 'B', 'C', 'D'].includes(evaluation) && p.grade === evaluation);
                 return matchSearch && matchFy && matchDept && matchEvaluation;
             });
         },
@@ -276,7 +310,7 @@ window.mainProjectsPage = function mainProjectsPage() {
         },
 
         setEvaluationFilter(val) {
-            this.evaluationFilter = ['evaluated', 'ungraded'].includes(val) ? val : 'all';
+            this.evaluationFilter = ['evaluated', 'ungraded', 'A+', 'A', 'B', 'C', 'D'].includes(val) ? val : 'all';
             this.currentPage = 1;
             this.syncUrl();
             this.$nextTick(() => {
@@ -449,7 +483,12 @@ if (window.Alpine && typeof Alpine.data === 'function') {
                 'options' => [
                     ['value' => 'all', 'label' => 'ผลประเมินทั้งหมด'],
                     ['value' => 'evaluated', 'label' => 'ประเมินแล้ว'],
-                    ['value' => 'ungraded', 'label' => 'ยังไม่ประเมิน'],
+                    ['value' => 'A+', 'label' => 'เกรด A+ · ดีเยี่ยมมาก', 'dot' => 'bg-emerald-500'],
+                    ['value' => 'A', 'label' => 'เกรด A · ดีเยี่ยม', 'dot' => 'bg-sky-500'],
+                    ['value' => 'B', 'label' => 'เกรด B · ดี', 'dot' => 'bg-indigo-500'],
+                    ['value' => 'C', 'label' => 'เกรด C · พอใช้', 'dot' => 'bg-amber-500'],
+                    ['value' => 'D', 'label' => 'เกรด D · ต้องปรับปรุง', 'dot' => 'bg-rose-500'],
+                    ['value' => 'ungraded', 'label' => 'ยังไม่ประเมิน', 'dot' => 'bg-slate-400'],
                 ],
             ]); ?>
         </div>
@@ -593,8 +632,7 @@ if (window.Alpine && typeof Alpine.data === 'function') {
 
         <?php foreach ($projects as $index => $p): ?>
             <?php
-            $isInitiallyVisible = ($initPerPage === 'all') || 
-                ($index >= ($initPage - 1) * (int)$initPerPage && $index < $initPage * (int)$initPerPage);
+            $isInitiallyVisible = isset($initialVisibleIdMap[(int)$p['id']]);
             ?>
             <div class="bg-white dark:bg-[#181a20] rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm overflow-hidden" 
                  x-show="isProjectVisible(<?= $p['id'] ?>)" 

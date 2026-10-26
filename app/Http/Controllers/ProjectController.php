@@ -18,13 +18,14 @@ class ProjectController
     public function index(): void
     {
         $rawEvaluation = $_GET['evaluation'] ?? '';
+        $validEvaluations = ['evaluated', 'ungraded', 'A+', 'A', 'B', 'C', 'D'];
         $filters = [
             'fiscal_year_id' => $_GET['fiscal_year_id'] ?? '',
             'department_id'  => $_GET['department_id'] ?? '',
             'category_id'    => $_GET['category_id'] ?? '',
             'status'         => $_GET['status'] ?? '',
             'search'         => is_string($_GET['search'] ?? '') ? trim($_GET['search'] ?? '') : '',
-            'evaluation'     => is_string($rawEvaluation) && in_array($rawEvaluation, ['evaluated', 'ungraded'], true) ? $rawEvaluation : '',
+            'evaluation'     => is_string($rawEvaluation) && in_array($rawEvaluation, $validEvaluations, true) ? $rawEvaluation : '',
         ];
 
         // These scopes determine the loaded project set. Search, status and evaluation

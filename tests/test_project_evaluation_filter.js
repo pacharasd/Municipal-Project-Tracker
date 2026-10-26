@@ -19,18 +19,18 @@ for (const statusValue of ['all', 'not_started', 'in_progress', 'completed', 'ha
 }
 assert.match(source, /@select-changed="if \(\$event\.detail\.name === 'evaluation'\) setEvaluationFilter\(\$event\.detail\.value\)"/);
 assert.match(source, /'ariaLabel' => 'ผลประเมินโครงการหลัก'/);
-for (const value of ['all', 'evaluated', 'ungraded']) {
-    assert.ok(source.includes(`['value' => '${value}'`));
+for (const value of ['all', 'evaluated', 'A+', 'A', 'B', 'C', 'D', 'ungraded']) {
+    assert.ok(source.includes(`['value' => '${value}'`), `Expected evaluation option ${value}`);
 }
 
 const projects = [
-    { id: 1, fiscal_year_id: '1', department_id: '1', status: 'completed', evaluated: true, search_text: 'road alpha', budget: 100, sub_count: 2 },
-    { id: 2, fiscal_year_id: '1', department_id: '1', status: 'completed', evaluated: false, search_text: 'road beta', budget: 200, sub_count: 1 },
-    { id: 3, fiscal_year_id: '1', department_id: '1', status: 'in_progress', evaluated: true, search_text: 'bridge', budget: 300, sub_count: 0 },
-    { id: 4, fiscal_year_id: '1', department_id: '1', status: 'has_problem', evaluated: false, search_text: 'park', budget: 400, sub_count: 1 },
-    { id: 5, fiscal_year_id: '1', department_id: '1', status: 'completed', evaluated: true, search_text: 'road gamma', budget: 500, sub_count: 0 },
-    { id: 6, fiscal_year_id: '1', department_id: '1', status: 'completed', evaluated: true, search_text: 'road delta', budget: 600, sub_count: 0 },
-    { id: 7, fiscal_year_id: '2', department_id: '1', status: 'completed', evaluated: false, search_text: 'road year two', budget: 700, sub_count: 1 },
+    { id: 1, fiscal_year_id: '1', department_id: '1', status: 'completed', evaluated: true, grade: 'A+', search_text: 'road alpha', budget: 100, sub_count: 2 },
+    { id: 2, fiscal_year_id: '1', department_id: '1', status: 'completed', evaluated: false, grade: 'ungraded', search_text: 'road beta', budget: 200, sub_count: 1 },
+    { id: 3, fiscal_year_id: '1', department_id: '1', status: 'in_progress', evaluated: true, grade: 'A', search_text: 'bridge', budget: 300, sub_count: 0 },
+    { id: 4, fiscal_year_id: '1', department_id: '1', status: 'has_problem', evaluated: false, grade: 'ungraded', search_text: 'park', budget: 400, sub_count: 1 },
+    { id: 5, fiscal_year_id: '1', department_id: '1', status: 'completed', evaluated: true, grade: 'D', search_text: 'road gamma', budget: 500, sub_count: 0 },
+    { id: 6, fiscal_year_id: '1', department_id: '1', status: 'completed', evaluated: true, grade: 'D', search_text: 'road delta', budget: 600, sub_count: 0 },
+    { id: 7, fiscal_year_id: '2', department_id: '1', status: 'completed', evaluated: false, grade: 'ungraded', search_text: 'road year two', budget: 700, sub_count: 1 },
 ];
 
 function mount({ url = 'http://localhost/projects', evaluation = 'all', search = '', fiscalYear = '', dataset = projects } = {}) {
@@ -103,6 +103,19 @@ assert.deepEqual(Array.from(page.filteredProjects, p => p.id), [2, 4, 7]);
 assert.equal(page.totalFilteredSubCount, 3);
 assert.equal(page.paginatedIds.has(1), false);
 assert.equal(page.paginatedIds.has(2), true);
+
+page.setEvaluationFilter('A+');
+assert.deepEqual(Array.from(page.filteredProjects, p => p.id), [1]);
+assert.equal(new URL(location.href).searchParams.get('evaluation'), 'A+');
+
+page.setEvaluationFilter('D');
+assert.deepEqual(Array.from(page.filteredProjects, p => p.id), [5, 6]);
+assert.equal(new URL(location.href).searchParams.get('evaluation'), 'D');
+
+page.setEvaluationFilter('B');
+assert.deepEqual(Array.from(page.filteredProjects, p => p.id), []);
+assert.equal(new URL(location.href).searchParams.get('evaluation'), 'B');
+
 page.setEvaluationFilter('all');
 assert.equal(page.filteredProjects.length, 7);
 assert.equal(new URL(location.href).searchParams.has('evaluation'), false);

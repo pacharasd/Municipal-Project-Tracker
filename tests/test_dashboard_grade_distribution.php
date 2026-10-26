@@ -34,4 +34,12 @@ if (ProjectService::countEvaluationGrades([]) !== array_fill_keys(array_keys($ex
     throw new RuntimeException('Empty grade distribution is incorrect');
 }
 
+$dashboardSource = file_get_contents(__DIR__ . '/../resources/views/dashboard/index.blade.php');
+if (!str_contains($dashboardSource, 'data-grade-links=')
+    || !str_contains($dashboardSource, '<a href="<?= htmlspecialchars($gradeHref, ENT_QUOTES, \'UTF-8\') ?>"')
+    || !str_contains($dashboardSource, 'role="listitem"')
+    || !str_contains($dashboardSource, "['evaluation' => \$gKey]")) {
+    throw new RuntimeException('Dashboard grade rows must render accessible drill-down links for each grade');
+}
+
 echo "Dashboard grade distribution tests passed\n";

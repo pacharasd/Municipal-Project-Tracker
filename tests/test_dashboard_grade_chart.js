@@ -19,9 +19,22 @@ function mount(distribution) {
         D: { label: 'ต้องปรับปรุง', color: '#f43f5e' },
         ungraded: { label: 'ยังไม่ประเมิน', color: '#94a3b8' }
     };
+    const gradeLinks = {
+        'A+': '/projects?evaluation=A%2B',
+        A: '/projects?evaluation=A',
+        B: '/projects?evaluation=B',
+        C: '/projects?evaluation=C',
+        D: '/projects?evaluation=D',
+        ungraded: '/projects?evaluation=ungraded'
+    };
     const makeCanvas = counts => ({
         id: 'gradeDonutChart',
-        dataset: { gradeDistribution: JSON.stringify(counts), gradeMeta: JSON.stringify(gradeMeta) }
+        style: { cursor: 'default' },
+        dataset: {
+            gradeDistribution: JSON.stringify(counts),
+            gradeMeta: JSON.stringify(gradeMeta),
+            gradeLinks: JSON.stringify(gradeLinks)
+        }
     });
     let canvas = makeCanvas(distribution);
     let dark = false;
@@ -50,7 +63,13 @@ function mount(distribution) {
         update() {}
     }
 
+    const location = {
+        href: '/dashboard',
+        assigned: null,
+        assign(url) { this.assigned = url; }
+    };
     const window = {
+        location,
         addEventListener(name, callback) { events.set(name, callback); }
     };
     const document = {
@@ -81,6 +100,15 @@ const mounted = mount({ 'A+': 2, A: 1, B: 0, C: 0, D: 0, ungraded: 1 });
 assert.equal(mounted.chart().type, 'doughnut');
 assert.deepEqual(Array.from(mounted.chart().data.datasets[0].data), [2, 1, 1]);
 assert.equal(mounted.chart().options.plugins.tooltip.callbacks.label({ raw: 2, label: 'เกรด A+' }), ' เกรด A+: 2 โครงการ (50.0%)');
+mounted.chart().options.onClick({}, [{ index: 0 }]);
+assert.equal(mounted.window.location.assigned, '/projects?evaluation=A%2B');
+mounted.chart().options.onClick({}, [{ index: 2 }]);
+assert.equal(mounted.window.location.assigned, '/projects?evaluation=ungraded');
+const hoverTarget = { style: { cursor: 'default' } };
+mounted.chart().options.onHover({ native: { target: hoverTarget } }, [{ index: 0 }]);
+assert.equal(hoverTarget.style.cursor, 'pointer');
+mounted.chart().options.onHover({ native: { target: hoverTarget } }, []);
+assert.equal(hoverTarget.style.cursor, 'default');
 
 const first = mounted.chart();
 assert.equal(mounted.window._gradeDonutChartInstance, first);

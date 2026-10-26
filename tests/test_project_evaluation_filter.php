@@ -33,6 +33,15 @@ namespace App\Services {
             self::$lastFilters = $filters;
             return [];
         }
+        public static function calculateEvaluationGrade(?float $score): ?array
+        {
+            if ($score === null) return null;
+            if ($score >= 90.0) return ['grade' => 'A+'];
+            if ($score >= 80.0) return ['grade' => 'A'];
+            if ($score >= 70.0) return ['grade' => 'B'];
+            if ($score >= 60.0) return ['grade' => 'C'];
+            return ['grade' => 'D'];
+        }
     }
 }
 
@@ -61,6 +70,14 @@ namespace {
     $controller->index();
     if (\App\Core\View::$data['filters']['evaluation'] !== 'ungraded') {
         throw new \RuntimeException('Ungraded URL was not accepted');
+    }
+
+    foreach (['A+', 'A', 'B', 'C', 'D'] as $gradeVal) {
+        $_GET = ['evaluation' => $gradeVal];
+        $controller->index();
+        if (\App\Core\View::$data['filters']['evaluation'] !== $gradeVal) {
+            throw new \RuntimeException("Grade evaluation URL {$gradeVal} was not accepted");
+        }
     }
 
     $_GET = ['evaluation' => 'unknown'];
@@ -98,12 +115,14 @@ namespace {
 
     if (count($projectsSummary) !== 2
         || $projectsSummary[0]['evaluated'] !== true
+        || $projectsSummary[0]['grade'] !== 'D'
         || $projectsSummary[1]['evaluated'] !== false
+        || $projectsSummary[1]['grade'] !== 'ungraded'
         || $projectsSummary[0]['sub_count'] !== 1
         || $notStartedCount !== 2
         || $initStatus !== 'all'
         || ($notStartedCount + $inProgressCount + $completedCount + $hasProblemCount + $cancelledCount) !== count($projects)) {
-        throw new \RuntimeException('A score of zero must count as evaluated, NULL as ungraded, children must not count as main projects, and status counts must sum to total');
+        throw new \RuntimeException('A score of zero must count as evaluated (D), NULL as ungraded, children must not count as main projects, and status counts must sum to total');
     }
 
     $_GET = ['status' => 'not_started'];
