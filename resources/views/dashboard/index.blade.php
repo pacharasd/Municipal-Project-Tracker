@@ -489,16 +489,19 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                         </div>
                         <div>
                             <h2 class="text-base font-bold text-slate-900 dark:text-white font-heading truncate">โครงการตามประเภท</h2>
-                            <p class="text-[11px] text-slate-400 truncate">หมวดหมู่ที่ 1 - 8 ตามมาตรฐานกองทุน กปท.</p>
+                            <p class="text-[11px] text-slate-400 truncate">จัดกลุ่มจากประเภทของโครงการหลัก</p>
                         </div>
                     </div>
                     <span class="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-violet-50 dark:bg-violet-500/15 text-violet-700 dark:text-violet-300 border border-violet-500/20 shrink-0">
-                        8 หมวดหมู่
+                        <?= count($categoryData) ?> หมวดหมู่
                     </span>
                 </div>
 
                 <!-- Category Distribution Bar Chart Canvas -->
                 <div class="h-64 sm:h-[270px] relative w-full max-w-full pt-1 touch-pan-y" style="touch-action: pan-y;">
+                    <?php if (empty($categoryData)): ?>
+                        <div class="absolute inset-0 flex items-center justify-center text-sm text-slate-500 dark:text-slate-400">ไม่มีข้อมูลโครงการหลัก</div>
+                    <?php endif; ?>
                     <canvas id="categoryBarChart" 
                             data-categories='<?= htmlspecialchars(json_encode($stats['category_data'] ?? [], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>'
                             class="w-full h-full block"
@@ -1108,7 +1111,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                 }
 
                 const labels = catData.map(c => c.short_name);
-                const subCounts = catData.map(c => parseInt(c.sub_project_count || 0));
+                const mainCounts = catData.map(c => parseInt(c.project_count || 0, 10));
 
                 const catCtx = catCanvas.getContext('2d');
                 const catGrad = catCtx.createLinearGradient(0, 0, 0, 220);
@@ -1120,8 +1123,8 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                     data: {
                         labels: labels,
                         datasets: [{
-                            label: 'จำนวนกิจกรรมหลัก',
-                            data: subCounts,
+                            label: 'จำนวนโครงการหลัก',
+                            data: mainCounts,
                             backgroundColor: catGrad,
                             borderColor: isDark ? '#a78bfa' : '#7c3aed',
                             borderWidth: 1,
@@ -1152,7 +1155,7 @@ if (isset($selectedYearId) && $selectedYearId !== 'all') {
                                     label: (context) => {
                                         const idx = context.dataIndex;
                                         const c = catData[idx];
-                                        return ` กิจกรรมหลัก: ${context.raw} กิจกรรม (โครงการหลัก: ${c.project_count})`;
+                                        return ` โครงการหลัก: ${context.raw} โครงการ`;
                                     },
                                     afterLabel: (context) => {
                                         const idx = context.dataIndex;

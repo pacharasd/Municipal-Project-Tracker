@@ -656,30 +656,21 @@ class ProjectService
             $deptData = Database::query($deptSql);
         }
 
-        // 3. Category Distribution (ประเภทโครงการ 1 - 8 กปท.)
+        // 3. Category distribution uses the same main-project scope as main_total.
+        $catSql = "SELECT c.id, COALESCE(c.name, 'ไม่ระบุประเภท') as name, c.icon,
+                          COUNT(p.id) as project_count,
+                          COALESCE(SUM(p.budget), 0) as total_budget,
+                          COALESCE(SUM(p.disbursed_amount), 0) as total_disbursed
+                   FROM projects p
+                   LEFT JOIN project_categories c ON c.id = p.category_id
+                   WHERE p.parent_id IS NULL";
+        $catParams = [];
         if ($fiscalYearId !== null) {
-            $catSql = "SELECT c.id, c.name, c.icon,
-                              COUNT(p.id) as project_count, 
-                              COALESCE(SUM(p.budget), 0) as total_budget,
-                              COALESCE(SUM(p.disbursed_amount), 0) as total_disbursed,
-                              (SELECT COUNT(*) FROM projects sub WHERE sub.parent_id IN (SELECT p2.id FROM projects p2 WHERE p2.category_id = c.id AND p2.parent_id IS NULL AND p2.fiscal_year_id = ?)) as sub_project_count
-                       FROM project_categories c 
-                       LEFT JOIN projects p ON c.id = p.category_id AND p.parent_id IS NULL AND p.fiscal_year_id = ?
-                       GROUP BY c.id, c.name, c.icon 
-                       ORDER BY c.id ASC";
-            $catData = Database::query($catSql, [$fiscalYearId, $fiscalYearId]);
-        } else {
-            $catSql = "SELECT c.id, c.name, c.icon,
-                              COUNT(p.id) as project_count, 
-                              COALESCE(SUM(p.budget), 0) as total_budget,
-                              COALESCE(SUM(p.disbursed_amount), 0) as total_disbursed,
-                              (SELECT COUNT(*) FROM projects sub WHERE sub.parent_id IN (SELECT p2.id FROM projects p2 WHERE p2.category_id = c.id AND p2.parent_id IS NULL)) as sub_project_count
-                       FROM project_categories c 
-                       LEFT JOIN projects p ON c.id = p.category_id AND p.parent_id IS NULL
-                       GROUP BY c.id, c.name, c.icon 
-                       ORDER BY c.id ASC";
-            $catData = Database::query($catSql);
+            $catSql .= " AND p.fiscal_year_id = ?";
+            $catParams[] = $fiscalYearId;
         }
+        $catSql .= " GROUP BY c.id, c.name, c.icon ORDER BY c.id ASC";
+        $catData = Database::query($catSql, $catParams);
 
         foreach ($catData as &$cat) {
             if (preg_match('/^(ประเภท\s*\d+)/u', $cat['name'], $m)) {
