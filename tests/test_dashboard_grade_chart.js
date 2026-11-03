@@ -36,6 +36,32 @@ function mount(distribution) {
             gradeLinks: JSON.stringify(gradeLinks)
         }
     });
+    const makeStatusCanvas = () => ({
+        id: 'statusDonutChart',
+        style: { cursor: 'default' },
+        dataset: {
+            statusLinks: JSON.stringify({
+                not_started: '/projects?status=not_started',
+                in_progress: '/projects?status=in_progress',
+                completed: '/projects?status=completed',
+                has_problem: '/projects?status=has_problem',
+                cancelled: '/projects?status=cancelled'
+            }),
+            mainNotStarted: '0',
+            mainInProgress: '16',
+            mainCompleted: '4',
+            mainHasProblem: '5',
+            mainCancelled: '0',
+            mainTotal: '25',
+            subNotStarted: '2',
+            subInProgress: '50',
+            subCompleted: '20',
+            subHasProblem: '6',
+            subCancelled: '0',
+            subTotal: '78'
+        }
+    });
+    let statusCanvas = makeStatusCanvas();
     let canvas = makeCanvas(distribution);
     let dark = false;
 
@@ -75,7 +101,11 @@ function mount(distribution) {
     const document = {
         readyState: 'complete',
         documentElement: { classList: { contains() { return dark; } } },
-        getElementById(id) { return id === canvas.id ? canvas : null; }
+        getElementById(id) {
+            if (id === canvas.id) return canvas;
+            if (id === statusCanvas.id) return statusCanvas;
+            return null;
+        }
     };
     vm.runInNewContext(script, {
         Chart: ChartMock,
@@ -88,15 +118,22 @@ function mount(distribution) {
 
     return {
         chart() { return charts.get(canvas); },
+        statusChart() { return charts.get(statusCanvas); },
         instances,
         window,
         setDark(value) { dark = value; },
-        navigate(counts) { canvas = makeCanvas(counts); window.initDashboardCharts(); },
+        navigate(counts) { statusCanvas = makeStatusCanvas(); canvas = makeCanvas(counts); window.initDashboardCharts(); },
         events
     };
 }
 
 const mounted = mount({ 'A+': 2, A: 1, B: 0, C: 0, D: 0, ungraded: 1 });
+assert.equal(mounted.statusChart().type, 'doughnut');
+assert.deepEqual(Array.from(mounted.statusChart().data.datasets[0].data), [16, 4, 5]);
+mounted.statusChart().options.onClick({}, [{ index: 0 }]);
+assert.equal(mounted.window.location.assigned, '/projects?status=in_progress');
+mounted.window.updateStatusDonutMode('sub');
+assert.deepEqual(Array.from(mounted.statusChart().data.datasets[0].data), [2, 50, 20, 6]);
 assert.equal(mounted.chart().type, 'doughnut');
 assert.deepEqual(Array.from(mounted.chart().data.datasets[0].data), [2, 1, 1]);
 assert.equal(mounted.chart().options.plugins.tooltip.callbacks.label({ raw: 2, label: 'เกรด A+' }), ' เกรด A+: 2 โครงการ (50.0%)');
@@ -111,18 +148,22 @@ mounted.chart().options.onHover({ native: { target: hoverTarget } }, []);
 assert.equal(hoverTarget.style.cursor, 'default');
 
 const first = mounted.chart();
+const firstStatus = mounted.statusChart();
 assert.equal(mounted.window._gradeDonutChartInstance, first);
+assert.equal(mounted.window._statusDonutChartInstance, firstStatus);
 mounted.setDark(true);
 mounted.window.updateChartsThemeSynchronously();
 assert.equal(mounted.chart().data.datasets[0].borderColor, '#161922');
+assert.equal(mounted.statusChart().data.datasets[0].borderColor, '#161922');
 mounted.window.initDashboardCharts();
 assert.equal(first.destroyed, true);
-assert.equal(mounted.instances.filter(chart => !chart.destroyed).length, 1);
+assert.equal(firstStatus.destroyed, true);
+assert.equal(mounted.instances.filter(chart => !chart.destroyed).length, 2);
 const second = mounted.chart();
 mounted.navigate({ 'A+': 0, A: 0, B: 1, C: 0, D: 0, ungraded: 0 });
 assert.equal(second.destroyed, true);
 assert.deepEqual(Array.from(mounted.chart().data.datasets[0].data), [1]);
-assert.equal(mounted.instances.filter(chart => !chart.destroyed).length, 1);
+assert.equal(mounted.instances.filter(chart => !chart.destroyed).length, 2);
 mounted.events.get('theme-changed')();
 assert.equal(mounted.chart().data.datasets[0].borderColor, '#161922');
 

@@ -40,7 +40,7 @@ foreach ($users as $u) {
     createRoleOpen: false,
     editRoleOpen: false,
     currentUserId: <?= (int)$currentUserId ?>,
-    editUser: { id: '', name: '', email: '', position: '', phone: '', role_id: '' },
+    editUser: { id: '', name: '', full_name: '', email: '', position: '', phone: '', role_id: '' },
 
     // Password Management State
     createPassword: '',
@@ -164,11 +164,12 @@ foreach ($users as $u) {
             }
             if (!q) return true;
             const name = (u.name || '').toLowerCase();
+            const fullName = (u.full_name || '').toLowerCase();
             const email = (u.email || '').toLowerCase();
             const pos = (u.position || '').toLowerCase();
             const role = (u.role_label || '').toLowerCase();
             const phone = (u.phone || '').toLowerCase();
-            return name.includes(q) || email.includes(q) || pos.includes(q) || role.includes(q) || phone.includes(q);
+            return name.includes(q) || fullName.includes(q) || email.includes(q) || pos.includes(q) || role.includes(q) || phone.includes(q);
         });
     },
 
@@ -484,6 +485,9 @@ foreach ($users as $u) {
                                     <span class="text-[10px] px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded font-normal shrink-0">คุณ</span>
                                 </template>
                             </div>
+                            <template x-if="u.full_name">
+                                <div class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5" x-text="u.full_name"></div>
+                            </template>
                         </div>
                     </div>
 
@@ -572,6 +576,9 @@ foreach ($users as $u) {
                                                 <span class="text-[10px] px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded font-normal">คุณ</span>
                                             </template>
                                         </div>
+                                        <template x-if="u.full_name">
+                                            <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" x-text="u.full_name"></div>
+                                        </template>
                                     </div>
                                 </div>
                             </td>
@@ -723,18 +730,26 @@ foreach ($users as $u) {
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                            ชื่อ - นามสกุล <span class="text-rose-500">*</span>
+                            ชื่อผู้ใช้งาน (Username) <span class="text-rose-500">*</span>
                         </label>
-                        <input type="text" name="name" required placeholder="เช่น นายสมคิด สถิตย์คง"
+                        <input type="text" name="name" required placeholder="เช่น Admin_somkid หรือ somkid"
                                class="w-full px-3.5 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white transition-colors">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                            ตำแหน่ง / สังกัด
+                            ชื่อ - นามสกุล
                         </label>
-                        <input type="text" name="position" placeholder="เช่น นักวิเคราะห์นโยบายและแผน"
+                        <input type="text" name="full_name" placeholder="เช่น นายสมคิด สถิตย์คง"
                                class="w-full px-3.5 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white transition-colors">
                     </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        ตำแหน่ง / สังกัด
+                    </label>
+                    <input type="text" name="position" placeholder="เช่น นักวิเคราะห์นโยบายและแผน"
+                           class="w-full px-3.5 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white transition-colors">
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -943,18 +958,26 @@ foreach ($users as $u) {
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                            ชื่อ - นามสกุล <span class="text-rose-500">*</span>
+                            ชื่อผู้ใช้งาน (Username) <span class="text-rose-500">*</span>
                         </label>
-                        <input type="text" name="name" x-model="editUser.name" required
+                        <input type="text" name="name" x-model="editUser.name" required placeholder="เช่น Admin_somkid หรือ somkid"
                                class="w-full px-3.5 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white transition-colors">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                            ตำแหน่ง / สังกัด
+                            ชื่อ - นามสกุล
                         </label>
-                        <input type="text" name="position" x-model="editUser.position"
+                        <input type="text" name="full_name" x-model="editUser.full_name" placeholder="เช่น นายสมคิด สถิตย์คง"
                                class="w-full px-3.5 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white transition-colors">
                     </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        ตำแหน่ง / สังกัด
+                    </label>
+                    <input type="text" name="position" x-model="editUser.position" placeholder="เช่น นักวิเคราะห์นโยบายและแผน"
+                           class="w-full px-3.5 py-2 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white transition-colors">
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">

@@ -28,11 +28,26 @@ class ProfileController
         }
 
         $name = trim(strip_tags($_POST['name'] ?? ''));
+        $fullName = isset($_POST['full_name']) ? (trim(strip_tags($_POST['full_name'])) !== '' ? trim(strip_tags($_POST['full_name'])) : null) : ($currentUser['full_name'] ?? null);
         $position = trim(strip_tags($_POST['position'] ?? ''));
         $phone = isset($_POST['phone']) ? trim(strip_tags($_POST['phone'])) : ($currentUser['phone'] ?? '');
 
         if (mb_strlen($name) < 2 || mb_strlen($name) > 150) {
-            Session::flash('error', 'ชื่อ-นามสกุลต้องมีความยาวระหว่าง 2 ถึง 150 ตัวอักษร');
+            Session::flash('error', 'ชื่อผู้ใช้งาน (Username) ต้องมีความยาวระหว่าง 2 ถึง 150 ตัวอักษร');
+            header('Location: ' . $redirect);
+            exit;
+        }
+
+        if ($fullName !== null && mb_strlen($fullName) > 150) {
+            Session::flash('error', 'ชื่อ-นามสกุลต้องมีความยาวไม่เกิน 150 ตัวอักษร');
+            header('Location: ' . $redirect);
+            exit;
+        }
+
+        // Check duplicate username for another user
+        $existsName = Database::fetchColumn("SELECT COUNT(*) FROM users WHERE name = ? AND id != ?", [$name, $userId]);
+        if ($existsName > 0) {
+            Session::flash('error', "ชื่อผู้ใช้งาน (Username) '{$name}' ถูกใช้งานโดยผู้ใช้อื่นแล้ว");
             header('Location: ' . $redirect);
             exit;
         }
@@ -54,18 +69,21 @@ class ProfileController
 
         // ค่าเดิมสำหรับ Audit Log
         $oldValues = [
-            'name'     => $currentUser['name'] ?? '',
-            'position' => $currentUser['position'] ?? '',
+            'name'      => $currentUser['name'] ?? '',
+            'full_name' => $currentUser['full_name'] ?? '',
+            'position'  => $currentUser['position'] ?? '',
         ];
 
         $newValues = [
-            'name'     => $name,
-            'position' => $position,
+            'name'      => $name,
+            'full_name' => $fullName ?? '',
+            'position'  => $position,
         ];
 
         $updateData = [
-            'name'     => $name,
-            'position' => $position,
+            'name'      => $name,
+            'full_name' => $fullName,
+            'position'  => $position,
         ];
 
         if (isset($_POST['phone'])) {

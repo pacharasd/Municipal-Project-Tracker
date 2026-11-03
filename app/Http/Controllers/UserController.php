@@ -42,13 +42,14 @@ class UserController
         }
 
         $name = trim($_POST['name'] ?? '');
+        $fullName = !empty($_POST['full_name']) ? trim($_POST['full_name']) : null;
         $email = !empty($_POST['email']) ? trim($_POST['email']) : null;
         $password = trim($_POST['password'] ?? '');
         $position = trim($_POST['position'] ?? '');
         $phone = !empty($_POST['phone']) ? trim($_POST['phone']) : null;
 
         if (empty($name)) {
-            Session::flash('error', 'กรุณาระบุชื่อ - นามสกุล');
+            Session::flash('error', 'กรุณาระบุชื่อผู้ใช้งาน (Username)');
             header('Location: ' . Router::url('/users'));
             exit;
         }
@@ -62,7 +63,7 @@ class UserController
         // Check duplicate name
         $existsName = Database::fetchColumn("SELECT COUNT(*) FROM users WHERE name = ?", [$name]);
         if ($existsName > 0) {
-            Session::flash('error', "ชื่อผู้ใช้งาน '{$name}' มีอยู่ในระบบแล้ว กรุณาใช้ชื่ออื่น");
+            Session::flash('error', "ชื่อผู้ใช้งาน (Username) '{$name}' มีอยู่ในระบบแล้ว กรุณาใช้ชื่ออื่น");
             header('Location: ' . Router::url('/users'));
             exit;
         }
@@ -93,15 +94,16 @@ class UserController
 
         try {
             $userId = Database::insert('users', [
-                'name'     => $name,
-                'email'    => $email,
-                'password' => $hash,
-                'role_id'  => $roleId,
-                'position' => $position,
-                'phone'    => $phone,
+                'name'      => $name,
+                'full_name' => $fullName,
+                'email'     => $email,
+                'password'  => $hash,
+                'role_id'   => $roleId,
+                'position'  => $position,
+                'phone'     => $phone,
             ]);
 
-            \App\Services\AuditLogService::log('CREATE_USER', 'User', $userId, null, ['name' => $name, 'role_id' => $roleId]);
+            \App\Services\AuditLogService::log('CREATE_USER', 'User', $userId, null, ['name' => $name, 'full_name' => $fullName, 'role_id' => $roleId]);
             Session::flash('success', "เพิ่มผู้ใช้งาน '{$name}' เรียบร้อยแล้ว (รหัสผ่านเริ่มต้น: {$password})");
         } catch (\Throwable $e) {
             error_log("Failed to create user: " . $e->getMessage());
@@ -111,14 +113,15 @@ class UserController
                 try {
                     $fallbackEmail = 'user_' . time() . '_' . mt_rand(1000, 9999) . '@mpt.local';
                     $userId = Database::insert('users', [
-                        'name'     => $name,
-                        'email'    => $fallbackEmail,
-                        'password' => $hash,
-                        'role_id'  => $roleId,
-                        'position' => $position,
-                        'phone'    => $phone,
+                        'name'      => $name,
+                        'full_name' => $fullName,
+                        'email'     => $fallbackEmail,
+                        'password'  => $hash,
+                        'role_id'   => $roleId,
+                        'position'  => $position,
+                        'phone'     => $phone,
                     ]);
-                    \App\Services\AuditLogService::log('CREATE_USER', 'User', $userId, null, ['name' => $name, 'role_id' => $roleId]);
+                    \App\Services\AuditLogService::log('CREATE_USER', 'User', $userId, null, ['name' => $name, 'full_name' => $fullName, 'role_id' => $roleId]);
                     Session::flash('success', "เพิ่มผู้ใช้งาน '{$name}' เรียบร้อยแล้ว (รหัสผ่านเริ่มต้น: {$password})");
                     header('Location: ' . Router::url('/users'));
                     exit;
@@ -151,11 +154,12 @@ class UserController
         }
 
         $name = trim($_POST['name'] ?? '');
+        $fullName = isset($_POST['full_name']) ? (trim($_POST['full_name']) !== '' ? trim($_POST['full_name']) : null) : ($user['full_name'] ?? null);
         $position = trim($_POST['position'] ?? '');
         $newPassword = $_POST['password'] ?? '';
 
         if (empty($name)) {
-            Session::flash('error', 'กรุณาระบุชื่อ - นามสกุล');
+            Session::flash('error', 'กรุณาระบุชื่อผู้ใช้งาน (Username)');
             header('Location: ' . Router::url('/users'));
             exit;
         }
@@ -163,14 +167,15 @@ class UserController
         // Check duplicate name for another user
         $existsName = Database::fetchColumn("SELECT COUNT(*) FROM users WHERE name = ? AND id != ?", [$name, $userId]);
         if ($existsName > 0) {
-            Session::flash('error', "ชื่อผู้ใช้งาน '{$name}' ถูกใช้งานโดยผู้ใช้อื่นแล้ว");
+            Session::flash('error', "ชื่อผู้ใช้งาน (Username) '{$name}' ถูกใช้งานโดยผู้ใช้อื่นแล้ว");
             header('Location: ' . Router::url('/users'));
             exit;
         }
 
         $updateData = [
-            'name'     => $name,
-            'position' => $position,
+            'name'      => $name,
+            'full_name' => $fullName,
+            'position'  => $position,
         ];
 
         // If email or phone was explicitly passed in POST, update it; otherwise keep existing or null
@@ -236,6 +241,13 @@ class UserController
         $userId = (int)$id;
         if ($userId === Auth::id()) {
             Session::flash('error', 'ไม่สามารถลบบัญชีของตนเองที่กำลังใช้งานอยู่ได้');
+            header('Location: ' . Router::url('/users'));
+            exit;
+        }
+
+        $user = Database::fetch("SELECT * FROM users WHERE id = ?", [$userId]);
+        if (!$user) {
+            Session::flash('error', 'ไม่พบผู้ใช้งาน');
             header('Location: ' . Router::url('/users'));
             exit;
         }

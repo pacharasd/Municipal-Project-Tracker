@@ -276,6 +276,10 @@ class Database
 
             // Auto-migrate newly added columns seamlessly
             try {
+                $fullNameCol = $pdo->query("SHOW COLUMNS FROM `users` LIKE 'full_name'")->fetch();
+                if (!$fullNameCol) {
+                    $pdo->exec("ALTER TABLE `users` ADD COLUMN `full_name` VARCHAR(150) NULL DEFAULT NULL AFTER `name`");
+                }
                 $emailCol = $pdo->query("SHOW COLUMNS FROM `users` LIKE 'email'")->fetch();
                 if ($emailCol && strtolower($emailCol['Null'] ?? '') === 'no') {
                     $pdo->exec("ALTER TABLE `users` MODIFY COLUMN `email` VARCHAR(150) NULL DEFAULT NULL");

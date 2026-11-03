@@ -62,9 +62,9 @@ class AuthController
             "SELECT u.*, r.name as role_name, r.display_name as role_label 
              FROM users u 
              JOIN roles r ON u.role_id = r.id 
-             WHERE u.name = ? OR u.email = ? 
+             WHERE u.name = ? OR u.email = ? OR u.full_name = ? 
              LIMIT 1",
-            [$username, $username]
+            [$username, $username, $username]
         );
 
         // 4. Verify Password with Timing Attack Mitigation (OWASP ASVS 2.1.8)

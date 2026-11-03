@@ -36,10 +36,13 @@ if (ProjectService::countEvaluationGrades([]) !== array_fill_keys(array_keys($ex
 
 $dashboardSource = file_get_contents(__DIR__ . '/../resources/views/dashboard/index.blade.php');
 if (!str_contains($dashboardSource, 'data-grade-links=')
+    || !str_contains($dashboardSource, 'id="statusDonutChart"')
+    || !str_contains($dashboardSource, 'data-status-links=')
     || !str_contains($dashboardSource, '<a href="<?= htmlspecialchars($gradeHref, ENT_QUOTES, \'UTF-8\') ?>"')
     || !str_contains($dashboardSource, 'role="listitem"')
-    || !str_contains($dashboardSource, "['evaluation' => \$gKey]")) {
-    throw new RuntimeException('Dashboard grade rows must render accessible drill-down links for each grade');
+    || !str_contains($dashboardSource, "['evaluation' => \$gKey]")
+    || !str_contains($dashboardSource, "['status' => \$stKey]")) {
+    throw new RuntimeException('Dashboard status and grade rows must render accessible drill-down links');
 }
 
 echo "Dashboard grade distribution tests passed\n";
