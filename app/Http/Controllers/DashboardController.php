@@ -13,11 +13,14 @@ class DashboardController
         $fiscalYears = \App\Services\FiscalYearService::getFilterableYears();
         $activeYear = \App\Services\FiscalYearService::getActiveYear();
 
-        // Determine selected fiscal year (Default to 'all' - ทุกปีงบประมาณ)
+        // Determine selected fiscal year (Default to current fiscal year; 'all' = ทุกปีงบประมาณ)
         $rawYearParam = $_GET['fiscal_year_id'] ?? null;
-        if ($rawYearParam === null || $rawYearParam === '' || $rawYearParam === 'all') {
+        if ($rawYearParam === 'all' || (($rawYearParam === null || $rawYearParam === '') && empty($activeYear['id']))) {
             $selectedYearId = 'all';
             $filterYearId = null;
+        } elseif ($rawYearParam === null || $rawYearParam === '') {
+            $selectedYearId = (int)$activeYear['id'];
+            $filterYearId = $selectedYearId;
         } else {
             $selectedYearId = (int)$rawYearParam;
             $filterYearId = $selectedYearId;

@@ -38,6 +38,7 @@ class FiscalYearService
             return self::$cachedFilterableYears;
         }
 
+        self::ensureFiscalYears();
         $activeFy = self::getActiveYear();
         $currentYear = $activeFy ? (int)$activeFy['year'] : self::getCurrentFiscalYear();
 
@@ -91,10 +92,17 @@ class FiscalYearService
                 }
             }
 
-            // ซิงค์ is_active เริ่มต้นหากยังไม่มีปีใดเป็น active เลย
-            $hasActive = (int)Database::fetchColumn("SELECT COUNT(*) FROM fiscal_years WHERE is_active = 1");
-            if ($hasActive === 0) {
-                Database::execute("UPDATE fiscal_years SET is_active = IF(year = ?, 1, 0)", [$currentFiscalYear]);
+            // ซิงค์ is_active ให้ตรงกับปีงบประมาณตามวันที่จริง (ตัดปีทุกวันที่ 1 ตุลาคม)
+            // ป้องกันกรณีปีที่ active ค้างอยู่ที่ปีเก่าหลังผ่านวันที่ 1 ตุลาคม
+            $activeYears = Database::query("SELECT year FROM fiscal_years WHERE is_active = 1");
+            $isInSync = count($activeYears) === 1 && (int)$activeYears[0]['year'] === $currentFiscalYear;
+            if (!$isInSync) {
+                Database::transaction(function () use ($currentFiscalYear) {
+                    Database::execute("UPDATE fiscal_years SET is_active = IF(year = ?, 1, 0)", [$currentFiscalYear]);
+                    return true;
+                });
+                self::$cachedActiveYear = null;
+                self::$cachedFilterableYears = null;
             }
             self::$ensured = true;
         } catch (Exception $e) {
@@ -110,6 +118,8 @@ class FiscalYearService
         if (self::$cachedActiveYear !== null) {
             return self::$cachedActiveYear;
         }
+
+        self::ensureFiscalYears();
 
         $year = Database::fetch("SELECT * FROM fiscal_years WHERE is_active = 1 LIMIT 1");
         if (!$year) {
